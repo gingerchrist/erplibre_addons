@@ -1,27 +1,12 @@
+import logging
 import subprocess
-
-import pexpect
 
 from odoo import http
 from odoo.addons.web_settings_dashboard.controllers.main import (
     WebSettingsDashboard,
 )
 
-
-def cmdlineCall(name, args):
-    child = pexpect.spawn(name, args)
-    # Wait for the end of the output
-    child.expect(pexpect.EOF)
-    out = (
-        child.before
-    )  # we get all the data before the EOF (stderr and stdout)
-    child.close()  # that will set the return code for us
-    # signalstatus and existstatus read as the same (for my purpose only)
-    if child.exitstatus is None:
-        returncode = child.signalstatus
-    else:
-        returncode = child.exitstatus
-    return out, returncode
+_logger = logging.getLogger(__name__)
 
 
 class WebSettingsDashboardERPLibre(WebSettingsDashboard):
@@ -37,8 +22,26 @@ class WebSettingsDashboardERPLibre(WebSettingsDashboard):
                     share["server_erplibre_commit"] = subprocess.check_output(
                         ["git", "describe", "--tags"]
                     ).strip()
-                except:
-                    print(cmdlineCall("git", ["describe", "--tags"]))
-                    print("Cannot execute 'git describe --tags'")
-                    share["server_erplibre_commit"] = "0".encode("utf-8")
+                except Exception as e:
+                    _logger.error(e)
+                    try:
+                        # Try force safe.directory with git config
+                        subprocess.check_output(
+                            [
+                                "git",
+                                "config",
+                                "--global",
+                                "safe.directory",
+                                "/ERPLibre",
+                            ]
+                        ).strip()
+                        share[
+                            "server_erplibre_commit"
+                        ] = subprocess.check_output(
+                            ["git", "describe", "--tags"]
+                        ).strip()
+                    except Exception as e:
+                        share["server_erplibre_commit"] = "ERROR".encode(
+                            "utf-8"
+                        )
         return res
