@@ -1,8 +1,8 @@
-odoo.define('website_jitsi', function (require) {
-    'use strict';
-    var sAnimation = require('website.content.snippets.animation');
+odoo.define("website_jitsi", function (require) {
+    "use strict";
+    var sAnimation = require("website.content.snippets.animation");
     sAnimation.registry.website_jitsi = sAnimation.Class.extend({
-        selector: '.website_jitsi',
+        selector: ".website_jitsi",
 
         /**
          * @override
@@ -10,26 +10,26 @@ odoo.define('website_jitsi', function (require) {
         start: function () {
             var options = {
                 roomName: "Default", // 'PickAnAppropriateMeetingNameHere',
-                width: '100%', // 700,
+                width: "100%", // 700,
                 height: 700,
-                parentNode: document.querySelector('#meet'),
+                parentNode: document.querySelector("#meet"),
                 userInfo: {},
                 invitees_X: [],
                 configOverwrite: {
                     prejoinPageEnabled: false,
                 },
-                onload: ev => {
+                onload: (ev) => {
                     const URL = ev.target.src;
 
-                    $('iframe[id^=jitsiConferenceFrame]').each(function () {
-                        if ($(this).attr('id') != 'jitsiConferenceFrame0') {
+                    $("iframe[id^=jitsiConferenceFrame]").each(function () {
+                        if ($(this).attr("id") != "jitsiConferenceFrame0") {
                             $(this).remove();
                         }
                     });
 
-                    console.warn('> Jitsi loaded:', URL, ev);
+                    console.warn("> Jitsi loaded:", URL, ev);
                     //document.body.classList.add('jitsi-loaded');
-                }
+                },
             };
 
             let new_record = true;
@@ -39,9 +39,10 @@ odoo.define('website_jitsi', function (require) {
             // let jitsi_id = 1;
 
             var def = this._rpc({
-                route: '/website_jitsi/get_info/', params: {
+                route: "/website_jitsi/get_info/",
+                params: {
                     new_record: new_record,
-                    jitsi_id:jitsi_id,
+                    jitsi_id: jitsi_id,
                 },
             }).then(function (data) {
                 if (data.error) {
@@ -58,17 +59,10 @@ odoo.define('website_jitsi', function (require) {
                 console.log("Jitsi url: " + data.meetings.url);
 
                 const jitsi = new JitsiMeetExternalAPI(data.meetings.domaineName, options);
-                jitsi.addEventListener('incomingMessage', ev => console.warn('> Incoming:', ev));
-                jitsi.addEventListener('outgoingMessage', ev => console.warn('> Outgoing:', ev));
+                jitsi.addEventListener("incomingMessage", (ev) => console.warn("> Incoming:", ev));
+                jitsi.addEventListener("outgoingMessage", (ev) => console.warn("> Outgoing:", ev));
             });
             return $.when(this._super.apply(this, arguments), def);
         },
     });
 });
-
-
-
-
-
-
-

@@ -1,20 +1,17 @@
 /* Copyright 2017 Tecnativa - Jairo Llopis
  * License LGPL-3.0 or later (https://www.gnu.org/licenses/lgpl). */
 
-odoo.define('erplibre_website_snippets_jitsi.widgets', function (require) {
+odoo.define("erplibre_website_snippets_jitsi.widgets", function (require) {
     "use strict";
 
     var ajax = require("web.ajax");
-    var core = require('web.core');
+    var core = require("web.core");
     var widget = require("web_editor.widget");
     var _t = core._t;
     var Dialog = widget.Dialog;
 
     var result = $.Deferred(),
-        _templates_loaded = ajax.loadXML(
-            "/erplibre_website_snippets_jitsi/static/src/xml/widgets.xml",
-            core.qweb
-        );
+        _templates_loaded = ajax.loadXML("/erplibre_website_snippets_jitsi/static/src/xml/widgets.xml", core.qweb);
 
     var DefaultValueForm = Dialog.extend({
         template: "erplibre_website_snippets_jitsi.DefaultValueForm",
@@ -29,10 +26,14 @@ odoo.define('erplibre_website_snippets_jitsi.widgets', function (require) {
          */
         init: function (parent, options, field) {
             this.field_html = $(field).html();
-            var _options = $.extend({}, {
-                title: _t("Set field's default value"),
-                size: "small",
-            }, options);
+            var _options = $.extend(
+                {},
+                {
+                    title: _t("Set field's default value"),
+                    size: "small",
+                },
+                options
+            );
             return this._super(parent, _options);
         },
 
@@ -42,7 +43,8 @@ odoo.define('erplibre_website_snippets_jitsi.widgets', function (require) {
         save: function () {
             var inputs = this.$(".o_website_form_input");
             if (inputs.is(":checkbox")) {
-                this.final_data = inputs.filter(":checked")
+                this.final_data = inputs
+                    .filter(":checked")
                     .map(function () {
                         return $(this).val();
                     })
@@ -69,10 +71,14 @@ odoo.define('erplibre_website_snippets_jitsi.widgets', function (require) {
         init: function (parent, options, models, chosen) {
             this.models = models;
             this.chosen = chosen;
-            var _options = $.extend({}, {
-                title: _t("Form Settings"),
-                size: "small",
-            }, options);
+            var _options = $.extend(
+                {},
+                {
+                    title: _t("Form Settings"),
+                    size: "small",
+                },
+                options
+            );
             return this._super(parent, _options);
         },
 
@@ -100,10 +106,14 @@ odoo.define('erplibre_website_snippets_jitsi.widgets', function (require) {
         init: function (parent, options, fields, blacklist) {
             this.fields = fields;
             this.blacklist = blacklist;
-            var _options = $.extend({}, {
-                title: _t("Add Model Fields"),
-                size: "small",
-            }, options);
+            var _options = $.extend(
+                {},
+                {
+                    title: _t("Add Model Fields"),
+                    size: "small",
+                },
+                options
+            );
             return this._super(parent, _options);
         },
 

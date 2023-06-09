@@ -42,8 +42,7 @@
 
     <template id="assets_editor" inherit_id="website.assets_editor">
         <xpath expr=".">
-            <script type="text/javascript"
-                    src="/erplibre_website_snippets_jitsi/static/src/js/dialog.js"/>
+            <script type="text/javascript" src="/erplibre_website_snippets_jitsi/static/src/js/dialog.js" />
         </xpath>
     </template>
 
@@ -53,10 +52,10 @@
             <!-- The form itself -->
             <div data-js="erplibre_website_snippets_jitsi_form" data-selector=".website_jitsi">
                 <a id="channel" tabindex="-1" href="#" class="dropdown-item" data-ask_model="" data-no-preview="true">
-                    <i class="fa fa-list"/>Channels
+                    <i class="fa fa-list" />
+                    Channels
                 </a>
             </div>
-
         </xpath>
     </template>
 </odoo>
