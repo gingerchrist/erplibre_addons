@@ -1,25 +1,20 @@
-odoo.define('erplibre_website_snippets_jitsi.dialog', function (require) {
+odoo.define("erplibre_website_snippets_jitsi.dialog", function (require) {
     "use strict";
 
     var ajax = require("web.ajax");
-    var core = require('web.core');
+    var core = require("web.core");
     var widget = require("web_editor.widget");
     var _t = core._t;
     var Dialog = widget.Dialog;
-    var options = require('web_editor.snippets.options');
-    var sAnimation = require('website.content.snippets.animation');
-    var rpc = require('web.rpc');
+    var options = require("web_editor.snippets.options");
+    var sAnimation = require("website.content.snippets.animation");
+    var rpc = require("web.rpc");
     var weContext = require("web_editor.context");
 
     let list_rooms = [];
 
-
     var result = $.Deferred(),
-        _templates_loaded = ajax.loadXML(
-            "/erplibre_website_snippets_jitsi/static/src/xml/widgets.xml",
-            core.qweb
-        );
-
+        _templates_loaded = ajax.loadXML("/erplibre_website_snippets_jitsi/static/src/xml/widgets.xml", core.qweb);
 
     var ParamsForm = Dialog.extend({
         template: "erplibre_website_snippets_jitsi.ParamsForm",
@@ -37,10 +32,14 @@ odoo.define('erplibre_website_snippets_jitsi.dialog', function (require) {
             this.chosen = chosen;
             this.rooms = rooms;
 
-            var _options = $.extend({}, {
-                title: _t("Form Settings"),
-                size: "small",
-            }, options);
+            var _options = $.extend(
+                {},
+                {
+                    title: _t("Form Settings"),
+                    size: "small",
+                },
+                options
+            );
             return this._super(parent, _options);
         },
 
@@ -51,37 +50,36 @@ odoo.define('erplibre_website_snippets_jitsi.dialog', function (require) {
             this.final_data = this.$("#model").val();
             console.log("save: " + this.final_data);
 
-
             rpc.query({
-                model: 'sinerkia_jitsi_meet.jitsi_meet',
-                method: 'get_channel',
-                args: [parseInt(this.final_data)]
-            }).then(function (data){
+                model: "sinerkia_jitsi_meet.jitsi_meet",
+                method: "get_channel",
+                args: [parseInt(this.final_data)],
+            }).then(function (data) {
                 if (_.isEmpty(data)) {
                     return;
                 }
 
                 var options = {
                     roomName: "Default", // 'PickAnAppropriateMeetingNameHere',
-                    width: '100%', // 700,
+                    width: "100%", // 700,
                     height: 700,
-                    parentNode: document.querySelector('#meet'),
+                    parentNode: document.querySelector("#meet"),
                     userInfo: {},
                     invitees_X: [],
                     configOverwrite: {
                         prejoinPageEnabled: false,
                     },
-                    onload: ev => {
+                    onload: (ev) => {
                         const URL = ev.target.src;
 
-                        $('iframe[id^=jitsiConferenceFrame]').each(function () {
-                            if ($(this).attr('id') != 'jitsiConferenceFrame0') {
+                        $("iframe[id^=jitsiConferenceFrame]").each(function () {
+                            if ($(this).attr("id") != "jitsiConferenceFrame0") {
                                 $(this).remove();
                             }
                         });
 
-                        console.warn('> Jitsi loaded:', URL, ev);
-                    }
+                        console.warn("> Jitsi loaded:", URL, ev);
+                    },
                 };
                 options.roomName = data.meetings.roomName;
                 options.userInfo = data.userInfo;
@@ -90,10 +88,9 @@ odoo.define('erplibre_website_snippets_jitsi.dialog', function (require) {
                 console.log("Jitsi url: " + data.meetings.url);
 
                 const jitsi = new JitsiMeetExternalAPI(data.meetings.domaineName, options);
-                jitsi.addEventListener('incomingMessage', ev => console.warn('> Incoming:', ev));
-                jitsi.addEventListener('outgoingMessage', ev => console.warn('> Outgoing:', ev));
-            })
-
+                jitsi.addEventListener("incomingMessage", (ev) => console.warn("> Incoming:", ev));
+                jitsi.addEventListener("outgoingMessage", (ev) => console.warn("> Outgoing:", ev));
+            });
 
             //
             // var def = this._rpc({
@@ -139,7 +136,6 @@ odoo.define('erplibre_website_snippets_jitsi.dialog', function (require) {
         },
     });
 
-
     _templates_loaded.done(function () {
         result.resolve({
             ParamsForm: ParamsForm,
@@ -148,7 +144,6 @@ odoo.define('erplibre_website_snippets_jitsi.dialog', function (require) {
 
     var Form = options.Class.extend({
         init: function () {
-
             this._super.apply(this, arguments);
             //this.$form = this.$(".website_jitsi");
         },
@@ -157,44 +152,31 @@ odoo.define('erplibre_website_snippets_jitsi.dialog', function (require) {
          * Ask for a model or remove snippet.
          */
         onBuilt: function () {
-            var dialog = new ParamsForm(
-                $(".website_jitsi"), {}, list_rooms, ""
-            );
+            var dialog = new ParamsForm($(".website_jitsi"), {}, list_rooms, "");
             this._super.apply(this, arguments);
             dialog.open();
-
-
         },
     });
 
-    let jitsi = sAnimation.registry.website_jitsi = sAnimation.Class.extend({
-        selector: '.website_jitsi',
+    let jitsi = (sAnimation.registry.website_jitsi = sAnimation.Class.extend({
+        selector: ".website_jitsi",
 
         /**
          * @override
          */
         start: function () {
             let def = this._rpc({
-                model: 'sinerkia_jitsi_meet.jitsi_meet',
-                method: 'search_read',
+                model: "sinerkia_jitsi_meet.jitsi_meet",
+                method: "search_read",
                 kwargs: {
-                    fields: [
-                        "name",
-                        "roomName",
-                        "domaineName",
-                        "url",
-                        "id",
-                    ],
-                context: weContext.get()},
+                    fields: ["name", "roomName", "domaineName", "url", "id"],
+                    context: weContext.get(),
+                },
             }).done(function (models_list) {
                 console.log("in rpc " + JSON.stringify(models_list));
                 list_rooms = models_list;
                 //_models_def.resolve(_.indexBy(models_list, "model"));
             });
-
-
-
-
 
             // let def = this._rpc({
             //     route: '/website_jitsi/get_canal_list/'
@@ -223,17 +205,13 @@ odoo.define('erplibre_website_snippets_jitsi.dialog', function (require) {
             // });
 
             return $.when(this._super.apply(this, arguments), def);
-
         },
+    }));
+
+    $(document).on("click", "#channel", function (ev) {
+        let optionsDialog = new ParamsForm($(".website_jitsi"), {}, list_rooms, "");
+        optionsDialog.open();
     });
 
-    $(document).on("click", '#channel', function (ev) {
-        let optionsDialog = new ParamsForm(
-            $(".website_jitsi"), {}, list_rooms, ""
-        );
-        optionsDialog.open();
-    })
-
     options.registry.erplibre_website_snippets_jitsi_form = Form;
-
 });

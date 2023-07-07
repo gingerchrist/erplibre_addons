@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <record id="view_sync_db_result_conf_tree" model="ir.ui.view">
+        <field name="name">sync.db.result tree</field>
+        <field name="model">sync.db.result</field>
+        <field name="arch" type="xml">
+            <tree colors="bg_color_field: colored_line" limit="1000">
+                <field name="sequence" widget="handle" />
+                <field name="colored_line" invisible="True" />
+                <field name="id" />
+                <field name="sync_db_id" />
+                <field name="type_result" />
+                <field name="model_name" />
+                <field name="field_name" />
+                <field name="record_id" />
+                <field name="source" />
+                <field name="field_value_local" />
+                <field name="field_value_remote" />
+                <field name="msg" />
+                <field name="data" />
+                <field name="status" />
+                <field name="resolution" invisible="True" />
+                <button
+                    name="sync_local"
+                    string="Sync local"
+                    type="object"
+                    attrs="{'invisible': ['|',('resolution','not in',['solution_local', 'solution_remote_local']),('status','in',['not_solvable','solved'])]}"
+                />
+                <button
+                    name="sync_remote"
+                    string="Sync remote"
+                    type="object"
+                    attrs="{'invisible': ['|',('resolution','not in',['solution_remote', 'solution_remote_local']),('status','in',['not_solvable','solved'])]}"
+                />
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sync_db_result_conf_search" model="ir.ui.view">
+        <field name="name">sync.db.result search</field>
+        <field name="model">sync.db.result</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="model_name" />
+                <field name="field_name" />
+                <field name="record_id" />
+                <field name="field_value_local" />
+                <field name="field_value_remote" />
+                <field name="msg" />
+                <field name="data" />
+                <field name="status" />
+                <field name="resolution" />
+                <field name="type_result" />
+                <field name="colored_line" />
+                <field name="source" />
+                <group expand="0" string="Group By...">
+                    <filter string="Source" name="source" domain="[]" context="{'group_by':'source'}" />
+                    <filter string="Status" name="colored_line" domain="[]" context="{'group_by':'colored_line'}" />
+                    <filter string="Type result" name="type_result" domain="[]" context="{'group_by':'type_result'}" />
+                    <filter string="Sync DB" name="sync_db_id" domain="[]" context="{'group_by':'sync_db_id'}" />
+                    <filter string="Model" name="model_name" domain="[]" context="{'group_by':'model_name'}" />
+                    <filter string="Field" name="field_name" domain="[]" context="{'group_by':'field_name'}" />
+                    <filter string="Record ID" name="record_id" domain="[]" context="{'group_by':'record_id'}" />
+                    <filter string="Data" name="data" domain="[]" context="{'group_by':'data'}" />
+                    <filter string="Status" name="status" domain="[]" context="{'group_by':'status'}" />
+                    <filter string="Resolution" name="resolution" domain="[]" context="{'group_by':'resolution'}" />
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_sync_db_result" model="ir.actions.act_window">
+        <field name="name">Show result after sync execution</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">sync.db.result</field>
+        <field name="view_mode">tree</field>
+        <field name="view_id" ref="view_sync_db_result_conf_tree" />
+    </record>
+
+    <!-- Execute sync from "More" menu -->
+    <record id="action_server_sync_result_local" model="ir.actions.server">
+        <field name="name">Sync local</field>
+        <field name="model_id" ref="sync_external_model.model_sync_db_result" />
+        <field name="binding_model_id" ref="sync_external_model.model_sync_db_result" />
+        <field name="state">code</field>
+        <field name="code">records.sync_local()</field>
+    </record>
+
+    <record id="action_server_sync_result_remote" model="ir.actions.server">
+        <field name="name">Sync remote</field>
+        <field name="model_id" ref="sync_external_model.model_sync_db_result" />
+        <field name="binding_model_id" ref="sync_external_model.model_sync_db_result" />
+        <field name="state">code</field>
+        <field name="code">records.sync_remote()</field>
+    </record>
+</odoo>

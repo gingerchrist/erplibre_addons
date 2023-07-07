@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <record id="view_sync_conf_form" model="ir.ui.view">
+        <field name="name">sync.db form</field>
+        <field name="model">sync.db</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <field name="sync_db_result_ids" invisible="True" />
+                    <button class="oe_highlight" name="action_sync" string="Execute sync" type="object" />
+                    <button
+                        icon="fa-eye"
+                        class="btn-secondary"
+                        name="%(sync_external_model.action_sync_db_result)d"
+                        context="{'default_sync_db_id': active_id}"
+                        string="Show result"
+                        type="action"
+                        attrs="{'invisible': [('sync_db_result_ids','=',[])]}"
+                    />
+                </header>
+                <div class="oe_title">
+                    <h1>
+                        <field name="name" />
+                    </h1>
+                </div>
+                <group string="Basic sync configuration">
+                    <field name="protocol" />
+                    <field name="method_sync" />
+                    <field name="module_name" />
+                </group>
+                <group string="Sync Settings">
+                    <field name="sync_host" placeholder="example.com" />
+                    <field name="sync_port" />
+                    <field name="database" placeholder="Database name, nothing to use default." />
+                    <field name="sync_user" placeholder="john" />
+                    <field name="sync_password" password="True" />
+                    <button
+                        icon="fa-television"
+                        name="action_sync_test_connection"
+                        string="Test sync Connection"
+                        type="object"
+                    />
+                </group>
+                <separator colspan="2" string="Legend for result" />
+                <div>
+                    The colored line legend when analyse result.
+                    <div class="bg-danger">Error, cannot sync, ask a developer.</div>
+                    <div class="bg-warning">Difference detected</div>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_sync_conf_search" model="ir.ui.view">
+        <field name="name">sync.db search</field>
+        <field name="model">sync.db</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name" />
+            </search>
+        </field>
+    </record>
+
+    <record id="view_sync_conf_tree" model="ir.ui.view">
+        <field name="name">sync.db tree</field>
+        <field name="model">sync.db</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name" />
+            </tree>
+        </field>
+    </record>
+
+    <act_window id="action_sync_conf_form" name="Automated Syncs" res_model="sync.db" />
+
+    <!-- Execute sync from "More" menu -->
+    <record id="action_server_sync" model="ir.actions.server">
+        <field name="name">Execute sync(s)</field>
+        <field name="model_id" ref="sync_external_model.model_sync_db" />
+        <field name="binding_model_id" ref="sync_external_model.model_sync_db" />
+        <field name="state">code</field>
+        <field name="code">records.action_sync()</field>
+    </record>
+</odoo>

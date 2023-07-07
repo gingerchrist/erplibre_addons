@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_sync_db_read,Read sync.db,model_sync_db,base.group_erp_manager,1,0,0,0
+access_sync_db_write,Write sync.db,model_sync_db,base.group_system,1,1,1,1
+access_sync_db_result_read,Read sync.db.result,model_sync_db_result,base.group_erp_manager,1,0,0,0
+access_sync_db_result_write,Write sync.db.result,model_sync_db_result,base.group_system,1,1,1,1
