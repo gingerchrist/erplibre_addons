@@ -1,0 +1,26 @@
+# Copyright 2023 TechnoLibre inc. - Mathieu Benoit
+# License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
+
+{
+    "name": "ERPLibre IT Workspace",
+    "category": "Tools",
+    "summary": "ERPLibre IT manage workspace to create new ERPLibre",
+    "version": "12.0.1.0.0",
+    "author": (
+        "Mathieu Benoit"
+    ),
+    "license": "AGPL-3",
+    "website": "https://erplibre.ca",
+    "depends": ["mail"],
+    "external_dependencies": {
+        "python": ["pysftp"],
+    },
+    "data": [
+        "security/ir.model.access.csv",
+        "data/mail_message_subtype.xml",
+        "views/it_workspace.xml",
+        "views/menu.xml",
+        "data/ir_cron.xml",
+    ],
+    "installable": True,
+}
