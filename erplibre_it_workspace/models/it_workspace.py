@@ -62,6 +62,10 @@ class ITWorkspace(models.Model):
         default="fam"
     )
 
+    docker_compose_content = fields.Text(
+        default=""
+    )
+
     folder = fields.Char(
         required=True,
         default=lambda self: self._default_folder(),
@@ -94,6 +98,27 @@ class ITWorkspace(models.Model):
         string="SFTP Port",
         default=22,
         help="The port on the FTP server that accepts SSH/SFTP calls.",
+    )
+
+    port_http = fields.Integer(
+        string="port http",
+        default=8069,
+        help="The port of http odoo.",
+    )
+
+    port_longpolling = fields.Integer(
+        string="port longpolling",
+        default=8071,
+        help="The port of longpolling odoo.",
+    )
+
+    url_instance = fields.Char()
+
+    url_instance_database_manager = fields.Char()
+
+    force_create_docker_compose = fields.Boolean(
+        default=True,
+        help="Recreate docker-compose from configuration.",
     )
 
     sftp_private_key = fields.Char(
@@ -175,6 +200,21 @@ class ITWorkspace(models.Model):
             raise exceptions.Warning(_("Connection Test Failed!"))
 
     @api.multi
+    def action_stop_docker_compose(self):
+        # Start with local storage
+        for rec in self.filtered(lambda r: r.method == "local"):
+            result = os.popen(f"cd {rec.folder};docker-compose down").read()
+            result = os.popen(f"cd {rec.folder};docker-compose ps").read()
+            rec.log_workspace = f"\n{result}"
+
+    @api.multi
+    def action_docker_status(self):
+        # Start with local storage
+        for rec in self.filtered(lambda r: r.method == "local"):
+            result = os.popen(f"cd {rec.folder};docker-compose ps").read()
+            rec.log_workspace = f"\n{result}"
+
+    @api.multi
     def action_it_check_workspace(self):
         """Run selected it_workspaces."""
         it_workspace = None
@@ -190,17 +230,19 @@ class ITWorkspace(models.Model):
                 except OSError:
                     pass
 
-                file_docker_compose = os.path.join(rec.folder, "docker-compose.yml")
+                rec.url_instance = f"http://127.0.0.1:{rec.port_http}"
+                rec.url_instance_database_manager = f"{rec.url_instance}/web/database/manager"
 
-                docker_compose_content = """
+                file_docker_compose = os.path.join(rec.folder, "docker-compose.yml")
+                docker_compose_content = f"""
 version: "3.3"
 services:
   ERPLibre:
     image: technolibre/erplibre:1.5.0
     ports:
-      - 8069:8069
+      - {rec.port_http}:8069
       - 8071:8071
-      - 8072:8072
+      - {rec.port_longpolling}:8072
     environment:
       HOST: db
       PASSWORD: mysecretpassword
@@ -242,11 +284,22 @@ volumes:
   erplibre_conf:
   erplibre-db-data:
 """
-                if not os.path.exists(file_docker_compose):
-                    with open(os.path.join(rec.folder, filename), "w") as destiny:
+                if rec.force_create_docker_compose or not os.path.exists(file_docker_compose):
+                    with open(file_docker_compose, "w") as destiny:
                         destiny.write(docker_compose_content)
 
-                rec.log_workspace += "pet\n"
+                result = os.popen(f"cd {rec.folder};tree").read()
+                rec.log_workspace = result
+                result = os.popen(f"cd {rec.folder};docker-compose ps").read()
+                rec.log_workspace += f"\n{result}"
+                # result = os.popen(f"cd {rec.folder};docker-compose ps").read()
+                result = os.popen(f"cd {rec.folder};cat docker-compose.yml").read()
+                rec.docker_compose_content = result
+                result = os.popen(f"cd {rec.folder};docker-compose up -d").read()
+                rec.log_workspace += f"\n{result}"
+                result = os.popen(f"cd {rec.folder};docker-compose ps").read()
+                rec.log_workspace += f"\n{result}"
+
                 # with open(os.path.join(rec.folder, filename), "wb") as destiny:
                 #     # Copy the cached it_workspace
                 #     if it_workspace:

@@ -6,7 +6,9 @@
         <field name="arch" type="xml">
             <form>
                 <header>
-                    <button class="oe_highlight" name="action_it_check_workspace" string="Execute it_workspace" type="object" />
+                    <button class="oe_highlight" name="action_it_check_workspace" string="Run docker-compose" type="object" />
+                    <button class="oe_highlight" name="action_stop_docker_compose" string="Stop docker-compose" type="object" />
+                    <button class="oe_highlight" name="action_docker_status" string="Status" type="object" />
                 </header>
                 <div class="oe_title">
                     <h1>
@@ -18,6 +20,11 @@
                     <field name="days_to_keep" />
                     <field name="method" />
                     <field name="it_workspace_format" />
+                    <field name="port_http" />
+                    <field name="port_longpolling" />
+                    <field name="force_create_docker_compose" />
+                    <field name="url_instance" widget="url"/>
+                    <field name="url_instance_database_manager" widget="url"/>
                 </group>
                 <div attrs="{'invisible': [('method', '!=', 'sftp')]}">
                     <div class="bg-warning">
@@ -48,6 +55,10 @@
                         <li>Set the scheduler to active and fill in how often you want it_workspaces generated.</li>
                     </ol>
                 </div>
+                <group string="info">
+                    <field name="log_workspace" />
+                    <field name="docker_compose_content" />
+                </group>
             </form>
         </field>
     </record>
