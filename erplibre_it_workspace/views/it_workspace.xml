@@ -9,6 +9,7 @@
                     <button class="oe_highlight" name="action_it_check_workspace" string="Run docker-compose" type="object" />
                     <button class="oe_highlight" name="action_stop_docker_compose" string="Stop docker-compose" type="object" />
                     <button class="oe_highlight" name="action_docker_status" string="Status" type="object" />
+                    <button class="oe_highlight" name="action_docker_restore_db_image" string="Restore DB Image" type="object" />
                 </header>
                 <div class="oe_title">
                     <h1>
@@ -17,9 +18,7 @@
                 </div>
                 <group string="Basic it_workspace configuration">
                     <field name="folder" />
-                    <field name="days_to_keep" />
                     <field name="method" />
-                    <field name="it_workspace_format" />
                     <field name="port_http" />
                     <field name="port_longpolling" />
                     <field name="force_create_docker_compose" />
@@ -46,19 +45,27 @@
                         />
                     </group>
                 </div>
-                <separator colspan="2" string="Help" />
-                <div>
-                    Automatic it_workspaces of the database can be scheduled as follows:
-                    <ol>
-                        <li>Go to Settings / Technical / Automation / Scheduled Actions.</li>
-                        <li>Search the action named 'it_workspace scheduler'.</li>
-                        <li>Set the scheduler to active and fill in how often you want it_workspaces generated.</li>
-                    </ol>
-                </div>
-                <group string="info">
-                    <field name="log_workspace" />
-                    <field name="docker_compose_content" />
-                </group>
+<!--                <separator colspan="2" string="Help" />-->
+<!--                <div>-->
+<!--                    Automatic it_workspaces of the database can be scheduled as follows:-->
+<!--                    <ol>-->
+<!--                        <li>Go to Settings / Technical / Automation / Scheduled Actions.</li>-->
+<!--                        <li>Search the action named 'it_workspace scheduler'.</li>-->
+<!--                        <li>Set the scheduler to active and fill in how often you want it_workspaces generated.</li>-->
+<!--                    </ol>-->
+<!--                </div>-->
+                <notebook>
+                    <page name="log" string="Log">
+                        <group>
+                            <field name="log_workspace" />
+                        </group>
+                    </page>
+                    <page name="docker" string="Docker">
+                        <group>
+                            <field name="docker_compose_ps" />
+                        </group>
+                    </page>
+                </notebook>
             </form>
         </field>
     </record>

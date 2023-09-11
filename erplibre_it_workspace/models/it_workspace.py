@@ -62,7 +62,7 @@ class ITWorkspace(models.Model):
         default="fam"
     )
 
-    docker_compose_content = fields.Text(
+    docker_compose_ps = fields.Text(
         default=""
     )
 
@@ -199,19 +199,38 @@ class ITWorkspace(models.Model):
             _logger.info("Connection Test Failed!", exc_info=True)
             raise exceptions.Warning(_("Connection Test Failed!"))
 
+    def update_docker_compose_ps(self, rec):
+        result = os.popen(f"cd {rec.folder};docker compose ps").read()
+        rec.docker_compose_ps = f"\n{result}"
+
     @api.multi
     def action_stop_docker_compose(self):
         # Start with local storage
         for rec in self.filtered(lambda r: r.method == "local"):
             result = os.popen(f"cd {rec.folder};docker-compose down").read()
-            result = os.popen(f"cd {rec.folder};docker-compose ps").read()
-            rec.log_workspace = f"\n{result}"
+            self.update_docker_compose_ps(rec)
 
     @api.multi
     def action_docker_status(self):
         # Start with local storage
         for rec in self.filtered(lambda r: r.method == "local"):
-            result = os.popen(f"cd {rec.folder};docker-compose ps").read()
+            self.update_docker_compose_ps(rec)
+
+    @api.multi
+    def action_docker_restore_db_image(self):
+        # Start with local storage
+        for rec in self.filtered(lambda r: r.method == "local"):
+            workspace = os.path.basename(rec.folder)
+            # for "docker exec", command line need "-ti", but "popen" no need
+            result = os.popen(f"""cd {rec.folder};docker exec -u root {workspace}_ERPLibre_1 /bin/bash -c \"
+cd /ERPLibre; \\
+time ./script/database/db_restore.py --database test; \\
+\"""").read()
+            # time make doc_markdown
+            # time make db_list
+            # ./.venv/bin/python3 ./odoo/odoo-bin db --list --user_password mysecretpassword --user_login odoo
+            # psycopg2.OperationalError: connection to server on socket "/var/run/postgresql/.s.PGSQL.5432" failed: No such file or directory
+            # 	Is the server running locally and accepting connections on that socket
             rec.log_workspace = f"\n{result}"
 
     @api.multi
@@ -226,7 +245,7 @@ class ITWorkspace(models.Model):
             with rec.it_workspace_log():
                 # Directory must exist
                 try:
-                    os.makedirs(rec.folder)
+                    os.makedirs(rec.folder, exist_ok=True)
                 except OSError:
                     pass
 
@@ -241,7 +260,6 @@ services:
     image: technolibre/erplibre:1.5.0
     ports:
       - {rec.port_http}:8069
-      - 8071:8071
       - {rec.port_longpolling}:8072
     environment:
       HOST: db
@@ -294,11 +312,12 @@ volumes:
                 rec.log_workspace += f"\n{result}"
                 # result = os.popen(f"cd {rec.folder};docker-compose ps").read()
                 result = os.popen(f"cd {rec.folder};cat docker-compose.yml").read()
-                rec.docker_compose_content = result
+                rec.docker_compose_ps = result
                 result = os.popen(f"cd {rec.folder};docker-compose up -d").read()
                 rec.log_workspace += f"\n{result}"
                 result = os.popen(f"cd {rec.folder};docker-compose ps").read()
                 rec.log_workspace += f"\n{result}"
+                self.update_docker_compose_ps(rec)
 
                 # with open(os.path.join(rec.folder, filename), "wb") as destiny:
                 #     # Copy the cached it_workspace
