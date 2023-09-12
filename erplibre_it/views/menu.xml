@@ -1,12 +1,17 @@
-<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!--Child menu-->
 
-    <menuitem
-        id="it_workspace_menu"
-        name="IT Workspace"
-        action="action_it_check_workspace_conf_form"
-        sequence="0"
-        parent="base.next_id_9"
-    />
+  <!--Root menu-->
+
+  <menuitem id="erplibre_it" name="Erplibre It" sequence="20" web_icon="erplibre_it,static/description/icon.png"/>
+
+  <!--Sub menu-->
+
+  <menuitem id="menu" name="Menu" sequence="1" parent="erplibre_it"/>
+
+  <!--Child menu-->
+
+  <menuitem id="db_image" name="Db image" action="it_db_image_db_image_action_window" sequence="1" parent="menu"/>
+
+  <menuitem id="workspace" name="Workspace" action="action_it_check_workspace_conf_form" sequence="2" parent="menu"/>
 </odoo>
