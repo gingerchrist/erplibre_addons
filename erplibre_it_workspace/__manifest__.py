@@ -2,7 +2,7 @@
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
 
 {
-    "name": "ERPLibre IT Workspace",
+    "name": "ERPLibre IT",
     "category": "Tools",
     "summary": "ERPLibre IT manage workspace to create new ERPLibre",
     "version": "12.0.1.0.0",

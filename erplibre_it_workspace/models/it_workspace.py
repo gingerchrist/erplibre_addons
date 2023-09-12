@@ -50,14 +50,6 @@ class ITWorkspace(models.Model):
         help="Choose the format for this it_workspace.",
     )
 
-    days_to_keep = fields.Integer(
-        required=True,
-        help=(
-            "it_workspaces older than this will be deleted automatically. Set 0 to"
-            " disable autodeletion."
-        ),
-    )
-
     log_workspace = fields.Text(
         default="fam"
     )
@@ -395,23 +387,23 @@ volumes:
     def cleanup(self):
         """Clean up old it_workspaces."""
         now = datetime.now()
-        for rec in self.filtered("days_to_keep"):
-            with rec.cleanup_log():
-                oldest = self.filename(now - timedelta(days=rec.days_to_keep))
-
-                if rec.method == "local":
-                    for name in iglob(os.path.join(rec.folder, "*.dump.zip")):
-                        if os.path.basename(name) < oldest:
-                            os.unlink(name)
-
-                elif rec.method == "sftp":
-                    with rec.sftp_connection() as remote:
-                        for name in remote.listdir(rec.folder):
-                            if (
-                                name.endswith(".dump.zip")
-                                and os.path.basename(name) < oldest
-                            ):
-                                remote.unlink("%s/%s" % (rec.folder, name))
+        # for rec in self.filtered("days_to_keep"):
+        #     with rec.cleanup_log():
+        #         oldest = self.filename(now - timedelta(days=rec.days_to_keep))
+        #
+        #         if rec.method == "local":
+        #             for name in iglob(os.path.join(rec.folder, "*.dump.zip")):
+        #                 if os.path.basename(name) < oldest:
+        #                     os.unlink(name)
+        #
+        #         elif rec.method == "sftp":
+        #             with rec.sftp_connection() as remote:
+        #                 for name in remote.listdir(rec.folder):
+        #                     if (
+        #                         name.endswith(".dump.zip")
+        #                         and os.path.basename(name) < oldest
+        #                     ):
+        #                         remote.unlink("%s/%s" % (rec.folder, name))
 
     @api.multi
     @contextmanager

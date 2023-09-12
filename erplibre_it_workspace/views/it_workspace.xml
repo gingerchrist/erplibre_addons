@@ -89,7 +89,6 @@
             <tree>
                 <field name="name" />
                 <field name="folder" />
-                <field name="days_to_keep" />
             </tree>
         </field>
     </record>
