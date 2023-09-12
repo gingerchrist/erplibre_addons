@@ -7,6 +7,12 @@ class ItCodeGenerator(models.Model):
 
     name = fields.Char()
 
-    it_workspace_id = fields.Many2one("it.workspace")
+    it_workspace_id = fields.Many2one(
+        comodel_name="it.workspace",
+        string="It Workspace",
+    )
 
-
+    module_ids = fields.One2many(
+        comodel_name="it.code_generator.module",
+        inverse_name="code_generator",
+    )
