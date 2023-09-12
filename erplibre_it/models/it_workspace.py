@@ -51,11 +51,9 @@ class ITWorkspace(models.Model):
     )
 
     log_workspace = fields.Text(
-        default="fam"
     )
 
     docker_compose_ps = fields.Text(
-        default=""
     )
 
     folder = fields.Char(
@@ -206,23 +204,32 @@ class ITWorkspace(models.Model):
     def action_docker_status(self):
         # Start with local storage
         for rec in self.filtered(lambda r: r.method == "local"):
-            self.update_docker_compose_ps(rec)
+            result = os.popen(f"cd {rec.folder};docker compose ps").read()
+            rec.docker_compose_ps = f"\n{result}"
+    @api.multi
+    def action_open_terminal(self):
+        # Start with local storage
+        for rec in self.filtered(lambda r: r.method == "local"):
+            os.popen(f"cd {rec.folder};gnome-terminal --window -- bash")
+
+    def _exec_docker(self, rec, cmd):
+        workspace = os.path.basename(rec.folder)
+        # for "docker exec", command line need "-ti", but "popen" no need
+        result = os.popen(f"""cd {rec.folder};docker exec -u root {workspace}_ERPLibre_1 /bin/bash -c \"{cmd}\"""").read()
+        # time make doc_markdown
+        # time make db_list
+        # ./.venv/bin/python3 ./odoo/odoo-bin db --list --user_password mysecretpassword --user_login odoo
+        # psycopg2.OperationalError: connection to server on socket "/var/run/postgresql/.s.PGSQL.5432" failed: No such file or directory
+        # 	Is the server running locally and accepting connections on that socket
+        return result
 
     @api.multi
     def action_docker_restore_db_image(self):
         # Start with local storage
         for rec in self.filtered(lambda r: r.method == "local"):
-            workspace = os.path.basename(rec.folder)
-            # for "docker exec", command line need "-ti", but "popen" no need
-            result = os.popen(f"""cd {rec.folder};docker exec -u root {workspace}_ERPLibre_1 /bin/bash -c \"
-cd /ERPLibre; \\
-time ./script/database/db_restore.py --database test; \\
-\"""").read()
-            # time make doc_markdown
-            # time make db_list
-            # ./.venv/bin/python3 ./odoo/odoo-bin db --list --user_password mysecretpassword --user_login odoo
-            # psycopg2.OperationalError: connection to server on socket "/var/run/postgresql/.s.PGSQL.5432" failed: No such file or directory
-            # 	Is the server running locally and accepting connections on that socket
+            # TODO not working
+            # maybe send by network REST web/database/restore
+            result = self._exec_docker(rec, "cd /ERPLibre;time ./script/database/db_restore.py --database test;")
             rec.log_workspace = f"\n{result}"
 
     @api.multi
@@ -298,18 +305,26 @@ volumes:
                     with open(file_docker_compose, "w") as destiny:
                         destiny.write(docker_compose_content)
 
-                result = os.popen(f"cd {rec.folder};tree").read()
-                rec.log_workspace = result
-                result = os.popen(f"cd {rec.folder};docker-compose ps").read()
-                rec.log_workspace += f"\n{result}"
+                # result = os.popen(f"cd {rec.folder};tree").read()
+                # rec.log_workspace = result
+                # result = os.popen(f"cd {rec.folder};docker-compose ps").read()
+                # rec.log_workspace = f"\n{result}"
                 # result = os.popen(f"cd {rec.folder};docker-compose ps").read()
                 result = os.popen(f"cd {rec.folder};cat docker-compose.yml").read()
                 rec.docker_compose_ps = result
                 result = os.popen(f"cd {rec.folder};docker-compose up -d").read()
-                rec.log_workspace += f"\n{result}"
+                rec.log_workspace = f"\n{result}"
                 result = os.popen(f"cd {rec.folder};docker-compose ps").read()
                 rec.log_workspace += f"\n{result}"
                 self.update_docker_compose_ps(rec)
+
+                result = self._exec_docker(rec, "cat /etc/odoo/odoo.conf;")
+                if "db_host" not in result:
+                    self._exec_docker(rec, f"echo -e 'db_host = db\ndb_port = 5432\ndb_user = odoo\ndb_password = mysecretpassword\n' >> /etc/odoo/odoo.conf;")
+                if "admin_passwd" not in result:
+                    self._exec_docker(rec, f"echo -e 'admin_passwd = admin\n' >> /etc/odoo/odoo.conf;")
+                if ",/ERPLibre/addons/OCA_connector-jira" in result:
+                    self._exec_docker(rec, f"sed -e \"s/,\/ERPLibre\/addons\/OCA_connector-jira//g\" -i /etc/odoo/odoo.conf")
 
                 # with open(os.path.join(rec.folder, filename), "wb") as destiny:
                 #     # Copy the cached it_workspace
