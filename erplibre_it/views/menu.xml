@@ -12,6 +12,8 @@
   <!--Child menu-->
 
   <menuitem id="db_image" name="Db image" action="it_db_image_db_image_action_window" sequence="1" parent="menu"/>
+  <menuitem id="code_generator" name="Code generator" action="it_code_generator_code_generator_action_window" sequence="1" parent="menu"/>
+
 
   <menuitem id="workspace" name="Workspace" action="action_it_check_workspace_conf_form" sequence="2" parent="menu"/>
 </odoo>
