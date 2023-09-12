@@ -6,3 +6,7 @@ class ItCodeGenerator(models.Model):
     _description = "it_code_generator"
 
     name = fields.Char()
+
+    it_workspace_id = fields.Many2one("it.workspace")
+
+
