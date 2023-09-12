@@ -238,7 +238,7 @@ class ITWorkspace(models.Model):
     def _exec_docker(self, rec, cmd):
         workspace = os.path.basename(rec.folder)
         # for "docker exec", command line need "-ti", but "popen" no need
-        result = os.popen(f"""cd {rec.folder};docker exec -u root {workspace}_ERPLibre_1 /bin/bash -c \"{cmd}\"""").read()
+        result = os.popen(f'cd {rec.folder};docker exec -u root {workspace}_ERPLibre_1 /bin/bash -c "{cmd}"').read()
         # time make doc_markdown
         # time make db_list
         # ./.venv/bin/python3 ./odoo/odoo-bin db --list --user_password mysecretpassword --user_login odoo
