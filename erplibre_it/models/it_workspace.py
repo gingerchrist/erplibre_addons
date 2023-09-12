@@ -212,6 +212,13 @@ class ITWorkspace(models.Model):
         for rec in self.filtered(lambda r: r.method == "local"):
             os.popen(f"cd {rec.folder};gnome-terminal --window -- bash")
 
+    # @api.multi
+    def action_open_terminal_docker(self):
+        # Start with local storage
+        for rec in self.filtered(lambda r: r.method == "local"):
+            workspace = os.path.basename(rec.folder)
+            os.popen(f"cd {rec.folder};gnome-terminal --window -- bash -c 'docker exec -u root -ti {workspace}_ERPLibre_1 /bin/bash;bash'")
+
     def _exec_docker(self, rec, cmd):
         workspace = os.path.basename(rec.folder)
         # for "docker exec", command line need "-ti", but "popen" no need
@@ -229,8 +236,53 @@ class ITWorkspace(models.Model):
         for rec in self.filtered(lambda r: r.method == "local"):
             # TODO not working
             # maybe send by network REST web/database/restore
-            result = self._exec_docker(rec, "cd /ERPLibre;time ./script/database/db_restore.py --database test;")
-            rec.log_workspace = f"\n{result}"
+            # result = self._exec_docker(rec, "cd /ERPLibre;time ./script/database/db_restore.py --database test;")
+            # rec.log_workspace = f"\n{result}"
+            url_list = f"{rec.url_instance}/web/database/list"
+            url_restore = f"{rec.url_instance}/web/database/restore"
+            url_drop = f"{rec.url_instance}/web/database/drop"
+            backup_file_path = "/home/mathben/git/erplibre_it/image_db/erplibre_base.zip"
+            # backup_file_path = "/home/mathben/git/erplibre_it/image_db/erplibre_demo_full.zip"
+            session = requests.Session()
+            response = requests.get(url_list, data=json.dumps({}), headers={'Content-Type': 'application/json', 'Accept': 'application/json'})
+            if response.status_code == 200:
+                database_list = response.json()
+                print(database_list)
+            else:
+                print("une erreur")
+                continue
+
+            # Delete first
+            result_db_list = database_list.get("result")
+            if result_db_list:
+                result_db_list = result_db_list[0]
+                if result_db_list:
+                    files = {'master_pwd': (None, 'admin'), 'name': (None, result_db_list)}
+                    response = session.post(url_drop, files=files)
+                    if response.status_code == 200:
+                        print("Le drop a été envoyé avec succès.")
+                    else:
+                        print("Une erreur s'est produite lors du drop.")
+                        # Strange, retry for test
+                        time.sleep(1)
+                        response = requests.get(url_list, data=json.dumps({}),
+                                                headers={'Content-Type': 'application/json',
+                                                         'Accept': 'application/json'})
+                        if response.status_code == 200:
+                            database_list = response.json()
+                            print(database_list)
+
+            with open(backup_file_path, 'rb') as backup_file:
+                files = {'backup_file': (backup_file.name, backup_file, 'application/octet-stream'), 'master_pwd': (None, 'admin'), 'name':(None, 'test')}
+                response = session.post(url_restore, files=files)
+            if response.status_code == 200:
+                print("Le fichier de restauration a été envoyé avec succès.")
+            else:
+                print("Une erreur s'est produite lors de l'envoi du fichier de restauration.")
+
+            # f = {'file data': open('./image_db/erplibre_base.zip', 'rb')}
+            # res = requests.post(url_restore, files=f)
+            # print(res.text)
 
     @api.multi
     def action_it_check_workspace(self):
@@ -305,11 +357,6 @@ volumes:
                     with open(file_docker_compose, "w") as destiny:
                         destiny.write(docker_compose_content)
 
-                # result = os.popen(f"cd {rec.folder};tree").read()
-                # rec.log_workspace = result
-                # result = os.popen(f"cd {rec.folder};docker-compose ps").read()
-                # rec.log_workspace = f"\n{result}"
-                # result = os.popen(f"cd {rec.folder};docker-compose ps").read()
                 result = os.popen(f"cd {rec.folder};cat docker-compose.yml").read()
                 rec.docker_compose_ps = result
                 result = os.popen(f"cd {rec.folder};docker-compose up -d").read()
@@ -319,27 +366,18 @@ volumes:
                 self.update_docker_compose_ps(rec)
 
                 result = self._exec_docker(rec, "cat /etc/odoo/odoo.conf;")
+                has_change = False
                 if "db_host" not in result:
-                    self._exec_docker(rec, f"echo -e 'db_host = db\ndb_port = 5432\ndb_user = odoo\ndb_password = mysecretpassword\n' >> /etc/odoo/odoo.conf;")
+                    result += "db_host = db\ndb_port = 5432\ndb_user = odoo\ndb_password = mysecretpassword\n"
                 if "admin_passwd" not in result:
-                    self._exec_docker(rec, f"echo -e 'admin_passwd = admin\n' >> /etc/odoo/odoo.conf;")
-                if ",/ERPLibre/addons/OCA_connector-jira" in result:
-                    self._exec_docker(rec, f"sed -e \"s/,\/ERPLibre\/addons\/OCA_connector-jira//g\" -i /etc/odoo/odoo.conf")
-
-                # with open(os.path.join(rec.folder, filename), "wb") as destiny:
-                #     # Copy the cached it_workspace
-                #     if it_workspace:
-                #         with open(it_workspace) as cached:
-                #             shutil.copyfileobj(cached, destiny)
-                #     # Generate new it_workspace
-                #     else:
-                #         db.dump_db(
-                #             self.env.cr.dbname,
-                #             destiny,
-                #             it_workspace_format=rec.it_workspace_format,
-                #         )
-                #         it_workspace = it_workspace or destiny.name
-                # successful |= rec
+                    result += "admin_passwd = admin\n"
+                str_to_replace = ",/ERPLibre/addons/OCA_connector-jira"
+                if str_to_replace in result:
+                    result = result.replace(str_to_replace, "")
+                    has_change = True
+                if has_change:
+                    # TODO rewrite conf file and reformat
+                    self._exec_docker(rec, f"echo -e '{result}' > /etc/odoo/odoo.conf")
 
         # Ensure a local it_workspace exists if we are going to write it remotely
         sftp = self.filtered(lambda r: r.method == "sftp")
