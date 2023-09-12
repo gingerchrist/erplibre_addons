@@ -16,6 +16,7 @@
     "data": [
         "security/ir.model.access.csv",
         "data/mail_message_subtype.xml",
+        "views/it_db_image.xml",
         "views/it_workspace.xml",
         "views/menu.xml",
         "data/ir_cron.xml",
