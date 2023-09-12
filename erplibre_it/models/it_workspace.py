@@ -9,6 +9,9 @@ import traceback
 from contextlib import contextmanager
 from datetime import datetime, timedelta
 from glob import iglob
+import requests
+import json
+import time
 
 import paramiko
 
@@ -137,6 +140,8 @@ class ITWorkspace(models.Model):
         ),
     )
 
+    image_db_selection = fields.Many2one(comodel_name='it.db.image')
+
     @api.model
     def _default_folder(self):
         """Default to ``it_workspaces`` folder inside current server datadir."""
@@ -212,6 +217,17 @@ class ITWorkspace(models.Model):
         for rec in self.filtered(lambda r: r.method == "local"):
             os.popen(f"cd {rec.folder};gnome-terminal --window -- bash")
 
+    @api.multi
+    def action_refresh_db_image(self):
+        path_image_db = os.path.join(os.getcwd(), "image_db")
+        for file_name in os.listdir(path_image_db):
+            if file_name.endswith(".zip"):
+                file_path = os.path.join(path_image_db, file_name)
+                image_name = file_name[:-4]
+                image_db_id = self.env["it.db.image"].search([("name", "=", image_name)])
+                if not image_db_id:
+                    self.env["it.db.image"].create({"name": image_name, "path": file_path})
+
     # @api.multi
     def action_open_terminal_docker(self):
         # Start with local storage
@@ -241,8 +257,7 @@ class ITWorkspace(models.Model):
             url_list = f"{rec.url_instance}/web/database/list"
             url_restore = f"{rec.url_instance}/web/database/restore"
             url_drop = f"{rec.url_instance}/web/database/drop"
-            backup_file_path = "/home/mathben/git/erplibre_it/image_db/erplibre_base.zip"
-            # backup_file_path = "/home/mathben/git/erplibre_it/image_db/erplibre_demo_full.zip"
+            backup_file_path = rec.image_db_selection.path
             session = requests.Session()
             response = requests.get(url_list, data=json.dumps({}), headers={'Content-Type': 'application/json', 'Accept': 'application/json'})
             if response.status_code == 200:
