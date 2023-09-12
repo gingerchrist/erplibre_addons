@@ -6,9 +6,7 @@
     "category": "Tools",
     "summary": "ERPLibre IT manage workspace to create new ERPLibre",
     "version": "12.0.1.0.0",
-    "author": (
-        "Mathieu Benoit"
-    ),
+    "author": "Mathieu Benoit",
     "license": "AGPL-3",
     "website": "https://erplibre.ca",
     "depends": ["mail"],

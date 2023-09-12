@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <record id="view_it_workspace_conf_form" model="ir.ui.view">
         <field name="name">it.workspace form</field>
@@ -102,9 +102,10 @@
     <!-- Execute it_workspace from "More" menu -->
     <record id="action_server_it_workspace" model="ir.actions.server">
         <field name="name">Execute it_workspace(s)</field>
-        <field name="model_id" ref="model_it_workspace" />
-        <field name="binding_model_id" ref="model_it_workspace" />
+        <field name="model_id" ref="model_it_workspace"/>
+        <field name="binding_model_id" ref="model_it_workspace"/>
         <field name="state">code</field>
         <field name="code">records.action_it_check_workspace()</field>
     </record>
+
 </odoo>

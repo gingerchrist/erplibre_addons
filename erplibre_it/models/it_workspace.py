@@ -2,18 +2,18 @@
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
 
 import base64
+import json
 import logging
 import os
 import shutil
+import time
 import traceback
 from contextlib import contextmanager
 from datetime import datetime, timedelta
 from glob import iglob
-import requests
-import json
-import time
 
 import paramiko
+import requests
 
 from odoo import _, api, exceptions, fields, models, tools
 from odoo.service import db
@@ -24,20 +24,20 @@ try:
 except ImportError:  # pragma: no cover
     _logger.debug("Cannot import pysftp")
 
-class ITWorkspace(models.Model):
+
+class ItWorkspace(models.Model):
     _name = "it.workspace"
     _inherit = "mail.thread"
     _description = "ERPLibre IT Workspace"
 
     # _sql_constraints = [
-    #     ("name_unique", "UNIQUE(name)", "Cannot duplicate a configuration."),
-    #     (
-    #         "days_to_keep_positive",
-    #         "CHECK(days_to_keep >= 0)",
-    #         "I cannot remove it_workspaces from the future. Ask Doc for that.",
-    #     ),
+    # ("name_unique", "UNIQUE(name)", "Cannot duplicate a configuration."),
+    # (
+    # "days_to_keep_positive",
+    # "CHECK(days_to_keep >= 0)",
+    # "I cannot remove it_workspaces from the future. Ask Doc for that.",
+    # ),
     # ]
-
     name = fields.Char(
         compute="_compute_name",
         store=True,
@@ -53,11 +53,9 @@ class ITWorkspace(models.Model):
         help="Choose the format for this it_workspace.",
     )
 
-    log_workspace = fields.Text(
-    )
+    log_workspace = fields.Text()
 
-    docker_compose_ps = fields.Text(
-    )
+    docker_compose_ps = fields.Text()
 
     folder = fields.Char(
         required=True,
@@ -140,7 +138,7 @@ class ITWorkspace(models.Model):
         ),
     )
 
-    image_db_selection = fields.Many2one(comodel_name='it.db.image')
+    image_db_selection = fields.Many2one(comodel_name="it.db.image")
 
     @api.model
     def _default_folder(self):
@@ -174,8 +172,8 @@ class ITWorkspace(models.Model):
             ):
                 raise exceptions.ValidationError(
                     _(
-                        "Do not save it_workspaces on your filestore, or you will "
-                        "it_workspace your it_workspaces too!"
+                        "Do not save it_workspaces on your filestore, or you"
+                        " will it_workspace your it_workspaces too!"
                     )
                 )
 
@@ -211,6 +209,7 @@ class ITWorkspace(models.Model):
         for rec in self.filtered(lambda r: r.method == "local"):
             result = os.popen(f"cd {rec.folder};docker compose ps").read()
             rec.docker_compose_ps = f"\n{result}"
+
     @api.multi
     def action_open_terminal(self):
         # Start with local storage
@@ -224,21 +223,32 @@ class ITWorkspace(models.Model):
             if file_name.endswith(".zip"):
                 file_path = os.path.join(path_image_db, file_name)
                 image_name = file_name[:-4]
-                image_db_id = self.env["it.db.image"].search([("name", "=", image_name)])
+                image_db_id = self.env["it.db.image"].search(
+                    [("name", "=", image_name)]
+                )
                 if not image_db_id:
-                    self.env["it.db.image"].create({"name": image_name, "path": file_path})
+                    self.env["it.db.image"].create(
+                        {"name": image_name, "path": file_path}
+                    )
 
-    # @api.multi
+            # @api.multi
+
     def action_open_terminal_docker(self):
         # Start with local storage
         for rec in self.filtered(lambda r: r.method == "local"):
             workspace = os.path.basename(rec.folder)
-            os.popen(f"cd {rec.folder};gnome-terminal --window -- bash -c 'docker exec -u root -ti {workspace}_ERPLibre_1 /bin/bash;bash'")
+            os.popen(
+                f"cd {rec.folder};gnome-terminal --window -- bash -c 'docker"
+                f" exec -u root -ti {workspace}_ERPLibre_1 /bin/bash;bash'"
+            )
 
     def _exec_docker(self, rec, cmd):
         workspace = os.path.basename(rec.folder)
         # for "docker exec", command line need "-ti", but "popen" no need
-        result = os.popen(f'cd {rec.folder};docker exec -u root {workspace}_ERPLibre_1 /bin/bash -c "{cmd}"').read()
+        result = os.popen(
+            f"cd {rec.folder};docker exec -u root {workspace}_ERPLibre_1"
+            f' /bin/bash -c "{cmd}"'
+        ).read()
         # time make doc_markdown
         # time make db_list
         # ./.venv/bin/python3 ./odoo/odoo-bin db --list --user_password mysecretpassword --user_login odoo
@@ -259,7 +269,14 @@ class ITWorkspace(models.Model):
             url_drop = f"{rec.url_instance}/web/database/drop"
             backup_file_path = rec.image_db_selection.path
             session = requests.Session()
-            response = requests.get(url_list, data=json.dumps({}), headers={'Content-Type': 'application/json', 'Accept': 'application/json'})
+            response = requests.get(
+                url_list,
+                data=json.dumps({}),
+                headers={
+                    "Content-Type": "application/json",
+                    "Accept": "application/json",
+                },
+            )
             if response.status_code == 200:
                 database_list = response.json()
                 print(database_list)
@@ -272,7 +289,10 @@ class ITWorkspace(models.Model):
             if result_db_list:
                 result_db_list = result_db_list[0]
                 if result_db_list:
-                    files = {'master_pwd': (None, 'admin'), 'name': (None, result_db_list)}
+                    files = {
+                        "master_pwd": (None, "admin"),
+                        "name": (None, result_db_list),
+                    }
                     response = session.post(url_drop, files=files)
                     if response.status_code == 200:
                         print("Le drop a été envoyé avec succès.")
@@ -280,20 +300,36 @@ class ITWorkspace(models.Model):
                         print("Une erreur s'est produite lors du drop.")
                         # Strange, retry for test
                         time.sleep(1)
-                        response = requests.get(url_list, data=json.dumps({}),
-                                                headers={'Content-Type': 'application/json',
-                                                         'Accept': 'application/json'})
+                        response = requests.get(
+                            url_list,
+                            data=json.dumps({}),
+                            headers={
+                                "Content-Type": "application/json",
+                                "Accept": "application/json",
+                            },
+                        )
                         if response.status_code == 200:
                             database_list = response.json()
                             print(database_list)
 
-            with open(backup_file_path, 'rb') as backup_file:
-                files = {'backup_file': (backup_file.name, backup_file, 'application/octet-stream'), 'master_pwd': (None, 'admin'), 'name':(None, 'test')}
+            with open(backup_file_path, "rb") as backup_file:
+                files = {
+                    "backup_file": (
+                        backup_file.name,
+                        backup_file,
+                        "application/octet-stream",
+                    ),
+                    "master_pwd": (None, "admin"),
+                    "name": (None, "test"),
+                }
                 response = session.post(url_restore, files=files)
             if response.status_code == 200:
                 print("Le fichier de restauration a été envoyé avec succès.")
             else:
-                print("Une erreur s'est produite lors de l'envoi du fichier de restauration.")
+                print(
+                    "Une erreur s'est produite lors de l'envoi du fichier de"
+                    " restauration."
+                )
 
             # f = {'file data': open('./image_db/erplibre_base.zip', 'rb')}
             # res = requests.post(url_restore, files=f)
@@ -307,7 +343,9 @@ class ITWorkspace(models.Model):
 
         # Start with local storage
         for rec in self.filtered(lambda r: r.method == "local"):
-            filename = self.filename(datetime.now(), ext=rec.it_workspace_format)
+            filename = self.filename(
+                datetime.now(), ext=rec.it_workspace_format
+            )
             with rec.it_workspace_log():
                 # Directory must exist
                 try:
@@ -316,9 +354,13 @@ class ITWorkspace(models.Model):
                     pass
 
                 rec.url_instance = f"http://127.0.0.1:{rec.port_http}"
-                rec.url_instance_database_manager = f"{rec.url_instance}/web/database/manager"
+                rec.url_instance_database_manager = (
+                    f"{rec.url_instance}/web/database/manager"
+                )
 
-                file_docker_compose = os.path.join(rec.folder, "docker-compose.yml")
+                file_docker_compose = os.path.join(
+                    rec.folder, "docker-compose.yml"
+                )
                 docker_compose_content = f"""
 version: "3.3"
 services:
@@ -368,13 +410,19 @@ volumes:
   erplibre_conf:
   erplibre-db-data:
 """
-                if rec.force_create_docker_compose or not os.path.exists(file_docker_compose):
+                if rec.force_create_docker_compose or not os.path.exists(
+                    file_docker_compose
+                ):
                     with open(file_docker_compose, "w") as destiny:
                         destiny.write(docker_compose_content)
 
-                result = os.popen(f"cd {rec.folder};cat docker-compose.yml").read()
+                result = os.popen(
+                    f"cd {rec.folder};cat docker-compose.yml"
+                ).read()
                 rec.docker_compose_ps = result
-                result = os.popen(f"cd {rec.folder};docker-compose up -d").read()
+                result = os.popen(
+                    f"cd {rec.folder};docker-compose up -d"
+                ).read()
                 rec.log_workspace = f"\n{result}"
                 result = os.popen(f"cd {rec.folder};docker-compose ps").read()
                 rec.log_workspace += f"\n{result}"
@@ -383,7 +431,10 @@ volumes:
                 result = self._exec_docker(rec, "cat /etc/odoo/odoo.conf;")
                 has_change = False
                 if "db_host" not in result:
-                    result += "db_host = db\ndb_port = 5432\ndb_user = odoo\ndb_password = mysecretpassword\n"
+                    result += (
+                        "db_host = db\ndb_port = 5432\ndb_user ="
+                        " odoo\ndb_password = mysecretpassword\n"
+                    )
                 if "admin_passwd" not in result:
                     result += "admin_passwd = admin\n"
                 str_to_replace = ",/ERPLibre/addons/OCA_connector-jira"
@@ -392,13 +443,17 @@ volumes:
                     has_change = True
                 if has_change:
                     # TODO rewrite conf file and reformat
-                    self._exec_docker(rec, f"echo -e '{result}' > /etc/odoo/odoo.conf")
+                    self._exec_docker(
+                        rec, f"echo -e '{result}' > /etc/odoo/odoo.conf"
+                    )
 
         # Ensure a local it_workspace exists if we are going to write it remotely
         sftp = self.filtered(lambda r: r.method == "sftp")
         if sftp:
             for rec in sftp:
-                filename = self.filename(datetime.now(), ext=rec.it_workspace_format)
+                filename = self.filename(
+                    datetime.now(), ext=rec.it_workspace_format
+                )
                 with rec.it_workspace_log():
 
                     cached = db.dump_db(
@@ -480,20 +535,27 @@ volumes:
         self.ensure_one()
         try:
             _logger.info(
-                "Starting cleanup process after database it_workspace: %s", self.name
+                "Starting cleanup process after database it_workspace: %s",
+                self.name,
             )
             yield
         except Exception:
-            _logger.exception("Cleanup of old database it_workspaces failed: %s")
+            _logger.exception(
+                "Cleanup of old database it_workspaces failed: %s"
+            )
             escaped_tb = tools.html_escape(traceback.format_exc())
             self.message_post(  # pylint: disable=translation-required
                 body="<p>%s</p><pre>%s</pre>"
-                % (_("Cleanup of old database it_workspaces failed."), escaped_tb),
+                % (
+                    _("Cleanup of old database it_workspaces failed."),
+                    escaped_tb,
+                ),
                 subtype=self.env.ref("erplibre_it_workspace.failure"),
             )
         else:
             _logger.info(
-                "Cleanup of old database it_workspaces succeeded: %s", self.name
+                "Cleanup of old database it_workspaces succeeded: %s",
+                self.name,
             )
 
     @staticmethod
