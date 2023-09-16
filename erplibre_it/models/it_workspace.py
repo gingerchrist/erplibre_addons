@@ -57,6 +57,14 @@ class ItWorkspace(models.Model):
 
     docker_compose_ps = fields.Text()
 
+    docker_version = fields.Char(default="technolibre/erplibre:1.5.0_c0c6f23")
+
+    docker_cmd_extra = fields.Char(help="Extra command to share to odoo executable", default="")
+
+    docker_nb_proc = fields.Integer(help="Number of processor/thread, 0 if not behind a proxy, else 2 or more.", default=0)
+
+    docker_is_behind_proxy = fields.Boolean(help="Longpolling need a proxy when workers > 1", default=False)
+
     folder = fields.Char(
         required=True,
         default=lambda self: self._default_folder(),
@@ -242,19 +250,25 @@ class ItWorkspace(models.Model):
                 f" exec -u root -ti {workspace}_ERPLibre_1 /bin/bash;bash'"
             )
 
-    def _exec_docker(self, rec, cmd):
-        workspace = os.path.basename(rec.folder)
-        # for "docker exec", command line need "-ti", but "popen" no need
-        result = os.popen(
-            f"cd {rec.folder};docker exec -u root {workspace}_ERPLibre_1"
-            f' /bin/bash -c "{cmd}"'
-        ).read()
-        # time make doc_markdown
-        # time make db_list
-        # ./.venv/bin/python3 ./odoo/odoo-bin db --list --user_password mysecretpassword --user_login odoo
-        # psycopg2.OperationalError: connection to server on socket "/var/run/postgresql/.s.PGSQL.5432" failed: No such file or directory
-        # 	Is the server running locally and accepting connections on that socket
-        return result
+    def exec_docker(self, cmd):
+        lst_result = []
+        for rec in self:
+            workspace = os.path.basename(rec.folder)
+            # for "docker exec", command line need "-ti", but "popen" no need
+            result = os.popen(
+                f"cd {rec.folder};docker exec -u root {workspace}_ERPLibre_1"
+                f' /bin/bash -c "{cmd}"'
+            ).read()
+            # time make doc_markdown
+            # time make db_list
+            # ./.venv/bin/python3 ./odoo/odoo-bin db --list --user_password mysecretpassword --user_login odoo
+            # psycopg2.OperationalError: connection to server on socket "/var/run/postgresql/.s.PGSQL.5432" failed: No such file or directory
+            # 	Is the server running locally and accepting connections on that socket
+            if len(self) == 1:
+                return result
+            else:
+                lst_result.append(result)
+        return lst_result
 
     @api.multi
     def action_docker_restore_db_image(self):
@@ -262,7 +276,7 @@ class ItWorkspace(models.Model):
         for rec in self.filtered(lambda r: r.method == "local"):
             # TODO not working
             # maybe send by network REST web/database/restore
-            # result = self._exec_docker(rec, "cd /ERPLibre;time ./script/database/db_restore.py --database test;")
+            # result = self.exec_docker("cd /ERPLibre;time ./script/database/db_restore.py --database test;")
             # rec.log_workspace = f"\n{result}"
             url_list = f"{rec.url_instance}/web/database/list"
             url_restore = f"{rec.url_instance}/web/database/restore"
@@ -361,11 +375,13 @@ class ItWorkspace(models.Model):
                 file_docker_compose = os.path.join(
                     rec.folder, "docker-compose.yml"
                 )
+                workers = f"--workers {rec.docker_nb_proc}"
+                # TODO support when rec.docker_is_behind_proxy is True
                 docker_compose_content = f"""
 version: "3.3"
 services:
   ERPLibre:
-    image: technolibre/erplibre:1.5.0
+    image: {rec.docker_version}
     ports:
       - {rec.port_http}:8069
       - {rec.port_longpolling}:8072
@@ -383,7 +399,7 @@ services:
     #command: odoo --workers 0
     # behind a proxy
     #command: odoo --workers 2
-    command: odoo
+    command: odoo {workers} {rec.docker_cmd_extra}
     volumes:
       # See the volume section at the end of the file
       - erplibre_data_dir:/home/odoo/.local/share/Odoo
@@ -428,23 +444,27 @@ volumes:
                 rec.log_workspace += f"\n{result}"
                 self.update_docker_compose_ps(rec)
 
-                result = self._exec_docker(rec, "cat /etc/odoo/odoo.conf;")
+                # TODO support only one file, and remove /odoo.conf
+                self.exec_docker("cp /etc/odoo/odoo.conf ./config.conf;")
+                result = self.exec_docker("cat /etc/odoo/odoo.conf;")
                 has_change = False
                 if "db_host" not in result:
+                    # TODO remove this information from executable of docker
                     result += (
                         "db_host = db\ndb_port = 5432\ndb_user ="
                         " odoo\ndb_password = mysecretpassword\n"
                     )
                 if "admin_passwd" not in result:
                     result += "admin_passwd = admin\n"
+                # TODO remove repo OCA_connector-jira
                 str_to_replace = ",/ERPLibre/addons/OCA_connector-jira"
                 if str_to_replace in result:
                     result = result.replace(str_to_replace, "")
                     has_change = True
                 if has_change:
                     # TODO rewrite conf file and reformat
-                    self._exec_docker(
-                        rec, f"echo -e '{result}' > /etc/odoo/odoo.conf"
+                    self.exec_docker(
+                        f"echo -e '{result}' > /etc/odoo/odoo.conf"
                     )
 
         # Ensure a local it_workspace exists if we are going to write it remotely

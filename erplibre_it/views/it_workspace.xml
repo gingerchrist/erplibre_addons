@@ -65,7 +65,15 @@
                         </group>
                     </page>
                     <page name="docker" string="Docker">
-                        <group>
+                        <group string="Configuration">
+                            <group>
+                                <field name="docker_version"/>
+                                <field name="docker_cmd_extra"/>
+                                <field name="docker_nb_proc"/>
+                                <field name="docker_is_behind_proxy"/>
+                            </group>
+                        </group>
+                        <group string="Log">
                             <field name="docker_compose_ps" />
                         </group>
                     </page>
