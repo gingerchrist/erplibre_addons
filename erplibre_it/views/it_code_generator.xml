@@ -6,6 +6,9 @@
         <field name="model">it.code_generator</field>
         <field name="arch" type="xml">
             <form string="Titre">
+                <header>
+                    <button class="oe_highlight" name="action_generate_code" string="Generate" type="object" />
+                </header>
                 <sheet>
                     <group>
                         <field name="name"/>
