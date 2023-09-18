@@ -95,6 +95,8 @@ class ItWorkspace(models.Model):
         ),
     )
 
+    # TODO backup button and restore button
+
     sftp_password = fields.Char(
         string="SFTP Password",
         help=(
@@ -121,9 +123,25 @@ class ItWorkspace(models.Model):
         help="The port of longpolling odoo.",
     )
 
+    db_name = fields.Char(string="DB instance name", default="test")
+
+    db_is_restored = fields.Boolean(
+        help="When false, it's because actually restoring a DB."
+    )
+
+    docker_is_running = fields.Boolean(
+        help="When false, it's because not running docker."
+    )
+
     url_instance = fields.Char()
 
     url_instance_database_manager = fields.Char()
+
+    it_code_generator_ids = fields.One2many(
+        comodel_name="it.code_generator",
+        inverse_name="it_workspace_id",
+        string="It code generator",
+    )
 
     force_create_docker_compose = fields.Boolean(
         default=True,
@@ -156,7 +174,14 @@ class ItWorkspace(models.Model):
         ),
     )
 
-    image_db_selection = fields.Many2one(comodel_name="it.db.image")
+    def _default_image_db_selection(self):
+        return self.env["it.db.image"].search(
+            [("name", "like", "erplibre_base")], limit=1
+        )
+
+    image_db_selection = fields.Many2one(
+        comodel_name="it.db.image", default=_default_image_db_selection
+    )
 
     @api.model
     def _default_folder(self):
@@ -220,6 +245,7 @@ class ItWorkspace(models.Model):
         for rec in self.filtered(lambda r: r.method == "local"):
             result = os.popen(f"cd {rec.folder};docker compose down").read()
             self.update_docker_compose_ps(rec)
+            rec.docker_is_running = False
 
     @api.multi
     def action_docker_status(self):
@@ -227,6 +253,14 @@ class ItWorkspace(models.Model):
         for rec in self.filtered(lambda r: r.method == "local"):
             result = os.popen(f"cd {rec.folder};docker compose ps").read()
             rec.docker_compose_ps = f"\n{result}"
+
+    def action_docker_logs(self):
+        # Start with local storage
+        for rec in self.filtered(lambda r: r.method == "local"):
+            os.popen(
+                f"cd {rec.folder};gnome-terminal --window -- bash -c 'docker"
+                " compose logs -f;bash'"
+            )
 
     @api.multi
     def action_open_terminal(self):
@@ -255,18 +289,20 @@ class ItWorkspace(models.Model):
         # Start with local storage
         for rec in self.filtered(lambda r: r.method == "local"):
             workspace = os.path.basename(rec.folder)
+            docker_name = f"{workspace}-ERPLibre-1"
             os.popen(
                 f"cd {rec.folder};gnome-terminal --window -- bash -c 'docker"
-                f" exec -u root -ti {workspace}_ERPLibre_1 /bin/bash;bash'"
+                f" exec -u root -ti {docker_name} /bin/bash;bash'"
             )
 
     def exec_docker(self, cmd):
         lst_result = []
         for rec in self:
             workspace = os.path.basename(rec.folder)
+            docker_name = f"{workspace}-ERPLibre-1"
             # for "docker exec", command line need "-ti", but "popen" no need
             result = os.popen(
-                f"cd {rec.folder};docker exec -u root {workspace}-ERPLibre-1"
+                f"cd {rec.folder};docker exec -u root {docker_name}"
                 f' /bin/bash -c "{cmd}"'
             ).read()
             # time make doc_markdown
@@ -291,6 +327,10 @@ class ItWorkspace(models.Model):
             url_list = f"{rec.url_instance}/web/database/list"
             url_restore = f"{rec.url_instance}/web/database/restore"
             url_drop = f"{rec.url_instance}/web/database/drop"
+            if not rec.image_db_selection:
+                # TODO create stage, need a stage ready to restore
+                raise exceptions.Warning(_("Error, need field db_selection"))
+            rec.db_is_restored = False
             backup_file_path = rec.image_db_selection.path
             session = requests.Session()
             response = requests.get(
@@ -344,11 +384,12 @@ class ItWorkspace(models.Model):
                         "application/octet-stream",
                     ),
                     "master_pwd": (None, "admin"),
-                    "name": (None, "test"),
+                    "name": (None, rec.db_name),
                 }
                 response = session.post(url_restore, files=files)
             if response.status_code == 200:
                 print("Le fichier de restauration a été envoyé avec succès.")
+                rec.db_is_restored = True
             else:
                 print(
                     "Une erreur s'est produite lors de l'envoi du fichier de"
@@ -373,9 +414,13 @@ class ItWorkspace(models.Model):
             with rec.it_workspace_log():
                 # Directory must exist
                 try:
-                    os.makedirs(rec.folder, exist_ok=True)
+                    # TODO make test to validate if remove next line, permission root the project /tmp/project/addons root
+                    addons_path = os.path.join(rec.folder, "addons")
+                    os.makedirs(addons_path, exist_ok=True)
                 except OSError:
                     pass
+
+                rec.docker_is_running = False
 
                 rec.url_instance = f"http://127.0.0.1:{rec.port_http}"
                 rec.url_instance_database_manager = (
@@ -482,6 +527,7 @@ volumes:
                     self.exec_docker(
                         f"echo -e '{result}' > /etc/odoo/odoo.conf"
                     )
+                rec.docker_is_running = True
 
         # Ensure a local it_workspace exists if we are going to write it remotely
         sftp = self.filtered(lambda r: r.method == "sftp")

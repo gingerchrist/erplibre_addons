@@ -10,6 +10,7 @@
                     <button class="oe_highlight" name="action_stop_docker_compose" string="Stop docker-compose" type="object" />
                     <button class="oe_highlight" name="action_docker_status" string="Status" type="object" />
                     <button class="oe_highlight" name="action_docker_restore_db_image" string="Restore DB Image" type="object" />
+                    <button class="oe_highlight" name="action_docker_logs" string="Docker logs" type="object" />
                     <button class="oe_highlight" name="action_open_terminal" string="Terminal" type="object" />
                     <button class="oe_highlight" name="action_open_terminal_docker" string="Terminal docker" type="object" />
                     <button class="oe_highlight" name="action_refresh_db_image" string="Reload db image" type="object" />
@@ -28,6 +29,7 @@
                     <field name="url_instance" widget="url"/>
                     <field name="url_instance_database_manager" widget="url"/>
                     <field name="image_db_selection"/>
+                    <field name="db_name"/>
                 </group>
                 <div attrs="{'invisible': [('method', '!=', 'sftp')]}">
                     <div class="bg-warning">
@@ -75,6 +77,17 @@
                         </group>
                         <group string="Log">
                             <field name="docker_compose_ps" />
+                        </group>
+                    </page>
+                    <page name="status" string="Status">
+                        <group string="Instance">
+                            <field name="docker_is_running"/>
+                            <field name="db_is_restored"/>
+                        </group>
+                    </page>
+                    <page name="code_generator" string="Code">
+                        <group string="Generator">
+                            <field name="it_code_generator_ids"/>
                         </group>
                     </page>
                 </notebook>

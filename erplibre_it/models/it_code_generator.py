@@ -8,7 +8,15 @@ class ItCodeGenerator(models.Model):
 
     name = fields.Char()
 
+    # TODO need to be a many2many to execute on multiple platform (or only share the result ;-))
+    # TODO if share result, do a command to copy file all and recreate it like a mirror on other workspace
     it_workspace_id = fields.Many2one(
+        comodel_name="it.workspace",
+        string="It Workspace",
+    )
+
+    # TODO create boolean cache with default workspace to work for the other
+    default_workspace_master = fields.Many2one(
         comodel_name="it.workspace",
         string="It Workspace",
     )
@@ -34,14 +42,17 @@ class ItCodeGenerator(models.Model):
                     lst_model.append(
                         {"name": model_id.name, "fields": lst_field}
                     )
+                    # TODO missing support relation many2one many2many one2many
+                    # TODO missing support related field
                     for field_id in model_id.field_ids:
-                        lst_field.append(
-                            {
-                                "name": field_id.name,
-                                "help": field_id.help,
-                                "type": field_id.type,
-                            }
-                        )
+                        dct_value_field = {
+                            "name": field_id.name,
+                            "help": field_id.help,
+                            "type": field_id.type,
+                        }
+                        if field_id.widget:
+                            dct_value_field = field_id.widget
+                        lst_field.append(dct_value_field)
                 # TODO option clean all repository before
                 model_conf = json.dumps(dct_model_conf).replace('"', '\\"')
                 extra_arg = ""
