@@ -59,11 +59,21 @@ class ItWorkspace(models.Model):
 
     docker_version = fields.Char(default="technolibre/erplibre:1.5.0_c0c6f23")
 
-    docker_cmd_extra = fields.Char(help="Extra command to share to odoo executable", default="")
+    docker_cmd_extra = fields.Char(
+        help="Extra command to share to odoo executable", default=""
+    )
 
-    docker_nb_proc = fields.Integer(help="Number of processor/thread, 0 if not behind a proxy, else 2 or more.", default=0)
+    docker_nb_proc = fields.Integer(
+        help=(
+            "Number of processor/thread, 0 if not behind a proxy, else 2 or"
+            " more."
+        ),
+        default=0,
+    )
 
-    docker_is_behind_proxy = fields.Boolean(help="Longpolling need a proxy when workers > 1", default=False)
+    docker_is_behind_proxy = fields.Boolean(
+        help="Longpolling need a proxy when workers > 1", default=False
+    )
 
     folder = fields.Char(
         required=True,
@@ -208,7 +218,7 @@ class ItWorkspace(models.Model):
     def action_stop_docker_compose(self):
         # Start with local storage
         for rec in self.filtered(lambda r: r.method == "local"):
-            result = os.popen(f"cd {rec.folder};docker-compose down").read()
+            result = os.popen(f"cd {rec.folder};docker compose down").read()
             self.update_docker_compose_ps(rec)
 
     @api.multi
@@ -256,7 +266,7 @@ class ItWorkspace(models.Model):
             workspace = os.path.basename(rec.folder)
             # for "docker exec", command line need "-ti", but "popen" no need
             result = os.popen(
-                f"cd {rec.folder};docker exec -u root {workspace}_ERPLibre_1"
+                f"cd {rec.folder};docker exec -u root {workspace}-ERPLibre-1"
                 f' /bin/bash -c "{cmd}"'
             ).read()
             # time make doc_markdown
@@ -376,6 +386,10 @@ class ItWorkspace(models.Model):
                     rec.folder, "docker-compose.yml"
                 )
                 workers = f"--workers {rec.docker_nb_proc}"
+                if rec.docker_cmd_extra:
+                    docker_cmd_extra = f" {rec.docker_cmd_extra}"
+                else:
+                    docker_cmd_extra = ""
                 # TODO support when rec.docker_is_behind_proxy is True
                 docker_compose_content = f"""
 version: "3.3"
@@ -399,7 +413,7 @@ services:
     #command: odoo --workers 0
     # behind a proxy
     #command: odoo --workers 2
-    command: odoo {workers} {rec.docker_cmd_extra}
+    command: odoo {workers}{docker_cmd_extra}
     volumes:
       # See the volume section at the end of the file
       - erplibre_data_dir:/home/odoo/.local/share/Odoo
@@ -437,15 +451,17 @@ volumes:
                 ).read()
                 rec.docker_compose_ps = result
                 result = os.popen(
-                    f"cd {rec.folder};docker-compose up -d"
+                    f"cd {rec.folder};docker compose up -d"
                 ).read()
                 rec.log_workspace = f"\n{result}"
-                result = os.popen(f"cd {rec.folder};docker-compose ps").read()
+                result = os.popen(f"cd {rec.folder};docker compose ps").read()
                 rec.log_workspace += f"\n{result}"
                 self.update_docker_compose_ps(rec)
 
                 # TODO support only one file, and remove /odoo.conf
-                self.exec_docker("cp /etc/odoo/odoo.conf ./config.conf;")
+                self.exec_docker(
+                    "cd /ERPLibre;cp /etc/odoo/odoo.conf ./config.conf;"
+                )
                 result = self.exec_docker("cat /etc/odoo/odoo.conf;")
                 has_change = False
                 if "db_host" not in result:
