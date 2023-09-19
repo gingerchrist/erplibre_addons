@@ -18,7 +18,7 @@ class ItCodeGenerator(models.Model):
     # TODO create boolean cache with default workspace to work for the other
     default_workspace_master = fields.Many2one(
         comodel_name="it.workspace",
-        string="It Workspace",
+        string="It Workspace default",
     )
 
     module_ids = fields.One2many(
@@ -27,6 +27,7 @@ class ItCodeGenerator(models.Model):
     )
 
     def action_generate_code(self):
+        # TODO add try catch, add breakpoint, rerun loop. Careful when lose context
         # Start with local storage
         for rec in self:
             if rec.it_workspace_id:

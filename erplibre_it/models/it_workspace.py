@@ -143,6 +143,10 @@ class ItWorkspace(models.Model):
         string="It code generator",
     )
 
+    it_code_generator_tree_addons = fields.Text(
+        string="Tree addons", help="Will show generated files from code generator or humain"
+    )
+
     force_create_docker_compose = fields.Boolean(
         default=True,
         help="Recreate docker-compose from configuration.",
@@ -235,17 +239,18 @@ class ItWorkspace(models.Model):
             _logger.info("Connection Test Failed!", exc_info=True)
             raise exceptions.Warning(_("Connection Test Failed!"))
 
-    def update_docker_compose_ps(self, rec):
-        result = os.popen(f"cd {rec.folder};docker compose ps").read()
-        rec.docker_compose_ps = f"\n{result}"
+    def update_docker_compose_ps(self):
+        for rec in self:
+            result = os.popen(f"cd {rec.folder};docker compose ps").read()
+            rec.docker_compose_ps = f"\n{result}"
 
     @api.multi
     def action_stop_docker_compose(self):
         # Start with local storage
         for rec in self.filtered(lambda r: r.method == "local"):
             result = os.popen(f"cd {rec.folder};docker compose down").read()
-            self.update_docker_compose_ps(rec)
-            rec.docker_is_running = False
+        self.update_docker_compose_ps()
+        self.action_docker_check_docker_ps()
 
     @api.multi
     def action_docker_status(self):
@@ -253,6 +258,19 @@ class ItWorkspace(models.Model):
         for rec in self.filtered(lambda r: r.method == "local"):
             result = os.popen(f"cd {rec.folder};docker compose ps").read()
             rec.docker_compose_ps = f"\n{result}"
+
+    def action_docker_check_docker_ps(self):
+        # Start with local storage
+        for rec in self.filtered(lambda r: r.method == "local"):
+            result = os.popen(f"cd {rec.folder};docker compose ps --format json").read()
+            # rec.docker_compose_ps = f"\n{result}"
+            rec.docker_is_running = result
+
+    def action_docker_check_docker_tree_addons(self):
+        # Start with local storage
+        for rec in self.filtered(lambda r: r.method == "local"):
+            result = os.popen(f"cd {rec.folder};tree ").read()
+            rec.it_code_generator_tree_addons = result
 
     def action_docker_logs(self):
         # Start with local storage
@@ -315,6 +333,16 @@ class ItWorkspace(models.Model):
             else:
                 lst_result.append(result)
         return lst_result
+
+    def action_it_check_all(self):
+        self.action_docker_status()
+        self.action_docker_check_docker_ps()
+        self.action_docker_check_docker_tree_addons()
+
+        # self.docker_is_running = False
+        for rec in self:
+            pass
+        pass
 
     @api.multi
     def action_docker_restore_db_image(self):
@@ -501,12 +529,8 @@ volumes:
                 rec.log_workspace = f"\n{result}"
                 result = os.popen(f"cd {rec.folder};docker compose ps").read()
                 rec.log_workspace += f"\n{result}"
-                self.update_docker_compose_ps(rec)
+                rec.update_docker_compose_ps()
 
-                # TODO support only one file, and remove /odoo.conf
-                self.exec_docker(
-                    "cd /ERPLibre;cp /etc/odoo/odoo.conf ./config.conf;"
-                )
                 result = self.exec_docker("cat /etc/odoo/odoo.conf;")
                 has_change = False
                 if "db_host" not in result:
@@ -527,7 +551,11 @@ volumes:
                     self.exec_docker(
                         f"echo -e '{result}' > /etc/odoo/odoo.conf"
                     )
-                rec.docker_is_running = True
+                # TODO support only one file, and remove /odoo.conf
+                self.exec_docker(
+                    "cd /ERPLibre;cp /etc/odoo/odoo.conf ./config.conf;"
+                )
+                self.action_docker_check_docker_ps()
 
         # Ensure a local it_workspace exists if we are going to write it remotely
         sftp = self.filtered(lambda r: r.method == "sftp")
