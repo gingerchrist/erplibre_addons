@@ -112,7 +112,8 @@
         <field name="name">it_code_generator_module_model_field_tree</field>
         <field name="model">it.code_generator.module.model.field</field>
         <field name="arch" type="xml">
-            <tree>
+            <tree decoration-danger="has_error">
+                <field name="has_error" invisible="True"/>
                 <field name="name"/>
                 <field name="model_id"/>
                 <field name="type"/>

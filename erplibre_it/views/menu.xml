@@ -7,21 +7,21 @@
 
   <!--Sub menu-->
 
-  <menuitem id="menu" name="Menu" sequence="1" parent="erplibre_it"/>
+  <menuitem id="workspace" name="Workspace" sequence="1" parent="erplibre_it"/>
 
-  <menuitem id="menu_code_generator" name="Code Generator" sequence="2" parent="menu"/>
+  <menuitem id="menu_code_generator" name="Code Generator" sequence="2" parent="erplibre_it"/>
 
   <!--Child menu-->
 
-  <menuitem id="db_image" name="Db image" action="it_db_image_db_image_action_window" sequence="3" parent="menu"/>
+  <menuitem id="db_image" name="Db image" action="it_db_image_db_image_action_window" sequence="2" parent="workspace"/>
 
-  <menuitem id="code_generator" name="Code generator" action="it_code_generator_code_generator_action_window" sequence="1" parent="menu_code_generator"/>
+  <menuitem id="code_generator" name="Project" action="it_code_generator_code_generator_action_window" sequence="1" parent="menu_code_generator"/>
 
-  <menuitem id="code_generator_module" name="Code generator module" action="it_code_generator_module_code_generator_module_action_window" sequence="2" parent="menu_code_generator"/>
+  <menuitem id="code_generator_module" name="Module" action="it_code_generator_module_code_generator_module_action_window" sequence="2" parent="menu_code_generator"/>
 
-  <menuitem id="code_generator_module_model" name="Code generator module model" action="it_code_generator_module_model_code_generator_module_model_action_window" sequence="3" parent="menu_code_generator"/>
+  <menuitem id="code_generator_module_model" name="Model" action="it_code_generator_module_model_code_generator_module_model_action_window" sequence="3" parent="menu_code_generator"/>
 
-  <menuitem id="code_generator_module_model_field" name="Code generator module model field" action="it_code_generator_module_model_field_code_generator_module_model_field_action_window" sequence="4" parent="menu_code_generator"/>
+  <menuitem id="code_generator_module_model_field" name="Field" action="it_code_generator_module_model_field_code_generator_module_model_field_action_window" sequence="4" parent="menu_code_generator"/>
 
-  <menuitem id="workspace" name="Workspace" action="action_it_check_workspace_conf_form" sequence="1" parent="menu"/>
+  <menuitem id="workspace_item" name="Workspace" action="action_it_check_workspace_conf_form" sequence="1" parent="workspace"/>
 </odoo>

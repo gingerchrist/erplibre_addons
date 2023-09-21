@@ -14,17 +14,23 @@
                         <field name="name" />
                     </h1>
                 </div>
-                <group string="Basic it_workspace configuration">
-                    <field name="folder" />
-                    <field name="method" />
-                    <field name="port_http" />
-                    <field name="port_longpolling" />
-                    <field name="force_create_docker_compose" />
-                    <field name="url_instance" widget="url"/>
-                    <field name="url_instance_database_manager" widget="url"/>
-                    <field name="image_db_selection"/>
-                    <field name="db_name"/>
+                <group>
+                    <group string="Basic it_workspace configuration">
+                        <field name="folder" />
+                        <field name="method" />
+                        <field name="port_http" />
+                        <field name="port_longpolling" />
+                    </group>
+                    <group string="Info">
+                        <field name="url_instance" widget="url"/>
+                        <field name="url_instance_database_manager" string="URL Instance Database" widget="url"/>
+                    </group>
+                    <group string="DB">
+                        <field name="image_db_selection"/>
+                        <field name="db_name"/>
+                    </group>
                 </group>
+
                 <div attrs="{'invisible': [('method', '!=', 'sftp')]}">
                     <div class="bg-warning">
                         <h3>Warning:</h3>
@@ -71,6 +77,7 @@
                         </group>
                         <group string="Configuration">
                             <group>
+                                <field name="force_create_docker_compose" />
                                 <field name="docker_version"/>
                                 <field name="docker_cmd_extra"/>
                                 <field name="docker_nb_proc"/>
@@ -107,16 +114,16 @@
                                 <div attrs="{'invisible': [('time_exec_action_install_all_generated_module', '=', False)]}">Exec in <field name="time_exec_action_install_all_generated_module" nolabel="1"/></div>
                             </group>
                             <group>
+                                <button class="oe_highlight" name="action_install_and_generate_all_generated_module" string="Generate &amp; install all" type="object" />
+                                <div attrs="{'invisible': [('time_exec_action_install_and_generate_all_generated_module', '=', False)]}">Exec in <field name="time_exec_action_install_and_generate_all_generated_module" nolabel="1"/></div>
+                            </group>
+                            <group>
                                 <button class="oe_highlight" name="action_install_all_uca_generated_module" string="Install UCA" type="object" />
                                 <div attrs="{'invisible': [('time_exec_action_install_all_uca_generated_module', '=', False)]}">Exec in <field name="time_exec_action_install_all_uca_generated_module" nolabel="1"/></div>
                             </group>
                             <group>
                                 <button class="oe_highlight" name="action_install_all_ucb_generated_module" string="Install UCB" type="object" />
                                 <div attrs="{'invisible': [('time_exec_action_install_all_ucb_generated_module', '=', False)]}">Exec in <field name="time_exec_action_install_all_ucb_generated_module" nolabel="1"/></div>
-                            </group>
-                            <group>
-                                <button class="oe_highlight" name="action_install_and_generate_all_generated_module" string="Install &amp; generate all" type="object" />
-                                <div attrs="{'invisible': [('time_exec_action_install_and_generate_all_generated_module', '=', False)]}">Exec in <field name="time_exec_action_install_and_generate_all_generated_module" nolabel="1"/></div>
                             </group>
                             <group>
                                 <button class="oe_highlight" name="action_clear_all_generated_module" string="Clear all" type="object" />
@@ -132,7 +139,10 @@
                             </group>
                         </group>
                         <group string="Generator">
-                            <field name="it_code_generator_ids"/>
+                            <field name="it_code_generator_ids" widget="many2many"/>
+                            <field name="it_code_generator_module_ids" widget="many2many"/>
+                            <field name="it_code_generator_model_ids" widget="many2many"/>
+                            <field name="it_code_generator_field_ids" widget="many2many"/>
                         </group>
                         <notebook>
                             <page name="code_generator_info_diff" string="Diff">

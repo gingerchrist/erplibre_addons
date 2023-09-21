@@ -140,7 +140,29 @@ class ItWorkspace(models.Model):
     it_code_generator_ids = fields.One2many(
         comodel_name="it.code_generator",
         inverse_name="it_workspace_id",
-        string="It code generator",
+        string="Project",
+    )
+
+    it_code_generator_module_ids = fields.One2many(
+        related="it_code_generator_ids.module_ids",
+        string="Module",
+        readonly=False,
+    )
+
+    it_code_generator_model_ids = fields.One2many(
+        related="it_code_generator_module_ids.model_ids",
+        string="Model",
+        readonly=False,
+    )
+
+    it_code_generator_field_ids = fields.One2many(
+        related="it_code_generator_model_ids.field_ids",
+        string="Field",
+        readonly=False,
+    )
+
+    it_code_generator_finish_compute = fields.Boolean(
+        store=True, compute="_compute_it_code_generator_finish_compute"
     )
 
     it_code_generator_tree_addons = fields.Text(
@@ -253,6 +275,34 @@ class ItWorkspace(models.Model):
         return os.path.join(
             tools.config["data_dir"], "backups", self.env.cr.dbname
         )
+
+    @api.multi
+    @api.depends("it_code_generator_ids")
+    def _compute_it_code_generator_finish_compute(self):
+        """Get the right summary for this job."""
+        for rec in self:
+            rec.it_code_generator_finish_compute = True
+            lst_module = list(
+                set(
+                    [
+                        b.id
+                        for a in rec.it_code_generator_ids
+                        for b in a.module_ids
+                    ]
+                ).difference(
+                    set([a.id for a in rec.it_code_generator_module_ids])
+                )
+            )
+            if lst_module:
+                for module_id_int in lst_module:
+                    rec.write(
+                        {
+                            "it_code_generator_module_ids": [
+                                (4, module_id_int, None)
+                            ]
+                        }
+                    )
+            print("it_code_generator_ids")
 
     @api.multi
     @api.depends("folder", "method", "sftp_host", "sftp_port", "sftp_user")
