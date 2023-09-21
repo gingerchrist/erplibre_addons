@@ -32,12 +32,29 @@ class ItCodeGeneratorModuleModelField(models.Model):
     )
 
     # TODO missing support relation
-    relation = fields.Char(
-        help="comodel - Create relation for many2one, many2many, one2many"
+    relation = fields.Many2one(
+        comodel_name="it.code_generator.module.model",
+        help="comodel - Create relation for many2one, many2many, one2many",
     )
 
-    field_relation = fields.Char(
-        help="inverse_name - Need for one2many to associate with many2one."
+    relation_manual = fields.Char(
+        help=(
+            "comodel - Create relation for many2one, many2many, one2many."
+            " Manual entry by pass relation field."
+        )
+    )
+
+    field_relation = fields.Many2one(
+        comodel_name="it.code_generator.module.model.field",
+        domain="[('model_id', '=', relation)]",
+        help="inverse_name - Need for one2many to associate with many2one.",
+    )
+
+    field_relation_manual = fields.Char(
+        help=(
+            "inverse_name - Need for one2many to associate with many2one,"
+            " manual entry."
+        )
     )
 
     widget = fields.Selection(

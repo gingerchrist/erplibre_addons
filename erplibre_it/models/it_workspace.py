@@ -144,7 +144,28 @@ class ItWorkspace(models.Model):
     )
 
     it_code_generator_tree_addons = fields.Text(
-        string="Tree addons", help="Will show generated files from code generator or humain"
+        string="Tree addons",
+        help="Will show generated files from code generator or humain",
+    )
+
+    it_code_generator_diff = fields.Text(
+        string="Diff addons",
+        help="Will show diff git",
+    )
+
+    it_code_generator_status = fields.Text(
+        string="Status addons",
+        help="Will show status git",
+    )
+
+    it_code_generator_stat = fields.Text(
+        string="Stat addons",
+        help="Will show statistique code",
+    )
+
+    it_code_generator_log_addons = fields.Text(
+        string="Log code generator",
+        help="Will show code generator log, last execution",
     )
 
     force_create_docker_compose = fields.Boolean(
@@ -158,6 +179,45 @@ class ItWorkspace(models.Model):
             "Path to the private key file. Only the Odoo user should have read"
             " permissions for that file."
         ),
+    )
+
+    time_exec_action_code_generator_generate_all = fields.Char(
+        help="Execution time of method action_code_generator_generate_all",
+    )
+
+    time_exec_action_clear_all_generated_module = fields.Char(
+        help="Execution time of method action_clear_all_generated_module",
+    )
+
+    time_exec_action_install_all_generated_module = fields.Char(
+        help="Execution time of method action_install_all_generated_module",
+    )
+
+    time_exec_action_install_all_uca_generated_module = fields.Char(
+        help=(
+            "Execution time of method action_install_all_uca_generated_module"
+        ),
+    )
+
+    time_exec_action_install_all_ucb_generated_module = fields.Char(
+        help=(
+            "Execution time of method action_install_all_ucb_generated_module"
+        ),
+    )
+
+    time_exec_action_install_and_generate_all_generated_module = fields.Char(
+        help=(
+            "Execution time of method"
+            " action_install_and_generate_all_generated_module"
+        ),
+    )
+
+    time_exec_action_git_diff_all_generated_module = fields.Char(
+        help="Execution time of method action_git_diff_all_generated_module",
+    )
+
+    time_exec_action_git_commit_all_generated_module = fields.Char(
+        help="Execution time of method action_git_commit_all_generated_module",
     )
 
     sftp_public_host_key = fields.Char(
@@ -262,7 +322,9 @@ class ItWorkspace(models.Model):
     def action_docker_check_docker_ps(self):
         # Start with local storage
         for rec in self.filtered(lambda r: r.method == "local"):
-            result = os.popen(f"cd {rec.folder};docker compose ps --format json").read()
+            result = os.popen(
+                f"cd {rec.folder};docker compose ps --format json"
+            ).read()
             # rec.docker_compose_ps = f"\n{result}"
             rec.docker_is_running = result
 
@@ -271,6 +333,146 @@ class ItWorkspace(models.Model):
         for rec in self.filtered(lambda r: r.method == "local"):
             result = os.popen(f"cd {rec.folder};tree ").read()
             rec.it_code_generator_tree_addons = result
+
+    def action_code_generator_generate_all(self):
+        # Start with local storage
+        for rec in self.filtered(lambda r: r.method == "local"):
+            start = datetime.now()
+            rec.it_code_generator_ids.action_generate_code()
+            end = datetime.now()
+            td = (end - start).total_seconds()
+            rec.time_exec_action_code_generator_generate_all = f"{td:.03f}s"
+
+    def action_clear_all_generated_module(self):
+        # Start with local storage
+        for rec in self.filtered(lambda r: r.method == "local"):
+            start = datetime.now()
+            for cg in rec.it_code_generator_ids:
+                cg.action_clear_all_code()
+            end = datetime.now()
+            td = (end - start).total_seconds()
+            rec.time_exec_action_clear_all_generated_module = f"{td:.03f}s"
+        self.action_it_check_all()
+
+    def action_git_commit_all_generated_module(self):
+        # Start with local storage
+        for rec in self.filtered(lambda r: r.method == "local"):
+            start = datetime.now()
+            for cg in rec.it_code_generator_ids:
+                cg.action_git_commit_all_code()
+            end = datetime.now()
+            td = (end - start).total_seconds()
+            rec.time_exec_action_git_commit_all_generated_module = (
+                f"{td:.03f}s"
+            )
+
+    def action_git_diff_all_generated_module(self):
+        # Start with local storage
+        for rec in self.filtered(lambda r: r.method == "local"):
+            start = datetime.now()
+            diff = ""
+            status = ""
+            stat = ""
+            for cg in rec.it_code_generator_ids:
+                diff += cg.git_diff_all_code()
+                status += cg.git_status_all_code()
+                stat += cg.git_stat_all_code()
+
+            rec.it_code_generator_diff = diff
+            rec.it_code_generator_status = status
+            rec.it_code_generator_stat = stat
+            end = datetime.now()
+            td = (end - start).total_seconds()
+            rec.time_exec_action_git_diff_all_generated_module = f"{td:.03f}s"
+
+    def action_install_all_generated_module(self):
+        # Start with local storage
+        for rec in self.filtered(lambda r: r.method == "local"):
+            start = datetime.now()
+            module_list = ",".join(
+                [
+                    m.name
+                    for cg in rec.it_code_generator_ids
+                    for m in cg.module_ids
+                ]
+            )
+            last_cmd = rec.docker_cmd_extra
+            rec.docker_cmd_extra = (
+                f"-d {rec.db_name} -i {module_list} -u {module_list}"
+            )
+            rec.action_stop_docker_compose()
+            rec.action_start_docker_compose()
+            rec.docker_cmd_extra = last_cmd
+            end = datetime.now()
+            td = (end - start).total_seconds()
+            rec.time_exec_action_install_all_generated_module = f"{td:.03f}s"
+        self.action_it_check_all()
+
+    def action_install_all_uca_generated_module(self):
+        # Start with local storage
+        for rec in self.filtered(lambda r: r.method == "local"):
+            start = datetime.now()
+            module_list = ",".join(
+                [
+                    f"code_generator_template_{m.name},{m.name}"
+                    for cg in rec.it_code_generator_ids
+                    for m in cg.module_ids
+                ]
+            )
+            self.exec_docker(
+                "cd /ERPLibre;./script/database/db_restore.py --database"
+                " cg_uca"
+            )
+            self.exec_docker(
+                "cd /ERPLibre;./script/addons/install_addons_dev.sh cg_uca"
+                f" {module_list}"
+            )
+
+            end = datetime.now()
+            td = (end - start).total_seconds()
+            rec.time_exec_action_install_all_uca_generated_module = (
+                f"{td:.03f}s"
+            )
+        self.action_it_check_all()
+
+    def action_install_all_ucb_generated_module(self):
+        # Start with local storage
+        for rec in self.filtered(lambda r: r.method == "local"):
+            start = datetime.now()
+            module_list = ",".join(
+                [
+                    f"code_generator_{m.name}"
+                    for cg in rec.it_code_generator_ids
+                    for m in cg.module_ids
+                ]
+            )
+            self.exec_docker(
+                "cd /ERPLibre;./script/database/db_restore.py --database"
+                " cg_ucb"
+            )
+            self.exec_docker(
+                "cd /ERPLibre;./script/addons/install_addons_dev.sh cg_ucb"
+                f" {module_list}"
+            )
+
+            end = datetime.now()
+            td = (end - start).total_seconds()
+            rec.time_exec_action_install_all_ucb_generated_module = (
+                f"{td:.03f}s"
+            )
+        self.action_it_check_all()
+
+    def action_install_and_generate_all_generated_module(self):
+        # Start with local storage
+        for rec in self.filtered(lambda r: r.method == "local"):
+            start = datetime.now()
+            rec.action_code_generator_generate_all()
+            rec.action_install_all_generated_module()
+            end = datetime.now()
+            td = (end - start).total_seconds()
+            rec.time_exec_action_install_and_generate_all_generated_module = (
+                f"{td:.03f}s"
+            )
 
     def action_docker_logs(self):
         # Start with local storage
@@ -319,6 +521,7 @@ class ItWorkspace(models.Model):
             workspace = os.path.basename(rec.folder)
             docker_name = f"{workspace}-ERPLibre-1"
             # for "docker exec", command line need "-ti", but "popen" no need
+            # TODO catch error, stderr with stdout
             result = os.popen(
                 f"cd {rec.folder};docker exec -u root {docker_name}"
                 f' /bin/bash -c "{cmd}"'
@@ -338,11 +541,6 @@ class ItWorkspace(models.Model):
         self.action_docker_status()
         self.action_docker_check_docker_ps()
         self.action_docker_check_docker_tree_addons()
-
-        # self.docker_is_running = False
-        for rec in self:
-            pass
-        pass
 
     @api.multi
     def action_docker_restore_db_image(self):
@@ -429,7 +627,7 @@ class ItWorkspace(models.Model):
             # print(res.text)
 
     @api.multi
-    def action_it_check_workspace(self):
+    def action_start_docker_compose(self):
         """Run selected it_workspaces."""
         it_workspace = None
         successful = self.browse()
@@ -593,7 +791,7 @@ volumes:
     @api.model
     def action_it_check_workspace_all(self):
         """Run all scheduled it_workspaces."""
-        return self.search([]).action_it_check_workspace()
+        return self.search([]).action_start_docker_compose()
 
     @api.multi
     @contextmanager
@@ -609,7 +807,7 @@ volumes:
                 body="<p>%s</p><pre>%s</pre>"
                 % (_("Database it_workspace failed."), escaped_tb),
                 subtype=self.env.ref(
-                    "erplibre_it_workspace.mail_message_subtype_failure"
+                    "erplibre_it.mail_message_subtype_failure"
                 ),
             )
         else:
