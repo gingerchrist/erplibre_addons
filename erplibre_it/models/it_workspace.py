@@ -375,6 +375,9 @@ class ItWorkspace(models.Model):
             start = datetime.now()
             # TODO add try catch, add breakpoint, rerun loop. Careful when lose context
             # Start with local storage
+            # Increase speed
+            # TODO keep old configuration of config.conf and not overwrite all
+            # rec.exec_docker("cd /ERPLibre;make config_gen_code_generator")
             for rec_cg in rec.it_code_generator_ids:
                 for module_id in rec_cg.module_ids:
                     # Support only 1, but can run in parallel multiple if no dependencies between
@@ -445,6 +448,7 @@ class ItWorkspace(models.Model):
                     )
                     result = rec.exec_docker(cmd)
                     rec.it_code_generator_log_addons = result
+            # rec.exec_docker("cd /ERPLibre;make config_gen_all")
             end = datetime.now()
             td = (end - start).total_seconds()
             rec.time_exec_action_code_generator_generate_all = f"{td:.03f}s"
