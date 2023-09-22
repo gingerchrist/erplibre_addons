@@ -207,41 +207,51 @@ class ItWorkspace(models.Model):
     )
 
     time_exec_action_code_generator_generate_all = fields.Char(
+        readonly=True,
         help="Execution time of method action_code_generator_generate_all",
     )
 
     time_exec_action_clear_all_generated_module = fields.Char(
+        readonly=True,
         help="Execution time of method action_clear_all_generated_module",
     )
 
     time_exec_action_install_all_generated_module = fields.Char(
+        readonly=True,
         help="Execution time of method action_install_all_generated_module",
     )
 
     time_exec_action_install_all_uca_generated_module = fields.Char(
+        readonly=True,
         help=(
             "Execution time of method action_install_all_uca_generated_module"
         ),
     )
 
     time_exec_action_install_all_ucb_generated_module = fields.Char(
+        readonly=True,
         help=(
             "Execution time of method action_install_all_ucb_generated_module"
         ),
     )
 
     time_exec_action_install_and_generate_all_generated_module = fields.Char(
+        readonly=True,
         help=(
             "Execution time of method"
             " action_install_and_generate_all_generated_module"
         ),
     )
 
-    time_exec_action_git_diff_all_generated_module = fields.Char(
-        help="Execution time of method action_git_diff_all_generated_module",
+    time_exec_action_refresh_meta_cg_generated_module = fields.Char(
+        readonly=True,
+        help=(
+            "Execution time of method action_refresh_meta_cg_generated_module"
+        ),
     )
 
     time_exec_action_git_commit_all_generated_module = fields.Char(
+        readonly=True,
         help="Execution time of method action_git_commit_all_generated_module",
     )
 
@@ -435,7 +445,6 @@ class ItWorkspace(models.Model):
                     )
                     result = rec.exec_docker(cmd)
                     rec.it_code_generator_log_addons = result
-                    # TODO option install continuous or stop execution
             end = datetime.now()
             td = (end - start).total_seconds()
             rec.time_exec_action_code_generator_generate_all = f"{td:.03f}s"
@@ -497,7 +506,7 @@ class ItWorkspace(models.Model):
                 f"{td:.03f}s"
             )
 
-    def action_git_diff_all_generated_module(self):
+    def action_refresh_meta_cg_generated_module(self):
         # Start with local storage
         for rec in self.filtered(lambda r: r.method == "local"):
             start = datetime.now()
@@ -506,11 +515,14 @@ class ItWorkspace(models.Model):
             stat = ""
             result = rec.exec_docker(f"ls /ERPLibre/addons/addons/.git")
             if result:
+                # Create diff
                 diff += rec.exec_docker(f"cd /ERPLibre/addons/addons;git diff")
+                # Create status
                 status += rec.exec_docker(
                     f"cd /ERPLibre/addons/addons;git status"
                 )
                 for cg in rec.it_code_generator_ids:
+                    # Create statistic
                     for module_id in cg.module_ids:
                         result = rec.exec_docker(
                             "cd /ERPLibre;./script/statistic/code_count.sh"
@@ -536,12 +548,70 @@ class ItWorkspace(models.Model):
                             stat += f"./addons/addons/code_generator_{module_id.name}"
                             stat += result
 
+                        # Autofix attached field to workspace
+                        if rec not in module_id.it_workspace_ids:
+                            module_id.it_workspace_ids = [(4, rec.id)]
+                        for model_id in module_id.model_ids:
+                            if rec not in model_id.it_workspace_ids:
+                                model_id.it_workspace_ids = [(4, rec.id)]
+                            for field_id in model_id.field_ids:
+                                if rec not in field_id.it_workspace_ids:
+                                    field_id.it_workspace_ids = [(4, rec.id)]
+
             rec.it_code_generator_diff = diff
             rec.it_code_generator_status = status
             rec.it_code_generator_stat = stat
             end = datetime.now()
             td = (end - start).total_seconds()
-            rec.time_exec_action_git_diff_all_generated_module = f"{td:.03f}s"
+            rec.time_exec_action_refresh_meta_cg_generated_module = (
+                f"{td:.03f}s"
+            )
+
+    @api.multi
+    def write(self, values):
+        cg_before_ids_i = self.it_code_generator_ids.ids
+
+        status = super().write(values)
+        if "it_code_generator_ids" in values.keys():
+            # Update all the list
+            for rec in self:
+                cg_missing_ids_i = list(
+                    set(cg_before_ids_i).difference(
+                        set(rec.it_code_generator_ids.ids)
+                    )
+                )
+                cg_missing_ids = self.env["it.code_generator"].browse(
+                    cg_missing_ids_i
+                )
+                for cg_id in cg_missing_ids:
+                    for module_id in cg_id.module_ids:
+                        if rec in module_id.it_workspace_ids:
+                            module_id.it_workspace_ids = [(3, rec.id)]
+                        for model_id in module_id.model_ids:
+                            if rec in model_id.it_workspace_ids:
+                                model_id.it_workspace_ids = [(3, rec.id)]
+                            for field_id in model_id.field_ids:
+                                if rec in field_id.it_workspace_ids:
+                                    field_id.it_workspace_ids = [(3, rec.id)]
+                cg_adding_ids_i = list(
+                    set(rec.it_code_generator_ids.ids).difference(
+                        set(cg_before_ids_i)
+                    )
+                )
+                cg_adding_ids = self.env["it.code_generator"].browse(
+                    cg_adding_ids_i
+                )
+                for cg_id in cg_adding_ids:
+                    for module_id in cg_id.module_ids:
+                        if rec not in module_id.it_workspace_ids:
+                            module_id.it_workspace_ids = [(4, rec.id)]
+                        for model_id in module_id.model_ids:
+                            if rec not in model_id.it_workspace_ids:
+                                model_id.it_workspace_ids = [(4, rec.id)]
+                            for field_id in model_id.field_ids:
+                                if rec not in field_id.it_workspace_ids:
+                                    field_id.it_workspace_ids = [(4, rec.id)]
+        return status
 
     def action_install_all_generated_module(self):
         # Start with local storage
@@ -558,6 +628,10 @@ class ItWorkspace(models.Model):
             rec.docker_cmd_extra = (
                 f"-d {rec.db_name} -i {module_list} -u {module_list}"
             )
+            # TODO option install continuous or stop execution.
+            # TODO Use install continuous in production, else stop execution for dev
+            # TODO actually, it's continuous
+            # TODO maybe add an auto-update when detect installation finish
             rec.action_stop_docker_compose()
             rec.action_start_docker_compose()
             rec.docker_cmd_extra = last_cmd
@@ -626,6 +700,8 @@ class ItWorkspace(models.Model):
             start = datetime.now()
             rec.action_code_generator_generate_all()
             rec.action_install_all_generated_module()
+            rec.action_git_commit_all_generated_module()
+            rec.action_refresh_meta_cg_generated_module()
             end = datetime.now()
             td = (end - start).total_seconds()
             rec.time_exec_action_install_and_generate_all_generated_module = (
@@ -672,6 +748,25 @@ class ItWorkspace(models.Model):
                 f"cd {rec.folder};gnome-terminal --window -- bash -c 'docker"
                 f" exec -u root -ti {docker_name} /bin/bash;bash'"
             )
+
+    def action_open_terminal_docker_tig(self):
+        # Start with local storage
+        for rec in self.filtered(lambda r: r.method == "local"):
+            workspace = os.path.basename(rec.folder)
+            docker_name = f"{workspace}-ERPLibre-1"
+            result = self.exec_docker("which tig")
+            if not result:
+                self.action_docker_install_dev_soft()
+            os.popen(
+                f"cd {rec.folder};gnome-terminal --window -- bash -c 'docker"
+                f' exec -u root -ti {docker_name} /bin/bash -c "cd'
+                " /ERPLibre;cd ./addons/addons;tig\";bash'"
+            )
+
+    def action_docker_install_dev_soft(self):
+        # Start with local storage
+        for rec in self.filtered(lambda r: r.method == "local"):
+            rec.exec_docker(f"apt update;apt install -y tig vim htop tree")
 
     def exec_docker(self, cmd):
         lst_result = []

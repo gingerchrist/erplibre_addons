@@ -14,6 +14,7 @@ class ItCodeGeneratorModuleModelField(models.Model):
     model_id = fields.Many2one(
         comodel_name="it.code_generator.module.model",
         string="Model",
+        ondelete="cascade",
     )
 
     type = fields.Selection(

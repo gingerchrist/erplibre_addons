@@ -8,7 +8,6 @@ class ItCodeGenerator(models.Model):
 
     name = fields.Char()
 
-    # TODO need to be a many2many to execute on multiple platform (or only share the result ;-))
     # TODO if share result, do a command to copy file all and recreate it like a mirror on other workspace
     it_workspace_ids = fields.Many2many(
         comodel_name="it.workspace",
@@ -36,6 +35,9 @@ class ItCodeGenerator(models.Model):
         w_ids = self.env.context.get("default_it_workspace_ids")
         if w_ids:
             for cg_id in r:
+                if not cg_id.default_workspace_master:
+                    cg_id.default_workspace_master = w_ids[0]
+
                 if not cg_id.it_workspace_ids:
                     cg_id.it_workspace_ids = [6, 0, w_ids]
                 for module_id in cg_id.module_ids:

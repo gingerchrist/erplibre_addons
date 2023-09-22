@@ -17,6 +17,7 @@ class ItCodeGeneratorModuleModel(models.Model):
     module_id = fields.Many2one(
         comodel_name="it.code_generator.module",
         string="Module",
+        ondelete="cascade",
     )
 
     it_workspace_ids = fields.Many2many(

@@ -16,6 +16,9 @@
                     <group>
                         <field name="module_ids"/>
                     </group>
+                    <group>
+                        <field name="default_workspace_master"/>
+                    </group>
                 </sheet>
             </form>
         </field>

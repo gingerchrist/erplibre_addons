@@ -68,6 +68,7 @@
                             <button class="oe_highlight" name="action_open_terminal_docker" string="Terminal docker" type="object" />
                             <button class="oe_highlight" name="action_docker_restore_db_image" string="Restore DB Image" type="object" />
                             <button class="oe_highlight" name="action_docker_logs" string="Docker logs" type="object" />
+                            <button class="oe_highlight" name="action_docker_install_dev_soft" string="Docker install dev" type="object" />
                         </group>
                         <group>
                             <group string="Status instance">
@@ -97,6 +98,10 @@
                     <page name="code_generator" string="Code">
                         <group string="Action">
                             <group>
+                                <button class="oe_highlight" name="action_install_and_generate_all_generated_module" string="All" type="object" />
+                                <div attrs="{'invisible': [('time_exec_action_install_and_generate_all_generated_module', '=', False)]}">Exec in <field name="time_exec_action_install_and_generate_all_generated_module" nolabel="1"/></div>
+                            </group>
+                            <group>
                                 <button class="oe_highlight" name="action_code_generator_generate_all" string="Generate all" type="object" />
                                 <div attrs="{'invisible': [('time_exec_action_code_generator_generate_all', '=', False)]}">Exec in <field name="time_exec_action_code_generator_generate_all" nolabel="1"/></div>
                             </group>
@@ -105,8 +110,8 @@
                                 <div attrs="{'invisible': [('time_exec_action_install_all_generated_module', '=', False)]}">Exec in <field name="time_exec_action_install_all_generated_module" nolabel="1"/></div>
                             </group>
                             <group>
-                                <button class="oe_highlight" name="action_install_and_generate_all_generated_module" string="Generate &amp; install all" type="object" />
-                                <div attrs="{'invisible': [('time_exec_action_install_and_generate_all_generated_module', '=', False)]}">Exec in <field name="time_exec_action_install_and_generate_all_generated_module" nolabel="1"/></div>
+                                <button class="oe_highlight" name="action_refresh_meta_cg_generated_module" string="Refresh CG" type="object" />
+                                <div attrs="{'invisible': [('time_exec_action_refresh_meta_cg_generated_module', '=', False)]}">Exec in <field name="time_exec_action_refresh_meta_cg_generated_module" nolabel="1"/></div>
                             </group>
                             <group>
                                 <button class="oe_highlight" name="action_install_all_uca_generated_module" string="Install UCA" type="object" />
@@ -125,8 +130,7 @@
                                 <div attrs="{'invisible': [('time_exec_action_git_commit_all_generated_module', '=', False)]}">Exec in <field name="time_exec_action_git_commit_all_generated_module" nolabel="1"/></div>
                             </group>
                             <group>
-                                <button class="oe_highlight" name="action_git_diff_all_generated_module" string="Git diff" type="object" />
-                                <div attrs="{'invisible': [('time_exec_action_git_diff_all_generated_module', '=', False)]}">Exec in <field name="time_exec_action_git_diff_all_generated_module" nolabel="1"/></div>
+                                <button class="oe_highlight" name="action_open_terminal_docker_tig" string="Terminal docker tig" type="object" />
                             </group>
                         </group>
                         <group string="Generator">
