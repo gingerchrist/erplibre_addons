@@ -137,33 +137,36 @@ class ItWorkspace(models.Model):
 
     url_instance_database_manager = fields.Char()
 
-    it_code_generator_ids = fields.One2many(
+    it_code_generator_ids = fields.Many2many(
         comodel_name="it.code_generator",
         inverse_name="it_workspace_id",
         string="Project",
     )
 
-    it_code_generator_module_ids = fields.One2many(
-        related="it_code_generator_ids.module_ids",
+    it_code_generator_module_ids = fields.Many2many(
+        comodel_name="it.code_generator.module",
+        # related="it_code_generator_ids.module_ids",
         string="Module",
         readonly=False,
     )
 
-    it_code_generator_model_ids = fields.One2many(
-        related="it_code_generator_module_ids.model_ids",
+    it_code_generator_model_ids = fields.Many2many(
+        # related="it_code_generator_module_ids.model_ids",
+        comodel_name="it.code_generator.module.model",
         string="Model",
         readonly=False,
     )
 
-    it_code_generator_field_ids = fields.One2many(
-        related="it_code_generator_model_ids.field_ids",
+    it_code_generator_field_ids = fields.Many2many(
+        # related="it_code_generator_model_ids.field_ids",
+        comodel_name="it.code_generator.module.model.field",
         string="Field",
         readonly=False,
     )
 
-    it_code_generator_finish_compute = fields.Boolean(
-        store=True, compute="_compute_it_code_generator_finish_compute"
-    )
+    # it_code_generator_finish_compute = fields.Boolean(
+    #     store=True, compute="_compute_it_code_generator_finish_compute"
+    # )
 
     it_code_generator_tree_addons = fields.Text(
         string="Tree addons",
@@ -277,34 +280,6 @@ class ItWorkspace(models.Model):
         )
 
     @api.multi
-    @api.depends("it_code_generator_ids")
-    def _compute_it_code_generator_finish_compute(self):
-        """Get the right summary for this job."""
-        for rec in self:
-            rec.it_code_generator_finish_compute = True
-            lst_module = list(
-                set(
-                    [
-                        b.id
-                        for a in rec.it_code_generator_ids
-                        for b in a.module_ids
-                    ]
-                ).difference(
-                    set([a.id for a in rec.it_code_generator_module_ids])
-                )
-            )
-            if lst_module:
-                for module_id_int in lst_module:
-                    rec.write(
-                        {
-                            "it_code_generator_module_ids": [
-                                (4, module_id_int, None)
-                            ]
-                        }
-                    )
-            print("it_code_generator_ids")
-
-    @api.multi
     @api.depends("folder", "method", "sftp_host", "sftp_port", "sftp_user")
     def _compute_name(self):
         """Get the right summary for this job."""
@@ -388,17 +363,104 @@ class ItWorkspace(models.Model):
         # Start with local storage
         for rec in self.filtered(lambda r: r.method == "local"):
             start = datetime.now()
-            rec.it_code_generator_ids.action_generate_code()
+            # TODO add try catch, add breakpoint, rerun loop. Careful when lose context
+            # Start with local storage
+            for rec_cg in rec.it_code_generator_ids:
+                for module_id in rec_cg.module_ids:
+                    # Support only 1, but can run in parallel multiple if no dependencies between
+                    module_name = module_id.name
+                    lst_model = []
+                    dct_model_conf = {"model": lst_model}
+                    for model_id in module_id.model_ids:
+                        lst_field = []
+                        lst_model.append(
+                            {"name": model_id.name, "fields": lst_field}
+                        )
+                        for field_id in model_id.field_ids:
+                            dct_value_field = {
+                                "name": field_id.name,
+                                "help": field_id.help,
+                                "type": field_id.type,
+                            }
+                            if field_id.type in [
+                                "many2one",
+                                "many2many",
+                                "one2many",
+                            ]:
+                                dct_value_field["relation"] = (
+                                    field_id.relation.name
+                                    if field_id.relation
+                                    else field_id.relation_manual
+                                )
+                                if not dct_value_field["relation"]:
+                                    msg_err = (
+                                        f"Model '{model_id.name}', field"
+                                        f" '{field_id.name}' need a relation"
+                                        f" because type is '{field_id.type}'"
+                                    )
+                                    raise exceptions.Warning(msg_err)
+                            if field_id.type in [
+                                "one2many",
+                            ]:
+                                dct_value_field["relation_field"] = (
+                                    field_id.field_relation.name
+                                    if field_id.field_relation
+                                    else field_id.field_relation_manual
+                                )
+                                if not dct_value_field["relation_field"]:
+                                    msg_err = (
+                                        f"Model '{model_id.name}', field"
+                                        f" '{field_id.name}' need a relation"
+                                        " field because type is"
+                                        f" '{field_id.type}'"
+                                    )
+                                    raise exceptions.Warning(msg_err)
+                            if field_id.widget:
+                                dct_value_field = field_id.widget
+                            lst_field.append(dct_value_field)
+                    if rec_cg.force_clean_before_generate:
+                        self._docker_remove_module(module_id)
+                    model_conf = (
+                        json.dumps(dct_model_conf)
+                        .replace('"', '\\"')
+                        .replace("'", "")
+                    )
+                    extra_arg = ""
+                    if model_conf:
+                        extra_arg = f" --config '{model_conf}'"
+                    cmd = (
+                        "cd /ERPLibre;./script/code_generator/new_project.py"
+                        f" --keep_bd_alive -m {module_name} -d"
+                        f" addons/addons{extra_arg}"
+                    )
+                    result = rec.exec_docker(cmd)
+                    rec.it_code_generator_log_addons = result
+                    # TODO option install continuous or stop execution
             end = datetime.now()
             td = (end - start).total_seconds()
             rec.time_exec_action_code_generator_generate_all = f"{td:.03f}s"
+
+    def _docker_remove_module(self, module_id):
+        for rec in self:
+            rec.exec_docker(
+                f"cd /ERPLibre/addons/addons;rm -rf ./{module_id.name};"
+            )
+            rec.exec_docker(
+                "cd /ERPLibre/addons/addons;rm -rf"
+                f" ./code_generator_template_{module_id.name};"
+            )
+            rec.exec_docker(
+                "cd /ERPLibre/addons/addons;rm -rf"
+                f" ./code_generator_{module_id.name};"
+            )
 
     def action_clear_all_generated_module(self):
         # Start with local storage
         for rec in self.filtered(lambda r: r.method == "local"):
             start = datetime.now()
             for cg in rec.it_code_generator_ids:
-                cg.action_clear_all_code()
+                for module_id in cg.module_ids:
+                    self._docker_remove_module(module_id)
             end = datetime.now()
             td = (end - start).total_seconds()
             rec.time_exec_action_clear_all_generated_module = f"{td:.03f}s"
@@ -408,8 +470,27 @@ class ItWorkspace(models.Model):
         # Start with local storage
         for rec in self.filtered(lambda r: r.method == "local"):
             start = datetime.now()
-            for cg in rec.it_code_generator_ids:
-                cg.action_git_commit_all_code()
+            # for cg in rec.it_code_generator_ids:
+            # Validate git directory exist
+            result = rec.exec_docker(f"ls /ERPLibre/addons/addons/.git")
+            if not result:
+                # Suppose git not exist
+                # This is not good if .git directory is in parent directory
+                result = rec.exec_docker(
+                    f"cd /ERPLibre/addons/addons;git init"
+                )
+            result = rec.exec_docker(
+                f"cd /ERPLibre/addons/addons;git status -s"
+            )
+            if result:
+                # Force add file and commit
+                result = rec.exec_docker(
+                    f"cd /ERPLibre/addons/addons;git add ."
+                )
+                result = rec.exec_docker(
+                    f"cd /ERPLibre/addons/addons;git commit -m 'Commit by"
+                    f" RobotLibre'"
+                )
             end = datetime.now()
             td = (end - start).total_seconds()
             rec.time_exec_action_git_commit_all_generated_module = (
@@ -423,10 +504,37 @@ class ItWorkspace(models.Model):
             diff = ""
             status = ""
             stat = ""
-            for cg in rec.it_code_generator_ids:
-                diff += cg.git_diff_all_code()
-                status += cg.git_status_all_code()
-                stat += cg.git_stat_all_code()
+            result = rec.exec_docker(f"ls /ERPLibre/addons/addons/.git")
+            if result:
+                diff += rec.exec_docker(f"cd /ERPLibre/addons/addons;git diff")
+                status += rec.exec_docker(
+                    f"cd /ERPLibre/addons/addons;git status"
+                )
+                for cg in rec.it_code_generator_ids:
+                    for module_id in cg.module_ids:
+                        result = rec.exec_docker(
+                            "cd /ERPLibre;./script/statistic/code_count.sh"
+                            f" ./addons/addons/{module_id.name};"
+                        )
+                        if result:
+                            stat += f"./addons/addons/{module_id.name}"
+                            stat += result
+
+                        result = rec.exec_docker(
+                            "cd /ERPLibre;./script/statistic/code_count.sh"
+                            f" ./addons/addons/code_generator_template_{module_id.name};"
+                        )
+                        if result:
+                            stat += f"./addons/addons/code_generator_template_{module_id.name}"
+                            stat += result
+
+                        result = rec.exec_docker(
+                            "cd /ERPLibre;./script/statistic/code_count.sh"
+                            f" ./addons/addons/code_generator_{module_id.name};"
+                        )
+                        if result:
+                            stat += f"./addons/addons/code_generator_{module_id.name}"
+                            stat += result
 
             rec.it_code_generator_diff = diff
             rec.it_code_generator_status = status
@@ -706,12 +814,16 @@ class ItWorkspace(models.Model):
                 file_docker_compose = os.path.join(
                     rec.folder, "docker-compose.yml"
                 )
-                workers = f"--workers {rec.docker_nb_proc}"
                 if rec.docker_cmd_extra:
                     docker_cmd_extra = f" {rec.docker_cmd_extra}"
                 else:
                     docker_cmd_extra = ""
-                # TODO support when rec.docker_is_behind_proxy is True
+                if rec.docker_is_behind_proxy:
+                    docker_behind_proxy = f" --proxy-mode"
+                    workers = f"--workers {max(2, rec.docker_nb_proc)}"
+                else:
+                    docker_behind_proxy = ""
+                    workers = f"--workers {rec.docker_nb_proc}"
                 docker_compose_content = f"""
 version: "3.3"
 services:
@@ -733,8 +845,8 @@ services:
     # not behind a proxy
     #command: odoo --workers 0
     # behind a proxy
-    #command: odoo --workers 2
-    command: odoo {workers}{docker_cmd_extra}
+    #command: odoo --workers 2 --proxy-mode
+    command: odoo {workers}{docker_behind_proxy}{docker_cmd_extra}
     volumes:
       # See the volume section at the end of the file
       - erplibre_data_dir:/home/odoo/.local/share/Odoo

@@ -6,17 +6,12 @@
         <field name="model">it.code_generator</field>
         <field name="arch" type="xml">
             <form string="Titre">
-                <header>
-                    <button class="oe_highlight" name="action_generate_code" string="Generate" type="object" />
-                    <button class="oe_highlight" name="action_clear_all_code" string="Clear" type="object" />
-                    <button class="oe_highlight" name="action_git_commit_all_code" string="Git commit" type="object" />
-                </header>
                 <sheet>
                     <group>
                         <field name="name"/>
                     </group>
                     <group>
-                        <field name="it_workspace_id"/>
+                        <field name="it_workspace_ids"/>
                     </group>
                     <group>
                         <field name="module_ids"/>
@@ -32,7 +27,7 @@
         <field name="arch" type="xml">
             <graph string="It code generator">
                 <field name="name" type="row"/>
-                <field name="it_workspace_id" type="row"/>
+                <field name="it_workspace_ids" type="row"/>
             </graph>
         </field>
     </record>
@@ -43,7 +38,7 @@
         <field name="arch" type="xml">
             <kanban class="o_kanban_mobile">
                 <field name="name"/>
-                <field name="it_workspace_id"/>
+                <field name="it_workspace_ids"/>
                 <field name="module_ids"/>
                 <templates>
                     <t t-name="kanban-box">
@@ -57,7 +52,7 @@
                                     </li>
                                     <li class="mb4">
                                         <strong>
-                                            <field name="it_workspace_id"/>
+                                            <field name="it_workspace_ids"/>
                                         </strong>
                                     </li>
                                     <li class="mb4">
@@ -80,7 +75,7 @@
         <field name="arch" type="xml">
             <pivot string="It code generator">
                 <field name="name" type="row"/>
-                <field name="it_workspace_id" type="row"/>
+                <field name="it_workspace_ids" type="row"/>
             </pivot>
         </field>
     </record>
@@ -91,7 +86,6 @@
         <field name="arch" type="xml">
             <search string="It code generator">
                 <filter domain="[('name','!=',False)]" name="name" string="Name"/>
-                <filter domain="[('it_workspace_id','!=',False)]" name="it_workspace_id" string="It Workspace"/>
                 <filter domain="[('module_ids','!=',False)]" name="module_ids" string=""/>
             </search>
         </field>
@@ -103,7 +97,7 @@
         <field name="arch" type="xml">
             <tree>
                 <field name="name"/>
-                <field name="it_workspace_id"/>
+                <field name="it_workspace_ids"/>
                 <field name="module_ids"/>
             </tree>
         </field>

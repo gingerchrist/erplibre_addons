@@ -16,6 +16,9 @@
                     <group>
                         <field name="model_ids"/>
                     </group>
+                    <group>
+                        <field name="it_workspace_ids"/>
+                    </group>
                 </sheet>
             </form>
         </field>

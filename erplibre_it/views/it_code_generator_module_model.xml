@@ -19,6 +19,9 @@
                     <group>
                         <field name="field_ids"/>
                     </group>
+                    <group>
+                        <field name="it_workspace_ids"/>
+                    </group>
                 </sheet>
             </form>
         </field>

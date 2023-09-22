@@ -94,15 +94,6 @@
                             <field name="db_is_restored"/>
                         </group>
                     </page>
-                    <page name="log" string="Log">
-                        <group string="Action">
-                            <button class="oe_highlight" name="action_open_terminal" string="Terminal" type="object" />
-                            <button class="oe_highlight" name="action_open_terminal_docker" string="Terminal docker" type="object" />
-                        </group>
-                        <group>
-                            <field name="log_workspace" />
-                        </group>
-                    </page>
                     <page name="code_generator" string="Code">
                         <group string="Action">
                             <group>
@@ -139,28 +130,36 @@
                             </group>
                         </group>
                         <group string="Generator">
-                            <field name="it_code_generator_ids" widget="many2many"/>
-                            <field name="it_code_generator_module_ids" widget="many2many"/>
-                            <field name="it_code_generator_model_ids" widget="many2many"/>
-                            <field name="it_code_generator_field_ids" widget="many2many"/>
+                            <field name="id" invisible="True"/>
+                            <field name="it_code_generator_ids" widget="many2many" context="{'default_it_workspace_ids': [id]}"/>
+                            <field name="it_code_generator_module_ids" widget="many2many" context="{'default_it_workspace_ids': [id]}"/>
+                            <field name="it_code_generator_model_ids" widget="many2many" context="{'default_it_workspace_ids': [id]}"/>
+                            <field name="it_code_generator_field_ids" widget="many2many" context="{'default_it_workspace_ids': [id]}"/>
                         </group>
-                        <notebook>
-                            <page name="code_generator_info_diff" string="Diff">
-                                <field name="it_code_generator_diff"/>
-                            </page>
-                            <page name="code_generator_info_status" string="Status">
-                                <field name="it_code_generator_status"/>
-                            </page>
-                            <page name="code_generator_info_stat" string="Stat">
-                                <field name="it_code_generator_stat"/>
-                            </page>
-                            <page name="code_generator_info_tree" string="Tree">
-                                <field name="it_code_generator_tree_addons"/>
-                            </page>
-                            <page name="code_generator_info_log" string="Log">
-                                <field name="it_code_generator_log_addons"/>
-                            </page>
-                        </notebook>
+                    </page>
+                    <page name="code_generator_info_diff" string="Diff">
+                        <field name="it_code_generator_diff"/>
+                    </page>
+                    <page name="code_generator_info_status" string="Status">
+                        <field name="it_code_generator_status"/>
+                    </page>
+                    <page name="code_generator_info_stat" string="Stat">
+                        <field name="it_code_generator_stat"/>
+                    </page>
+                    <page name="code_generator_info_tree" string="Tree">
+                        <field name="it_code_generator_tree_addons"/>
+                    </page>
+                    <page name="log" string="Log">
+                        <group string="Action">
+                            <button class="oe_highlight" name="action_open_terminal" string="Terminal" type="object" />
+                            <button class="oe_highlight" name="action_open_terminal_docker" string="Terminal docker" type="object" />
+                        </group>
+                        <group>
+                            <field name="log_workspace" />
+                        </group>
+                        <group>
+                            <field name="it_code_generator_log_addons"/>
+                        </group>
                     </page>
                 </notebook>
             </form>

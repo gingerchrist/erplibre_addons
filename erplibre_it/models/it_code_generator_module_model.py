@@ -18,3 +18,8 @@ class ItCodeGeneratorModuleModel(models.Model):
         comodel_name="it.code_generator.module",
         string="Module",
     )
+
+    it_workspace_ids = fields.Many2many(
+        comodel_name="it.workspace",
+        string="It Workspace",
+    )

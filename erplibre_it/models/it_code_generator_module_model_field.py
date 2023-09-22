@@ -74,6 +74,11 @@ class ItCodeGeneratorModuleModelField(models.Model):
         ]
     )
 
+    it_workspace_ids = fields.Many2many(
+        comodel_name="it.workspace",
+        string="It Workspace",
+    )
+
     @api.depends(
         "type",
         "relation",
