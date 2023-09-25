@@ -75,41 +75,25 @@ class ItWorkspace(models.Model):
         help="Longpolling need a proxy when workers > 1", default=False
     )
 
+    is_installed = fields.Boolean(
+        help="Need to install environnement before execute it."
+    )
+
     folder = fields.Char(
         required=True,
         default=lambda self: self._default_folder(),
         help="Absolute path for storing the it_workspaces",
     )
 
-    method = fields.Selection(
-        selection=[("local", "Local disk"), ("sftp", "Remote SFTP server")],
-        default="local",
-        help="Choose the storage method for this it_workspace.",
-    )
-
-    sftp_host = fields.Char(
-        string="SFTP Server",
-        help=(
-            "The host name or IP address from your remote server. For example"
-            " 192.168.0.1"
+    system_id = fields.Many2one(
+        "it.system",
+        required=True,
+        default=lambda self: self.env.ref(
+            "erplibre_it.it_system_local", raise_if_not_found=False
         ),
     )
 
     # TODO backup button and restore button
-
-    sftp_password = fields.Char(
-        string="SFTP Password",
-        help=(
-            "The password for the SFTP connection. If you specify a private"
-            " key file, then this is the password to decrypt it."
-        ),
-    )
-
-    sftp_port = fields.Integer(
-        string="SFTP Port",
-        default=22,
-        help="The port on the FTP server that accepts SSH/SFTP calls.",
-    )
 
     port_http = fields.Integer(
         string="port http",
@@ -126,11 +110,11 @@ class ItWorkspace(models.Model):
     db_name = fields.Char(string="DB instance name", default="test")
 
     db_is_restored = fields.Boolean(
-        help="When false, it's because actually restoring a DB."
+        readonly=True, help="When false, it's because actually restoring a DB."
     )
 
     docker_is_running = fields.Boolean(
-        help="When false, it's because not running docker."
+        readonly=True, help="When false, it's because not running docker."
     )
 
     url_instance = fields.Char()
@@ -198,14 +182,6 @@ class ItWorkspace(models.Model):
         help="Recreate docker-compose from configuration.",
     )
 
-    sftp_private_key = fields.Char(
-        string="Private key location",
-        help=(
-            "Path to the private key file. Only the Odoo user should have read"
-            " permissions for that file."
-        ),
-    )
-
     time_exec_action_code_generator_generate_all = fields.Char(
         readonly=True,
         help="Execution time of method action_code_generator_generate_all",
@@ -255,24 +231,6 @@ class ItWorkspace(models.Model):
         help="Execution time of method action_git_commit_all_generated_module",
     )
 
-    sftp_public_host_key = fields.Char(
-        string="Public host key",
-        help=(
-            "Verify SFTP server's identity using its public rsa-key. The host"
-            " key verification protects you from man-in-the-middle attacks."
-            " Can be generated with command 'ssh-keyscan -p PORT -H HOST/IP'"
-            " and the right key is immediately after the words 'ssh-rsa'."
-        ),
-    )
-
-    sftp_user = fields.Char(
-        string="Username in the SFTP Server",
-        help=(
-            "The username where the SFTP connection should be made with. This"
-            " is the user on the external server."
-        ),
-    )
-
     def _default_image_db_selection(self):
         return self.env["it.db.image"].search(
             [("name", "like", "erplibre_base")], limit=1
@@ -285,291 +243,294 @@ class ItWorkspace(models.Model):
     @api.model
     def _default_folder(self):
         """Default to ``it_workspaces`` folder inside current server datadir."""
-        return os.path.join(
-            tools.config["data_dir"], "backups", self.env.cr.dbname
-        )
+        # return os.path.join(
+        #     tools.config["data_dir"], "backups", self.env.cr.dbname
+        # )
+        return ""
 
     @api.multi
-    @api.depends("folder", "method", "sftp_host", "sftp_port", "sftp_user")
+    @api.depends("folder")
     def _compute_name(self):
         """Get the right summary for this job."""
         for rec in self:
-            if rec.method == "local":
-                rec.name = "%s @ localhost" % rec.folder
-            elif rec.method == "sftp":
-                rec.name = "sftp://%s@%s:%d%s" % (
-                    rec.sftp_user,
-                    rec.sftp_host,
-                    rec.sftp_port,
-                    rec.folder,
-                )
+            rec.name = rec.folder
 
     @api.multi
-    @api.constrains("folder", "method")
-    def _check_folder(self):
-        """Do not use the filestore or you will backup your it_workspaces."""
-        for record in self:
-            if record.method == "local" and record.folder.startswith(
-                tools.config.filestore(self.env.cr.dbname)
-            ):
-                raise exceptions.ValidationError(
-                    _(
-                        "Do not save it_workspaces on your filestore, or you"
-                        " will it_workspace your it_workspaces too!"
-                    )
-                )
-
-    @api.multi
-    def action_sftp_test_connection(self):
-        """Check if the SFTP settings are correct."""
-        try:
-            # Just open and close the connection
-            with self.sftp_connection():
-                raise exceptions.Warning(_("Connection Test Succeeded!"))
-        except (
-            pysftp.CredentialException,
-            pysftp.ConnectionException,
-            pysftp.SSHException,
-        ):
-            _logger.info("Connection Test Failed!", exc_info=True)
-            raise exceptions.Warning(_("Connection Test Failed!"))
+    @api.depends("folder", "system_id")
+    def _compute_is_installed(self):
+        for rec in self:
+            # TODO validate installation is done before
+            rec.is_installed = False
 
     def update_docker_compose_ps(self):
         for rec in self:
-            result = os.popen(f"cd {rec.folder};docker compose ps").read()
+            result = rec.system_id.execute_with_result(
+                f"cd {rec.folder};docker compose ps"
+            )
             rec.docker_compose_ps = f"\n{result}"
 
     @api.multi
     def action_stop_docker_compose(self):
-        # Start with local storage
-        for rec in self.filtered(lambda r: r.method == "local"):
-            result = os.popen(f"cd {rec.folder};docker compose down").read()
+        for rec in self:
+            with rec.it_workspace_log():
+                rec.system_id.execute_with_result(
+                    f"cd {rec.folder};docker compose down"
+                )
         self.update_docker_compose_ps()
         self.action_docker_check_docker_ps()
 
     @api.multi
     def action_docker_status(self):
-        # Start with local storage
-        for rec in self.filtered(lambda r: r.method == "local"):
-            result = os.popen(f"cd {rec.folder};docker compose ps").read()
-            rec.docker_compose_ps = f"\n{result}"
+        for rec in self:
+            with rec.it_workspace_log():
+                result = rec.system_id.execute_with_result(
+                    f"cd {rec.folder};docker compose ps"
+                )
+                rec.docker_compose_ps = f"\n{result}"
 
+    @api.multi
     def action_docker_check_docker_ps(self):
-        # Start with local storage
-        for rec in self.filtered(lambda r: r.method == "local"):
-            result = os.popen(
-                f"cd {rec.folder};docker compose ps --format json"
-            ).read()
-            # rec.docker_compose_ps = f"\n{result}"
-            rec.docker_is_running = result
+        for rec in self:
+            with rec.it_workspace_log():
+                result = rec.system_id.execute_with_result(
+                    f"cd {rec.folder};docker compose ps --format json"
+                )
+                # rec.docker_compose_ps = f"\n{result}"
+                rec.docker_is_running = result
 
+    @api.multi
     def action_docker_check_docker_tree_addons(self):
-        # Start with local storage
-        for rec in self.filtered(lambda r: r.method == "local"):
-            result = os.popen(f"cd {rec.folder};tree ").read()
-            rec.it_code_generator_tree_addons = result
+        for rec in self:
+            with rec.it_workspace_log():
+                result = rec.system_id.execute_with_result(
+                    f"cd {rec.folder};tree"
+                )
+                rec.it_code_generator_tree_addons = result
 
+    @api.multi
     def action_code_generator_generate_all(self):
-        # Start with local storage
-        for rec in self.filtered(lambda r: r.method == "local"):
-            start = datetime.now()
-            # TODO add try catch, add breakpoint, rerun loop. Careful when lose context
-            # Start with local storage
-            # Increase speed
-            # TODO keep old configuration of config.conf and not overwrite all
-            # rec.exec_docker("cd /ERPLibre;make config_gen_code_generator")
-            for rec_cg in rec.it_code_generator_ids:
-                for module_id in rec_cg.module_ids:
-                    # Support only 1, but can run in parallel multiple if no dependencies between
-                    module_name = module_id.name
-                    lst_model = []
-                    dct_model_conf = {"model": lst_model}
-                    for model_id in module_id.model_ids:
-                        lst_field = []
-                        lst_model.append(
-                            {"name": model_id.name, "fields": lst_field}
+        for rec in self:
+            with rec.it_workspace_log():
+                start = datetime.now()
+                # TODO add try catch, add breakpoint, rerun loop. Careful when lose context
+                # Start with local storage
+                # Increase speed
+                # TODO keep old configuration of config.conf and not overwrite all
+                # rec.system_id.exec_docker("cd /ERPLibre;make config_gen_code_generator", rec.folder)
+                for rec_cg in rec.it_code_generator_ids:
+                    for module_id in rec_cg.module_ids:
+                        # Support only 1, but can run in parallel multiple if no dependencies between
+                        module_name = module_id.name
+                        lst_model = []
+                        dct_model_conf = {"model": lst_model}
+                        for model_id in module_id.model_ids:
+                            lst_field = []
+                            lst_model.append(
+                                {"name": model_id.name, "fields": lst_field}
+                            )
+                            for field_id in model_id.field_ids:
+                                dct_value_field = {
+                                    "name": field_id.name,
+                                    "help": field_id.help,
+                                    "type": field_id.type,
+                                }
+                                if field_id.type in [
+                                    "many2one",
+                                    "many2many",
+                                    "one2many",
+                                ]:
+                                    dct_value_field["relation"] = (
+                                        field_id.relation.name
+                                        if field_id.relation
+                                        else field_id.relation_manual
+                                    )
+                                    if not dct_value_field["relation"]:
+                                        msg_err = (
+                                            f"Model '{model_id.name}', field"
+                                            f" '{field_id.name}' need a"
+                                            " relation because type is"
+                                            f" '{field_id.type}'"
+                                        )
+                                        raise exceptions.Warning(msg_err)
+                                if field_id.type in [
+                                    "one2many",
+                                ]:
+                                    dct_value_field["relation_field"] = (
+                                        field_id.field_relation.name
+                                        if field_id.field_relation
+                                        else field_id.field_relation_manual
+                                    )
+                                    if not dct_value_field["relation_field"]:
+                                        msg_err = (
+                                            f"Model '{model_id.name}', field"
+                                            f" '{field_id.name}' need a"
+                                            " relation field because type is"
+                                            f" '{field_id.type}'"
+                                        )
+                                        raise exceptions.Warning(msg_err)
+                                if field_id.widget:
+                                    dct_value_field = field_id.widget
+                                lst_field.append(dct_value_field)
+                        if rec_cg.force_clean_before_generate:
+                            self._docker_remove_module(module_id)
+                        model_conf = (
+                            json.dumps(dct_model_conf)
+                            .replace('"', '\\"')
+                            .replace("'", "")
                         )
-                        for field_id in model_id.field_ids:
-                            dct_value_field = {
-                                "name": field_id.name,
-                                "help": field_id.help,
-                                "type": field_id.type,
-                            }
-                            if field_id.type in [
-                                "many2one",
-                                "many2many",
-                                "one2many",
-                            ]:
-                                dct_value_field["relation"] = (
-                                    field_id.relation.name
-                                    if field_id.relation
-                                    else field_id.relation_manual
-                                )
-                                if not dct_value_field["relation"]:
-                                    msg_err = (
-                                        f"Model '{model_id.name}', field"
-                                        f" '{field_id.name}' need a relation"
-                                        f" because type is '{field_id.type}'"
-                                    )
-                                    raise exceptions.Warning(msg_err)
-                            if field_id.type in [
-                                "one2many",
-                            ]:
-                                dct_value_field["relation_field"] = (
-                                    field_id.field_relation.name
-                                    if field_id.field_relation
-                                    else field_id.field_relation_manual
-                                )
-                                if not dct_value_field["relation_field"]:
-                                    msg_err = (
-                                        f"Model '{model_id.name}', field"
-                                        f" '{field_id.name}' need a relation"
-                                        " field because type is"
-                                        f" '{field_id.type}'"
-                                    )
-                                    raise exceptions.Warning(msg_err)
-                            if field_id.widget:
-                                dct_value_field = field_id.widget
-                            lst_field.append(dct_value_field)
-                    if rec_cg.force_clean_before_generate:
-                        self._docker_remove_module(module_id)
-                    model_conf = (
-                        json.dumps(dct_model_conf)
-                        .replace('"', '\\"')
-                        .replace("'", "")
-                    )
-                    extra_arg = ""
-                    if model_conf:
-                        extra_arg = f" --config '{model_conf}'"
-                    cmd = (
-                        "cd /ERPLibre;./script/code_generator/new_project.py"
-                        f" --keep_bd_alive -m {module_name} -d"
-                        f" addons/addons{extra_arg}"
-                    )
-                    result = rec.exec_docker(cmd)
-                    rec.it_code_generator_log_addons = result
-            # rec.exec_docker("cd /ERPLibre;make config_gen_all")
-            end = datetime.now()
-            td = (end - start).total_seconds()
-            rec.time_exec_action_code_generator_generate_all = f"{td:.03f}s"
+                        extra_arg = ""
+                        if model_conf:
+                            extra_arg = f" --config '{model_conf}'"
+                        cmd = (
+                            "cd /ERPLibre;./script/code_generator/new_project.py"
+                            f" --keep_bd_alive -m {module_name} -d"
+                            f" addons/addons{extra_arg}"
+                        )
+                        result = rec.system_id.exec_docker(cmd, rec.folder)
+                        rec.it_code_generator_log_addons = result
+                # rec.system_id.exec_docker("cd /ERPLibre;make config_gen_all", rec.folder)
+                end = datetime.now()
+                td = (end - start).total_seconds()
+                rec.time_exec_action_code_generator_generate_all = (
+                    f"{td:.03f}s"
+                )
 
     def _docker_remove_module(self, module_id):
         for rec in self:
-            rec.exec_docker(
-                f"cd /ERPLibre/addons/addons;rm -rf ./{module_id.name};"
-            )
-            rec.exec_docker(
-                "cd /ERPLibre/addons/addons;rm -rf"
-                f" ./code_generator_template_{module_id.name};"
-            )
-            rec.exec_docker(
-                "cd /ERPLibre/addons/addons;rm -rf"
-                f" ./code_generator_{module_id.name};"
-            )
+            with rec.it_workspace_log():
+                rec.system_id.exec_docker(
+                    f"cd /ERPLibre/addons/addons;rm -rf ./{module_id.name};",
+                    rec.folder,
+                )
+                rec.system_id.exec_docker(
+                    "cd /ERPLibre/addons/addons;rm -rf"
+                    f" ./code_generator_template_{module_id.name};",
+                    rec.folder,
+                )
+                rec.system_id.exec_docker(
+                    "cd /ERPLibre/addons/addons;rm -rf"
+                    f" ./code_generator_{module_id.name};",
+                    rec.folder,
+                )
 
+    @api.multi
     def action_clear_all_generated_module(self):
-        # Start with local storage
-        for rec in self.filtered(lambda r: r.method == "local"):
-            start = datetime.now()
-            for cg in rec.it_code_generator_ids:
-                for module_id in cg.module_ids:
-                    self._docker_remove_module(module_id)
-            end = datetime.now()
-            td = (end - start).total_seconds()
-            rec.time_exec_action_clear_all_generated_module = f"{td:.03f}s"
+        for rec in self:
+            with rec.it_workspace_log():
+                start = datetime.now()
+                for cg in rec.it_code_generator_ids:
+                    for module_id in cg.module_ids:
+                        self._docker_remove_module(module_id)
+                end = datetime.now()
+                td = (end - start).total_seconds()
+                rec.time_exec_action_clear_all_generated_module = f"{td:.03f}s"
         self.action_it_check_all()
 
+    @api.multi
     def action_git_commit_all_generated_module(self):
-        # Start with local storage
-        for rec in self.filtered(lambda r: r.method == "local"):
-            start = datetime.now()
-            # for cg in rec.it_code_generator_ids:
-            # Validate git directory exist
-            result = rec.exec_docker(f"ls /ERPLibre/addons/addons/.git")
-            if not result:
-                # Suppose git not exist
-                # This is not good if .git directory is in parent directory
-                result = rec.exec_docker(
-                    f"cd /ERPLibre/addons/addons;git init"
+        for rec in self:
+            with rec.it_workspace_log():
+                start = datetime.now()
+                # for cg in rec.it_code_generator_ids:
+                # Validate git directory exist
+                result = rec.system_id.exec_docker(
+                    f"ls /ERPLibre/addons/addons/.git", rec.folder
                 )
-            result = rec.exec_docker(
-                f"cd /ERPLibre/addons/addons;git status -s"
-            )
-            if result:
-                # Force add file and commit
-                result = rec.exec_docker(
-                    f"cd /ERPLibre/addons/addons;git add ."
+                if not result:
+                    # Suppose git not exist
+                    # This is not good if .git directory is in parent directory
+                    result = rec.system_id.exec_docker(
+                        f"cd /ERPLibre/addons/addons;git init", rec.folder
+                    )
+                result = rec.system_id.exec_docker(
+                    f"cd /ERPLibre/addons/addons;git status -s", rec.folder
                 )
-                result = rec.exec_docker(
-                    f"cd /ERPLibre/addons/addons;git commit -m 'Commit by"
-                    f" RobotLibre'"
+                if result:
+                    # Force add file and commit
+                    result = rec.system_id.exec_docker(
+                        f"cd /ERPLibre/addons/addons;git add .", rec.folder
+                    )
+                    result = rec.system_id.exec_docker(
+                        f"cd /ERPLibre/addons/addons;git commit -m 'Commit by"
+                        f" RobotLibre'",
+                        rec.folder,
+                    )
+                end = datetime.now()
+                td = (end - start).total_seconds()
+                rec.time_exec_action_git_commit_all_generated_module = (
+                    f"{td:.03f}s"
                 )
-            end = datetime.now()
-            td = (end - start).total_seconds()
-            rec.time_exec_action_git_commit_all_generated_module = (
-                f"{td:.03f}s"
-            )
 
+    @api.multi
     def action_refresh_meta_cg_generated_module(self):
-        # Start with local storage
-        for rec in self.filtered(lambda r: r.method == "local"):
-            start = datetime.now()
-            diff = ""
-            status = ""
-            stat = ""
-            result = rec.exec_docker(f"ls /ERPLibre/addons/addons/.git")
-            if result:
-                # Create diff
-                diff += rec.exec_docker(f"cd /ERPLibre/addons/addons;git diff")
-                # Create status
-                status += rec.exec_docker(
-                    f"cd /ERPLibre/addons/addons;git status"
+        for rec in self:
+            with rec.it_workspace_log():
+                start = datetime.now()
+                diff = ""
+                status = ""
+                stat = ""
+                result = rec.system_id.exec_docker(
+                    f"ls /ERPLibre/addons/addons/.git", rec.folder
                 )
-                for cg in rec.it_code_generator_ids:
-                    # Create statistic
-                    for module_id in cg.module_ids:
-                        result = rec.exec_docker(
-                            "cd /ERPLibre;./script/statistic/code_count.sh"
-                            f" ./addons/addons/{module_id.name};"
-                        )
-                        if result:
-                            stat += f"./addons/addons/{module_id.name}"
-                            stat += result
+                if result:
+                    # Create diff
+                    diff += rec.system_id.exec_docker(
+                        f"cd /ERPLibre/addons/addons;git diff", rec.folder
+                    )
+                    # Create status
+                    status += rec.system_id.exec_docker(
+                        f"cd /ERPLibre/addons/addons;git status", rec.folder
+                    )
+                    for cg in rec.it_code_generator_ids:
+                        # Create statistic
+                        for module_id in cg.module_ids:
+                            result = rec.system_id.exec_docker(
+                                "cd /ERPLibre;./script/statistic/code_count.sh"
+                                f" ./addons/addons/{module_id.name};",
+                                rec.folder,
+                            )
+                            if result:
+                                stat += f"./addons/addons/{module_id.name}"
+                                stat += result
 
-                        result = rec.exec_docker(
-                            "cd /ERPLibre;./script/statistic/code_count.sh"
-                            f" ./addons/addons/code_generator_template_{module_id.name};"
-                        )
-                        if result:
-                            stat += f"./addons/addons/code_generator_template_{module_id.name}"
-                            stat += result
+                            result = rec.system_id.exec_docker(
+                                "cd /ERPLibre;./script/statistic/code_count.sh"
+                                f" ./addons/addons/code_generator_template_{module_id.name};",
+                                rec.folder,
+                            )
+                            if result:
+                                stat += f"./addons/addons/code_generator_template_{module_id.name}"
+                                stat += result
 
-                        result = rec.exec_docker(
-                            "cd /ERPLibre;./script/statistic/code_count.sh"
-                            f" ./addons/addons/code_generator_{module_id.name};"
-                        )
-                        if result:
-                            stat += f"./addons/addons/code_generator_{module_id.name}"
-                            stat += result
+                            result = rec.system_id.exec_docker(
+                                "cd /ERPLibre;./script/statistic/code_count.sh"
+                                f" ./addons/addons/code_generator_{module_id.name};",
+                                rec.folder,
+                            )
+                            if result:
+                                stat += f"./addons/addons/code_generator_{module_id.name}"
+                                stat += result
 
-                        # Autofix attached field to workspace
-                        if rec not in module_id.it_workspace_ids:
-                            module_id.it_workspace_ids = [(4, rec.id)]
-                        for model_id in module_id.model_ids:
-                            if rec not in model_id.it_workspace_ids:
-                                model_id.it_workspace_ids = [(4, rec.id)]
-                            for field_id in model_id.field_ids:
-                                if rec not in field_id.it_workspace_ids:
-                                    field_id.it_workspace_ids = [(4, rec.id)]
+                            # Autofix attached field to workspace
+                            if rec not in module_id.it_workspace_ids:
+                                module_id.it_workspace_ids = [(4, rec.id)]
+                            for model_id in module_id.model_ids:
+                                if rec not in model_id.it_workspace_ids:
+                                    model_id.it_workspace_ids = [(4, rec.id)]
+                                for field_id in model_id.field_ids:
+                                    if rec not in field_id.it_workspace_ids:
+                                        field_id.it_workspace_ids = [
+                                            (4, rec.id)
+                                        ]
 
-            rec.it_code_generator_diff = diff
-            rec.it_code_generator_status = status
-            rec.it_code_generator_stat = stat
-            end = datetime.now()
-            td = (end - start).total_seconds()
-            rec.time_exec_action_refresh_meta_cg_generated_module = (
-                f"{td:.03f}s"
-            )
+                rec.it_code_generator_diff = diff
+                rec.it_code_generator_status = status
+                rec.it_code_generator_stat = stat
+                end = datetime.now()
+                td = (end - start).total_seconds()
+                rec.time_exec_action_refresh_meta_cg_generated_module = (
+                    f"{td:.03f}s"
+                )
 
     @api.multi
     def write(self, values):
@@ -577,332 +538,312 @@ class ItWorkspace(models.Model):
 
         status = super().write(values)
         if "it_code_generator_ids" in values.keys():
-            # Update all the list
+            # Update all the list of code generator, associate to this workspace
             for rec in self:
-                cg_missing_ids_i = list(
-                    set(cg_before_ids_i).difference(
-                        set(rec.it_code_generator_ids.ids)
+                with rec.it_workspace_log():
+                    cg_missing_ids_i = list(
+                        set(cg_before_ids_i).difference(
+                            set(rec.it_code_generator_ids.ids)
+                        )
                     )
-                )
-                cg_missing_ids = self.env["it.code_generator"].browse(
-                    cg_missing_ids_i
-                )
-                for cg_id in cg_missing_ids:
-                    for module_id in cg_id.module_ids:
-                        if rec in module_id.it_workspace_ids:
-                            module_id.it_workspace_ids = [(3, rec.id)]
-                        for model_id in module_id.model_ids:
-                            if rec in model_id.it_workspace_ids:
-                                model_id.it_workspace_ids = [(3, rec.id)]
-                            for field_id in model_id.field_ids:
-                                if rec in field_id.it_workspace_ids:
-                                    field_id.it_workspace_ids = [(3, rec.id)]
-                cg_adding_ids_i = list(
-                    set(rec.it_code_generator_ids.ids).difference(
-                        set(cg_before_ids_i)
+                    cg_missing_ids = self.env["it.code_generator"].browse(
+                        cg_missing_ids_i
                     )
-                )
-                cg_adding_ids = self.env["it.code_generator"].browse(
-                    cg_adding_ids_i
-                )
-                for cg_id in cg_adding_ids:
-                    for module_id in cg_id.module_ids:
-                        if rec not in module_id.it_workspace_ids:
-                            module_id.it_workspace_ids = [(4, rec.id)]
-                        for model_id in module_id.model_ids:
-                            if rec not in model_id.it_workspace_ids:
-                                model_id.it_workspace_ids = [(4, rec.id)]
-                            for field_id in model_id.field_ids:
-                                if rec not in field_id.it_workspace_ids:
-                                    field_id.it_workspace_ids = [(4, rec.id)]
+                    for cg_id in cg_missing_ids:
+                        for module_id in cg_id.module_ids:
+                            if rec in module_id.it_workspace_ids:
+                                module_id.it_workspace_ids = [(3, rec.id)]
+                            for model_id in module_id.model_ids:
+                                if rec in model_id.it_workspace_ids:
+                                    model_id.it_workspace_ids = [(3, rec.id)]
+                                for field_id in model_id.field_ids:
+                                    if rec in field_id.it_workspace_ids:
+                                        field_id.it_workspace_ids = [
+                                            (3, rec.id)
+                                        ]
+                    cg_adding_ids_i = list(
+                        set(rec.it_code_generator_ids.ids).difference(
+                            set(cg_before_ids_i)
+                        )
+                    )
+                    cg_adding_ids = self.env["it.code_generator"].browse(
+                        cg_adding_ids_i
+                    )
+                    for cg_id in cg_adding_ids:
+                        for module_id in cg_id.module_ids:
+                            if rec not in module_id.it_workspace_ids:
+                                module_id.it_workspace_ids = [(4, rec.id)]
+                            for model_id in module_id.model_ids:
+                                if rec not in model_id.it_workspace_ids:
+                                    model_id.it_workspace_ids = [(4, rec.id)]
+                                for field_id in model_id.field_ids:
+                                    if rec not in field_id.it_workspace_ids:
+                                        field_id.it_workspace_ids = [
+                                            (4, rec.id)
+                                        ]
         return status
 
+    @api.multi
     def action_install_all_generated_module(self):
-        # Start with local storage
-        for rec in self.filtered(lambda r: r.method == "local"):
-            start = datetime.now()
-            module_list = ",".join(
-                [
-                    m.name
-                    for cg in rec.it_code_generator_ids
-                    for m in cg.module_ids
-                ]
-            )
-            last_cmd = rec.docker_cmd_extra
-            rec.docker_cmd_extra = (
-                f"-d {rec.db_name} -i {module_list} -u {module_list}"
-            )
-            # TODO option install continuous or stop execution.
-            # TODO Use install continuous in production, else stop execution for dev
-            # TODO actually, it's continuous
-            # TODO maybe add an auto-update when detect installation finish
-            rec.action_stop_docker_compose()
-            rec.action_start_docker_compose()
-            rec.docker_cmd_extra = last_cmd
-            end = datetime.now()
-            td = (end - start).total_seconds()
-            rec.time_exec_action_install_all_generated_module = f"{td:.03f}s"
+        for rec in self:
+            with rec.it_workspace_log():
+                start = datetime.now()
+                module_list = ",".join(
+                    [
+                        m.name
+                        for cg in rec.it_code_generator_ids
+                        for m in cg.module_ids
+                    ]
+                )
+                last_cmd = rec.docker_cmd_extra
+                rec.docker_cmd_extra = (
+                    f"-d {rec.db_name} -i {module_list} -u {module_list}"
+                )
+                # TODO option install continuous or stop execution.
+                # TODO Use install continuous in production, else stop execution for dev
+                # TODO actually, it's continuous
+                # TODO maybe add an auto-update when detect installation finish
+                rec.action_stop_docker_compose()
+                rec.action_start_docker_compose()
+                rec.docker_cmd_extra = last_cmd
+                end = datetime.now()
+                td = (end - start).total_seconds()
+                rec.time_exec_action_install_all_generated_module = (
+                    f"{td:.03f}s"
+                )
         self.action_it_check_all()
 
+    @api.multi
     def action_install_all_uca_generated_module(self):
-        # Start with local storage
-        for rec in self.filtered(lambda r: r.method == "local"):
-            start = datetime.now()
-            module_list = ",".join(
-                [
-                    f"code_generator_template_{m.name},{m.name}"
-                    for cg in rec.it_code_generator_ids
-                    for m in cg.module_ids
-                ]
-            )
-            self.exec_docker(
-                "cd /ERPLibre;./script/database/db_restore.py --database"
-                " cg_uca"
-            )
-            self.exec_docker(
-                "cd /ERPLibre;./script/addons/install_addons_dev.sh cg_uca"
-                f" {module_list}"
-            )
+        for rec in self:
+            with rec.it_workspace_log():
+                start = datetime.now()
+                module_list = ",".join(
+                    [
+                        f"code_generator_template_{m.name},{m.name}"
+                        for cg in rec.it_code_generator_ids
+                        for m in cg.module_ids
+                    ]
+                )
+                rec.system_id.exec_docker(
+                    "cd /ERPLibre;./script/database/db_restore.py --database"
+                    " cg_uca",
+                    rec.folder,
+                )
+                rec.system_id.exec_docker(
+                    "cd /ERPLibre;./script/addons/install_addons_dev.sh cg_uca"
+                    f" {module_list}",
+                    rec.folder,
+                )
 
-            end = datetime.now()
-            td = (end - start).total_seconds()
-            rec.time_exec_action_install_all_uca_generated_module = (
-                f"{td:.03f}s"
-            )
+                end = datetime.now()
+                td = (end - start).total_seconds()
+                rec.time_exec_action_install_all_uca_generated_module = (
+                    f"{td:.03f}s"
+                )
         self.action_it_check_all()
 
+    @api.multi
     def action_install_all_ucb_generated_module(self):
-        # Start with local storage
-        for rec in self.filtered(lambda r: r.method == "local"):
-            start = datetime.now()
-            module_list = ",".join(
-                [
-                    f"code_generator_{m.name}"
-                    for cg in rec.it_code_generator_ids
-                    for m in cg.module_ids
-                ]
-            )
-            self.exec_docker(
-                "cd /ERPLibre;./script/database/db_restore.py --database"
-                " cg_ucb"
-            )
-            self.exec_docker(
-                "cd /ERPLibre;./script/addons/install_addons_dev.sh cg_ucb"
-                f" {module_list}"
-            )
+        for rec in self:
+            with rec.it_workspace_log():
+                start = datetime.now()
+                module_list = ",".join(
+                    [
+                        f"code_generator_{m.name}"
+                        for cg in rec.it_code_generator_ids
+                        for m in cg.module_ids
+                    ]
+                )
+                rec.system_id.exec_docker(
+                    "cd /ERPLibre;./script/database/db_restore.py --database"
+                    " cg_ucb",
+                    rec.folder,
+                )
+                rec.system_id.exec_docker(
+                    "cd /ERPLibre;./script/addons/install_addons_dev.sh cg_ucb"
+                    f" {module_list}",
+                    rec.folder,
+                )
 
-            end = datetime.now()
-            td = (end - start).total_seconds()
-            rec.time_exec_action_install_all_ucb_generated_module = (
-                f"{td:.03f}s"
-            )
+                end = datetime.now()
+                td = (end - start).total_seconds()
+                rec.time_exec_action_install_all_ucb_generated_module = (
+                    f"{td:.03f}s"
+                )
         self.action_it_check_all()
 
+    @api.multi
     def action_install_and_generate_all_generated_module(self):
-        # Start with local storage
-        for rec in self.filtered(lambda r: r.method == "local"):
-            start = datetime.now()
-            rec.action_code_generator_generate_all()
-            rec.action_install_all_generated_module()
-            rec.action_git_commit_all_generated_module()
-            rec.action_refresh_meta_cg_generated_module()
-            end = datetime.now()
-            td = (end - start).total_seconds()
-            rec.time_exec_action_install_and_generate_all_generated_module = (
-                f"{td:.03f}s"
-            )
+        for rec in self:
+            with rec.it_workspace_log():
+                start = datetime.now()
+                rec.action_code_generator_generate_all()
+                rec.action_install_all_generated_module()
+                rec.action_git_commit_all_generated_module()
+                rec.action_refresh_meta_cg_generated_module()
+                end = datetime.now()
+                td = (end - start).total_seconds()
+                rec.time_exec_action_install_and_generate_all_generated_module = (
+                    f"{td:.03f}s"
+                )
 
+    @api.multi
     def action_docker_logs(self):
-        # Start with local storage
-        for rec in self.filtered(lambda r: r.method == "local"):
-            os.popen(
-                f"cd {rec.folder};gnome-terminal --window -- bash -c 'docker"
-                " compose logs -f;bash'"
-            )
+        for rec in self:
+            with rec.it_workspace_log():
+                rec.system_id.execute_gnome_terminal(
+                    rec.folder, cmd="docker compose logs -f"
+                )
 
     @api.multi
     def action_open_terminal(self):
-        # Start with local storage
-        for rec in self.filtered(lambda r: r.method == "local"):
-            os.popen(f"cd {rec.folder};gnome-terminal --window -- bash")
+        for rec in self:
+            with rec.it_workspace_log():
+                rec.system_id.execute_gnome_terminal(rec.folder)
 
     @api.multi
-    def action_refresh_db_image(self):
-        path_image_db = os.path.join(os.getcwd(), "image_db")
-        for file_name in os.listdir(path_image_db):
-            if file_name.endswith(".zip"):
-                file_path = os.path.join(path_image_db, file_name)
-                image_name = file_name[:-4]
-                image_db_id = self.env["it.db.image"].search(
-                    [("name", "=", image_name)]
-                )
-                if not image_db_id:
-                    self.env["it.db.image"].create(
-                        {"name": image_name, "path": file_path}
-                    )
-
-            # @api.multi
-
     def action_open_terminal_docker(self):
-        # Start with local storage
-        for rec in self.filtered(lambda r: r.method == "local"):
-            workspace = os.path.basename(rec.folder)
-            docker_name = f"{workspace}-ERPLibre-1"
-            os.popen(
-                f"cd {rec.folder};gnome-terminal --window -- bash -c 'docker"
-                f" exec -u root -ti {docker_name} /bin/bash;bash'"
-            )
-
-    def action_open_terminal_docker_tig(self):
-        # Start with local storage
-        for rec in self.filtered(lambda r: r.method == "local"):
-            workspace = os.path.basename(rec.folder)
-            docker_name = f"{workspace}-ERPLibre-1"
-            result = self.exec_docker("which tig")
-            if not result:
-                self.action_docker_install_dev_soft()
-            os.popen(
-                f"cd {rec.folder};gnome-terminal --window -- bash -c 'docker"
-                f' exec -u root -ti {docker_name} /bin/bash -c "cd'
-                " /ERPLibre;cd ./addons/addons;tig\";bash'"
-            )
-
-    def action_docker_install_dev_soft(self):
-        # Start with local storage
-        for rec in self.filtered(lambda r: r.method == "local"):
-            rec.exec_docker(f"apt update;apt install -y tig vim htop tree")
-
-    def exec_docker(self, cmd):
-        lst_result = []
         for rec in self:
-            workspace = os.path.basename(rec.folder)
-            docker_name = f"{workspace}-ERPLibre-1"
-            # for "docker exec", command line need "-ti", but "popen" no need
-            # TODO catch error, stderr with stdout
-            result = os.popen(
-                f"cd {rec.folder};docker exec -u root {docker_name}"
-                f' /bin/bash -c "{cmd}"'
-            ).read()
-            # time make doc_markdown
-            # time make db_list
-            # ./.venv/bin/python3 ./odoo/odoo-bin db --list --user_password mysecretpassword --user_login odoo
-            # psycopg2.OperationalError: connection to server on socket "/var/run/postgresql/.s.PGSQL.5432" failed: No such file or directory
-            # 	Is the server running locally and accepting connections on that socket
-            if len(self) == 1:
-                return result
-            else:
-                lst_result.append(result)
-        return lst_result
+            with rec.it_workspace_log():
+                workspace = os.path.basename(rec.folder)
+                docker_name = f"{workspace}-ERPLibre-1"
+                rec.system_id.execute_gnome_terminal(
+                    rec.folder,
+                    cmd=f"docker exec -u root -ti {docker_name} /bin/bash",
+                )
 
+    @api.multi
+    def action_open_terminal_docker_tig(self):
+        for rec in self:
+            with rec.it_workspace_log():
+                result = rec.system_id.exec_docker("which tig", rec.folder)
+                if not result:
+                    self.action_docker_install_dev_soft()
+                rec.system_id.execute_gnome_terminal(
+                    rec.folder,
+                    cmd="cd /ERPLibre;cd ./addons/addons;tig",
+                    docker=True,
+                )
+
+    @api.multi
+    def action_docker_install_dev_soft(self):
+        for rec in self:
+            with rec.it_workspace_log():
+                rec.system_id.exec_docker(
+                    f"apt update;apt install -y tig vim htop tree watch",
+                    rec.folder,
+                )
+
+    @api.multi
     def action_it_check_all(self):
         self.action_docker_status()
         self.action_docker_check_docker_ps()
         self.action_docker_check_docker_tree_addons()
 
     @api.multi
+    def action_install_workspace(self):
+        for rec in self:
+            with rec.it_workspace_log():
+                # Directory must exist
+                # TODO make test to validate if remove next line, permission root the project /tmp/project/addons root
+                addons_path = os.path.join(rec.folder, "addons")
+                rec.system_id.execute_with_result(f"mkdir -p '{addons_path}'")
+            rec.is_installed = True
+
+    @api.multi
     def action_docker_restore_db_image(self):
-        # Start with local storage
-        for rec in self.filtered(lambda r: r.method == "local"):
-            # TODO not working
-            # maybe send by network REST web/database/restore
-            # result = self.exec_docker("cd /ERPLibre;time ./script/database/db_restore.py --database test;")
-            # rec.log_workspace = f"\n{result}"
-            url_list = f"{rec.url_instance}/web/database/list"
-            url_restore = f"{rec.url_instance}/web/database/restore"
-            url_drop = f"{rec.url_instance}/web/database/drop"
-            if not rec.image_db_selection:
-                # TODO create stage, need a stage ready to restore
-                raise exceptions.Warning(_("Error, need field db_selection"))
-            rec.db_is_restored = False
-            backup_file_path = rec.image_db_selection.path
-            session = requests.Session()
-            response = requests.get(
-                url_list,
-                data=json.dumps({}),
-                headers={
-                    "Content-Type": "application/json",
-                    "Accept": "application/json",
-                },
-            )
-            if response.status_code == 200:
-                database_list = response.json()
-                print(database_list)
-            else:
-                print("une erreur")
-                continue
-
-            # Delete first
-            result_db_list = database_list.get("result")
-            if result_db_list:
-                result_db_list = result_db_list[0]
-                if result_db_list:
-                    files = {
-                        "master_pwd": (None, "admin"),
-                        "name": (None, result_db_list),
-                    }
-                    response = session.post(url_drop, files=files)
-                    if response.status_code == 200:
-                        print("Le drop a été envoyé avec succès.")
-                    else:
-                        print("Une erreur s'est produite lors du drop.")
-                        # Strange, retry for test
-                        time.sleep(1)
-                        response = requests.get(
-                            url_list,
-                            data=json.dumps({}),
-                            headers={
-                                "Content-Type": "application/json",
-                                "Accept": "application/json",
-                            },
-                        )
-                        if response.status_code == 200:
-                            database_list = response.json()
-                            print(database_list)
-
-            with open(backup_file_path, "rb") as backup_file:
-                files = {
-                    "backup_file": (
-                        backup_file.name,
-                        backup_file,
-                        "application/octet-stream",
-                    ),
-                    "master_pwd": (None, "admin"),
-                    "name": (None, rec.db_name),
-                }
-                response = session.post(url_restore, files=files)
-            if response.status_code == 200:
-                print("Le fichier de restauration a été envoyé avec succès.")
-                rec.db_is_restored = True
-            else:
-                print(
-                    "Une erreur s'est produite lors de l'envoi du fichier de"
-                    " restauration."
+        for rec in self:
+            with rec.it_workspace_log():
+                # TODO not working
+                # maybe send by network REST web/database/restore
+                # result = rec.system_id.exec_docker("cd /ERPLibre;time ./script/database/db_restore.py --database test;", rec.folder)
+                # rec.log_workspace = f"\n{result}"
+                url_list = f"{rec.url_instance}/web/database/list"
+                url_restore = f"{rec.url_instance}/web/database/restore"
+                url_drop = f"{rec.url_instance}/web/database/drop"
+                if not rec.image_db_selection:
+                    # TODO create stage, need a stage ready to restore
+                    raise exceptions.Warning(
+                        _("Error, need field db_selection")
+                    )
+                rec.db_is_restored = False
+                backup_file_path = rec.image_db_selection.path
+                session = requests.Session()
+                response = requests.get(
+                    url_list,
+                    data=json.dumps({}),
+                    headers={
+                        "Content-Type": "application/json",
+                        "Accept": "application/json",
+                    },
                 )
+                if response.status_code == 200:
+                    database_list = response.json()
+                    print(database_list)
+                else:
+                    # TODO remove print
+                    print("une erreur")
+                    continue
 
-            # f = {'file data': open('./image_db/erplibre_base.zip', 'rb')}
-            # res = requests.post(url_restore, files=f)
-            # print(res.text)
+                # Delete first
+                result_db_list = database_list.get("result")
+                if result_db_list:
+                    result_db_list = result_db_list[0]
+                    if result_db_list:
+                        files = {
+                            "master_pwd": (None, "admin"),
+                            "name": (None, result_db_list),
+                        }
+                        response = session.post(url_drop, files=files)
+                        if response.status_code == 200:
+                            print("Le drop a été envoyé avec succès.")
+                        else:
+                            print("Une erreur s'est produite lors du drop.")
+                            # Strange, retry for test
+                            time.sleep(1)
+                            response = requests.get(
+                                url_list,
+                                data=json.dumps({}),
+                                headers={
+                                    "Content-Type": "application/json",
+                                    "Accept": "application/json",
+                                },
+                            )
+                            if response.status_code == 200:
+                                database_list = response.json()
+                                print(database_list)
+
+                with open(backup_file_path, "rb") as backup_file:
+                    files = {
+                        "backup_file": (
+                            backup_file.name,
+                            backup_file,
+                            "application/octet-stream",
+                        ),
+                        "master_pwd": (None, "admin"),
+                        "name": (None, rec.db_name),
+                    }
+                    response = session.post(url_restore, files=files)
+                if response.status_code == 200:
+                    print(
+                        "Le fichier de restauration a été envoyé avec succès."
+                    )
+                    rec.db_is_restored = True
+                else:
+                    print(
+                        "Une erreur s'est produite lors de l'envoi du fichier"
+                        " de restauration."
+                    )
+
+                # f = {'file data': open('./image_db/erplibre_base.zip', 'rb')}
+                # res = requests.post(url_restore, files=f)
+                # print(res.text)
 
     @api.multi
     def action_start_docker_compose(self):
-        """Run selected it_workspaces."""
-        it_workspace = None
-        successful = self.browse()
-
-        # Start with local storage
-        for rec in self.filtered(lambda r: r.method == "local"):
-            filename = self.filename(
-                datetime.now(), ext=rec.it_workspace_format
-            )
+        for rec in self:
             with rec.it_workspace_log():
-                # Directory must exist
-                try:
-                    # TODO make test to validate if remove next line, permission root the project /tmp/project/addons root
-                    addons_path = os.path.join(rec.folder, "addons")
-                    os.makedirs(addons_path, exist_ok=True)
-                except OSError:
-                    pass
-
                 rec.docker_is_running = False
 
                 rec.url_instance = f"http://127.0.0.1:{rec.port_http}"
@@ -978,19 +919,23 @@ volumes:
                     with open(file_docker_compose, "w") as destiny:
                         destiny.write(docker_compose_content)
 
-                result = os.popen(
+                result = rec.system_id.execute_with_result(
                     f"cd {rec.folder};cat docker-compose.yml"
-                ).read()
+                )
                 rec.docker_compose_ps = result
-                result = os.popen(
+                result = rec.system_id.execute_with_result(
                     f"cd {rec.folder};docker compose up -d"
-                ).read()
+                )
                 rec.log_workspace = f"\n{result}"
-                result = os.popen(f"cd {rec.folder};docker compose ps").read()
+                result = rec.system_id.execute_with_result(
+                    f"cd {rec.folder};docker compose ps"
+                )
                 rec.log_workspace += f"\n{result}"
                 rec.update_docker_compose_ps()
 
-                result = self.exec_docker("cat /etc/odoo/odoo.conf;")
+                result = rec.system_id.exec_docker(
+                    "cat /etc/odoo/odoo.conf;", rec.folder
+                )
                 has_change = False
                 if "db_host" not in result:
                     # TODO remove this information from executable of docker
@@ -1007,56 +952,20 @@ volumes:
                     has_change = True
                 if has_change:
                     # TODO rewrite conf file and reformat
-                    self.exec_docker(
-                        f"echo -e '{result}' > /etc/odoo/odoo.conf"
+                    rec.system_id.exec_docker(
+                        f"echo -e '{result}' > /etc/odoo/odoo.conf", rec.folder
                     )
                 # TODO support only one file, and remove /odoo.conf
-                self.exec_docker(
-                    "cd /ERPLibre;cp /etc/odoo/odoo.conf ./config.conf;"
+                rec.system_id.exec_docker(
+                    "cd /ERPLibre;cp /etc/odoo/odoo.conf ./config.conf;",
+                    rec.folder,
                 )
-                self.action_docker_check_docker_ps()
-
-        # Ensure a local it_workspace exists if we are going to write it remotely
-        sftp = self.filtered(lambda r: r.method == "sftp")
-        if sftp:
-            for rec in sftp:
-                filename = self.filename(
-                    datetime.now(), ext=rec.it_workspace_format
-                )
-                with rec.it_workspace_log():
-
-                    cached = db.dump_db(
-                        self.env.cr.dbname,
-                        None,
-                        it_workspace_format=rec.it_workspace_format,
-                    )
-
-                    with cached:
-                        with rec.sftp_connection() as remote:
-                            # Directory must exist
-                            try:
-                                remote.makedirs(rec.folder)
-                            except pysftp.ConnectionException:
-                                pass
-
-                            # Copy cached it_workspace to remote server
-                            with remote.open(
-                                os.path.join(rec.folder, filename), "wb"
-                            ) as destiny:
-                                shutil.copyfileobj(cached, destiny)
-                        successful |= rec
-
-        # Remove old files for successful it_workspaces
-        # successful.cleanup()
-
-    @api.model
-    def action_it_check_workspace_all(self):
-        """Run all scheduled it_workspaces."""
-        return self.search([]).action_start_docker_compose()
+                rec.action_docker_check_docker_ps()
 
     @api.multi
     @contextmanager
     def it_workspace_log(self):
+        # TODO adapt for erplibre_it
         """Log a it_workspace result."""
         try:
             _logger.info("Starting database it_workspace: %s", self.name)
@@ -1074,100 +983,3 @@ volumes:
         else:
             _logger.info("Database it_workspace succeeded: %s", self.name)
             self.message_post(body=_("Database it_workspace succeeded."))
-
-    @api.multi
-    def cleanup(self):
-        """Clean up old it_workspaces."""
-        now = datetime.now()
-        # for rec in self.filtered("days_to_keep"):
-        #     with rec.cleanup_log():
-        #         oldest = self.filename(now - timedelta(days=rec.days_to_keep))
-        #
-        #         if rec.method == "local":
-        #             for name in iglob(os.path.join(rec.folder, "*.dump.zip")):
-        #                 if os.path.basename(name) < oldest:
-        #                     os.unlink(name)
-        #
-        #         elif rec.method == "sftp":
-        #             with rec.sftp_connection() as remote:
-        #                 for name in remote.listdir(rec.folder):
-        #                     if (
-        #                         name.endswith(".dump.zip")
-        #                         and os.path.basename(name) < oldest
-        #                     ):
-        #                         remote.unlink("%s/%s" % (rec.folder, name))
-
-    @api.multi
-    @contextmanager
-    def cleanup_log(self):
-        """Log a possible cleanup failure."""
-        self.ensure_one()
-        try:
-            _logger.info(
-                "Starting cleanup process after database it_workspace: %s",
-                self.name,
-            )
-            yield
-        except Exception:
-            _logger.exception(
-                "Cleanup of old database it_workspaces failed: %s"
-            )
-            escaped_tb = tools.html_escape(traceback.format_exc())
-            self.message_post(  # pylint: disable=translation-required
-                body="<p>%s</p><pre>%s</pre>"
-                % (
-                    _("Cleanup of old database it_workspaces failed."),
-                    escaped_tb,
-                ),
-                subtype=self.env.ref("erplibre_it_workspace.failure"),
-            )
-        else:
-            _logger.info(
-                "Cleanup of old database it_workspaces succeeded: %s",
-                self.name,
-            )
-
-    @staticmethod
-    def filename(when, ext="zip"):
-        """Generate a file name for a it_workspace.
-
-        :param datetime.datetime when:
-            Use this datetime instead of :meth:`datetime.datetime.now`.
-        :param str ext: Extension of the file. Default: dump.zip
-        """
-        return "{:%Y_%m_%d_%H_%M_%S}.{ext}".format(
-            when, ext="dump.zip" if ext == "zip" else ext
-        )
-
-    @api.multi
-    def sftp_connection(self):
-        """Return a new SFTP connection with found parameters."""
-        self.ensure_one()
-        params = {
-            "host": self.sftp_host,
-            "username": self.sftp_user,
-            "port": self.sftp_port,
-        }
-
-        # not empty sftp_public_key means that we should verify sftp server with it
-        cnopts = pysftp.CnOpts()
-        if self.sftp_public_host_key:
-            key = paramiko.RSAKey(
-                data=base64.b64decode(self.sftp_public_host_key)
-            )
-            cnopts.hostkeys.add(self.sftp_host, "ssh-rsa", key)
-        else:
-            cnopts.hostkeys = None
-
-        _logger.debug(
-            "Trying to connect to sftp://%(username)s@%(host)s:%(port)d",
-            extra=params,
-        )
-        if self.sftp_private_key:
-            params["private_key"] = self.sftp_private_key
-            if self.sftp_password:
-                params["private_key_pass"] = self.sftp_password
-        else:
-            params["password"] = self.sftp_password
-
-        return pysftp.Connection(**params, cnopts=cnopts)

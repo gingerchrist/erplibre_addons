@@ -12,4 +12,4 @@ def post_init_hook(cr, e):
         env = api.Environment(cr, SUPERUSER_ID, {})
 
         # Refresh DB image
-        env["it.workspace"].action_refresh_db_image()
+        env["it.system"].action_refresh_db_image()

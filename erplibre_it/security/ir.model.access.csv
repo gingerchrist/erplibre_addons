@@ -6,3 +6,4 @@ it_code_generator_access_user_types_/_internal_user,it_code_generator Access Use
 it_code_generator_module_access_user_types_/_internal_user,it_code_generator_module Access User types / Internal User,model_it_code_generator_module,base.group_user,1,1,1,1
 it_code_generator_module_model_access_user_types_/_internal_user,it_code_generator_module_model Access User types / Internal User,model_it_code_generator_module_model,base.group_user,1,1,1,1
 it_code_generator_module_model_field_access_user_types_/_internal_user,it_code_generator_module_model_field Access User types / Internal User,model_it_code_generator_module_model_field,base.group_user,1,1,1,1
+it_system_access_user_types_/_internal_user,it_system Access User types / Internal User,model_it_system,base.group_user,1,1,1,1
