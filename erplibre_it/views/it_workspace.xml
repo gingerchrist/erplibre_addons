@@ -18,11 +18,19 @@
                     <group string="Basic">
                         <field name="system_id" />
                         <field name="folder" />
+                        <field name="mode_exec" />
+                        <field name="mode_environnement" />
+                        <field name="mode_version_erplibre" />
+                        <field name="mode_version_base" />
                         <field name="is_installed" invisible="True"/>
                     </group>
                     <group string="Network" attrs="{'invisible': [('is_installed', '=', False)]}">
                         <field name="port_http" />
                         <field name="port_longpolling" />
+                    </group>
+                    <group string="Git">
+                        <field name="git_branch" />
+                        <field name="git_url" />
                     </group>
                     <group string="Info" attrs="{'invisible': [('is_installed', '=', False)]}">
                         <field name="url_instance" widget="url"/>
@@ -113,7 +121,7 @@
                                 <div attrs="{'invisible': [('time_exec_action_git_commit_all_generated_module', '=', False)]}">Exec in <field name="time_exec_action_git_commit_all_generated_module" nolabel="1"/></div>
                             </group>
                             <group>
-                                <button class="oe_highlight" name="action_open_terminal_docker_tig" string="Terminal docker tig" type="object" />
+                                <button class="oe_highlight" name="action_open_terminal_tig" string="Terminal tig" type="object" />
                             </group>
                         </group>
                         <group string="Generator">

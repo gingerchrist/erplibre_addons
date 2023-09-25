@@ -187,6 +187,49 @@ class ItWorkspace(models.Model):
         help="Execution time of method action_code_generator_generate_all",
     )
 
+    mode_exec = fields.Selection(
+        selection=[("docker", "Docker"), ("git", "Git")], default="docker"
+    )
+
+    mode_environnement = fields.Selection(
+        selection=[
+            ("dev", "Dev"),
+            ("test", "Test"),
+            ("prod", "Prod"),
+            ("stage", "Stage"),
+        ],
+        default="test",
+        help=(
+            "Dev to improve, test to test, prod ready for production, stage to"
+            " use a dev and replace a prod"
+        ),
+    )
+
+    mode_version_erplibre = fields.Selection(
+        selection=[
+            ("1.5.0", "1.5.0"),
+            ("master", "Master"),
+            ("develop", "Develop"),
+        ],
+        default="1.5.0",
+        help=(
+            "Dev to improve, test to test, prod ready for production, stage to"
+            " use a dev and replace a prod"
+        ),
+    )
+
+    mode_version_base = fields.Selection(
+        selection=[("12.0", "12.0"), ("14.0", "14.0")],
+        default="12.0",
+        help="Support base version communautaire",
+    )
+
+    git_branch = fields.Char("Git branch")
+
+    git_url = fields.Char(
+        "Git URL", default="https://github.com/ERPLibre/ERPLibre"
+    )
+
     time_exec_action_clear_all_generated_module = fields.Char(
         readonly=True,
         help="Execution time of method action_clear_all_generated_module",
@@ -264,18 +307,21 @@ class ItWorkspace(models.Model):
 
     def update_docker_compose_ps(self):
         for rec in self:
-            result = rec.system_id.execute_with_result(
-                f"cd {rec.folder};docker compose ps"
-            )
-            rec.docker_compose_ps = f"\n{result}"
+            with rec.it_workspace_log():
+                if rec.mode_exec in ["docker"]:
+                    result = rec.system_id.execute_with_result(
+                        f"cd {rec.folder};docker compose ps"
+                    )
+                    rec.docker_compose_ps = f"\n{result}"
 
     @api.multi
     def action_stop_docker_compose(self):
         for rec in self:
             with rec.it_workspace_log():
-                rec.system_id.execute_with_result(
-                    f"cd {rec.folder};docker compose down"
-                )
+                if rec.mode_exec in ["docker"]:
+                    rec.system_id.execute_with_result(
+                        f"cd {rec.folder};docker compose down"
+                    )
         self.update_docker_compose_ps()
         self.action_docker_check_docker_ps()
 
@@ -714,7 +760,7 @@ class ItWorkspace(models.Model):
                 )
 
     @api.multi
-    def action_open_terminal_docker_tig(self):
+    def action_open_terminal_tig(self):
         for rec in self:
             with rec.it_workspace_log():
                 result = rec.system_id.exec_docker("which tig", rec.folder)
@@ -745,11 +791,57 @@ class ItWorkspace(models.Model):
     def action_install_workspace(self):
         for rec in self:
             with rec.it_workspace_log():
+                if rec.mode_exec in ["docker"]:
+                    lst_file = (
+                        rec.system_id.execute_with_result(f"ls {rec.folder}")
+                        .strip()
+                        .split("\n")
+                    )
+                    if "docker-compose.yml" in lst_file:
+                        # TODO try to reuse
+                        print("detect docker-compose.yml, please read it")
+                    self.action_pre_install_workspace()
+                elif rec.mode_exec in ["git"]:
+                    branch_str = ""
+                    if rec.mode_version_erplibre:
+                        if rec.mode_version_erplibre[0].isnumeric():
+                            branch_str = f" -b v{rec.mode_version_erplibre}"
+                        else:
+                            branch_str = f" -b {rec.mode_version_erplibre}"
+
+                    exist = (
+                        rec.system_id.execute_with_result(
+                            f'[[ -d {rec.folder} ]] && echo "Exist" || echo'
+                            ' "Die"'
+                        )
+                        == "Exist"
+                    )
+                    print(exist)
+                    if not exist:
+                        result = rec.system_id.execute_with_result(
+                            f"git clone {rec.git_url}{branch_str} {rec.folder}"
+                        )
+                    else:
+                        # TODO try te reuse
+                        print("Git project already exist")
+                    # lst_file = rec.system_id.execute_with_result(f"ls {rec.folder}").strip().split("\n")
+                    # if "docker-compose.yml" in lst_file:
+                    # if rec.mode_environnement in ["prod", "test"]:
+                    #     result = rec.system_id.execute_with_result(
+                    #         "git clone https://github.com/ERPLibre/ERPLibre"
+                    #         f"{branch_str}"
+                    #     )
+                    # else:
+            rec.is_installed = True
+
+    @api.multi
+    def action_pre_install_workspace(self):
+        for rec in self:
+            with rec.it_workspace_log():
                 # Directory must exist
                 # TODO make test to validate if remove next line, permission root the project /tmp/project/addons root
                 addons_path = os.path.join(rec.folder, "addons")
                 rec.system_id.execute_with_result(f"mkdir -p '{addons_path}'")
-            rec.is_installed = True
 
     @api.multi
     def action_docker_restore_db_image(self):
