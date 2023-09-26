@@ -101,6 +101,8 @@ class ItWorkspace(models.Model):
         help="The port of http odoo.",
     )
 
+    is_self_instance = fields.Boolean(default=False, help="Is the instance who run this database")
+
     port_longpolling = fields.Integer(
         string="port longpolling",
         default=8071,
@@ -786,17 +788,20 @@ class ItWorkspace(models.Model):
         self.action_docker_status()
         self.action_docker_check_docker_ps()
         self.action_docker_check_docker_tree_addons()
+        # TODO check is_self_instance
+        # for rec in self:
+        #     print(rec)
 
     @api.multi
     def action_install_workspace(self):
         for rec in self:
             with rec.it_workspace_log():
+                lst_file = (
+                    rec.system_id.execute_with_result(f"ls {rec.folder}")
+                    .strip()
+                    .split("\n")
+                )
                 if rec.mode_exec in ["docker"]:
-                    lst_file = (
-                        rec.system_id.execute_with_result(f"ls {rec.folder}")
-                        .strip()
-                        .split("\n")
-                    )
                     if "docker-compose.yml" in lst_file:
                         # TODO try to reuse
                         print("detect docker-compose.yml, please read it")
@@ -809,21 +814,22 @@ class ItWorkspace(models.Model):
                         else:
                             branch_str = f" -b {rec.mode_version_erplibre}"
 
-                    exist = (
-                        rec.system_id.execute_with_result(
-                            f'[[ -d {rec.folder} ]] && echo "Exist" || echo'
-                            ' "Die"'
-                        )
-                        == "Exist"
-                    )
-                    print(exist)
-                    if not exist:
+                    # TODO bug if file has same key
+                    # if any(["ls:cannot access " in str_file for str_file in lst_file]):
+                    if any(
+                        [
+                            "No such file or directory" in str_file
+                            for str_file in lst_file
+                        ]
+                    ):
+                        self.action_pre_install_workspace()
                         result = rec.system_id.execute_with_result(
                             f"git clone {rec.git_url}{branch_str} {rec.folder}"
                         )
                     else:
                         # TODO try te reuse
                         print("Git project already exist")
+
                     # lst_file = rec.system_id.execute_with_result(f"ls {rec.folder}").strip().split("\n")
                     # if "docker-compose.yml" in lst_file:
                     # if rec.mode_environnement in ["prod", "test"]:
@@ -832,6 +838,7 @@ class ItWorkspace(models.Model):
                     #         f"{branch_str}"
                     #     )
                     # else:
+                rec.action_network_change_port_random()
             rec.is_installed = True
 
     @api.multi
@@ -931,6 +938,51 @@ class ItWorkspace(models.Model):
                 # f = {'file data': open('./image_db/erplibre_base.zip', 'rb')}
                 # res = requests.post(url_restore, files=f)
                 # print(res.text)
+
+    @api.multi
+    def action_network_change_port_random(
+        self, min_port=10000, max_port=20000
+    ):
+        # Choose 2 sequence
+        for rec in self:
+            with rec.it_workspace_log():
+                # port_1
+                while rec.check_port_is_open(
+                    rec, rec.system_id.iterator_port_generator
+                ):
+                    rec.system_id.iterator_port_generator += 1
+                rec.port_http = rec.system_id.iterator_port_generator
+                rec.system_id.iterator_port_generator += 1
+                # port_2
+                while rec.check_port_is_open(
+                    rec, rec.system_id.iterator_port_generator
+                ):
+                    rec.system_id.iterator_port_generator += 1
+                rec.port_longpolling = rec.system_id.iterator_port_generator
+                rec.system_id.iterator_port_generator += 1
+                if rec.system_id.iterator_port_generator >= max_port:
+                    rec.system_id.iterator_port_generator = min_port
+
+    @staticmethod
+    def check_port_is_open(rec, port):
+        # TODO move to it_network
+        script = f"""
+import socket
+sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+result = sock.connect_ex(("127.0.0.1",{port}))
+if result == 0:
+   print("Port is open")
+else:
+   print("Port is not open")
+sock.close()
+        """
+        if rec.system_id.debug_command:
+            print(script)
+        result = rec.system_id.execute_with_result(
+            script,
+            engine="python",
+        )
+        return result == "Port is open"
 
     @api.multi
     def action_start_docker_compose(self):

@@ -66,6 +66,10 @@ class ItSystem(models.Model):
         help="This will show in log the command when execute it.",
     )
 
+    iterator_port_generator = fields.Integer(
+        default=10000, help="Iterate to generate next port"
+    )
+
     ssh_private_key = fields.Char(
         string="Private key location",
         help=(
@@ -107,8 +111,16 @@ class ItSystem(models.Model):
                     rec.ssh_port,
                 )
 
-    def execute_with_result(self, cmd):
+    def execute_with_result(
+        self, cmd, add_stdin_log=False, add_stderr_log=True, engine="bash"
+    ):
+        """
+        engine can be bash or python
+        """
+        if engine == "python":
+            cmd = f"python -c '{cmd}'"
         lst_result = []
+        cmd = cmd.strip()
         for rec in self.filtered(lambda r: r.method == "local"):
             result = os.popen(cmd).read()
             if len(self) == 1:
@@ -117,7 +129,13 @@ class ItSystem(models.Model):
         for rec in self.filtered(lambda r: r.method == "ssh"):
             with rec.ssh_connection() as ssh_client:
                 stdin, stdout, stderr = ssh_client.exec_command(cmd)
-                result = stdout.read().decode("utf-8")
+                if add_stdin_log:
+                    result = stdin.read().decode("utf-8")
+                else:
+                    result = ""
+                result += stdout.read().decode("utf-8")
+                if add_stderr_log:
+                    result += stderr.read().decode("utf-8")
                 if len(self) == 1:
                     return result
                 lst_result.append(result)
