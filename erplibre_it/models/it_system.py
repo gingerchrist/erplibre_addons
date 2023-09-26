@@ -1,6 +1,7 @@
 from odoo import _, api, exceptions, fields, models
 import json
 import logging
+import subprocess
 import os
 
 _logger = logging.getLogger(__name__)
@@ -111,6 +112,19 @@ class ItSystem(models.Model):
                     rec.ssh_port,
                 )
 
+    def execute_process(self, cmd, add_stdin_log=False, add_stderr_log=True):
+        # subprocess.Popen("date", stdout=subprocess.PIPE, shell=True)
+        # (output, err) = p.communicate()
+        p = subprocess.Popen(
+            cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
+        (output, err) = p.communicate()
+        p_status = p.wait()
+        result = output.decode()
+        if add_stderr_log:
+            result += err.decode()
+        return result
+
     def execute_with_result(
         self, cmd, add_stdin_log=False, add_stderr_log=True, engine="bash"
     ):
@@ -122,7 +136,7 @@ class ItSystem(models.Model):
         lst_result = []
         cmd = cmd.strip()
         for rec in self.filtered(lambda r: r.method == "local"):
-            result = os.popen(cmd).read()
+            result = rec.execute_process(cmd)
             if len(self) == 1:
                 return result
             lst_result.append(result)
@@ -142,6 +156,7 @@ class ItSystem(models.Model):
         return lst_result
 
     def execute_gnome_terminal(self, folder, cmd="", docker=False):
+        # TODO if folder not exist, cannot CD. don't execute the command if wrong directory
         for rec in self.filtered(lambda r: r.method == "local"):
             str_keep_open = ""
             if rec.keep_terminal_open:
@@ -163,10 +178,10 @@ class ItSystem(models.Model):
                     f"cd {folder};gnome-terminal --window -- bash -c"
                     f" '{docker_wrap_cmd}'"
                 )
-                os.popen(cmd_output)
+                rec.execute_process(cmd_output)
             else:
                 cmd_output = f"cd {folder};gnome-terminal --window -- bash"
-                os.popen(cmd_output)
+                rec.execute_process(cmd_output)
             if rec.debug_command:
                 print(cmd_output)
         for rec in self.filtered(lambda r: r.method == "ssh"):
@@ -195,14 +210,14 @@ class ItSystem(models.Model):
                     f' {rec.ssh_user}@{rec.ssh_host} "cd {folder};'
                     f" {docker_wrap_cmd}\"'"
                 )
-                os.popen(cmd_output)
+                rec.execute_process(cmd_output)
             else:
                 cmd_output = (
                     f"gnome-terminal --window -- bash -c '{sshpass}ssh -t"
                     f' {rec.ssh_user}@{rec.ssh_host} "cd {folder}; bash'
                     " --login\"'"
                 )
-                os.popen(cmd_output)
+                rec.execute_process(cmd_output)
             if rec.debug_command:
                 print(cmd_output)
 

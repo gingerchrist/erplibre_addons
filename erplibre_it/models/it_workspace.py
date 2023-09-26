@@ -101,7 +101,9 @@ class ItWorkspace(models.Model):
         help="The port of http odoo.",
     )
 
-    is_self_instance = fields.Boolean(default=False, help="Is the instance who run this database")
+    is_self_instance = fields.Boolean(
+        default=False, help="Is the instance who run this database"
+    )
 
     port_longpolling = fields.Integer(
         string="port longpolling",
@@ -785,6 +787,19 @@ class ItWorkspace(models.Model):
 
     @api.multi
     def action_it_check_all(self):
+        for rec in self:
+            lst_file = (
+                rec.system_id.execute_with_result(f"ls {rec.folder}")
+                .strip()
+                .split("\n")
+            )
+            if any(
+                [
+                    "No such file or directory" in str_file
+                    for str_file in lst_file
+                ]
+            ):
+                rec.is_installed = False
         self.action_docker_status()
         self.action_docker_check_docker_ps()
         self.action_docker_check_docker_tree_addons()
@@ -822,10 +837,15 @@ class ItWorkspace(models.Model):
                             for str_file in lst_file
                         ]
                     ):
-                        self.action_pre_install_workspace()
+                        self.action_pre_install_workspace(ignore_last_directory=True)
                         result = rec.system_id.execute_with_result(
                             f"git clone {rec.git_url}{branch_str} {rec.folder}"
                         )
+                        rec.log_workspace = result
+                        result = rec.system_id.execute_with_result(
+                            f"cd {rec.folder};make install_dev"
+                        )
+                        rec.log_workspace += result
                     else:
                         # TODO try te reuse
                         print("Git project already exist")
@@ -842,12 +862,13 @@ class ItWorkspace(models.Model):
             rec.is_installed = True
 
     @api.multi
-    def action_pre_install_workspace(self):
+    def action_pre_install_workspace(self, ignore_last_directory=False):
         for rec in self:
             with rec.it_workspace_log():
+                folder = rec.folder if not ignore_last_directory else os.path.basename(rec.folder)
                 # Directory must exist
                 # TODO make test to validate if remove next line, permission root the project /tmp/project/addons root
-                addons_path = os.path.join(rec.folder, "addons")
+                addons_path = os.path.join(folder, "addons")
                 rec.system_id.execute_with_result(f"mkdir -p '{addons_path}'")
 
     @api.multi
