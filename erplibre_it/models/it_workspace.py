@@ -843,7 +843,7 @@ class ItWorkspace(models.Model):
                         )
                         rec.log_workspace = result
                         result = rec.system_id.execute_with_result(
-                            f"cd {rec.folder};make install_dev"
+                            f"cd {rec.folder};./script/install/install_locally_dev.sh"
                         )
                         rec.log_workspace += result
                     else:
