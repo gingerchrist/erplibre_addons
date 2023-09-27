@@ -3,6 +3,7 @@ import json
 import logging
 import subprocess
 import os
+import base64
 
 _logger = logging.getLogger(__name__)
 try:
@@ -204,20 +205,22 @@ class ItSystem(models.Model):
                 )
                 if cmd:
                     docker_wrap_cmd += f' -c \\"{cmd}{str_keep_open}\\"'
-            if docker_wrap_cmd:
-                cmd_output = (
-                    f"gnome-terminal --window -- bash -c '{sshpass}ssh -t"
-                    f' {rec.ssh_user}@{rec.ssh_host} "cd {folder};'
-                    f" {docker_wrap_cmd}\"'"
+            argument_ssh = ""
+            if rec.ssh_public_host_key:
+                # TODO use public host key instead of ignore it
+                argument_ssh = (
+                    ' -o "UserKnownHostsFile=/dev/null" -o'
+                    ' "StrictHostKeyChecking=no"'
                 )
-                rec.execute_process(cmd_output)
-            else:
-                cmd_output = (
-                    f"gnome-terminal --window -- bash -c '{sshpass}ssh -t"
-                    f' {rec.ssh_user}@{rec.ssh_host} "cd {folder}; bash'
-                    " --login\"'"
-                )
-                rec.execute_process(cmd_output)
+            if not docker_wrap_cmd:
+                docker_wrap_cmd = "bash --login"
+            cmd_output = (
+                "gnome-terminal --window -- bash -c"
+                f" '{sshpass}ssh{argument_ssh} -t"
+                f' {rec.ssh_user}@{rec.ssh_host} "cd {folder};'
+                f" {docker_wrap_cmd}\"'"
+            )
+            rec.execute_process(cmd_output)
             if rec.debug_command:
                 print(cmd_output)
 
@@ -226,10 +229,13 @@ class ItSystem(models.Model):
         docker_name = f"{workspace}-ERPLibre-1"
         # for "docker exec", command line need "-ti", but "popen" no need
         # TODO catch error, stderr with stdout
-        return self.execute_with_result(
+        cmd_output = (
             f"cd {folder};docker exec -u root {docker_name}"
             f' /bin/bash -c "{cmd}"'
         )
+        if self.debug_command:
+            print(cmd_output)
+        return self.execute_with_result(cmd_output)
 
     @api.multi
     def action_ssh_test_connection(self):
@@ -253,7 +259,16 @@ class ItSystem(models.Model):
         self.ensure_one()
 
         ssh_client = paramiko.SSHClient()
+        ssh_client.load_system_host_keys()
         ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        if self.ssh_public_host_key:
+            # add to host keys
+            key = paramiko.RSAKey(
+                data=base64.b64decode(self.ssh_public_host_key)
+            )
+            ssh_client.get_host_keys().add(
+                hostname=self.ssh_host, keytype="ssh-rsa", key=key
+            )
         ssh_client.connect(
             hostname=self.ssh_host,
             port=self.ssh_port,

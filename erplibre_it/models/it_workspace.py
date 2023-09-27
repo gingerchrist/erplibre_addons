@@ -376,6 +376,11 @@ class ItWorkspace(models.Model):
                 # Increase speed
                 # TODO keep old configuration of config.conf and not overwrite all
                 # rec.system_id.exec_docker("cd /ERPLibre;make config_gen_code_generator", rec.folder)
+                if rec.it_code_generator_ids:
+                    rec.action_stop_docker_compose()
+                    rec.docker_config_gen_cg = True
+                    rec.action_start_docker_compose()
+                    rec.docker_config_gen_cg = False
                 for rec_cg in rec.it_code_generator_ids:
                     for module_id in rec_cg.module_ids:
                         # Support only 1, but can run in parallel multiple if no dependencies between
@@ -447,6 +452,9 @@ class ItWorkspace(models.Model):
                         )
                         result = rec.system_id.exec_docker(cmd, rec.folder)
                         rec.it_code_generator_log_addons = result
+                if rec.it_code_generator_ids:
+                    rec.action_stop_docker_compose()
+                    rec.action_start_docker_compose()
                 # rec.system_id.exec_docker("cd /ERPLibre;make config_gen_all", rec.folder)
                 end = datetime.now()
                 td = (end - start).total_seconds()
@@ -495,7 +503,7 @@ class ItWorkspace(models.Model):
                 result = rec.system_id.exec_docker(
                     f"ls /ERPLibre/addons/addons/.git", rec.folder
                 )
-                if not result:
+                if "No such file or directory" in result:
                     # Suppose git not exist
                     # This is not good if .git directory is in parent directory
                     result = rec.system_id.exec_docker(
@@ -663,9 +671,7 @@ class ItWorkspace(models.Model):
                 # TODO actually, it's continuous
                 # TODO maybe add an auto-update when detect installation finish
                 rec.action_stop_docker_compose()
-                rec.docker_config_gen_cg = True
                 rec.action_start_docker_compose()
-                rec.docker_config_gen_cg = False
                 rec.docker_cmd_extra = last_cmd
                 end = datetime.now()
                 td = (end - start).total_seconds()
@@ -794,6 +800,18 @@ class ItWorkspace(models.Model):
                 rec.system_id.exec_docker(
                     f"apt update;apt install -y tig vim htop tree watch",
                     rec.folder,
+                )
+
+    @api.multi
+    def action_os_user_permission_docker(self):
+        for rec in self:
+            with rec.it_workspace_log():
+                rec.system_id.execute_gnome_terminal(
+                    rec.folder,
+                    cmd=(
+                        "sudo groupadd docker;sudo usermod -aG docker"
+                        f" {rec.system_id.ssh_user}"
+                    ),
                 )
 
     @api.multi
@@ -1028,7 +1046,12 @@ sock.close()
             with rec.it_workspace_log():
                 rec.docker_is_running = False
 
-                rec.url_instance = f"http://127.0.0.1:{rec.port_http}"
+                url_host = (
+                    rec.system_id.ssh_host
+                    if rec.system_id.method == "ssh"
+                    else "127.0.0.1"
+                )
+                rec.url_instance = f"http://{url_host}:{rec.port_http}"
                 rec.url_instance_database_manager = (
                     f"{rec.url_instance}/web/database/manager"
                 )
@@ -1098,8 +1121,10 @@ volumes:
                 if rec.force_create_docker_compose or not os.path.exists(
                     file_docker_compose
                 ):
-                    with open(file_docker_compose, "w") as destiny:
-                        destiny.write(docker_compose_content)
+                    rec.system_id.execute_with_result(
+                        f"echo '{docker_compose_content}' >"
+                        f" {file_docker_compose}"
+                    )
 
                 result = rec.system_id.execute_with_result(
                     f"cd {rec.folder};cat docker-compose.yml"
@@ -1133,41 +1158,48 @@ volumes:
                     result = result.replace(str_to_replace, "")
                     has_change = True
 
-                if rec.docker_config_gen_cg or not rec.docker_config_gen_cg and rec.docker_config_cache:
+                if (
+                    rec.docker_config_gen_cg
+                    or not rec.docker_config_gen_cg
+                    and rec.docker_config_cache
+                ):
                     # TODO this is not good, need a script from manifest to rebuild this path
                     if rec.docker_config_gen_cg:
                         addons_path = (
-                                "addons_path ="
-                                " /ERPLibre/odoo/addons,"
-                                "/ERPLibre/addons/addons,"
-                                "/ERPLibre/addons/OCA_web,"
-                                "/ERPLibre/addons/ERPLibre_erplibre_addons,"
-                                "/ERPLibre/addons/ERPLibre_erplibre_theme_addons,"
-                                "/ERPLibre/addons/MathBenTech_development,"
-                                "/ERPLibre/addons/MathBenTech_erplibre-family-management,"
-                                "/ERPLibre/addons/MathBenTech_odoo-business-spending-management-quebec-canada,"
-                                "/ERPLibre/addons/MathBenTech_scrummer,"
-                                "/ERPLibre/addons/Numigi_odoo-partner-addons,"
-                                "/ERPLibre/addons/Numigi_odoo-web-addons,"
-                                "/ERPLibre/addons/OCA_contract,"
-                                "/ERPLibre/addons/OCA_geospatial,"
-                                "/ERPLibre/addons/OCA_helpdesk,"
-                                "/ERPLibre/addons/OCA_server-auth,"
-                                "/ERPLibre/addons/OCA_server-brand,"
-                                "/ERPLibre/addons/OCA_server-tools,"
-                                "/ERPLibre/addons/OCA_server-ux,"
-                                "/ERPLibre/addons/OCA_social,"
-                                "/ERPLibre/addons/OCA_website,"
-                                "/ERPLibre/addons/TechnoLibre_odoo-code-generator,"
-                                "/ERPLibre/addons/TechnoLibre_odoo-code-generator-template,"
-                                "/ERPLibre/addons/ajepe_odoo-addons,"
-                                "/ERPLibre/addons/muk-it_muk_base,"
-                                "/ERPLibre/addons/muk-it_muk_misc,"
-                                "/ERPLibre/addons/muk-it_muk_web,"
-                                "/ERPLibre/addons/muk-it_muk_website,"
-                                "/ERPLibre/addons/odoo_design-themes"
-                            )
-                    elif not rec.docker_config_gen_cg and rec.docker_config_cache:
+                            "addons_path ="
+                            " /ERPLibre/odoo/addons,"
+                            "/ERPLibre/addons/addons,"
+                            "/ERPLibre/addons/OCA_web,"
+                            "/ERPLibre/addons/ERPLibre_erplibre_addons,"
+                            "/ERPLibre/addons/ERPLibre_erplibre_theme_addons,"
+                            "/ERPLibre/addons/MathBenTech_development,"
+                            "/ERPLibre/addons/MathBenTech_erplibre-family-management,"
+                            "/ERPLibre/addons/MathBenTech_odoo-business-spending-management-quebec-canada,"
+                            "/ERPLibre/addons/MathBenTech_scrummer,"
+                            "/ERPLibre/addons/Numigi_odoo-partner-addons,"
+                            "/ERPLibre/addons/Numigi_odoo-web-addons,"
+                            "/ERPLibre/addons/OCA_contract,"
+                            "/ERPLibre/addons/OCA_geospatial,"
+                            "/ERPLibre/addons/OCA_helpdesk,"
+                            "/ERPLibre/addons/OCA_server-auth,"
+                            "/ERPLibre/addons/OCA_server-brand,"
+                            "/ERPLibre/addons/OCA_server-tools,"
+                            "/ERPLibre/addons/OCA_server-ux,"
+                            "/ERPLibre/addons/OCA_social,"
+                            "/ERPLibre/addons/OCA_website,"
+                            "/ERPLibre/addons/TechnoLibre_odoo-code-generator,"
+                            "/ERPLibre/addons/TechnoLibre_odoo-code-generator-template,"
+                            "/ERPLibre/addons/ajepe_odoo-addons,"
+                            "/ERPLibre/addons/muk-it_muk_base,"
+                            "/ERPLibre/addons/muk-it_muk_misc,"
+                            "/ERPLibre/addons/muk-it_muk_web,"
+                            "/ERPLibre/addons/muk-it_muk_website,"
+                            "/ERPLibre/addons/odoo_design-themes"
+                        )
+                    elif (
+                        not rec.docker_config_gen_cg
+                        and rec.docker_config_cache
+                    ):
                         addons_path = rec.docker_config_cache
                         rec.docker_config_cache = ""
 
@@ -1175,7 +1207,10 @@ volumes:
                     lst_result = result.split("\n")
                     for i, a_result in enumerate(lst_result):
                         if a_result.startswith("addons_path = "):
-                            if rec.docker_config_gen_cg and not rec.docker_config_cache:
+                            if (
+                                rec.docker_config_gen_cg
+                                and not rec.docker_config_cache
+                            ):
                                 rec.docker_config_cache = a_result
                             lst_result[i] = addons_path
                             break

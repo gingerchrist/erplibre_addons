@@ -63,6 +63,7 @@
                             <button class="oe_highlight" name="action_docker_restore_db_image" string="Restore DB Image" type="object" />
                             <button class="oe_highlight" name="action_docker_logs" string="Docker logs" type="object" />
                             <button class="oe_highlight" name="action_docker_install_dev_soft" string="Docker install dev" type="object" />
+                            <button class="oe_highlight" name="action_os_user_permission_docker" string="Give docker permission" type="object" />
                         </group>
                         <group>
                             <group string="Status instance">
