@@ -71,6 +71,15 @@ class ItWorkspace(models.Model):
         default=0,
     )
 
+    docker_config_gen_cg = fields.Boolean(
+        default=False,
+        help="Will reduce config path to improve speed to code generator",
+    )
+
+    docker_config_cache = fields.Char(
+        help="Fill when docker_config_gen_cg is True, will be erase after",
+    )
+
     docker_is_behind_proxy = fields.Boolean(
         help="Longpolling need a proxy when workers > 1", default=False
     )
@@ -654,7 +663,9 @@ class ItWorkspace(models.Model):
                 # TODO actually, it's continuous
                 # TODO maybe add an auto-update when detect installation finish
                 rec.action_stop_docker_compose()
+                rec.docker_config_gen_cg = True
                 rec.action_start_docker_compose()
+                rec.docker_config_gen_cg = False
                 rec.docker_cmd_extra = last_cmd
                 end = datetime.now()
                 td = (end - start).total_seconds()
@@ -837,7 +848,9 @@ class ItWorkspace(models.Model):
                             for str_file in lst_file
                         ]
                     ):
-                        self.action_pre_install_workspace(ignore_last_directory=True)
+                        self.action_pre_install_workspace(
+                            ignore_last_directory=True
+                        )
                         result = rec.system_id.execute_with_result(
                             f"git clone {rec.git_url}{branch_str} {rec.folder}"
                         )
@@ -865,7 +878,11 @@ class ItWorkspace(models.Model):
     def action_pre_install_workspace(self, ignore_last_directory=False):
         for rec in self:
             with rec.it_workspace_log():
-                folder = rec.folder if not ignore_last_directory else os.path.basename(rec.folder)
+                folder = (
+                    rec.folder
+                    if not ignore_last_directory
+                    else os.path.basename(rec.folder)
+                )
                 # Directory must exist
                 # TODO make test to validate if remove next line, permission root the project /tmp/project/addons root
                 addons_path = os.path.join(folder, "addons")
@@ -1115,6 +1132,56 @@ volumes:
                 if str_to_replace in result:
                     result = result.replace(str_to_replace, "")
                     has_change = True
+
+                if rec.docker_config_gen_cg or not rec.docker_config_gen_cg and rec.docker_config_cache:
+                    # TODO this is not good, need a script from manifest to rebuild this path
+                    if rec.docker_config_gen_cg:
+                        addons_path = (
+                                "addons_path ="
+                                " /ERPLibre/odoo/addons,"
+                                "/ERPLibre/addons/addons,"
+                                "/ERPLibre/addons/OCA_web,"
+                                "/ERPLibre/addons/ERPLibre_erplibre_addons,"
+                                "/ERPLibre/addons/ERPLibre_erplibre_theme_addons,"
+                                "/ERPLibre/addons/MathBenTech_development,"
+                                "/ERPLibre/addons/MathBenTech_erplibre-family-management,"
+                                "/ERPLibre/addons/MathBenTech_odoo-business-spending-management-quebec-canada,"
+                                "/ERPLibre/addons/MathBenTech_scrummer,"
+                                "/ERPLibre/addons/Numigi_odoo-partner-addons,"
+                                "/ERPLibre/addons/Numigi_odoo-web-addons,"
+                                "/ERPLibre/addons/OCA_contract,"
+                                "/ERPLibre/addons/OCA_geospatial,"
+                                "/ERPLibre/addons/OCA_helpdesk,"
+                                "/ERPLibre/addons/OCA_server-auth,"
+                                "/ERPLibre/addons/OCA_server-brand,"
+                                "/ERPLibre/addons/OCA_server-tools,"
+                                "/ERPLibre/addons/OCA_server-ux,"
+                                "/ERPLibre/addons/OCA_social,"
+                                "/ERPLibre/addons/OCA_website,"
+                                "/ERPLibre/addons/TechnoLibre_odoo-code-generator,"
+                                "/ERPLibre/addons/TechnoLibre_odoo-code-generator-template,"
+                                "/ERPLibre/addons/ajepe_odoo-addons,"
+                                "/ERPLibre/addons/muk-it_muk_base,"
+                                "/ERPLibre/addons/muk-it_muk_misc,"
+                                "/ERPLibre/addons/muk-it_muk_web,"
+                                "/ERPLibre/addons/muk-it_muk_website,"
+                                "/ERPLibre/addons/odoo_design-themes"
+                            )
+                    elif not rec.docker_config_gen_cg and rec.docker_config_cache:
+                        addons_path = rec.docker_config_cache
+                        rec.docker_config_cache = ""
+
+                    # TODO use configparser instead of string parsing
+                    lst_result = result.split("\n")
+                    for i, a_result in enumerate(lst_result):
+                        if a_result.startswith("addons_path = "):
+                            if rec.docker_config_gen_cg and not rec.docker_config_cache:
+                                rec.docker_config_cache = a_result
+                            lst_result[i] = addons_path
+                            break
+                    result = "\n".join(lst_result)
+                    has_change = True
+
                 if has_change:
                     # TODO rewrite conf file and reformat
                     rec.system_id.exec_docker(
