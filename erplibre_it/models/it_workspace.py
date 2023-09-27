@@ -815,6 +815,15 @@ class ItWorkspace(models.Model):
                 )
 
     @api.multi
+    def action_analyse_docker_image(self):
+        for rec in self:
+            with rec.it_workspace_log():
+                rec.system_id.execute_gnome_terminal(
+                    rec.folder,
+                    cmd=f"dive {rec.docker_version}",
+                )
+
+    @api.multi
     def action_it_check_all(self):
         for rec in self:
             lst_file = (
