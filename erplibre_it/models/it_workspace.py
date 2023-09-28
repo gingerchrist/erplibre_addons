@@ -1108,9 +1108,9 @@ services:
     volumes:
       # See the volume section at the end of the file
       - erplibre_data_dir:/home/odoo/.local/share/Odoo
-      - ./addons/addons:{rec.path_working_erplibre}/addons/addons
       - erplibre_conf:/etc/odoo
-{'      - ' + '      - '.join([f'./{rec.path_code_generator_to_generate}:{rec.path_working_erplibre}/{rec.path_code_generator_to_generate}']) if True else ''}
+{'      - ' + '''
+      - '''.join([f'./{path}:{rec.path_working_erplibre}/{path}' for path in rec.path_code_generator_to_generate.split(";")]) if rec.path_code_generator_to_generate else ''}
     restart: always
 
   db:
