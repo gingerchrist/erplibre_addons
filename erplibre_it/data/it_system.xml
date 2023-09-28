@@ -2,6 +2,9 @@
 <odoo>
     <data noupdate="1">
         <record model="it.system" id="it_system_local">
+            <field name="name">Self local</field>
+        </record>
+        <record model="it.system" id="it_system_local">
             <field name="name">Local</field>
         </record>
         <record model="it.system" id="it_system_ssh_localhost">

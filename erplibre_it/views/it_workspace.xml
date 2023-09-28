@@ -130,6 +130,10 @@
                                 <button class="oe_highlight" name="action_open_terminal_tig" string="Terminal tig" type="object" />
                             </group>
                         </group>
+                        <group string="Configuration">
+                            <field name="path_code_generator_to_generate"/>
+                            <field name="path_working_erplibre"/>
+                        </group>
                         <group string="Generator">
                             <field name="id" invisible="True"/>
                             <field name="it_code_generator_ids" widget="many2many" context="{'default_it_workspace_ids': [id]}"/>

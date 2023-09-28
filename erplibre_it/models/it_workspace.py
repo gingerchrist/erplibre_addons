@@ -84,6 +84,10 @@ class ItWorkspace(models.Model):
         help="Longpolling need a proxy when workers > 1", default=False
     )
 
+    path_code_generator_to_generate = fields.Char(default="addons/addons", help="")
+
+    path_working_erplibre = fields.Char(default="/ERPLibre", help="")
+
     is_installed = fields.Boolean(
         help="Need to install environnement before execute it."
     )
@@ -375,7 +379,7 @@ class ItWorkspace(models.Model):
                 # Start with local storage
                 # Increase speed
                 # TODO keep old configuration of config.conf and not overwrite all
-                # rec.system_id.exec_docker("cd /ERPLibre;make config_gen_code_generator", rec.folder)
+                # rec.system_id.exec_docker(f"cd {rec.path_working_erplibre};make config_gen_code_generator", rec.folder)
                 if rec.it_code_generator_ids:
                     rec.action_stop_docker_compose()
                     rec.docker_config_gen_cg = True
@@ -446,16 +450,16 @@ class ItWorkspace(models.Model):
                         if model_conf:
                             extra_arg = f" --config '{model_conf}'"
                         cmd = (
-                            "cd /ERPLibre;./script/code_generator/new_project.py"
+                            f"cd {rec.path_working_erplibre};./script/code_generator/new_project.py"
                             f" --keep_bd_alive -m {module_name} -d"
-                            f" addons/addons{extra_arg}"
+                            f" {rec.path_code_generator_to_generate}{extra_arg}"
                         )
                         result = rec.system_id.exec_docker(cmd, rec.folder)
                         rec.it_code_generator_log_addons = result
                 if rec.it_code_generator_ids:
                     rec.action_stop_docker_compose()
                     rec.action_start_docker_compose()
-                # rec.system_id.exec_docker("cd /ERPLibre;make config_gen_all", rec.folder)
+                # rec.system_id.exec_docker(f"cd {rec.path_working_erplibre};make config_gen_all", rec.folder)
                 end = datetime.now()
                 td = (end - start).total_seconds()
                 rec.time_exec_action_code_generator_generate_all = (
@@ -466,16 +470,16 @@ class ItWorkspace(models.Model):
         for rec in self:
             with rec.it_workspace_log():
                 rec.system_id.exec_docker(
-                    f"cd /ERPLibre/addons/addons;rm -rf ./{module_id.name};",
+                    f"cd {rec.path_working_erplibre}/{rec.path_code_generator_to_generate};rm -rf ./{module_id.name};",
                     rec.folder,
                 )
                 rec.system_id.exec_docker(
-                    "cd /ERPLibre/addons/addons;rm -rf"
+                    f"cd {rec.path_working_erplibre}/{rec.path_code_generator_to_generate};rm -rf"
                     f" ./code_generator_template_{module_id.name};",
                     rec.folder,
                 )
                 rec.system_id.exec_docker(
-                    "cd /ERPLibre/addons/addons;rm -rf"
+                    f"cd {rec.path_working_erplibre}/{rec.path_code_generator_to_generate};rm -rf"
                     f" ./code_generator_{module_id.name};",
                     rec.folder,
                 )
@@ -501,24 +505,24 @@ class ItWorkspace(models.Model):
                 # for cg in rec.it_code_generator_ids:
                 # Validate git directory exist
                 result = rec.system_id.exec_docker(
-                    f"ls /ERPLibre/addons/addons/.git", rec.folder
+                    f"ls {rec.path_working_erplibre}/{rec.path_code_generator_to_generate}/.git", rec.folder
                 )
                 if "No such file or directory" in result:
                     # Suppose git not exist
                     # This is not good if .git directory is in parent directory
                     result = rec.system_id.exec_docker(
-                        f"cd /ERPLibre/addons/addons;git init", rec.folder
+                        f"cd {rec.path_working_erplibre}/{rec.path_code_generator_to_generate};git init", rec.folder
                     )
                 result = rec.system_id.exec_docker(
-                    f"cd /ERPLibre/addons/addons;git status -s", rec.folder
+                    f"cd {rec.path_working_erplibre}/{rec.path_code_generator_to_generate};git status -s", rec.folder
                 )
                 if result:
                     # Force add file and commit
                     result = rec.system_id.exec_docker(
-                        f"cd /ERPLibre/addons/addons;git add .", rec.folder
+                        f"cd {rec.path_working_erplibre}/{rec.path_code_generator_to_generate};git add .", rec.folder
                     )
                     result = rec.system_id.exec_docker(
-                        f"cd /ERPLibre/addons/addons;git commit -m 'Commit by"
+                        f"cd {rec.path_working_erplibre}/{rec.path_code_generator_to_generate};git commit -m 'Commit by"
                         f" RobotLibre'",
                         rec.folder,
                     )
@@ -537,45 +541,45 @@ class ItWorkspace(models.Model):
                 status = ""
                 stat = ""
                 result = rec.system_id.exec_docker(
-                    f"ls /ERPLibre/addons/addons/.git", rec.folder
+                    f"ls {rec.path_working_erplibre}/{rec.path_code_generator_to_generate}/.git", rec.folder
                 )
                 if result:
                     # Create diff
                     diff += rec.system_id.exec_docker(
-                        f"cd /ERPLibre/addons/addons;git diff", rec.folder
+                        f"cd {rec.path_working_erplibre}/{rec.path_code_generator_to_generate};git diff", rec.folder
                     )
                     # Create status
                     status += rec.system_id.exec_docker(
-                        f"cd /ERPLibre/addons/addons;git status", rec.folder
+                        f"cd {rec.path_working_erplibre}/{rec.path_code_generator_to_generate};git status", rec.folder
                     )
                     for cg in rec.it_code_generator_ids:
                         # Create statistic
                         for module_id in cg.module_ids:
                             result = rec.system_id.exec_docker(
-                                "cd /ERPLibre;./script/statistic/code_count.sh"
-                                f" ./addons/addons/{module_id.name};",
+                                f"cd {rec.path_working_erplibre};./script/statistic/code_count.sh"
+                                f" ./{rec.path_code_generator_to_generate}/{module_id.name};",
                                 rec.folder,
                             )
                             if result:
-                                stat += f"./addons/addons/{module_id.name}"
+                                stat += f"./{rec.path_code_generator_to_generate}/{module_id.name}"
                                 stat += result
 
                             result = rec.system_id.exec_docker(
-                                "cd /ERPLibre;./script/statistic/code_count.sh"
-                                f" ./addons/addons/code_generator_template_{module_id.name};",
+                                f"cd {rec.path_working_erplibre};./script/statistic/code_count.sh"
+                                f" ./{rec.path_code_generator_to_generate}/code_generator_template_{module_id.name};",
                                 rec.folder,
                             )
                             if result:
-                                stat += f"./addons/addons/code_generator_template_{module_id.name}"
+                                stat += f"./{rec.path_code_generator_to_generate}/code_generator_template_{module_id.name}"
                                 stat += result
 
                             result = rec.system_id.exec_docker(
-                                "cd /ERPLibre;./script/statistic/code_count.sh"
-                                f" ./addons/addons/code_generator_{module_id.name};",
+                                f"cd {rec.path_working_erplibre};./script/statistic/code_count.sh"
+                                f" ./{rec.path_code_generator_to_generate}/code_generator_{module_id.name};",
                                 rec.folder,
                             )
                             if result:
-                                stat += f"./addons/addons/code_generator_{module_id.name}"
+                                stat += f"./{rec.path_code_generator_to_generate}/code_generator_{module_id.name}"
                                 stat += result
 
                             # Autofix attached field to workspace
@@ -693,12 +697,12 @@ class ItWorkspace(models.Model):
                     ]
                 )
                 rec.system_id.exec_docker(
-                    "cd /ERPLibre;./script/database/db_restore.py --database"
+                    f"cd {rec.path_working_erplibre};./script/database/db_restore.py --database"
                     " cg_uca",
                     rec.folder,
                 )
                 rec.system_id.exec_docker(
-                    "cd /ERPLibre;./script/addons/install_addons_dev.sh cg_uca"
+                    f"cd {rec.path_working_erplibre};./script/addons/install_addons_dev.sh cg_uca"
                     f" {module_list}",
                     rec.folder,
                 )
@@ -723,12 +727,12 @@ class ItWorkspace(models.Model):
                     ]
                 )
                 rec.system_id.exec_docker(
-                    "cd /ERPLibre;./script/database/db_restore.py --database"
+                    f"cd {rec.path_working_erplibre};./script/database/db_restore.py --database"
                     " cg_ucb",
                     rec.folder,
                 )
                 rec.system_id.exec_docker(
-                    "cd /ERPLibre;./script/addons/install_addons_dev.sh cg_ucb"
+                    f"cd {rec.path_working_erplibre};./script/addons/install_addons_dev.sh cg_ucb"
                     f" {module_list}",
                     rec.folder,
                 )
@@ -789,7 +793,7 @@ class ItWorkspace(models.Model):
                     self.action_docker_install_dev_soft()
                 rec.system_id.execute_gnome_terminal(
                     rec.folder,
-                    cmd="cd /ERPLibre;cd ./addons/addons;tig",
+                    cmd=f"cd {rec.path_working_erplibre};cd ./{rec.path_code_generator_to_generate};tig",
                     docker=True,
                 )
 
@@ -894,7 +898,7 @@ class ItWorkspace(models.Model):
                     # if "docker-compose.yml" in lst_file:
                     # if rec.mode_environnement in ["prod", "test"]:
                     #     result = rec.system_id.execute_with_result(
-                    #         "git clone https://github.com/ERPLibre/ERPLibre"
+                    #         f"git clone https://github.com{rec.path_working_erplibre}{rec.path_working_erplibre}"
                     #         f"{branch_str}"
                     #     )
                     # else:
@@ -921,7 +925,7 @@ class ItWorkspace(models.Model):
             with rec.it_workspace_log():
                 # TODO not working
                 # maybe send by network REST web/database/restore
-                # result = rec.system_id.exec_docker("cd /ERPLibre;time ./script/database/db_restore.py --database test;", rec.folder)
+                # result = rec.system_id.exec_docker(f"cd {rec.path_working_erplibre};time ./script/database/db_restore.py --database test;", rec.folder)
                 # rec.log_workspace = f"\n{result}"
                 url_list = f"{rec.url_instance}/web/database/list"
                 url_restore = f"{rec.url_instance}/web/database/restore"
@@ -1000,7 +1004,7 @@ class ItWorkspace(models.Model):
                         " de restauration."
                     )
 
-                # f = {'file data': open('./image_db/erplibre_base.zip', 'rb')}
+                # f = {'file data': open(f'./image_db{rec.path_working_erplibre}_base.zip', 'rb')}
                 # res = requests.post(url_restore, files=f)
                 # print(res.text)
 
@@ -1104,8 +1108,9 @@ services:
     volumes:
       # See the volume section at the end of the file
       - erplibre_data_dir:/home/odoo/.local/share/Odoo
-      - ./addons/addons:/ERPLibre/addons/addons
+      - ./addons/addons:{rec.path_working_erplibre}/addons/addons
       - erplibre_conf:/etc/odoo
+{'      - ' + '      - '.join([f'./{rec.path_code_generator_to_generate}:{rec.path_working_erplibre}/{rec.path_code_generator_to_generate}']) if True else ''}
     restart: always
 
   db:
@@ -1162,7 +1167,7 @@ volumes:
                 if "admin_passwd" not in result:
                     result += "admin_passwd = admin\n"
                 # TODO remove repo OCA_connector-jira
-                str_to_replace = ",/ERPLibre/addons/OCA_connector-jira"
+                str_to_replace = f",{rec.path_working_erplibre}/addons/OCA_connector-jira"
                 if str_to_replace in result:
                     result = result.replace(str_to_replace, "")
                     has_change = True
@@ -1176,34 +1181,34 @@ volumes:
                     if rec.docker_config_gen_cg:
                         addons_path = (
                             "addons_path ="
-                            " /ERPLibre/odoo/addons,"
-                            "/ERPLibre/addons/addons,"
-                            "/ERPLibre/addons/OCA_web,"
-                            "/ERPLibre/addons/ERPLibre_erplibre_addons,"
-                            "/ERPLibre/addons/ERPLibre_erplibre_theme_addons,"
-                            "/ERPLibre/addons/MathBenTech_development,"
-                            "/ERPLibre/addons/MathBenTech_erplibre-family-management,"
-                            "/ERPLibre/addons/MathBenTech_odoo-business-spending-management-quebec-canada,"
-                            "/ERPLibre/addons/MathBenTech_scrummer,"
-                            "/ERPLibre/addons/Numigi_odoo-partner-addons,"
-                            "/ERPLibre/addons/Numigi_odoo-web-addons,"
-                            "/ERPLibre/addons/OCA_contract,"
-                            "/ERPLibre/addons/OCA_geospatial,"
-                            "/ERPLibre/addons/OCA_helpdesk,"
-                            "/ERPLibre/addons/OCA_server-auth,"
-                            "/ERPLibre/addons/OCA_server-brand,"
-                            "/ERPLibre/addons/OCA_server-tools,"
-                            "/ERPLibre/addons/OCA_server-ux,"
-                            "/ERPLibre/addons/OCA_social,"
-                            "/ERPLibre/addons/OCA_website,"
-                            "/ERPLibre/addons/TechnoLibre_odoo-code-generator,"
-                            "/ERPLibre/addons/TechnoLibre_odoo-code-generator-template,"
-                            "/ERPLibre/addons/ajepe_odoo-addons,"
-                            "/ERPLibre/addons/muk-it_muk_base,"
-                            "/ERPLibre/addons/muk-it_muk_misc,"
-                            "/ERPLibre/addons/muk-it_muk_web,"
-                            "/ERPLibre/addons/muk-it_muk_website,"
-                            "/ERPLibre/addons/odoo_design-themes"
+                            f" {rec.path_working_erplibre}/odoo/addons,"
+                            f"{rec.path_working_erplibre}/{rec.path_code_generator_to_generate},"
+                            f"{rec.path_working_erplibre}/addons/OCA_web,"
+                            f"{rec.path_working_erplibre}/addons{rec.path_working_erplibre}_erplibre_addons,"
+                            f"{rec.path_working_erplibre}/addons{rec.path_working_erplibre}_erplibre_theme_addons,"
+                            f"{rec.path_working_erplibre}/addons/MathBenTech_development,"
+                            f"{rec.path_working_erplibre}/addons/MathBenTech_erplibre-family-management,"
+                            f"{rec.path_working_erplibre}/addons/MathBenTech_odoo-business-spending-management-quebec-canada,"
+                            f"{rec.path_working_erplibre}/addons/MathBenTech_scrummer,"
+                            f"{rec.path_working_erplibre}/addons/Numigi_odoo-partner-addons,"
+                            f"{rec.path_working_erplibre}/addons/Numigi_odoo-web-addons,"
+                            f"{rec.path_working_erplibre}/addons/OCA_contract,"
+                            f"{rec.path_working_erplibre}/addons/OCA_geospatial,"
+                            f"{rec.path_working_erplibre}/addons/OCA_helpdesk,"
+                            f"{rec.path_working_erplibre}/addons/OCA_server-auth,"
+                            f"{rec.path_working_erplibre}/addons/OCA_server-brand,"
+                            f"{rec.path_working_erplibre}/addons/OCA_server-tools,"
+                            f"{rec.path_working_erplibre}/addons/OCA_server-ux,"
+                            f"{rec.path_working_erplibre}/addons/OCA_social,"
+                            f"{rec.path_working_erplibre}/addons/OCA_website,"
+                            f"{rec.path_working_erplibre}/addons/TechnoLibre_odoo-code-generator,"
+                            f"{rec.path_working_erplibre}/addons/TechnoLibre_odoo-code-generator-template,"
+                            f"{rec.path_working_erplibre}/addons/ajepe_odoo-addons,"
+                            f"{rec.path_working_erplibre}/addons/muk-it_muk_base,"
+                            f"{rec.path_working_erplibre}/addons/muk-it_muk_misc,"
+                            f"{rec.path_working_erplibre}/addons/muk-it_muk_web,"
+                            f"{rec.path_working_erplibre}/addons/muk-it_muk_website,"
+                            f"{rec.path_working_erplibre}/addons/odoo_design-themes"
                         )
                     elif (
                         not rec.docker_config_gen_cg
@@ -1233,7 +1238,7 @@ volumes:
                     )
                 # TODO support only one file, and remove /odoo.conf
                 rec.system_id.exec_docker(
-                    "cd /ERPLibre;cp /etc/odoo/odoo.conf ./config.conf;",
+                    f"cd {rec.path_working_erplibre};cp /etc/odoo/odoo.conf ./config.conf;",
                     rec.folder,
                 )
                 rec.action_docker_check_docker_ps()
