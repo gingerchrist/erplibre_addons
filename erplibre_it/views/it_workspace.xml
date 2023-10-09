@@ -146,6 +146,18 @@
                             <field name="it_code_generator_field_ids" widget="many2many" context="{'default_it_workspace_ids': [id]}"/>
                         </group>
                     </page>
+                    <page name="code_generator_misc" string="CG">
+                        <div class="bg-warning">
+                            <h3>Warning:</h3>
+                            Create new project with code generator
+                        </div>
+                        <group string="CG new project">
+                            <group>
+                                <button class="oe_highlight" name="action_cg_erplibre_it" string="ERPLibre IT" type="object" />
+                                <div attrs="{'invisible': [('time_exec_action_cg_erplibre_it', '=', False)]}">Exec in <field name="time_exec_action_cg_erplibre_it" nolabel="1"/></div>
+                            </group>
+                        </group>
+                    </page>
                     <page name="code_generator_info_diff" string="Diff">
                         <field name="it_code_generator_diff"/>
                     </page>

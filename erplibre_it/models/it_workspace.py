@@ -210,6 +210,11 @@ class ItWorkspace(models.Model):
         help="Execution time of method action_code_generator_generate_all",
     )
 
+    time_exec_action_cg_erplibre_it = fields.Char(
+        readonly=True,
+        help="Execution time of method action_cg_erplibre_it",
+    )
+
     mode_exec = fields.Selection(
         selection=[("docker", "Docker"), ("git", "Git")], default="docker"
     )
@@ -356,6 +361,19 @@ class ItWorkspace(models.Model):
                     f"cd {rec.folder};docker compose ps"
                 )
                 rec.docker_compose_ps = f"\n{result}"
+
+    @api.multi
+    def action_cg_erplibre_it(self):
+        for rec in self:
+            with rec.it_workspace_log():
+                start = datetime.now()
+                rec.system_id.execute_gnome_terminal(
+                    rec.folder,
+                    cmd="./script/code_generator/new_project.py -d ./addons/ERPLibre_erplibre_addons -m erplibre_it"
+                )
+                end = datetime.now()
+                td = (end - start).total_seconds()
+                rec.time_exec_action_cg_erplibre_it = f"{td:.03f}s"
 
     @api.multi
     def action_docker_check_docker_ps(self):
