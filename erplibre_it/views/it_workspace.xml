@@ -153,9 +153,18 @@
                         </div>
                         <group string="CG new project">
                             <group>
+                                <field name="need_debugger_cg_erplibre_it" invisible="True"/>
                                 <button class="oe_highlight" name="action_cg_erplibre_it" string="ERPLibre IT" type="object" />
                                 <div attrs="{'invisible': [('time_exec_action_cg_erplibre_it', '=', False)]}">Exec in <field name="time_exec_action_cg_erplibre_it" nolabel="1"/></div>
+                                <div attrs="{'invisible': [('need_debugger_cg_erplibre_it', '=', False)]}">
+                                    <button class="oe_highlight" name="action_cg_setup_pycharm_debug" string="Setup Pycharm debug" type="object" />
+                                </div>
+                                <button class="oe_highlight" name="action_open_terminal_path_erplibre_it" string="Terminal path erplibre it" type="object" />
                             </group>
+                        </group>
+                        <group string="Log">
+                            <field name="it_cg_erplibre_it_error_log" attrs="{'invisible': [('it_cg_erplibre_it_error_log', '=', False)]}"/>
+                            <field name="it_cg_erplibre_it_log" />
                         </group>
                     </page>
                     <page name="code_generator_info_diff" string="Diff">
