@@ -84,7 +84,13 @@ class ItWorkspace(models.Model):
         help="Longpolling need a proxy when workers > 1", default=False
     )
 
-    path_code_generator_to_generate = fields.Char(default="addons/addons", help="")
+    docker_initiate_succeed = fields.Boolean(
+        help="Docker is ready to run", default=False
+    )
+
+    path_code_generator_to_generate = fields.Char(
+        default="addons/addons", help=""
+    )
 
     path_working_erplibre = fields.Char(default="/ERPLibre", help="")
 
@@ -470,17 +476,18 @@ class ItWorkspace(models.Model):
         for rec in self:
             with rec.it_workspace_log():
                 rec.system_id.exec_docker(
-                    f"cd {rec.path_working_erplibre}/{rec.path_code_generator_to_generate};rm -rf ./{module_id.name};",
+                    f"cd {rec.path_working_erplibre}/{rec.path_code_generator_to_generate};rm"
+                    f" -rf ./{module_id.name};",
                     rec.folder,
                 )
                 rec.system_id.exec_docker(
-                    f"cd {rec.path_working_erplibre}/{rec.path_code_generator_to_generate};rm -rf"
-                    f" ./code_generator_template_{module_id.name};",
+                    f"cd {rec.path_working_erplibre}/{rec.path_code_generator_to_generate};rm"
+                    f" -rf ./code_generator_template_{module_id.name};",
                     rec.folder,
                 )
                 rec.system_id.exec_docker(
-                    f"cd {rec.path_working_erplibre}/{rec.path_code_generator_to_generate};rm -rf"
-                    f" ./code_generator_{module_id.name};",
+                    f"cd {rec.path_working_erplibre}/{rec.path_code_generator_to_generate};rm"
+                    f" -rf ./code_generator_{module_id.name};",
                     rec.folder,
                 )
 
@@ -505,25 +512,32 @@ class ItWorkspace(models.Model):
                 # for cg in rec.it_code_generator_ids:
                 # Validate git directory exist
                 result = rec.system_id.exec_docker(
-                    f"ls {rec.path_working_erplibre}/{rec.path_code_generator_to_generate}/.git", rec.folder
+                    f"ls {rec.path_working_erplibre}/{rec.path_code_generator_to_generate}/.git",
+                    rec.folder,
                 )
                 if "No such file or directory" in result:
                     # Suppose git not exist
                     # This is not good if .git directory is in parent directory
                     result = rec.system_id.exec_docker(
-                        f"cd {rec.path_working_erplibre}/{rec.path_code_generator_to_generate};git init", rec.folder
+                        f"cd {rec.path_working_erplibre}/{rec.path_code_generator_to_generate};git"
+                        " init",
+                        rec.folder,
                     )
                 result = rec.system_id.exec_docker(
-                    f"cd {rec.path_working_erplibre}/{rec.path_code_generator_to_generate};git status -s", rec.folder
+                    f"cd {rec.path_working_erplibre}/{rec.path_code_generator_to_generate};git"
+                    " status -s",
+                    rec.folder,
                 )
                 if result:
                     # Force add file and commit
                     result = rec.system_id.exec_docker(
-                        f"cd {rec.path_working_erplibre}/{rec.path_code_generator_to_generate};git add .", rec.folder
+                        f"cd {rec.path_working_erplibre}/{rec.path_code_generator_to_generate};git"
+                        " add .",
+                        rec.folder,
                     )
                     result = rec.system_id.exec_docker(
-                        f"cd {rec.path_working_erplibre}/{rec.path_code_generator_to_generate};git commit -m 'Commit by"
-                        f" RobotLibre'",
+                        f"cd {rec.path_working_erplibre}/{rec.path_code_generator_to_generate};git"
+                        " commit -m 'Commit by RobotLibre'",
                         rec.folder,
                     )
                 end = datetime.now()
@@ -541,16 +555,21 @@ class ItWorkspace(models.Model):
                 status = ""
                 stat = ""
                 result = rec.system_id.exec_docker(
-                    f"ls {rec.path_working_erplibre}/{rec.path_code_generator_to_generate}/.git", rec.folder
+                    f"ls {rec.path_working_erplibre}/{rec.path_code_generator_to_generate}/.git",
+                    rec.folder,
                 )
                 if result:
                     # Create diff
                     diff += rec.system_id.exec_docker(
-                        f"cd {rec.path_working_erplibre}/{rec.path_code_generator_to_generate};git diff", rec.folder
+                        f"cd {rec.path_working_erplibre}/{rec.path_code_generator_to_generate};git"
+                        " diff",
+                        rec.folder,
                     )
                     # Create status
                     status += rec.system_id.exec_docker(
-                        f"cd {rec.path_working_erplibre}/{rec.path_code_generator_to_generate};git status", rec.folder
+                        f"cd {rec.path_working_erplibre}/{rec.path_code_generator_to_generate};git"
+                        " status",
+                        rec.folder,
                     )
                     for cg in rec.it_code_generator_ids:
                         # Create statistic
@@ -697,13 +716,13 @@ class ItWorkspace(models.Model):
                     ]
                 )
                 rec.system_id.exec_docker(
-                    f"cd {rec.path_working_erplibre};./script/database/db_restore.py --database"
-                    " cg_uca",
+                    f"cd {rec.path_working_erplibre};./script/database/db_restore.py"
+                    " --database cg_uca",
                     rec.folder,
                 )
                 rec.system_id.exec_docker(
-                    f"cd {rec.path_working_erplibre};./script/addons/install_addons_dev.sh cg_uca"
-                    f" {module_list}",
+                    f"cd {rec.path_working_erplibre};./script/addons/install_addons_dev.sh"
+                    f" cg_uca {module_list}",
                     rec.folder,
                 )
 
@@ -727,13 +746,13 @@ class ItWorkspace(models.Model):
                     ]
                 )
                 rec.system_id.exec_docker(
-                    f"cd {rec.path_working_erplibre};./script/database/db_restore.py --database"
-                    " cg_ucb",
+                    f"cd {rec.path_working_erplibre};./script/database/db_restore.py"
+                    " --database cg_ucb",
                     rec.folder,
                 )
                 rec.system_id.exec_docker(
-                    f"cd {rec.path_working_erplibre};./script/addons/install_addons_dev.sh cg_ucb"
-                    f" {module_list}",
+                    f"cd {rec.path_working_erplibre};./script/addons/install_addons_dev.sh"
+                    f" cg_ucb {module_list}",
                     rec.folder,
                 )
 
@@ -793,7 +812,10 @@ class ItWorkspace(models.Model):
                     self.action_docker_install_dev_soft()
                 rec.system_id.execute_gnome_terminal(
                     rec.folder,
-                    cmd=f"cd {rec.path_working_erplibre};cd ./{rec.path_code_generator_to_generate};tig",
+                    cmd=(
+                        f"cd {rec.path_working_erplibre};cd"
+                        f" ./{rec.path_code_generator_to_generate};tig"
+                    ),
                     docker=True,
                 )
 
@@ -817,6 +839,12 @@ class ItWorkspace(models.Model):
                         f" {rec.system_id.ssh_user}"
                     ),
                 )
+                rec.system_id.execute_gnome_terminal(
+                    rec.folder,
+                    cmd="sudo systemctl start docker.service",
+                )
+                # TODO check if all good
+        self.docker_initiate_succeed = True
 
     @api.multi
     def action_analyse_docker_image(self):
@@ -830,6 +858,7 @@ class ItWorkspace(models.Model):
     @api.multi
     def action_it_check_all(self):
         for rec in self:
+            # rec.docker_initiate_succeed = not rec.docker_initiate_succeed
             lst_file = (
                 rec.system_id.execute_with_result(f"ls {rec.folder}")
                 .strip()
@@ -1147,6 +1176,15 @@ volumes:
                 result = rec.system_id.execute_with_result(
                     f"cd {rec.folder};docker compose up -d"
                 )
+
+                if (
+                    "Cannot connect to the Docker daemon at"
+                    " unix:///var/run/docker.sock. Is the docker daemon"
+                    " running?"
+                    in result
+                ):
+                    rec.docker_initiate_succeed = False
+
                 rec.log_workspace = f"\n{result}"
                 result = rec.system_id.execute_with_result(
                     f"cd {rec.folder};docker compose ps"
@@ -1167,7 +1205,9 @@ volumes:
                 if "admin_passwd" not in result:
                     result += "admin_passwd = admin\n"
                 # TODO remove repo OCA_connector-jira
-                str_to_replace = f",{rec.path_working_erplibre}/addons/OCA_connector-jira"
+                str_to_replace = (
+                    f",{rec.path_working_erplibre}/addons/OCA_connector-jira"
+                )
                 if str_to_replace in result:
                     result = result.replace(str_to_replace, "")
                     has_change = True
@@ -1238,7 +1278,8 @@ volumes:
                     )
                 # TODO support only one file, and remove /odoo.conf
                 rec.system_id.exec_docker(
-                    f"cd {rec.path_working_erplibre};cp /etc/odoo/odoo.conf ./config.conf;",
+                    f"cd {rec.path_working_erplibre};cp /etc/odoo/odoo.conf"
+                    " ./config.conf;",
                     rec.folder,
                 )
                 rec.action_docker_check_docker_ps()
