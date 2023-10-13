@@ -339,11 +339,7 @@ class ItWorkspace(models.Model):
 
     @api.model
     def _default_folder(self):
-        """Default to ``it_workspaces`` folder inside current server datadir."""
-        # return os.path.join(
-        #     tools.config["data_dir"], "backups", self.env.cr.dbname
-        # )
-        return ""
+        return os.getcwd()
 
     @api.multi
     @api.depends("folder")
