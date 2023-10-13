@@ -394,7 +394,7 @@ class ItWorkspace(models.Model):
                 addons_path = "./addons/ERPLibre_erplibre_addons"
                 module_name = "erplibre_it"
                 result = rec.system_id.execute_with_result(
-                    "./script/code_generator/new_project.py -d"
+                    f"cd {rec.folder};./script/code_generator/new_project.py -d"
                     f" {addons_path} -m {module_name}",
                 )
                 rec.it_cg_erplibre_it_log = result
