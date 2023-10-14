@@ -393,8 +393,12 @@ class ItWorkspace(models.Model):
                 # rec.need_debugger_cg_erplibre_it = False
                 addons_path = "./addons/ERPLibre_erplibre_addons"
                 module_name = "erplibre_it"
-                new_project_id = self.env["it.cg.new.project"].create(
-                    {"module": module_name, "directory": addons_path}
+                new_project_id = self.env["it.cg.new_project"].create(
+                    {
+                        "module": module_name,
+                        "directory": addons_path,
+                        "it_workspace": rec.id,
+                    }
                 )
                 new_project_id.action_new_project()
                 # result = rec.system_id.execute_with_result(
@@ -646,19 +650,31 @@ class ItWorkspace(models.Model):
                             self._docker_remove_module(module_id)
                         model_conf = (
                             json.dumps(dct_model_conf)
-                            .replace('"', '\\"')
-                            .replace("'", "")
+                            # .replace('"', '\\"')
+                            # .replace("'", "")
                         )
-                        extra_arg = ""
+                        dct_new_project = {
+                            "module": module_name,
+                            "directory": rec.path_code_generator_to_generate,
+                            "keep_bd_alive": True,
+                            "it_workspace": rec.id,
+                        }
+                        # extra_arg = ""
                         if model_conf:
-                            extra_arg = f" --config '{model_conf}'"
-                        cmd = (
-                            f"cd {rec.path_working_erplibre};./script/code_generator/new_project.py"
-                            f" --keep_bd_alive -m {module_name} -d"
-                            f" {rec.path_code_generator_to_generate}{extra_arg}"
+                            dct_new_project["config"] = model_conf
+                            # extra_arg = f" --config '{model_conf}'"
+
+                        new_project_id = self.env["it.cg.new_project"].create(
+                            dct_new_project
                         )
-                        result = rec.system_id.exec_docker(cmd, rec.folder)
-                        rec.it_code_generator_log_addons = result
+                        new_project_id.action_new_project()
+                        # cmd = (
+                        #     f"cd {rec.path_working_erplibre};./script/code_generator/new_project.py"
+                        #     f" --keep_bd_alive -m {module_name} -d"
+                        #     f" {rec.path_code_generator_to_generate}{extra_arg}"
+                        # )
+                        # result = rec.system_id.exec_docker(cmd, rec.folder)
+                        # rec.it_code_generator_log_addons = result
                 if rec.it_code_generator_ids:
                     rec.action_stop_docker_compose()
                     rec.action_start_docker_compose()

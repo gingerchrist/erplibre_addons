@@ -18,7 +18,7 @@ _logger = logging.getLogger(__name__)
 
 
 class ItCGNewProject(models.Model):
-    _name = "it.cg.new.project"
+    _name = "it.cg.new_project"
     _description = "Create new project for CG project"
 
     name = fields.Char()
@@ -33,24 +33,51 @@ class ItCGNewProject(models.Model):
 
     directory = fields.Char(required=True)
 
+    keep_bd_alive = fields.Boolean()
+
+    config = fields.Char()
+
+    code_generator_name = fields.Char()
+
+    template_name = fields.Char()
+
+    coverage = fields.Char()
+
+    odoo_config = fields.Char(default="./config.conf")
+
+    stop_execution_if_env_not_clean = fields.Boolean(default=True)
+
+    force = fields.Boolean()
+
+    internal_error = fields.Char(compute="_compute_internal_error", store=True)
+
+    it_workspace = fields.Many2one("it.workspace")
+
+    @api.multi
+    @api.depends("directory")
+    def _compute_internal_error(self):
+        """Get the right summary for this job."""
+        for rec in self:
+            if not os.path.exists(rec.directory):
+                rec.internal_error = (
+                    f"Path directory '{rec.directory}' not exist. You"
+                    f" actual path is: '{os.getcwd()}'."
+                )
+
     @api.multi
     def action_new_project(self):
         for rec in self:
             project = ProjectManagement(
                 rec.module,
                 rec.directory,
+                cg_name=rec.code_generator_name,
+                template_name=rec.template_name,
+                force=rec.force,
+                keep_bd_alive=rec.keep_bd_alive,
+                coverage=rec.coverage,
+                config=rec.config,
+                odoo_config=rec.odoo_config,
             )
-            # project = ProjectManagement(
-            #     config.module,
-            #     config.directory,
-            #     cg_name=config.code_generator_name,
-            #     template_name=config.template_name,
-            #     force=config.force,
-            #     keep_bd_alive=config.keep_bd_alive,
-            #     coverage=config.coverage,
-            #     config=config.config,
-            #     odoo_config=config.odoo_config
-            # )
             if project.msg_error:
                 rec.msg_error = project.msg_error
                 rec.has_error = True
@@ -82,15 +109,15 @@ class ProjectManagement:
         self.msg_error = ""
         self.has_config_update = False
         self.odoo_config = odoo_config
-
         self.module_directory = module_directory
-        if not os.path.exists(self.module_directory):
-            self.msg_error = (
-                f"Path directory '{self.module_directory}' not exist. You"
-                f" actual path is: '{os.getcwd()}'."
-            )
-            _logger.error(self.msg_error)
-            return
+
+        # if not os.path.exists(self.module_directory):
+        #     self.msg_error = (
+        #         f"Path directory '{self.module_directory}' not exist. You"
+        #         f" actual path is: '{os.getcwd()}'."
+        #     )
+        #     _logger.error(self.msg_error)
+        #     return
 
         self.cg_directory = cg_directory if cg_directory else module_directory
         if not os.path.exists(self.cg_directory):
@@ -183,6 +210,8 @@ class ProjectManagement:
             )
             return False
 
+        # TODO wait refactoring to use rec
+        # if rec.stop_execution_if_env_not_clean:
         status = git_repo.git.status(name, porcelain=True)
         if status:
             _logger.error(

@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <record id="it_code_generator_new_project_view_form" model="ir.ui.view">
-        <field name="name">it_code_generator_new_project_form</field>
-        <field name="model">it.cg.new.project</field>
+    <record id="it_new_project_view_form" model="ir.ui.view">
+        <field name="name">it_new_project_form</field>
+        <field name="model">it.cg.new_project</field>
         <field name="arch" type="xml">
             <form string="Titre">
                 <header>
@@ -13,6 +13,20 @@
                     <group>
                         <group>
                             <field name="name"/>
+                            <field name="msg_error"/>
+                            <field name="has_error"/>
+                            <field name="execution_finish"/>
+                            <field name="module"/>
+                            <field name="directory"/>
+                            <field name="keep_bd_alive"/>
+                            <field name="config"/>
+                            <field name="code_generator_name"/>
+                            <field name="stop_execution_if_env_not_clean"/>
+                            <field name="it_workspace"/>
+                            <field name="template_name"/>
+                            <field name="coverage"/>
+                            <field name="odoo_config"/>
+                            <field name="force"/>
                         </group>
                     </group>
                 </sheet>
@@ -20,9 +34,9 @@
         </field>
     </record>
 
-    <record id="it_code_generator_new_project_view_graph" model="ir.ui.view">
-        <field name="name">it_code_generator_new_project_graph</field>
-        <field name="model">it.cg.new.project</field>
+    <record id="it_new_project_view_graph" model="ir.ui.view">
+        <field name="name">it_new_project_graph</field>
+        <field name="model">it.cg.new_project</field>
         <field name="arch" type="xml">
             <graph string="It code generator module model field">
                 <field name="name" type="row"/>
@@ -30,9 +44,9 @@
         </field>
     </record>
 
-    <record id="it_code_generator_new_project_view_kanban" model="ir.ui.view">
-        <field name="name">it_code_generator_new_project_kanban</field>
-        <field name="model">it.cg.new.project</field>
+    <record id="it_new_project_view_kanban" model="ir.ui.view">
+        <field name="name">it_new_project_kanban</field>
+        <field name="model">it.cg.new_project</field>
         <field name="arch" type="xml">
             <kanban class="o_kanban_mobile">
                 <field name="name"/>
@@ -55,9 +69,9 @@
         </field>
     </record>
 
-    <record id="it_code_generator_new_project_view_pivot" model="ir.ui.view">
-        <field name="name">it_code_generator_new_project_pivot</field>
-        <field name="model">it.cg.new.project</field>
+    <record id="it_new_project_view_pivot" model="ir.ui.view">
+        <field name="name">it_new_project_pivot</field>
+        <field name="model">it.cg.new_project</field>
         <field name="arch" type="xml">
             <pivot string="It code generator new project">
                 <field name="name" type="row"/>
@@ -65,9 +79,9 @@
         </field>
     </record>
 
-    <record id="it_code_generator_new_project_view_search" model="ir.ui.view">
-        <field name="name">it_code_generator_new_project_search</field>
-        <field name="model">it.cg.new.project</field>
+    <record id="it_new_project_view_search" model="ir.ui.view">
+        <field name="name">it_new_project_search</field>
+        <field name="model">it.cg.new_project</field>
         <field name="arch" type="xml">
             <search string="It code generator module model field">
                 <filter domain="[('name','!=',False)]" name="name" string="Name"/>
@@ -75,9 +89,9 @@
         </field>
     </record>
 
-    <record id="it_code_generator_new_project_view_tree" model="ir.ui.view">
-        <field name="name">it_code_generator_new_project_tree</field>
-        <field name="model">it.cg.new.project</field>
+    <record id="it_new_project_view_tree" model="ir.ui.view">
+        <field name="name">it_new_project_tree</field>
+        <field name="model">it.cg.new_project</field>
         <field name="arch" type="xml">
             <tree>
                 <field name="name"/>
@@ -85,6 +99,6 @@
         </field>
     </record>
 
-    <act_window id="it_code_generator_new_project_action_window" name="Code generator new project" res_model="it.cg.new.project" view_mode="kanban,tree,pivot,graph,form"/>
+    <act_window id="it_new_project_action_window" name="Code generator new project" res_model="it.cg.new_project" view_mode="kanban,tree,pivot,graph,form"/>
 
 </odoo>
