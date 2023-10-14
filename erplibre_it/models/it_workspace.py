@@ -393,10 +393,15 @@ class ItWorkspace(models.Model):
                 # rec.need_debugger_cg_erplibre_it = False
                 addons_path = "./addons/ERPLibre_erplibre_addons"
                 module_name = "erplibre_it"
-                result = rec.system_id.execute_with_result(
-                    f"cd {rec.folder};./script/code_generator/new_project.py -d"
-                    f" {addons_path} -m {module_name}",
+                new_project_id = self.env["it.cg.new.project"].create(
+                    {"module": module_name, "directory": addons_path}
                 )
+                new_project_id.action_new_project()
+                # result = rec.system_id.execute_with_result(
+                #     f"cd {rec.folder};./script/code_generator/new_project.py"
+                #     f" -d {addons_path} -m {module_name}",
+                # )
+                result = ""
                 rec.it_cg_erplibre_it_log = result
                 index_error = result.rfind("odoo.exceptions.ValidationError")
                 if index_error >= 0:

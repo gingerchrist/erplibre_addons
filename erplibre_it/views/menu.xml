@@ -29,4 +29,6 @@
 
   <menuitem id="code_generator_module_model_field" name="Field" action="it_code_generator_module_model_field_code_generator_module_model_field_action_window" sequence="4" parent="menu_code"/>
 
+  <menuitem id="code_generator_new_project" name="Field" action="it_code_generator_new_project_action_window" sequence="5" parent="menu_code"/>
+
 </odoo>
