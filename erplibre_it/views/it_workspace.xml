@@ -7,6 +7,7 @@
             <form>
                 <header>
                     <button class="oe_highlight" name="action_install_workspace" string="Install" type="object" attrs="{'invisible': [('is_installed', '=', True)]}" />
+                    <button class="oe_highlight" name="action_install_me_workspace" string="Me" type="object" attrs="{'invisible': [('is_installed', '=', True)]}" />
                     <button class="oe_highlight" name="action_it_check_all" string="Status check" type="object" attrs="{'invisible': [('is_installed', '=', False)]}" />
                 </header>
                 <div class="badge-pill badge-success float-right" attrs="{'invisible': [('is_self_instance', '=', False)]}">Same instance</div>

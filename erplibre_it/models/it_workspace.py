@@ -1076,6 +1076,20 @@ class ItWorkspace(models.Model):
         #     print(rec)
 
     @api.multi
+    def action_install_me_workspace(self):
+        for rec in self:
+            with rec.it_workspace_log():
+                # Set same BD of this instance
+                rec.db_name = self.env.cr.dbname
+                # Detect the mode exec of this instance
+                status_ls = rec.system_id.execute_with_result(
+                    f"ls {rec.folder}/.git"
+                )
+                if "No such file or directory" not in status_ls:
+                    rec.mode_exec = "git"
+                self.action_install_workspace()
+
+    @api.multi
     def action_install_workspace(self):
         for rec in self:
             with rec.it_workspace_log():
