@@ -1,9 +1,10 @@
-from odoo import _, api, exceptions, fields, models
+import base64
 import json
 import logging
-import subprocess
 import os
-import base64
+import subprocess
+
+from odoo import _, api, exceptions, fields, models
 
 _logger = logging.getLogger(__name__)
 try:

@@ -1,5 +1,6 @@
-from odoo import _, api, exceptions, fields, models
 import json
+
+from odoo import _, api, exceptions, fields, models
 
 
 class ItCodeGenerator(models.Model):

@@ -2,14 +2,16 @@
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
 
 import configparser
+import json
+import logging
+import os
 import tempfile
 import uuid
-import json
-import os
-import logging
-from odoo import _, api, exceptions, fields, models, tools
+
 from git import Repo
 from git.exc import InvalidGitRepositoryError, NoSuchPathError
+
+from odoo import _, api, exceptions, fields, models, tools
 
 CODE_GENERATOR_DIRECTORY = "./addons/TechnoLibre_odoo-code-generator-template/"
 CODE_GENERATOR_DEMO_NAME = "code_generator_demo"

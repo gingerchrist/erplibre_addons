@@ -10,9 +10,6 @@
     "license": "AGPL-3",
     "website": "https://erplibre.ca",
     "depends": ["mail"],
-    "external_dependencies": {
-        "python": ["pysftp"],
-    },
     "data": [
         "security/ir.model.access.csv",
         "data/mail_message_subtype.xml",
@@ -21,6 +18,7 @@
         "views/it_code_generator_module_model.xml",
         "views/it_code_generator_module_model_field.xml",
         "views/it_code_generator_new_project.xml",
+        "views/it_ide_pycharm.xml",
         "views/it_db_image.xml",
         "views/it_workspace.xml",
         "views/it_system.xml",
