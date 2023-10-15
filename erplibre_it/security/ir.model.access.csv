@@ -9,3 +9,4 @@ it_code_generator_module_model_field_access_user_types_/_internal_user,it_code_g
 it_system_access_user_types_/_internal_user,it_system Access User types / Internal User,model_it_system,base.group_user,1,1,1,1
 access_it_cg_new_project,access_it_cg_new_project,model_it_cg_new_project,base.group_user,1,1,1,1
 access_it_ide_pycharm,access_it_ide_pycharm,model_it_ide_pycharm,base.group_user,1,1,1,1
+access_it_workspace_docker,access_it_workspace_docker,model_it_workspace_docker,base.group_user,1,1,1,1

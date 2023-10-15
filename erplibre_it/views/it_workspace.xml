@@ -9,6 +9,11 @@
                     <button class="oe_highlight" name="action_install_workspace" string="Install" type="object" attrs="{'invisible': [('is_installed', '=', True)]}" />
                     <button class="oe_highlight" name="action_install_me_workspace" string="Me" type="object" attrs="{'invisible': [('is_installed', '=', True)]}" />
                     <button class="oe_highlight" name="action_it_check_all" string="Status check" type="object" attrs="{'invisible': [('is_installed', '=', False)]}" />
+                    <button class="oe_highlight" name="action_start" string="Start" type="object" attrs="{'invisible': ['|', ('is_installed', '=', False), ('is_running', '=', True)]}" />
+                    <button class="btn-success" name="action_start" string="Start" type="object" attrs="{'invisible': ['|', ('is_installed', '=', False), ('is_running', '=', False)]}" />
+                    <button class="oe_highlight" name="action_stop" string="Stop" type="object" attrs="{'invisible': ['|', ('is_installed', '=', False), ('is_running', '=', False)]}" />
+                    <button class="btn-success" name="action_stop" string="Stop" type="object" attrs="{'invisible': ['|', ('is_installed', '=', False), ('is_running', '=', True)]}" />
+                    <button class="oe_highlight" name="action_reboot" string="Reboot" type="object" attrs="{'invisible': [('is_installed', '=', False)]}" />
                 </header>
                 <div class="badge-pill badge-success float-right" attrs="{'invisible': [('is_self_instance', '=', False)]}">Same instance</div>
                 <div class="oe_title">
@@ -26,6 +31,7 @@
                         <field name="mode_version_base" />
                         <field name="is_self_instance" invisible="True"/>
                         <field name="is_installed" invisible="True"/>
+                        <field name="is_running" invisible="True"/>
                     </group>
                     <group string="Network" attrs="{'invisible': [('is_installed', '=', False)]}">
                         <button class="oe_highlight" name="action_network_change_port_random" string="Random port" type="object" />
@@ -44,6 +50,9 @@
                         <field name="image_db_selection"/>
                         <field name="db_name"/>
                     </group>
+                    <group string="Docker" attrs="{'invisible': [('is_installed', '=', False)]}">
+                        <field name="workspace_docker_id"/>
+                    </group>
                 </group>
 
 <!--                <separator colspan="2" string="Help" />-->
@@ -56,44 +65,44 @@
 <!--                    </ol>-->
 <!--                </div>-->
                 <notebook attrs="{'invisible': [('is_installed', '=', False)]}">
-                    <page name="docker" string="Docker">
-                        <group string="Action">
-                            <field name="docker_initiate_succeed" invisible="True" />
-                            <button class="oe_highlight" name="action_start_docker_compose" string="Run docker-compose" type="object" />
-                            <button class="oe_highlight" name="action_stop_docker_compose" string="Stop docker-compose" type="object" />
-                            <button class="oe_highlight" name="action_open_terminal_docker" string="Terminal docker" type="object" />
-                            <button class="oe_highlight" name="action_docker_restore_db_image" string="Restore DB Image" type="object" />
-                            <button class="oe_highlight" name="action_docker_logs" string="Docker logs" type="object" />
-                            <button class="oe_highlight" name="action_docker_install_dev_soft" string="Docker install dev" type="object" />
-                            <button class="btn-danger" name="action_os_user_permission_docker" string="Give docker permission" type="object" attrs="{'invisible': [('docker_initiate_succeed', '=', True)]}"/>
+<!--                    <page name="docker" string="Docker">-->
+<!--                        <group string="Action">-->
+<!--                            <field name="docker_initiate_succeed" invisible="True" />-->
+<!--                            <button class="oe_highlight" name="action_start_docker_compose" string="Run docker-compose" type="object" />-->
+<!--                            <button class="oe_highlight" name="action_stop_docker_compose" string="Stop docker-compose" type="object" />-->
+<!--                            <button class="oe_highlight" name="action_open_terminal_docker" string="Terminal docker" type="object" />-->
+<!--                            <button class="oe_highlight" name="action_docker_restore_db_image" string="Restore DB Image" type="object" />-->
+<!--                            <button class="oe_highlight" name="action_docker_logs" string="Docker logs" type="object" />-->
+<!--                            <button class="oe_highlight" name="action_docker_install_dev_soft" string="Docker install dev" type="object" />-->
+<!--                            <button class="btn-danger" name="action_os_user_permission_docker" string="Give docker permission" type="object" attrs="{'invisible': [('docker_initiate_succeed', '=', True)]}"/>-->
 
-<!--                            <button  type="action" context="{'default_workcenter_id': workcenter_id}" string="Block" class="btn-danger" attrs="{'invisible': ['|', '|', ('working_state', '=', 'blocked'), ('state', 'in', ('done', 'pending', 'ready', 'cancel')), ('is_user_working', '=', False)]}"/>-->
+<!--&lt;!&ndash;                            <button  type="action" context="{'default_workcenter_id': workcenter_id}" string="Block" class="btn-danger" attrs="{'invisible': ['|', '|', ('working_state', '=', 'blocked'), ('state', 'in', ('done', 'pending', 'ready', 'cancel')), ('is_user_working', '=', False)]}"/>&ndash;&gt;-->
 
-                            <button class="oe_highlight" name="action_analyse_docker_image" string="Analyse docker image" type="object" />
-                        </group>
-                        <group>
-                            <group string="Status instance">
-                                <field name="docker_is_running"/>
-                                <field name="db_is_restored"/>
-                            </group>
-                        </group>
-                        <group string="Configuration">
-                            <group>
-                                <field name="force_create_docker_compose" />
-                                <field name="docker_version"/>
-                                <field name="docker_cmd_extra"/>
-                                <field name="docker_nb_proc"/>
-                                <field name="docker_is_behind_proxy"/>
-                                <field name="docker_config_gen_cg"/>
-                            </group>
-                        </group>
-                        <group string="Log">
-                            <field name="docker_compose_ps" />
-                        </group>
-                    </page>
+<!--                            <button class="oe_highlight" name="action_analyse_docker_image" string="Analyse docker image" type="object" />-->
+<!--                        </group>-->
+<!--                        <group>-->
+<!--                            <group string="Status instance">-->
+<!--                                <field name="docker_is_running"/>-->
+<!--                                <field name="db_is_restored"/>-->
+<!--                            </group>-->
+<!--                        </group>-->
+<!--                        <group string="Configuration">-->
+<!--                            <group>-->
+<!--                                <field name="force_create_docker_compose" />-->
+<!--                                <field name="docker_version"/>-->
+<!--                                <field name="docker_cmd_extra"/>-->
+<!--                                <field name="docker_nb_proc"/>-->
+<!--                                <field name="docker_is_behind_proxy"/>-->
+<!--                                <field name="docker_config_gen_cg"/>-->
+<!--                            </group>-->
+<!--                        </group>-->
+<!--                        <group string="Log">-->
+<!--                            <field name="docker_compose_ps" />-->
+<!--                        </group>-->
+<!--                    </page>-->
                     <page name="status" string="Status">
                         <group string="Instance">
-                            <field name="docker_is_running"/>
+<!--                            <field name="docker_is_running"/>-->
                             <field name="db_is_restored"/>
                         </group>
                     </page>
@@ -186,7 +195,7 @@
                     <page name="log" string="Log">
                         <group string="Action">
                             <button class="oe_highlight" name="action_open_terminal" string="Terminal" type="object" />
-                            <button class="oe_highlight" name="action_open_terminal_docker" string="Terminal docker" type="object" />
+<!--                            <button class="oe_highlight" name="action_open_terminal_docker" string="Terminal docker" type="object" />-->
                         </group>
                         <group>
                             <field name="log_workspace" />

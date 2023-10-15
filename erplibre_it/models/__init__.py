@@ -10,4 +10,5 @@ from . import (
     it_ide_pycharm,
     it_system,
     it_workspace,
+    it_workspace_docker,
 )

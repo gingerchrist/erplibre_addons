@@ -21,6 +21,7 @@
         "views/it_ide_pycharm.xml",
         "views/it_db_image.xml",
         "views/it_workspace.xml",
+        "views/it_workspace_docker.xml",
         "views/it_system.xml",
         "views/menu.xml",
         "data/ir_cron.xml",

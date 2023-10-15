@@ -32,6 +32,7 @@ class ItCodeGeneratorModuleModelField(models.Model):
             ("one2many", "one2many"),
         ],
         required=True,
+        default="char",
     )
 
     relation = fields.Many2one(

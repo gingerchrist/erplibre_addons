@@ -1,23 +1,14 @@
 # Copyright 2023 TechnoLibre inc. - Mathieu Benoit
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
 
-import base64
 import json
 import logging
 import os
-import shutil
-import subprocess
-import time
 import traceback
 from contextlib import contextmanager
 from datetime import datetime, timedelta
-from glob import iglob
-
-import paramiko
-import requests
 
 from odoo import _, api, exceptions, fields, models, tools
-from odoo.service import db
 
 _logger = logging.getLogger(__name__)
 
@@ -27,14 +18,6 @@ class ItWorkspace(models.Model):
     _inherit = "mail.thread"
     _description = "ERPLibre IT Workspace"
 
-    # _sql_constraints = [
-    # ("name_unique", "UNIQUE(name)", "Cannot duplicate a configuration."),
-    # (
-    # "days_to_keep_positive",
-    # "CHECK(days_to_keep >= 0)",
-    # "I cannot remove it_workspaces from the future. Ask Doc for that.",
-    # ),
-    # ]
     name = fields.Char(
         compute="_compute_name",
         store=True,
@@ -52,39 +35,6 @@ class ItWorkspace(models.Model):
 
     log_workspace = fields.Text()
 
-    docker_compose_ps = fields.Text()
-
-    docker_version = fields.Char(default="technolibre/erplibre:1.5.0_c0c6f23")
-
-    docker_cmd_extra = fields.Char(
-        help="Extra command to share to odoo executable", default=""
-    )
-
-    docker_nb_proc = fields.Integer(
-        help=(
-            "Number of processor/thread, 0 if not behind a proxy, else 2 or"
-            " more."
-        ),
-        default=0,
-    )
-
-    docker_config_gen_cg = fields.Boolean(
-        default=False,
-        help="Will reduce config path to improve speed to code generator",
-    )
-
-    docker_config_cache = fields.Char(
-        help="Fill when docker_config_gen_cg is True, will be erase after",
-    )
-
-    docker_is_behind_proxy = fields.Boolean(
-        help="Longpolling need a proxy when workers > 1", default=False
-    )
-
-    docker_initiate_succeed = fields.Boolean(
-        help="Docker is ready to run", default=False
-    )
-
     need_debugger_cg_erplibre_it = fields.Boolean(
         help="CG erplibre_it got error, detect can use the debugger",
         default=False,
@@ -98,6 +48,11 @@ class ItWorkspace(models.Model):
 
     is_installed = fields.Boolean(
         help="Need to install environnement before execute it."
+    )
+
+    is_running = fields.Boolean(
+        readonly=True,
+        default=False,
     )
 
     folder = fields.Char(
@@ -140,10 +95,6 @@ class ItWorkspace(models.Model):
 
     db_is_restored = fields.Boolean(
         readonly=True, help="When false, it's because actually restoring a DB."
-    )
-
-    docker_is_running = fields.Boolean(
-        readonly=True, help="When false, it's because not running docker."
     )
 
     url_instance = fields.Char()
@@ -222,11 +173,6 @@ class ItWorkspace(models.Model):
             " execution"
         ),
         readonly=True,
-    )
-
-    force_create_docker_compose = fields.Boolean(
-        default=True,
-        help="Recreate docker-compose from configuration.",
     )
 
     time_exec_action_code_generator_generate_all = fields.Char(
@@ -331,6 +277,8 @@ class ItWorkspace(models.Model):
         help="Execution time of method action_git_commit_all_generated_module",
     )
 
+    workspace_docker_id = fields.Many2one("it.workspace.docker")
+
     def _default_image_db_selection(self):
         return self.env["it.db.image"].search(
             [("name", "like", "erplibre_base")], limit=1
@@ -347,9 +295,12 @@ class ItWorkspace(models.Model):
     @api.multi
     @api.depends("folder")
     def _compute_name(self):
-        """Get the right summary for this job."""
         for rec in self:
-            rec.name = rec.folder
+            rec.name = (
+                f"{rec.mode_exec} - {rec.mode_environnement} -"
+                f" {rec.mode_version_erplibre} - {rec.mode_version_base} -"
+                f" {rec.folder} - {rec.port_http}"
+            )
 
     @api.multi
     @api.depends("folder", "system_id")
@@ -357,35 +308,6 @@ class ItWorkspace(models.Model):
         for rec in self:
             # TODO validate installation is done before
             rec.is_installed = False
-
-    def update_docker_compose_ps(self):
-        for rec in self:
-            with rec.it_workspace_log():
-                if rec.mode_exec in ["docker"]:
-                    result = rec.system_id.execute_with_result(
-                        f"cd {rec.folder};docker compose ps"
-                    )
-                    rec.docker_compose_ps = f"\n{result}"
-
-    @api.multi
-    def action_stop_docker_compose(self):
-        for rec in self:
-            with rec.it_workspace_log():
-                if rec.mode_exec in ["docker"]:
-                    rec.system_id.execute_with_result(
-                        f"cd {rec.folder};docker compose down"
-                    )
-        self.update_docker_compose_ps()
-        self.action_docker_check_docker_ps()
-
-    @api.multi
-    def action_docker_status(self):
-        for rec in self:
-            with rec.it_workspace_log():
-                result = rec.system_id.execute_with_result(
-                    f"cd {rec.folder};docker compose ps"
-                )
-                rec.docker_compose_ps = f"\n{result}"
 
     @api.multi
     def action_cg_erplibre_it(self):
@@ -441,25 +363,6 @@ class ItWorkspace(models.Model):
                 rec.system_id.execute_gnome_terminal(folder_path)
 
     @api.multi
-    def action_docker_check_docker_ps(self):
-        for rec in self:
-            with rec.it_workspace_log():
-                result = rec.system_id.execute_with_result(
-                    f"cd {rec.folder};docker compose ps --format json"
-                )
-                # rec.docker_compose_ps = f"\n{result}"
-                rec.docker_is_running = result
-
-    @api.multi
-    def action_docker_check_docker_tree_addons(self):
-        for rec in self:
-            with rec.it_workspace_log():
-                result = rec.system_id.execute_with_result(
-                    f"cd {rec.folder};tree"
-                )
-                rec.it_code_generator_tree_addons = result
-
-    @api.multi
     def action_code_generator_generate_all(self):
         for rec in self:
             with rec.it_workspace_log():
@@ -470,10 +373,9 @@ class ItWorkspace(models.Model):
                 # TODO keep old configuration of config.conf and not overwrite all
                 # rec.system_id.exec_docker(f"cd {rec.path_working_erplibre};make config_gen_code_generator", rec.folder)
                 if rec.it_code_generator_ids:
-                    rec.action_stop_docker_compose()
-                    rec.docker_config_gen_cg = True
-                    rec.action_start_docker_compose()
-                    rec.docker_config_gen_cg = False
+                    rec.workspace_docker_id.docker_config_gen_cg = True
+                    rec.action_reboot()
+                    rec.workspace_docker_id.docker_config_gen_cg = False
                 for rec_cg in rec.it_code_generator_ids:
                     for module_id in rec_cg.module_ids:
                         # Support only 1, but can run in parallel multiple if no dependencies between
@@ -529,7 +431,9 @@ class ItWorkspace(models.Model):
                                     dct_value_field = field_id.widget
                                 lst_field.append(dct_value_field)
                         if rec_cg.force_clean_before_generate:
-                            self._docker_remove_module(module_id)
+                            self.workspace_docker_id.docker_remove_module(
+                                module_id
+                            )
                         model_conf = (
                             json.dumps(dct_model_conf)
                             # .replace('"', '\\"')
@@ -558,32 +462,12 @@ class ItWorkspace(models.Model):
                         # result = rec.system_id.exec_docker(cmd, rec.folder)
                         # rec.it_code_generator_log_addons = result
                 if rec.it_code_generator_ids:
-                    rec.action_stop_docker_compose()
-                    rec.action_start_docker_compose()
+                    rec.action_reboot()
                 # rec.system_id.exec_docker(f"cd {rec.path_working_erplibre};make config_gen_all", rec.folder)
                 end = datetime.now()
                 td = (end - start).total_seconds()
                 rec.time_exec_action_code_generator_generate_all = (
                     f"{td:.03f}s"
-                )
-
-    def _docker_remove_module(self, module_id):
-        for rec in self:
-            with rec.it_workspace_log():
-                rec.system_id.exec_docker(
-                    f"cd {rec.path_working_erplibre}/{rec.path_code_generator_to_generate};rm"
-                    f" -rf ./{module_id.name};",
-                    rec.folder,
-                )
-                rec.system_id.exec_docker(
-                    f"cd {rec.path_working_erplibre}/{rec.path_code_generator_to_generate};rm"
-                    f" -rf ./code_generator_template_{module_id.name};",
-                    rec.folder,
-                )
-                rec.system_id.exec_docker(
-                    f"cd {rec.path_working_erplibre}/{rec.path_code_generator_to_generate};rm"
-                    f" -rf ./code_generator_{module_id.name};",
-                    rec.folder,
                 )
 
     @api.multi
@@ -593,7 +477,9 @@ class ItWorkspace(models.Model):
                 start = datetime.now()
                 for cg in rec.it_code_generator_ids:
                     for module_id in cg.module_ids:
-                        self._docker_remove_module(module_id)
+                        self.workspace_docker_id.docker_remove_module(
+                            module_id
+                        )
                 end = datetime.now()
                 td = (end - start).total_seconds()
                 rec.time_exec_action_clear_all_generated_module = f"{td:.03f}s"
@@ -604,6 +490,7 @@ class ItWorkspace(models.Model):
         for rec in self:
             with rec.it_workspace_log():
                 start = datetime.now()
+                # TODO execute by default without docker. If not exist, use exec_docker
                 # for cg in rec.it_code_generator_ids:
                 # Validate git directory exist
                 result = rec.system_id.exec_docker(
@@ -771,31 +658,27 @@ class ItWorkspace(models.Model):
     @api.multi
     def action_install_all_generated_module(self):
         for rec in self:
-            with rec.it_workspace_log():
-                start = datetime.now()
-                module_list = ",".join(
-                    [
-                        m.name
-                        for cg in rec.it_code_generator_ids
-                        for m in cg.module_ids
-                    ]
-                )
-                last_cmd = rec.docker_cmd_extra
-                rec.docker_cmd_extra = (
-                    f"-d {rec.db_name} -i {module_list} -u {module_list}"
-                )
-                # TODO option install continuous or stop execution.
-                # TODO Use install continuous in production, else stop execution for dev
-                # TODO actually, it's continuous
-                # TODO maybe add an auto-update when detect installation finish
-                rec.action_stop_docker_compose()
-                rec.action_start_docker_compose()
-                rec.docker_cmd_extra = last_cmd
-                end = datetime.now()
-                td = (end - start).total_seconds()
-                rec.time_exec_action_install_all_generated_module = (
-                    f"{td:.03f}s"
-                )
+            start = datetime.now()
+            module_list = ",".join(
+                [
+                    m.name
+                    for cg in rec.it_code_generator_ids
+                    for m in cg.module_ids
+                ]
+            )
+            last_cmd = rec.workspace_docker_id.docker_cmd_extra
+            rec.workspace_docker_id.docker_cmd_extra = (
+                f"-d {rec.db_name} -i {module_list} -u {module_list}"
+            )
+            # TODO option install continuous or stop execution.
+            # TODO Use install continuous in production, else stop execution for dev
+            # TODO actually, it's continuous
+            # TODO maybe add an auto-update when detect installation finish
+            rec.action_reboot()
+            rec.workspace_docker_id.docker_cmd_extra = last_cmd
+            end = datetime.now()
+            td = (end - start).total_seconds()
+            rec.time_exec_action_install_all_generated_module = f"{td:.03f}s"
         self.action_it_check_all()
 
     @api.multi
@@ -874,29 +757,10 @@ class ItWorkspace(models.Model):
                 )
 
     @api.multi
-    def action_docker_logs(self):
-        for rec in self:
-            with rec.it_workspace_log():
-                rec.system_id.execute_gnome_terminal(
-                    rec.folder, cmd="docker compose logs -f"
-                )
-
-    @api.multi
     def action_open_terminal(self):
         for rec in self:
             with rec.it_workspace_log():
                 rec.system_id.execute_gnome_terminal(rec.folder)
-
-    @api.multi
-    def action_open_terminal_docker(self):
-        for rec in self:
-            with rec.it_workspace_log():
-                workspace = os.path.basename(rec.folder)
-                docker_name = f"{workspace}-ERPLibre-1"
-                rec.system_id.execute_gnome_terminal(
-                    rec.folder,
-                    cmd=f"docker exec -u root -ti {docker_name} /bin/bash",
-                )
 
     @api.multi
     def action_open_terminal_tig(self):
@@ -904,7 +768,7 @@ class ItWorkspace(models.Model):
             with rec.it_workspace_log():
                 result = rec.system_id.exec_docker("which tig", rec.folder)
                 if not result:
-                    self.action_docker_install_dev_soft()
+                    self.workspace_docker_id.action_docker_install_dev_soft()
                 rec.system_id.execute_gnome_terminal(
                     rec.folder,
                     cmd=(
@@ -912,42 +776,6 @@ class ItWorkspace(models.Model):
                         f" ./{rec.path_code_generator_to_generate};tig"
                     ),
                     docker=True,
-                )
-
-    @api.multi
-    def action_docker_install_dev_soft(self):
-        for rec in self:
-            with rec.it_workspace_log():
-                rec.system_id.exec_docker(
-                    f"apt update;apt install -y tig vim htop tree watch",
-                    rec.folder,
-                )
-
-    @api.multi
-    def action_os_user_permission_docker(self):
-        for rec in self:
-            with rec.it_workspace_log():
-                rec.system_id.execute_gnome_terminal(
-                    rec.folder,
-                    cmd=(
-                        "sudo groupadd docker;sudo usermod -aG docker"
-                        f" {rec.system_id.ssh_user}"
-                    ),
-                )
-                rec.system_id.execute_gnome_terminal(
-                    rec.folder,
-                    cmd="sudo systemctl start docker.service",
-                )
-                # TODO check if all good
-        self.docker_initiate_succeed = True
-
-    @api.multi
-    def action_analyse_docker_image(self):
-        for rec in self:
-            with rec.it_workspace_log():
-                rec.system_id.execute_gnome_terminal(
-                    rec.folder,
-                    cmd=f"dive {rec.docker_version}",
                 )
 
     @api.multi
@@ -966,12 +794,8 @@ class ItWorkspace(models.Model):
                 ]
             ):
                 rec.is_installed = False
-        self.action_docker_status()
-        self.action_docker_check_docker_ps()
-        self.action_docker_check_docker_tree_addons()
-        # TODO check is_self_instance
-        # for rec in self:
-        #     print(rec)
+            rec.is_running = rec.workspace_docker_id.docker_is_running
+        self.workspace_docker_id.action_it_check_all()
 
     @api.multi
     def action_install_me_workspace(self):
@@ -986,6 +810,47 @@ class ItWorkspace(models.Model):
                 if "No such file or directory" not in status_ls:
                     rec.mode_exec = "git"
                 self.action_install_workspace()
+
+    @api.multi
+    def check_it_workspace_docker(self):
+        for rec in self:
+            if not rec.workspace_docker_id:
+                rec.workspace_docker_id = self.env[
+                    "it.workspace.docker"
+                ].create({"workspace_id": rec.id})
+
+    @api.multi
+    def action_start(self):
+        for rec in self:
+            # TODO create configuration
+            # localhost = "127.0.0.1"
+            localhost = "localhost"
+            url_host = (
+                rec.system_id.ssh_host
+                if rec.system_id.method == "ssh"
+                else localhost
+            )
+            rec.url_instance = f"http://{url_host}:{rec.port_http}"
+            rec.url_instance_database_manager = (
+                f"{rec.url_instance}/web/database/manager"
+            )
+            if rec.mode_exec in ["docker"]:
+                rec.check_it_workspace_docker()
+                rec.workspace_docker_id.action_start_docker_compose()
+        self.action_it_check_all()
+
+    @api.multi
+    def action_stop(self):
+        for rec in self:
+            if rec.mode_exec in ["docker"]:
+                rec.check_it_workspace_docker()
+                rec.workspace_docker_id.action_stop_docker_compose()
+        self.action_it_check_all()
+
+    @api.multi
+    def action_reboot(self):
+        self.action_stop()
+        self.action_start()
 
     @api.multi
     def action_install_workspace(self):
@@ -1058,95 +923,6 @@ class ItWorkspace(models.Model):
                 rec.system_id.execute_with_result(f"mkdir -p '{addons_path}'")
 
     @api.multi
-    def action_docker_restore_db_image(self):
-        for rec in self:
-            with rec.it_workspace_log():
-                # TODO not working
-                # maybe send by network REST web/database/restore
-                # result = rec.system_id.exec_docker(f"cd {rec.path_working_erplibre};time ./script/database/db_restore.py --database test;", rec.folder)
-                # rec.log_workspace = f"\n{result}"
-                url_list = f"{rec.url_instance}/web/database/list"
-                url_restore = f"{rec.url_instance}/web/database/restore"
-                url_drop = f"{rec.url_instance}/web/database/drop"
-                if not rec.image_db_selection:
-                    # TODO create stage, need a stage ready to restore
-                    raise exceptions.Warning(
-                        _("Error, need field db_selection")
-                    )
-                rec.db_is_restored = False
-                backup_file_path = rec.image_db_selection.path
-                session = requests.Session()
-                response = requests.get(
-                    url_list,
-                    data=json.dumps({}),
-                    headers={
-                        "Content-Type": "application/json",
-                        "Accept": "application/json",
-                    },
-                )
-                if response.status_code == 200:
-                    database_list = response.json()
-                    print(database_list)
-                else:
-                    # TODO remove print
-                    print("une erreur")
-                    continue
-
-                # Delete first
-                result_db_list = database_list.get("result")
-                if result_db_list:
-                    result_db_list = result_db_list[0]
-                    if result_db_list:
-                        files = {
-                            "master_pwd": (None, "admin"),
-                            "name": (None, result_db_list),
-                        }
-                        response = session.post(url_drop, files=files)
-                        if response.status_code == 200:
-                            print("Le drop a été envoyé avec succès.")
-                        else:
-                            print("Une erreur s'est produite lors du drop.")
-                            # Strange, retry for test
-                            time.sleep(1)
-                            response = requests.get(
-                                url_list,
-                                data=json.dumps({}),
-                                headers={
-                                    "Content-Type": "application/json",
-                                    "Accept": "application/json",
-                                },
-                            )
-                            if response.status_code == 200:
-                                database_list = response.json()
-                                print(database_list)
-
-                with open(backup_file_path, "rb") as backup_file:
-                    files = {
-                        "backup_file": (
-                            backup_file.name,
-                            backup_file,
-                            "application/octet-stream",
-                        ),
-                        "master_pwd": (None, "admin"),
-                        "name": (None, rec.db_name),
-                    }
-                    response = session.post(url_restore, files=files)
-                if response.status_code == 200:
-                    print(
-                        "Le fichier de restauration a été envoyé avec succès."
-                    )
-                    rec.db_is_restored = True
-                else:
-                    print(
-                        "Une erreur s'est produite lors de l'envoi du fichier"
-                        " de restauration."
-                    )
-
-                # f = {'file data': open(f'./image_db{rec.path_working_erplibre}_base.zip', 'rb')}
-                # res = requests.post(url_restore, files=f)
-                # print(res.text)
-
-    @api.multi
     def action_network_change_port_random(
         self, min_port=10000, max_port=20000
     ):
@@ -1190,208 +966,6 @@ sock.close()
             engine="python",
         )
         return result == "Port is open"
-
-    @api.multi
-    def action_start_docker_compose(self):
-        for rec in self:
-            with rec.it_workspace_log():
-                rec.docker_is_running = False
-
-                url_host = (
-                    rec.system_id.ssh_host
-                    if rec.system_id.method == "ssh"
-                    else "127.0.0.1"
-                )
-                rec.url_instance = f"http://{url_host}:{rec.port_http}"
-                rec.url_instance_database_manager = (
-                    f"{rec.url_instance}/web/database/manager"
-                )
-
-                file_docker_compose = os.path.join(
-                    rec.folder, "docker-compose.yml"
-                )
-                if rec.docker_cmd_extra:
-                    docker_cmd_extra = f" {rec.docker_cmd_extra}"
-                else:
-                    docker_cmd_extra = ""
-                if rec.docker_is_behind_proxy:
-                    docker_behind_proxy = f" --proxy-mode"
-                    workers = f"--workers {max(2, rec.docker_nb_proc)}"
-                else:
-                    docker_behind_proxy = ""
-                    workers = f"--workers {rec.docker_nb_proc}"
-                docker_compose_content = f"""
-version: "3.3"
-services:
-  ERPLibre:
-    image: {rec.docker_version}
-    ports:
-      - {rec.port_http}:8069
-      - {rec.port_longpolling}:8072
-    environment:
-      HOST: db
-      PASSWORD: mysecretpassword
-      USER: odoo
-      POSTGRES_DB: postgres
-      STOP_BEFORE_INIT: "False"
-      DB_NAME: ""
-      UPDATE_ALL_DB: "False"
-    depends_on:
-      - db
-    # not behind a proxy
-    #command: odoo --workers 0
-    # behind a proxy
-    #command: odoo --workers 2 --proxy-mode
-    command: odoo {workers}{docker_behind_proxy}{docker_cmd_extra}
-    volumes:
-      # See the volume section at the end of the file
-      - erplibre_data_dir:/home/odoo/.local/share/Odoo
-      - erplibre_conf:/etc/odoo
-{'      - ' + '''
-      - '''.join([f'./{path}:{rec.path_working_erplibre}/{path}' for path in rec.path_code_generator_to_generate.split(";")]) if rec.path_code_generator_to_generate else ''}
-    restart: always
-
-  db:
-    image: postgis/postgis:12-3.1-alpine
-    environment:
-      POSTGRES_PASSWORD: mysecretpassword
-      POSTGRES_USER: odoo
-      POSTGRES_DB: postgres
-      PGDATA: /var/lib/postgresql/data/pgdata
-    volumes:
-      - erplibre-db-data:/var/lib/postgresql/data/pgdata
-    restart: always
-
-# We configure volume without specific destination to let docker manage it. To configure it through docker use (read related documentation before continuing) :
-# - docker volume --help
-# - docker-compose down --help
-volumes:
-  erplibre_data_dir:
-  erplibre_conf:
-  erplibre-db-data:
-"""
-                if rec.force_create_docker_compose or not os.path.exists(
-                    file_docker_compose
-                ):
-                    rec.system_id.execute_with_result(
-                        f"echo '{docker_compose_content}' >"
-                        f" {file_docker_compose}"
-                    )
-
-                result = rec.system_id.execute_with_result(
-                    f"cd {rec.folder};cat docker-compose.yml"
-                )
-                rec.docker_compose_ps = result
-                result = rec.system_id.execute_with_result(
-                    f"cd {rec.folder};docker compose up -d"
-                )
-
-                if (
-                    "Cannot connect to the Docker daemon at"
-                    " unix:///var/run/docker.sock. Is the docker daemon"
-                    " running?"
-                    in result
-                ):
-                    rec.docker_initiate_succeed = False
-
-                rec.log_workspace = f"\n{result}"
-                result = rec.system_id.execute_with_result(
-                    f"cd {rec.folder};docker compose ps"
-                )
-                rec.log_workspace += f"\n{result}"
-                rec.update_docker_compose_ps()
-
-                result = rec.system_id.exec_docker(
-                    "cat /etc/odoo/odoo.conf;", rec.folder
-                )
-                has_change = False
-                if "db_host" not in result:
-                    # TODO remove this information from executable of docker
-                    result += (
-                        "db_host = db\ndb_port = 5432\ndb_user ="
-                        " odoo\ndb_password = mysecretpassword\n"
-                    )
-                if "admin_passwd" not in result:
-                    result += "admin_passwd = admin\n"
-                # TODO remove repo OCA_connector-jira
-                str_to_replace = (
-                    f",{rec.path_working_erplibre}/addons/OCA_connector-jira"
-                )
-                if str_to_replace in result:
-                    result = result.replace(str_to_replace, "")
-                    has_change = True
-
-                if (
-                    rec.docker_config_gen_cg
-                    or not rec.docker_config_gen_cg
-                    and rec.docker_config_cache
-                ):
-                    # TODO this is not good, need a script from manifest to rebuild this path
-                    if rec.docker_config_gen_cg:
-                        addons_path = (
-                            "addons_path ="
-                            f" {rec.path_working_erplibre}/odoo/addons,"
-                            f"{rec.path_working_erplibre}/{rec.path_code_generator_to_generate},"
-                            f"{rec.path_working_erplibre}/addons/OCA_web,"
-                            f"{rec.path_working_erplibre}/addons{rec.path_working_erplibre}_erplibre_addons,"
-                            f"{rec.path_working_erplibre}/addons{rec.path_working_erplibre}_erplibre_theme_addons,"
-                            f"{rec.path_working_erplibre}/addons/MathBenTech_development,"
-                            f"{rec.path_working_erplibre}/addons/MathBenTech_erplibre-family-management,"
-                            f"{rec.path_working_erplibre}/addons/MathBenTech_odoo-business-spending-management-quebec-canada,"
-                            f"{rec.path_working_erplibre}/addons/MathBenTech_scrummer,"
-                            f"{rec.path_working_erplibre}/addons/Numigi_odoo-partner-addons,"
-                            f"{rec.path_working_erplibre}/addons/Numigi_odoo-web-addons,"
-                            f"{rec.path_working_erplibre}/addons/OCA_contract,"
-                            f"{rec.path_working_erplibre}/addons/OCA_geospatial,"
-                            f"{rec.path_working_erplibre}/addons/OCA_helpdesk,"
-                            f"{rec.path_working_erplibre}/addons/OCA_server-auth,"
-                            f"{rec.path_working_erplibre}/addons/OCA_server-brand,"
-                            f"{rec.path_working_erplibre}/addons/OCA_server-tools,"
-                            f"{rec.path_working_erplibre}/addons/OCA_server-ux,"
-                            f"{rec.path_working_erplibre}/addons/OCA_social,"
-                            f"{rec.path_working_erplibre}/addons/OCA_website,"
-                            f"{rec.path_working_erplibre}/addons/TechnoLibre_odoo-code-generator,"
-                            f"{rec.path_working_erplibre}/addons/TechnoLibre_odoo-code-generator-template,"
-                            f"{rec.path_working_erplibre}/addons/ajepe_odoo-addons,"
-                            f"{rec.path_working_erplibre}/addons/muk-it_muk_base,"
-                            f"{rec.path_working_erplibre}/addons/muk-it_muk_misc,"
-                            f"{rec.path_working_erplibre}/addons/muk-it_muk_web,"
-                            f"{rec.path_working_erplibre}/addons/muk-it_muk_website,"
-                            f"{rec.path_working_erplibre}/addons/odoo_design-themes"
-                        )
-                    elif (
-                        not rec.docker_config_gen_cg
-                        and rec.docker_config_cache
-                    ):
-                        addons_path = rec.docker_config_cache
-                        rec.docker_config_cache = ""
-
-                    # TODO use configparser instead of string parsing
-                    lst_result = result.split("\n")
-                    for i, a_result in enumerate(lst_result):
-                        if a_result.startswith("addons_path = "):
-                            if (
-                                rec.docker_config_gen_cg
-                                and not rec.docker_config_cache
-                            ):
-                                rec.docker_config_cache = a_result
-                            lst_result[i] = addons_path
-                            break
-                    result = "\n".join(lst_result)
-                    has_change = True
-
-                if has_change:
-                    # TODO rewrite conf file and reformat
-                    rec.system_id.exec_docker(
-                        f"echo -e '{result}' > /etc/odoo/odoo.conf", rec.folder
-                    )
-                # TODO support only one file, and remove /odoo.conf
-                rec.system_id.exec_docker(
-                    f"cd {rec.path_working_erplibre};cp /etc/odoo/odoo.conf"
-                    " ./config.conf;",
-                    rec.folder,
-                )
-                rec.action_docker_check_docker_ps()
 
     @api.multi
     @contextmanager
