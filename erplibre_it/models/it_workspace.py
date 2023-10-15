@@ -93,13 +93,20 @@ class ItWorkspace(models.Model):
 
     db_name = fields.Char(string="DB instance name", default="test")
 
+    is_me = fields.Char(
+        string="Self instance",
+        help="Add more automatisation about manage itself.",
+    )
+
     db_is_restored = fields.Boolean(
         readonly=True, help="When false, it's because actually restoring a DB."
     )
 
-    url_instance = fields.Char()
+    url_instance = fields.Char(compute="_compute_url_instance", store=True)
 
-    url_instance_database_manager = fields.Char()
+    url_instance_database_manager = fields.Char(
+        compute="_compute_url_instance", store=True
+    )
 
     it_code_generator_ids = fields.Many2many(
         comodel_name="it.code_generator",
@@ -194,7 +201,7 @@ class ItWorkspace(models.Model):
     mode_exec = fields.Selection(
         selection=[
             ("docker", "Docker"),
-            ("terminal", "Terminal"),
+            ("terminal", "Gnome-terminal"),
             ("systemd", "SystemD"),
         ],
         default="docker",
@@ -293,6 +300,8 @@ class ItWorkspace(models.Model):
 
     workspace_docker_id = fields.Many2one("it.workspace.docker")
 
+    workspace_docker_id = fields.Many2one("it.workspace.docker")
+
     def _default_image_db_selection(self):
         return self.env["it.db.image"].search(
             [("name", "like", "erplibre_base")], limit=1
@@ -333,6 +342,27 @@ class ItWorkspace(models.Model):
         for rec in self:
             rec.is_conflict_mode_exec = (
                 rec.mode_source == "docker" and rec.mode_exec != "docker"
+            )
+
+    @api.multi
+    @api.depends(
+        "system_id.ssh_host",
+        "system_id.method",
+        "port_http",
+    )
+    def _compute_url_instance(self):
+        for rec in self:
+            # TODO create configuration
+            # localhost = "127.0.0.1"
+            localhost = "localhost"
+            url_host = (
+                rec.system_id.ssh_host
+                if rec.system_id.method == "ssh"
+                else localhost
+            )
+            rec.url_instance = f"http://{url_host}:{rec.port_http}"
+            rec.url_instance_database_manager = (
+                f"{rec.url_instance}/web/database/manager"
             )
 
     @api.multi
@@ -843,6 +873,9 @@ class ItWorkspace(models.Model):
                 if "No such file or directory" not in status_ls:
                     rec.mode_source = "git"
                 self.action_install_workspace()
+        self.is_me = True
+        self.port_http = 8069
+        self.port_longpolling = 8072
 
     @api.multi
     def check_it_workspace_docker(self):
@@ -855,29 +888,53 @@ class ItWorkspace(models.Model):
     @api.multi
     def action_start(self):
         for rec in self:
-            # TODO create configuration
-            # localhost = "127.0.0.1"
-            localhost = "localhost"
-            url_host = (
-                rec.system_id.ssh_host
-                if rec.system_id.method == "ssh"
-                else localhost
-            )
-            rec.url_instance = f"http://{url_host}:{rec.port_http}"
-            rec.url_instance_database_manager = (
-                f"{rec.url_instance}/web/database/manager"
+            out_server_exist = rec.system_id.execute_with_result(
+                f"lsof -i TCP:{rec.port_http} | grep python"
             )
             if rec.mode_exec in ["docker"]:
                 rec.check_it_workspace_docker()
                 rec.workspace_docker_id.action_start_docker_compose()
             else:
+                prefix = ""
+                if rec.is_me and out_server_exist:
+                    prefix = "sleep 1;"
                 rec.system_id.execute_gnome_terminal(
                     rec.folder,
                     cmd=(
-                        "./run.sh -d"
+                        f"{prefix}./run.sh -d"
                         f" {rec.db_name} --http-port={rec.port_http} --longpolling-port={rec.port_longpolling}"
                     ),
                 )
+            if out_server_exist:
+                # kill me if I exist
+                # kill first application with python3 with this port
+                # Ignore the browser with the same page, that's why need grep
+                # The first number is the 3 from python3, so take second number
+                # Force to kill, because execution is running, a simple sigint will not work. Cannot write this request
+                # Not work sleep 0 with gnome_terminal
+                sleep_kill = 1
+                if out_server_exist.startswith("python3 "):
+                    cmd = (
+                        f"sleep {sleep_kill};kill -9 $(lsof -i"
+                        f" TCP:{rec.port_http} | grep python3 | grep -oE"
+                        " '[0-9]+' | sed -n '2p');exit"
+                    )
+                    _logger.debug(cmd)
+                    rec.system_id.execute_gnome_terminal(cmd)
+                elif out_server_exist.startswith("python "):
+                    cmd = (
+                        f"sleep {sleep_kill};kill -9 $(lsof -i"
+                        f" TCP:{rec.port_http} | grep python | grep -oE"
+                        " '[0-9]+' | head -n1);exit"
+                    )
+                    _logger.debug(cmd)
+                    rec.system_id.execute_gnome_terminal(cmd)
+                else:
+                    _logger.warning(
+                        f"What is the software for the port {rec.port_http} :"
+                        f" {out_server_exist}"
+                    )
+
         self.action_it_check_all()
 
     @api.multi
@@ -986,8 +1043,17 @@ class ItWorkspace(models.Model):
             rec.system_id.execute_with_result(f"mkdir -p '{addons_path}'")
 
     @api.multi
+    @api.model
+    def action_network_change_port_default(
+        self, ctx=None, default_port_http=8069, default_port_longpolling=8072
+    ):
+        for rec in self:
+            rec.port_http = default_port_http
+            rec.port_longpolling = default_port_longpolling
+
+    @api.multi
     def action_network_change_port_random(
-        self, min_port=10000, max_port=20000
+        self, ctx=None, min_port=10000, max_port=20000
     ):
         # Choose 2 sequence
         for rec in self:
@@ -1012,6 +1078,7 @@ class ItWorkspace(models.Model):
     @staticmethod
     def check_port_is_open(rec, port):
         # TODO move to it_network
+        # TODO use lsof instead of this script
         script = f"""import socket
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 result = sock.connect_ex(("127.0.0.1",{port}))
