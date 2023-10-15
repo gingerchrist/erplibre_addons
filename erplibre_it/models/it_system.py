@@ -120,6 +120,9 @@ class ItSystem(models.Model):
         p = subprocess.Popen(
             cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
+        # p = subprocess.Popen(
+        #     cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, executable="/bin/bash"
+        # )
         # TODO check https://www.cyberciti.biz/faq/python-run-external-command-and-get-output/
         # TODO support async update output
         # import subprocess, sys
@@ -148,10 +151,12 @@ class ItSystem(models.Model):
         self, cmd, add_stdin_log=False, add_stderr_log=True, engine="bash"
     ):
         """
-        engine can be bash or python
+        engine can be bash, python or sh
         """
         if engine == "python":
             cmd = f"python -c '{cmd}'"
+        elif engine == "bash":
+            cmd = f"bash -c '{cmd}'"
         lst_result = []
         cmd = cmd.strip()
         for rec in self.filtered(lambda r: r.method == "local"):
@@ -223,6 +228,9 @@ class ItSystem(models.Model):
                 )
                 if cmd:
                     docker_wrap_cmd += f' -c \\"{cmd}{str_keep_open}\\"'
+            else:
+                # force replace " to \"
+                docker_wrap_cmd = docker_wrap_cmd.replace('"', '\\"')
             argument_ssh = ""
             if rec.ssh_public_host_key:
                 # TODO use public host key instead of ignore it

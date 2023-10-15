@@ -204,6 +204,13 @@
                             <field name="it_code_generator_log_addons"/>
                         </group>
                     </page>
+                    <page name="install" string="Install">
+                        <group>
+                            <group>
+                                <button class="oe_highlight" name="action_poetry_install" string="Poetry install" type="object" />
+                            </group>
+                        </group>
+                    </page>
                 </notebook>
             </form>
         </field>

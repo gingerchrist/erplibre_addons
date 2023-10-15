@@ -293,7 +293,14 @@ class ItWorkspace(models.Model):
         return os.getcwd()
 
     @api.multi
-    @api.depends("folder")
+    @api.depends(
+        "mode_exec",
+        "mode_environnement",
+        "mode_version_erplibre",
+        "mode_version_base",
+        "folder",
+        "port_http",
+    )
     def _compute_name(self):
         for rec in self:
             rec.name = (
@@ -837,6 +844,14 @@ class ItWorkspace(models.Model):
             if rec.mode_exec in ["docker"]:
                 rec.check_it_workspace_docker()
                 rec.workspace_docker_id.action_start_docker_compose()
+            else:
+                rec.system_id.execute_gnome_terminal(
+                    rec.folder,
+                    cmd=(
+                        "./run.sh -d"
+                        f" {rec.db_name} --http-port={rec.port_http} --longpolling-port={rec.port_longpolling}"
+                    ),
+                )
         self.action_it_check_all()
 
     @api.multi
@@ -882,9 +897,9 @@ class ItWorkspace(models.Model):
                             for str_file in lst_file
                         ]
                     ):
-                        self.action_pre_install_workspace(
-                            ignore_last_directory=True
-                        )
+                        # self.action_pre_install_workspace(
+                        #     ignore_last_directory=True
+                        # )
                         result = rec.system_id.execute_with_result(
                             f"git clone {rec.git_url}{branch_str} {rec.folder}"
                         )
@@ -893,6 +908,21 @@ class ItWorkspace(models.Model):
                             f"cd {rec.folder};./script/install/install_locally_dev.sh"
                         )
                         rec.log_workspace += result
+                        # TODO fix this bug, but activate into install script
+                        # TODO bug only for local, ssh is good
+                        # Bug poetry thinks it's installed, so force it
+                        # result = rec.system_id.execute_with_result(
+                        #     f"cd {rec.folder};source"
+                        #     " ./.venv/bin/activate;poetry install"
+                        # )
+                        # rec.log_workspace += result
+                        rec.system_id.execute_gnome_terminal(
+                            rec.folder,
+                            cmd=(
+                                'bash -c "source ./.venv/bin/activate;poetry'
+                                ' install"'
+                            ),
+                        )
                     else:
                         # TODO try te reuse
                         print("Git project already exist")
@@ -909,18 +939,25 @@ class ItWorkspace(models.Model):
             rec.is_installed = True
 
     @api.multi
+    def action_poetry_install(self):
+        for rec in self:
+            rec.system_id.execute_gnome_terminal(
+                rec.folder,
+                cmd='bash -c "source ./.venv/bin/activate;poetry install"',
+            )
+
+    @api.multi
     def action_pre_install_workspace(self, ignore_last_directory=False):
         for rec in self:
-            with rec.it_workspace_log():
-                folder = (
-                    rec.folder
-                    if not ignore_last_directory
-                    else os.path.basename(rec.folder)
-                )
-                # Directory must exist
-                # TODO make test to validate if remove next line, permission root the project /tmp/project/addons root
-                addons_path = os.path.join(folder, "addons")
-                rec.system_id.execute_with_result(f"mkdir -p '{addons_path}'")
+            # folder = (
+            #     rec.folder
+            #     if not ignore_last_directory
+            #     else os.path.basename(rec.folder)
+            # )
+            # Directory must exist
+            # TODO make test to validate if remove next line, permission root the project /tmp/project/addons root
+            addons_path = os.path.join(rec.folder, "addons", "addons")
+            rec.system_id.execute_with_result(f"mkdir -p '{addons_path}'")
 
     @api.multi
     def action_network_change_port_random(
@@ -949,8 +986,7 @@ class ItWorkspace(models.Model):
     @staticmethod
     def check_port_is_open(rec, port):
         # TODO move to it_network
-        script = f"""
-import socket
+        script = f"""import socket
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 result = sock.connect_ex(("127.0.0.1",{port}))
 if result == 0:
