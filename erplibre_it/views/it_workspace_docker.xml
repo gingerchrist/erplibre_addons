@@ -13,9 +13,6 @@
                     <button class="oe_highlight" name="action_docker_logs" string="Docker logs" type="object" />
                     <button class="oe_highlight" name="action_docker_install_dev_soft" string="Docker install dev" type="object" />
                     <button class="btn-danger" name="action_os_user_permission_docker" string="Give docker permission" type="object" attrs="{'invisible': [('docker_initiate_succeed', '=', True)]}"/>
-
-<!--                            <button  type="action" context="{'default_workcenter_id': workcenter_id}" string="Block" class="btn-danger" attrs="{'invisible': ['|', '|', ('working_state', '=', 'blocked'), ('state', 'in', ('done', 'pending', 'ready', 'cancel')), ('is_user_working', '=', False)]}"/>-->
-
                     <button class="oe_highlight" name="action_analyse_docker_image" string="Analyse docker image" type="object" />
                 </header>
                 <div class="oe_title">
@@ -33,6 +30,9 @@
                     <group string="Status instance">
                         <field name="docker_is_running"/>
 <!--                        <field name="db_is_restored"/>-->
+                    </group>
+                    <group string="Status error">
+                        <field name="has_error_restore_db" />
                     </group>
                 </group>
                 <group string="Configuration">

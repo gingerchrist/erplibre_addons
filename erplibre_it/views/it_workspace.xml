@@ -6,14 +6,14 @@
         <field name="arch" type="xml">
             <form>
                 <header>
-                    <button class="oe_highlight" name="action_install_workspace" string="Install" type="object" attrs="{'invisible': [('is_installed', '=', True)]}" />
-                    <button class="oe_highlight" name="action_install_me_workspace" string="Me" type="object" attrs="{'invisible': [('is_installed', '=', True)]}" />
-                    <button class="oe_highlight" name="action_it_check_all" string="Status check" type="object" attrs="{'invisible': [('is_installed', '=', False)]}" />
-                    <button class="oe_highlight" name="action_start" string="Start" type="object" attrs="{'invisible': ['|', ('is_installed', '=', False), ('is_running', '=', True)]}" />
-                    <button class="btn-success" name="action_start" string="Start" type="object" attrs="{'invisible': ['|', ('is_installed', '=', False), ('is_running', '=', False)]}" />
-                    <button class="oe_highlight" name="action_stop" string="Stop" type="object" attrs="{'invisible': ['|', ('is_installed', '=', False), ('is_running', '=', False)]}" />
-                    <button class="btn-success" name="action_stop" string="Stop" type="object" attrs="{'invisible': ['|', ('is_installed', '=', False), ('is_running', '=', True)]}" />
-                    <button class="oe_highlight" name="action_reboot" string="Reboot" type="object" attrs="{'invisible': [('is_installed', '=', False)]}" />
+                    <button class="oe_highlight" name="action_install_workspace" string="Install" type="object" attrs="{'invisible': ['|', ('is_installed', '=', True), ('is_conflict_mode_exec', '=', True)]}" />
+                    <button class="oe_highlight" name="action_install_me_workspace" string="Me" type="object" attrs="{'invisible': ['|', ('is_installed', '=', True), ('is_conflict_mode_exec', '=', True)]}" />
+                    <button class="oe_highlight" name="action_it_check_all" string="Status check" type="object" attrs="{'invisible': ['|', ('is_installed', '=', False), ('is_conflict_mode_exec', '=', True)]}" />
+                    <button class="oe_highlight" name="action_start" string="Start" type="object" attrs="{'invisible': ['|', '|', ('is_installed', '=', False), ('is_running', '=', True), ('is_conflict_mode_exec', '=', True)]}" />
+                    <button class="btn-success" name="action_start" string="Start" type="object" attrs="{'invisible': ['|', '|', ('is_installed', '=', False), ('is_running', '=', False), ('is_conflict_mode_exec', '=', True)]}" />
+                    <button class="oe_highlight" name="action_stop" string="Stop" type="object" attrs="{'invisible': ['|', '|', ('is_installed', '=', False), ('is_running', '=', False), ('is_conflict_mode_exec', '=', True)]}" />
+                    <button class="btn-success" name="action_stop" string="Stop" type="object" attrs="{'invisible': ['|', '|', ('is_installed', '=', False), ('is_running', '=', True), ('is_conflict_mode_exec', '=', True)]}" />
+                    <button class="oe_highlight" name="action_reboot" string="Reboot" type="object" attrs="{'invisible': ['|', ('is_installed', '=', False), ('is_conflict_mode_exec', '=', True)]}" />
                 </header>
                 <div class="badge-pill badge-success float-right" attrs="{'invisible': [('is_self_instance', '=', False)]}">Same instance</div>
                 <div class="oe_title">
@@ -21,14 +21,20 @@
                         <field name="name" />
                     </h1>
                 </div>
+                <div class="bg-danger" attrs="{'invisible': [('is_conflict_mode_exec', '=', False)]}">
+                    <h3>Error:</h3>
+                    Cannot support this execution mode with source mode 'docker'.
+                </div>
                 <group>
                     <group string="Basic">
                         <field name="system_id" />
                         <field name="folder" />
+                        <field name="mode_source" attrs="{'readonly': [('is_installed', '=', True)]}"/>
                         <field name="mode_exec" />
                         <field name="mode_environnement" />
                         <field name="mode_version_erplibre" />
                         <field name="mode_version_base" />
+                        <field name="is_conflict_mode_exec" invisible="True"/>
                         <field name="is_self_instance" invisible="True"/>
                         <field name="is_installed" invisible="True"/>
                         <field name="is_running" invisible="True"/>
@@ -235,6 +241,7 @@
                 <field name="name" />
                 <field name="folder" />
                 <field name="system_id" />
+                <field name="mode_source" />
                 <field name="mode_exec" />
                 <field name="mode_environnement" />
                 <field name="mode_version_erplibre" />

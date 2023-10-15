@@ -185,8 +185,18 @@ class ItWorkspace(models.Model):
         help="Execution time of method action_cg_erplibre_it",
     )
 
-    mode_exec = fields.Selection(
+    mode_source = fields.Selection(
         selection=[("docker", "Docker"), ("git", "Git")],
+        default="docker",
+        required=True,
+    )
+
+    mode_exec = fields.Selection(
+        selection=[
+            ("docker", "Docker"),
+            ("terminal", "Terminal"),
+            ("systemd", "SystemD"),
+        ],
         default="docker",
         required=True,
     )
@@ -204,6 +214,10 @@ class ItWorkspace(models.Model):
             "Dev to improve, test to test, prod ready for production, stage to"
             " use a dev and replace a prod"
         ),
+    )
+
+    is_conflict_mode_exec = fields.Boolean(
+        compute="_compute_is_conflict_mode_exec", store=True
     )
 
     mode_version_erplibre = fields.Selection(
@@ -294,6 +308,7 @@ class ItWorkspace(models.Model):
 
     @api.multi
     @api.depends(
+        "mode_source",
         "mode_exec",
         "mode_environnement",
         "mode_version_erplibre",
@@ -304,9 +319,20 @@ class ItWorkspace(models.Model):
     def _compute_name(self):
         for rec in self:
             rec.name = (
-                f"{rec.mode_exec} - {rec.mode_environnement} -"
-                f" {rec.mode_version_erplibre} - {rec.mode_version_base} -"
-                f" {rec.folder} - {rec.port_http}"
+                f"{rec.mode_source} - {rec.mode_exec} -"
+                f" {rec.mode_environnement} - {rec.mode_version_erplibre} -"
+                f" {rec.mode_version_base} - {rec.folder} - {rec.port_http}"
+            )
+
+    @api.multi
+    @api.depends(
+        "mode_source",
+        "mode_exec",
+    )
+    def _compute_is_conflict_mode_exec(self):
+        for rec in self:
+            rec.is_conflict_mode_exec = (
+                rec.mode_source == "docker" and rec.mode_exec != "docker"
             )
 
     @api.multi
@@ -815,7 +841,7 @@ class ItWorkspace(models.Model):
                     f"ls {rec.folder}/.git"
                 )
                 if "No such file or directory" not in status_ls:
-                    rec.mode_exec = "git"
+                    rec.mode_source = "git"
                 self.action_install_workspace()
 
     @api.multi
@@ -876,12 +902,12 @@ class ItWorkspace(models.Model):
                     .strip()
                     .split("\n")
                 )
-                if rec.mode_exec in ["docker"]:
+                if rec.mode_source in ["docker"]:
                     if "docker-compose.yml" in lst_file:
                         # TODO try to reuse
                         print("detect docker-compose.yml, please read it")
                     self.action_pre_install_workspace()
-                elif rec.mode_exec in ["git"]:
+                elif rec.mode_source in ["git"]:
                     branch_str = ""
                     if rec.mode_version_erplibre:
                         if rec.mode_version_erplibre[0].isnumeric():
