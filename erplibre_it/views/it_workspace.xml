@@ -8,12 +8,13 @@
                 <header>
                     <button class="oe_highlight" name="action_install_workspace" string="Install" type="object" attrs="{'invisible': ['|', ('is_installed', '=', True), ('is_conflict_mode_exec', '=', True)]}" />
                     <button class="oe_highlight" name="action_install_me_workspace" string="Me" type="object" attrs="{'invisible': ['|', ('is_installed', '=', True), ('is_conflict_mode_exec', '=', True)]}" />
-                    <button class="oe_highlight" name="action_it_check_all" string="Status check" type="object" attrs="{'invisible': ['|', ('is_installed', '=', False), ('is_conflict_mode_exec', '=', True)]}" />
+                    <button class="oe_highlight" name="action_check_all" string="Status check" type="object" attrs="{'invisible': ['|', ('is_installed', '=', False), ('is_conflict_mode_exec', '=', True)]}" />
                     <button class="oe_highlight" name="action_start" string="Start" type="object" attrs="{'invisible': ['|', '|', ('is_installed', '=', False), ('is_running', '=', True), ('is_conflict_mode_exec', '=', True)]}" />
                     <button class="btn-success" name="action_start" string="Start" type="object" attrs="{'invisible': ['|', '|', ('is_installed', '=', False), ('is_running', '=', False), ('is_conflict_mode_exec', '=', True)]}" />
                     <button class="oe_highlight" name="action_stop" string="Stop" type="object" attrs="{'invisible': ['|', '|', ('is_installed', '=', False), ('is_running', '=', False), ('is_conflict_mode_exec', '=', True)]}" />
                     <button class="btn-success" name="action_stop" string="Stop" type="object" attrs="{'invisible': ['|', '|', ('is_installed', '=', False), ('is_running', '=', True), ('is_conflict_mode_exec', '=', True)]}" />
                     <button class="oe_highlight" name="action_reboot" string="Reboot" type="object" attrs="{'invisible': ['|', ('is_installed', '=', False), ('is_conflict_mode_exec', '=', True)]}" />
+                    <button class="oe_highlight" name="action_install_workspace" string="Re-install" type="object" attrs="{'invisible': [('is_conflict_mode_exec', '=', True)]}" groups="base.group_no_one" />
                 </header>
                 <div class="badge-pill badge-success float-right" attrs="{'invisible': [('is_self_instance', '=', False)]}">Same instance</div>
                 <div class="oe_title">
@@ -34,6 +35,7 @@
                         <field name="mode_environnement" />
                         <field name="mode_version_erplibre" />
                         <field name="mode_version_base" />
+                        <field name="is_debug_log" />
                         <field name="is_conflict_mode_exec" invisible="True"/>
                         <field name="is_self_instance" invisible="True"/>
                         <field name="is_installed" invisible="True"/>
@@ -256,12 +258,44 @@
     <act_window id="action_it_check_workspace_conf_form" name="Automated it_workspaces" res_model="it.workspace" />
 
     <!-- Execute it_workspace from "More" menu -->
-    <record id="action_server_it_workspace" model="ir.actions.server">
-        <field name="name">Execute it_workspace(s)</field>
+    <record id="action_server_it_workspace_start" model="ir.actions.server">
+        <field name="name">Start workspace(s)</field>
         <field name="model_id" ref="model_it_workspace"/>
         <field name="binding_model_id" ref="model_it_workspace"/>
         <field name="state">code</field>
-        <field name="code">records.action_start_docker_compose()</field>
+        <field name="code">records.action_start()</field>
+    </record>
+
+    <record id="action_server_it_workspace_stop" model="ir.actions.server">
+        <field name="name">Stop workspace(s)</field>
+        <field name="model_id" ref="model_it_workspace"/>
+        <field name="binding_model_id" ref="model_it_workspace"/>
+        <field name="state">code</field>
+        <field name="code">records.action_stop()</field>
+    </record>
+
+    <record id="action_server_it_workspace_reboot" model="ir.actions.server">
+        <field name="name">Reboot workspace(s)</field>
+        <field name="model_id" ref="model_it_workspace"/>
+        <field name="binding_model_id" ref="model_it_workspace"/>
+        <field name="state">code</field>
+        <field name="code">records.action_reboot()</field>
+    </record>
+
+    <record id="action_server_it_workspace_check" model="ir.actions.server">
+        <field name="name">Check workspace(s)</field>
+        <field name="model_id" ref="model_it_workspace"/>
+        <field name="binding_model_id" ref="model_it_workspace"/>
+        <field name="state">code</field>
+        <field name="code">records.action_check_all()</field>
+    </record>
+
+    <record id="action_server_it_workspace_open_terminal_folder" model="ir.actions.server">
+        <field name="name">Open terminal folder workspace(s)</field>
+        <field name="model_id" ref="model_it_workspace"/>
+        <field name="binding_model_id" ref="model_it_workspace"/>
+        <field name="state">code</field>
+        <field name="code">records.action_open_terminal()</field>
     </record>
 
 </odoo>
