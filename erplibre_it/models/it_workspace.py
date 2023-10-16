@@ -569,8 +569,14 @@ class ItWorkspace(models.Model):
                 # This is not good if .git directory is in parent directory
                 result = rec.execute_to_instance(
                     f"cd {rec.path_working_erplibre}/{rec.path_code_generator_to_generate};git"
+                    " init;echo '*.pyc' > .gitignore;git add .gitignore;git"
+                    " commit -m 'first commit'",
+                )
+                result = rec.execute_to_instance(
+                    f"cd {rec.path_working_erplibre}/{rec.path_code_generator_to_generate};git"
                     " init",
                 )
+
             result = rec.execute_to_instance(
                 f"cd {rec.path_working_erplibre}/{rec.path_code_generator_to_generate};git"
                 " status -s",
