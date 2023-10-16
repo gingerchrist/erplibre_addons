@@ -8,16 +8,13 @@
             <form string="Titre">
                 <sheet>
                     <group>
-                        <field name="name"/>
-                    </group>
-                    <group>
-                        <field name="it_workspace_ids"/>
-                    </group>
-                    <group>
-                        <field name="module_ids"/>
-                    </group>
-                    <group>
-                        <field name="default_workspace_master"/>
+                        <group>
+                            <field name="name"/>
+                            <field name="it_workspace_ids"/>
+                            <field name="module_ids"/>
+                            <field name="default_workspace_master"/>
+                            <field name="force_clean_before_generate"/>
+                        </group>
                     </group>
                 </sheet>
             </form>

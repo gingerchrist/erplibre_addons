@@ -302,25 +302,6 @@ volumes:
             rec.workspace_id.it_code_generator_tree_addons = result
 
     @api.multi
-    def docker_remove_module(self, module_id):
-        for rec in self:
-            rec.workspace_id.system_id.exec_docker(
-                f"cd {rec.workspace_id.path_working_erplibre}/{rec.workspace_id.path_code_generator_to_generate};rm"
-                f" -rf ./{module_id.name};",
-                rec.workspace_id.folder,
-            )
-            rec.workspace_id.system_id.exec_docker(
-                f"cd {rec.workspace_id.path_working_erplibre}/{rec.workspace_id.path_code_generator_to_generate};rm"
-                f" -rf ./code_generator_template_{module_id.name};",
-                rec.workspace_id.folder,
-            )
-            rec.workspace_id.system_id.exec_docker(
-                f"cd {rec.workspace_id.path_working_erplibre}/{rec.workspace_id.path_code_generator_to_generate};rm"
-                f" -rf ./code_generator_{module_id.name};",
-                rec.workspace_id.folder,
-            )
-
-    @api.multi
     def action_docker_logs(self):
         for rec in self:
             rec.workspace_id.system_id.execute_gnome_terminal(

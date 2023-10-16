@@ -63,6 +63,10 @@
                     <group string="Docker" attrs="{'invisible': [('is_installed', '=', False)]}">
                         <field name="workspace_docker_id"/>
                     </group>
+                    <group string="Action">
+                        <button class="oe_highlight" name="action_open_terminal" string="Terminal" type="object" />
+<!--                            <button class="oe_highlight" name="action_open_terminal_docker" string="Terminal docker" type="object" />-->
+                    </group>
                 </group>
 
 <!--                <separator colspan="2" string="Help" />-->
@@ -153,6 +157,9 @@
                             <group>
                                 <button class="oe_highlight" name="action_open_terminal_tig" string="Terminal tig" type="object" />
                             </group>
+                            <group>
+                                <button class="oe_highlight" name="action_open_terminal_addons" string="Terminal addons" type="object" />
+                            </group>
                         </group>
                         <group string="Configuration">
                             <field name="path_code_generator_to_generate"/>
@@ -203,10 +210,6 @@
                         <field name="it_code_generator_tree_addons"/>
                     </page>
                     <page name="log" string="Log">
-                        <group string="Action">
-                            <button class="oe_highlight" name="action_open_terminal" string="Terminal" type="object" />
-<!--                            <button class="oe_highlight" name="action_open_terminal_docker" string="Terminal docker" type="object" />-->
-                        </group>
                         <group>
                             <field name="log_workspace" />
                         </group>
