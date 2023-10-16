@@ -22,6 +22,7 @@
         "views/it_db_image.xml",
         "views/it_workspace.xml",
         "views/it_workspace_docker.xml",
+        "views/it_workspace_terminal.xml",
         "views/it_system.xml",
         "views/menu.xml",
         "data/ir_cron.xml",

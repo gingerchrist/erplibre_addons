@@ -19,9 +19,11 @@
 
   <menuitem id="menu_workspace_docker_item" name="Workspace docker" action="action_it_check_workspace_docker_conf_form" sequence="2" parent="menu_workspace"/>
 
-  <menuitem id="menu_system_item" name="System" action="action_it_check_system_conf_form" sequence="3" parent="menu_workspace"/>
+  <menuitem id="menu_workspace_terminal_item" name="Workspace terminal" action="action_it_check_workspace_terminal_conf_form" sequence="3" parent="menu_workspace"/>
 
-  <menuitem id="menu_db_image" name="Db image" action="it_db_image_db_image_action_window" sequence="4" parent="menu_workspace"/>
+  <menuitem id="menu_system_item" name="System" action="action_it_check_system_conf_form" sequence="4" parent="menu_workspace"/>
+
+  <menuitem id="menu_db_image" name="Db image" action="it_db_image_db_image_action_window" sequence="5" parent="menu_workspace"/>
 
   <menuitem id="menu_code_generator" name="Project" action="it_code_generator_code_generator_action_window" sequence="1" parent="menu_code"/>
 

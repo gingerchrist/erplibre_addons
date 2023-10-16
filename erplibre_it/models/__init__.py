@@ -11,4 +11,5 @@ from . import (
     it_system,
     it_workspace,
     it_workspace_docker,
+    it_workspace_terminal,
 )
