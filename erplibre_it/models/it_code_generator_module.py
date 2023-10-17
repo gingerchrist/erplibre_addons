@@ -8,12 +8,15 @@ class ItCodeGeneratorModule(models.Model):
     name = fields.Char()
 
     code_generator = fields.Many2one(
-        comodel_name="it.code_generator", string="Project", ondelete="cascade"
+        comodel_name="it.code_generator",
+        string="Project",
+        ondelete="cascade",
     )
 
     model_ids = fields.One2many(
         comodel_name="it.code_generator.module.model",
         inverse_name="module_id",
+        string="Model",
     )
 
     it_workspace_ids = fields.Many2many(

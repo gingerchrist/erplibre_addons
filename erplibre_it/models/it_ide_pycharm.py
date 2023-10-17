@@ -11,13 +11,16 @@ from odoo import _, api, exceptions, fields, models, tools
 _logger = logging.getLogger(__name__)
 
 
-class ItIDEPycharm(models.Model):
+class ItIdePycharm(models.Model):
     _name = "it.ide.pycharm"
     _description = "Pycharm management for a workspace"
 
     name = fields.Char()
 
-    it_workspace = fields.Many2one("it.workspace", required=True)
+    it_workspace = fields.Many2one(
+        comodel_name="it.workspace",
+        required=True,
+    )
 
     @api.multi
     def action_cg_setup_pycharm_debug(self):

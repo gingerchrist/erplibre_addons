@@ -19,7 +19,10 @@ class ItWorkspaceDocker(models.Model):
 
     name = fields.Char(readonly=True, compute="_compute_name", store=True)
 
-    workspace_id = fields.Many2one("it.workspace")
+    workspace_id = fields.Many2one(
+        comodel_name="it.workspace",
+        string="Workspace",
+    )
 
     docker_is_running = fields.Boolean(
         readonly=True,
@@ -37,33 +40,29 @@ class ItWorkspaceDocker(models.Model):
     docker_version = fields.Char(default="technolibre/erplibre:1.5.0_c0c6f23")
 
     docker_cmd_extra = fields.Char(
-        help="Extra command to share to odoo executable", default=""
+        help="Extra command to share to odoo executable"
     )
 
     docker_nb_proc = fields.Integer(
         help=(
             "Number of processor/thread, 0 if not behind a proxy, else 2 or"
             " more."
-        ),
-        default=0,
+        )
     )
 
     docker_config_gen_cg = fields.Boolean(
-        default=False,
-        help="Will reduce config path to improve speed to code generator",
+        help="Will reduce config path to improve speed to code generator"
     )
 
     docker_config_cache = fields.Char(
-        help="Fill when docker_config_gen_cg is True, will be erase after",
+        help="Fill when docker_config_gen_cg is True, will be erase after"
     )
 
     docker_is_behind_proxy = fields.Boolean(
-        help="Longpolling need a proxy when workers > 1", default=False
+        help="Longpolling need a proxy when workers > 1"
     )
 
-    docker_initiate_succeed = fields.Boolean(
-        help="Docker is ready to run", default=False
-    )
+    docker_initiate_succeed = fields.Boolean(help="Docker is ready to run")
 
     has_error_restore_db = fields.Boolean()
 

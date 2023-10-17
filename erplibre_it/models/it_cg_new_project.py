@@ -19,7 +19,7 @@ KEY_REPLACE_CODE_GENERATOR_DEMO = 'MODULE_NAME = "%s"'
 _logger = logging.getLogger(__name__)
 
 
-class ItCGNewProject(models.Model):
+class ItCgNewProject(models.Model):
     _name = "it.cg.new_project"
     _description = "Create new project for CG project"
 
@@ -51,9 +51,12 @@ class ItCGNewProject(models.Model):
 
     force = fields.Boolean()
 
-    internal_error = fields.Char(compute="_compute_internal_error", store=True)
+    internal_error = fields.Char(
+        compute="_compute_internal_error",
+        store=True,
+    )
 
-    it_workspace = fields.Many2one("it.workspace")
+    it_workspace = fields.Many2one(comodel_name="it.workspace")
 
     @api.multi
     @api.depends("directory")

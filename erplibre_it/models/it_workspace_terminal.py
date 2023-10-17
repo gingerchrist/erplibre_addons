@@ -19,7 +19,10 @@ class ItWorkspaceTerminal(models.Model):
 
     name = fields.Char(readonly=True, compute="_compute_name", store=True)
 
-    workspace_id = fields.Many2one("it.workspace")
+    workspace_id = fields.Many2one(
+        comodel_name="it.workspace",
+        string="Workspace",
+    )
 
     terminal_is_running = fields.Boolean(
         readonly=True,
@@ -27,9 +30,7 @@ class ItWorkspaceTerminal(models.Model):
         default=True,
     )
 
-    terminal_initiate_succeed = fields.Boolean(
-        help="Terminal is ready to run", default=False
-    )
+    terminal_initiate_succeed = fields.Boolean(help="Terminal is ready to run")
 
     has_error_restore_db = fields.Boolean()
 

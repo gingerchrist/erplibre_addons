@@ -24,6 +24,7 @@ class ItCodeGenerator(models.Model):
     module_ids = fields.One2many(
         comodel_name="it.code_generator.module",
         inverse_name="code_generator",
+        string="Module",
     )
 
     force_clean_before_generate = fields.Boolean(

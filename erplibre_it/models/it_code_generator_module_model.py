@@ -12,6 +12,7 @@ class ItCodeGeneratorModuleModel(models.Model):
     field_ids = fields.One2many(
         comodel_name="it.code_generator.module.model.field",
         inverse_name="model_id",
+        string="Field",
     )
 
     module_id = fields.Many2one(

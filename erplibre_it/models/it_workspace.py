@@ -36,15 +36,12 @@ class ItWorkspace(models.Model):
     log_workspace = fields.Text()
 
     need_debugger_cg_erplibre_it = fields.Boolean(
-        help="CG erplibre_it got error, detect can use the debugger",
-        default=False,
+        help="CG erplibre_it got error, detect can use the debugger"
     )
 
-    path_code_generator_to_generate = fields.Char(
-        default="addons/addons", help=""
-    )
+    path_code_generator_to_generate = fields.Char(default="addons/addons")
 
-    path_working_erplibre = fields.Char(default="/ERPLibre", help="")
+    path_working_erplibre = fields.Char(default="/ERPLibre")
 
     is_installed = fields.Boolean(
         help="Need to install environnement before execute it."
@@ -64,16 +61,15 @@ class ItWorkspace(models.Model):
     )
 
     system_id = fields.Many2one(
-        "it.system",
+        comodel_name="it.system",
+        string="System",
         required=True,
         default=lambda self: self.env.ref(
             "erplibre_it.it_system_local", raise_if_not_found=False
         ),
     )
 
-    ide_pycharm = fields.Many2one(
-        "it.ide.pycharm",
-    )
+    ide_pycharm = fields.Many2one(comodel_name="it.ide.pycharm")
 
     # TODO backup button and restore button
 
@@ -84,7 +80,7 @@ class ItWorkspace(models.Model):
     )
 
     is_self_instance = fields.Boolean(
-        default=False, help="Is the instance who run this database"
+        help="Is the instance who run this database"
     )
 
     port_longpolling = fields.Integer(
@@ -93,7 +89,10 @@ class ItWorkspace(models.Model):
         help="The port of longpolling odoo.",
     )
 
-    db_name = fields.Char(string="DB instance name", default="test")
+    db_name = fields.Char(
+        string="DB instance name",
+        default="test",
+    )
 
     is_me = fields.Char(
         string="Self instance",
@@ -104,10 +103,14 @@ class ItWorkspace(models.Model):
         readonly=True, help="When false, it's because actually restoring a DB."
     )
 
-    url_instance = fields.Char(compute="_compute_url_instance", store=True)
+    url_instance = fields.Char(
+        compute="_compute_url_instance",
+        store=True,
+    )
 
     url_instance_database_manager = fields.Char(
-        compute="_compute_url_instance", store=True
+        compute="_compute_url_instance",
+        store=True,
     )
 
     it_code_generator_ids = fields.Many2many(
@@ -196,8 +199,8 @@ class ItWorkspace(models.Model):
 
     mode_source = fields.Selection(
         selection=[("docker", "Docker"), ("git", "Git")],
-        default="docker",
         required=True,
+        default="docker",
     )
 
     mode_exec = fields.Selection(
@@ -217,8 +220,8 @@ class ItWorkspace(models.Model):
             ("prod", "Prod"),
             ("stage", "Stage"),
         ],
-        default="test",
         required=True,
+        default="test",
         help=(
             "Dev to improve, test to test, prod ready for production, stage to"
             " use a dev and replace a prod"
@@ -226,7 +229,8 @@ class ItWorkspace(models.Model):
     )
 
     is_conflict_mode_exec = fields.Boolean(
-        compute="_compute_is_conflict_mode_exec", store=True
+        compute="_compute_is_conflict_mode_exec",
+        store=True,
     )
 
     mode_version_erplibre = fields.Selection(
@@ -245,8 +249,8 @@ class ItWorkspace(models.Model):
 
     mode_version_base = fields.Selection(
         selection=[("12.0", "12.0"), ("14.0", "14.0")],
-        default="12.0",
         required=True,
+        default="12.0",
         help="Support base version communautaire",
     )
 
@@ -300,9 +304,16 @@ class ItWorkspace(models.Model):
         help="Execution time of method action_git_commit_all_generated_module",
     )
 
-    workspace_docker_id = fields.Many2one("it.workspace.docker")
+    workspace_docker_id = fields.Many2one(
+        comodel_name="it.workspace.docker",
+        string="Workspace Docker",
+    )
 
-    workspace_terminal_id = fields.Many2one("it.workspace.terminal")
+    workspace_terminal_id = fields.Many2one(
+        comodel_name="it.workspace.terminal",
+        string="Workspace Terminal",
+    )
+
 
     def _default_image_db_selection(self):
         return self.env["it.db.image"].search(
@@ -336,10 +347,7 @@ class ItWorkspace(models.Model):
             )
 
     @api.multi
-    @api.depends(
-        "mode_source",
-        "mode_exec",
-    )
+    @api.depends("mode_source", "mode_exec")
     def _compute_is_conflict_mode_exec(self):
         for rec in self:
             rec.is_conflict_mode_exec = (
@@ -347,11 +355,7 @@ class ItWorkspace(models.Model):
             )
 
     @api.multi
-    @api.depends(
-        "system_id.ssh_host",
-        "system_id.method",
-        "port_http",
-    )
+    @api.depends("system_id.ssh_host", "system_id.method", "port_http")
     def _compute_url_instance(self):
         for rec in self:
             # TODO create configuration

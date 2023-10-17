@@ -9,7 +9,10 @@ class ItCodeGeneratorModuleModelField(models.Model):
 
     help = fields.Char()
 
-    has_error = fields.Boolean(compute="_compute_has_error", store=True)
+    has_error = fields.Boolean(
+        compute="_compute_has_error",
+        store=True,
+    )
 
     model_id = fields.Many2one(
         comodel_name="it.code_generator.module.model",
@@ -36,8 +39,8 @@ class ItCodeGeneratorModuleModelField(models.Model):
     )
 
     relation = fields.Many2one(
-        string="Comodel",
         comodel_name="it.code_generator.module.model",
+        string="Comodel",
         help="comodel - Create relation for many2one, many2many, one2many",
     )
 
