@@ -9,6 +9,7 @@ from . import (
     it_db_image,
     it_ide_pycharm,
     it_system,
+    it_test,
     it_workspace,
     it_workspace_docker,
     it_workspace_terminal,

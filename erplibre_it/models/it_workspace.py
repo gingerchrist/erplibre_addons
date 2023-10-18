@@ -309,6 +309,11 @@ class ItWorkspace(models.Model):
         string="Workspace Docker",
     )
 
+    test_ids = fields.Many2many(
+        comodel_name="it.test",
+        string="Tests",
+    )
+
     workspace_terminal_id = fields.Many2one(
         comodel_name="it.workspace.terminal",
         string="Workspace Terminal",
@@ -917,6 +922,7 @@ class ItWorkspace(models.Model):
 
     @api.multi
     def execute_to_instance(self, cmd):
+        # TODO search into context if need to parallel or serial
         self.check_it_workspace_docker()
         result = []
         for rec in self:

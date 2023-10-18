@@ -102,6 +102,14 @@
     />
 
     <menuitem
+        id="menu_code_generator_test"
+        name="Test"
+        action="action_it_test_conf_form"
+        sequence="5"
+        parent="menu_code"
+    />
+
+    <menuitem
         id="menu_it_ide_pycharm"
         name="IDE Pycharm"
         action="it_ide_pycharm_action_window"

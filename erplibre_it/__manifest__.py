@@ -24,6 +24,7 @@
         "views/it_workspace_docker.xml",
         "views/it_workspace_terminal.xml",
         "views/it_system.xml",
+        "views/it_test.xml",
         "views/menu.xml",
         "data/ir_cron.xml",
         "data/it_system.xml",
