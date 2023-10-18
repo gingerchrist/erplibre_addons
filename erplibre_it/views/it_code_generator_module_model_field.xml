@@ -1,6 +1,5 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8" ?>
 <odoo>
-
     <record id="it_code_generator_module_model_field_view_form" model="ir.ui.view">
         <field name="name">it_code_generator_module_model_field_form</field>
         <field name="model">it.code_generator.module.model.field</field>
@@ -9,18 +8,27 @@
                 <sheet>
                     <group>
                         <group>
-                            <field name="name"/>
-                            <field name="type"/>
-                            <field name="relation" attrs="{'invisible': [('type', 'not in', ['many2one', 'many2many', 'one2many'])]}"/>
-                            <field name="relation_manual" attrs="{'invisible': ['|', ('type', 'not in', ['many2one', 'many2many', 'one2many']), ('relation', '!=', False)]}"/>
-                            <field name="field_relation" attrs="{'invisible': [('type', 'not in', ['one2many'])]}"/>
-                            <field name="field_relation_manual" attrs="{'invisible': ['|', ('type', 'not in', ['one2many']), ('field_relation', '!=', False)]}"/>
-                            <field name="help"/>
+                            <field name="name" />
+                            <field name="type" />
+                            <field
+                                name="relation"
+                                attrs="{'invisible': [('type', 'not in', ['many2one', 'many2many', 'one2many'])]}"
+                            />
+                            <field
+                                name="relation_manual"
+                                attrs="{'invisible': ['|', ('type', 'not in', ['many2one', 'many2many', 'one2many']), ('relation', '!=', False)]}"
+                            />
+                            <field name="field_relation" attrs="{'invisible': [('type', 'not in', ['one2many'])]}" />
+                            <field
+                                name="field_relation_manual"
+                                attrs="{'invisible': ['|', ('type', 'not in', ['one2many']), ('field_relation', '!=', False)]}"
+                            />
+                            <field name="help" />
                         </group>
                     </group>
                     <group>
-                        <field name="model_id"/>
-                        <field name="it_workspace_ids"/>
+                        <field name="model_id" />
+                        <field name="it_workspace_ids" />
                     </group>
                 </sheet>
             </form>
@@ -32,10 +40,10 @@
         <field name="model">it.code_generator.module.model.field</field>
         <field name="arch" type="xml">
             <graph string="It code generator module model field">
-                <field name="name" type="row"/>
-                <field name="help" type="row"/>
-                <field name="model_id" type="row"/>
-                <field name="type" type="row"/>
+                <field name="name" type="row" />
+                <field name="help" type="row" />
+                <field name="model_id" type="row" />
+                <field name="type" type="row" />
             </graph>
         </field>
     </record>
@@ -45,10 +53,10 @@
         <field name="model">it.code_generator.module.model.field</field>
         <field name="arch" type="xml">
             <kanban class="o_kanban_mobile">
-                <field name="name"/>
-                <field name="help"/>
-                <field name="model_id"/>
-                <field name="type"/>
+                <field name="name" />
+                <field name="help" />
+                <field name="model_id" />
+                <field name="type" />
                 <templates>
                     <t t-name="kanban-box">
                         <div t-attf-class="oe_kanban_global_click">
@@ -56,22 +64,22 @@
                                 <ul>
                                     <li class="mb4">
                                         <strong>
-                                            <field name="name"/>
+                                            <field name="name" />
                                         </strong>
                                     </li>
                                     <li class="mb4">
                                         <strong>
-                                            <field name="help"/>
+                                            <field name="help" />
                                         </strong>
                                     </li>
                                     <li class="mb4">
                                         <strong>
-                                            <field name="model_id"/>
+                                            <field name="model_id" />
                                         </strong>
                                     </li>
                                     <li class="mb4">
                                         <strong>
-                                            <field name="type"/>
+                                            <field name="type" />
                                         </strong>
                                     </li>
                                 </ul>
@@ -88,10 +96,10 @@
         <field name="model">it.code_generator.module.model.field</field>
         <field name="arch" type="xml">
             <pivot string="It code generator module model field">
-                <field name="name" type="row"/>
-                <field name="help" type="row"/>
-                <field name="model_id" type="row"/>
-                <field name="type" type="row"/>
+                <field name="name" type="row" />
+                <field name="help" type="row" />
+                <field name="model_id" type="row" />
+                <field name="type" type="row" />
             </pivot>
         </field>
     </record>
@@ -101,10 +109,10 @@
         <field name="model">it.code_generator.module.model.field</field>
         <field name="arch" type="xml">
             <search string="It code generator module model field">
-                <filter domain="[('name','!=',False)]" name="name" string="Name"/>
-                <filter domain="[('help','!=',False)]" name="help" string="Help"/>
-                <filter domain="[('model_id','!=',False)]" name="model_id" string="Model"/>
-                <filter domain="[('type','!=',False)]" name="type" string="Type"/>
+                <filter domain="[('name','!=',False)]" name="name" string="Name" />
+                <filter domain="[('help','!=',False)]" name="help" string="Help" />
+                <filter domain="[('model_id','!=',False)]" name="model_id" string="Model" />
+                <filter domain="[('type','!=',False)]" name="type" string="Type" />
             </search>
         </field>
     </record>
@@ -114,19 +122,23 @@
         <field name="model">it.code_generator.module.model.field</field>
         <field name="arch" type="xml">
             <tree decoration-danger="has_error">
-                <field name="has_error" invisible="True"/>
-                <field name="name"/>
-                <field name="model_id"/>
-                <field name="type"/>
-                <field name="relation"/>
-                <field name="relation_manual"/>
-                <field name="field_relation"/>
-                <field name="field_relation_manual"/>
-                <field name="help"/>
+                <field name="has_error" invisible="True" />
+                <field name="name" />
+                <field name="model_id" />
+                <field name="type" />
+                <field name="relation" />
+                <field name="relation_manual" />
+                <field name="field_relation" />
+                <field name="field_relation_manual" />
+                <field name="help" />
             </tree>
         </field>
     </record>
 
-    <act_window id="it_code_generator_module_model_field_code_generator_module_model_field_action_window" name="Code generator module model field" res_model="it.code_generator.module.model.field" view_mode="kanban,tree,pivot,graph,form"/>
-
+    <act_window
+        id="it_code_generator_module_model_field_code_generator_module_model_field_action_window"
+        name="Code generator module model field"
+        res_model="it.code_generator.module.model.field"
+        view_mode="kanban,tree,pivot,graph,form"
+    />
 </odoo>

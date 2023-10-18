@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8" ?>
 <odoo>
     <record id="view_it_workspace_docker_conf_form" model="ir.ui.view">
         <field name="name">it.workspace.docker form</field>
@@ -6,14 +6,50 @@
         <field name="arch" type="xml">
             <form>
                 <header>
-                    <button class="oe_highlight" name="action_start_docker_compose" string="Run docker-compose" type="object" />
-                    <button class="oe_highlight" name="action_stop_docker_compose" string="Stop docker-compose" type="object" />
-                    <button class="oe_highlight" name="action_open_terminal_docker" string="Terminal docker" type="object" />
-                    <button class="oe_highlight" name="action_docker_restore_db_image" string="Restore DB Image" type="object" />
+                    <button
+                        class="oe_highlight"
+                        name="action_start_docker_compose"
+                        string="Run docker-compose"
+                        type="object"
+                    />
+                    <button
+                        class="oe_highlight"
+                        name="action_stop_docker_compose"
+                        string="Stop docker-compose"
+                        type="object"
+                    />
+                    <button
+                        class="oe_highlight"
+                        name="action_open_terminal_docker"
+                        string="Terminal docker"
+                        type="object"
+                    />
+                    <button
+                        class="oe_highlight"
+                        name="action_docker_restore_db_image"
+                        string="Restore DB Image"
+                        type="object"
+                    />
                     <button class="oe_highlight" name="action_docker_logs" string="Docker logs" type="object" />
-                    <button class="oe_highlight" name="action_docker_install_dev_soft" string="Docker install dev" type="object" />
-                    <button class="btn-danger" name="action_os_user_permission_docker" string="Give docker permission" type="object" attrs="{'invisible': [('docker_initiate_succeed', '=', True)]}"/>
-                    <button class="oe_highlight" name="action_analyse_docker_image" string="Analyse docker image" type="object" />
+                    <button
+                        class="oe_highlight"
+                        name="action_docker_install_dev_soft"
+                        string="Docker install dev"
+                        type="object"
+                    />
+                    <button
+                        class="btn-danger"
+                        name="action_os_user_permission_docker"
+                        string="Give docker permission"
+                        type="object"
+                        attrs="{'invisible': [('docker_initiate_succeed', '=', True)]}"
+                    />
+                    <button
+                        class="oe_highlight"
+                        name="action_analyse_docker_image"
+                        string="Analyse docker image"
+                        type="object"
+                    />
                 </header>
                 <div class="oe_title">
                     <h1>
@@ -28,8 +64,8 @@
                 </group>
                 <group>
                     <group string="Status instance">
-                        <field name="docker_is_running"/>
-<!--                        <field name="db_is_restored"/>-->
+                        <field name="docker_is_running" />
+                        <!--                        <field name="db_is_restored"/>-->
                     </group>
                     <group string="Status error">
                         <field name="has_error_restore_db" />
@@ -38,11 +74,11 @@
                 <group string="Configuration">
                     <group>
                         <field name="force_create_docker_compose" />
-                        <field name="docker_version"/>
-                        <field name="docker_cmd_extra"/>
-                        <field name="docker_nb_proc"/>
-                        <field name="docker_is_behind_proxy"/>
-                        <field name="docker_config_gen_cg"/>
+                        <field name="docker_version" />
+                        <field name="docker_cmd_extra" />
+                        <field name="docker_nb_proc" />
+                        <field name="docker_is_behind_proxy" />
+                        <field name="docker_config_gen_cg" />
                     </group>
                 </group>
                 <group string="Log">
@@ -72,6 +108,9 @@
         </field>
     </record>
 
-    <act_window id="action_it_check_workspace_docker_conf_form" name="Automated it_workspace_docker" res_model="it.workspace.docker" />
-
+    <act_window
+        id="action_it_check_workspace_docker_conf_form"
+        name="Automated it_workspace_docker"
+        res_model="it.workspace.docker"
+    />
 </odoo>

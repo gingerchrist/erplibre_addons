@@ -314,7 +314,6 @@ class ItWorkspace(models.Model):
         string="Workspace Terminal",
     )
 
-
     def _default_image_db_selection(self):
         return self.env["it.db.image"].search(
             [("name", "like", "erplibre_base")], limit=1

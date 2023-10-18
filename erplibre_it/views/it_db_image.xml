@@ -1,6 +1,5 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8" ?>
 <odoo>
-
     <record id="it_db_image_view_form" model="ir.ui.view">
         <field name="name">it_db_image_form</field>
         <field name="model">it.db.image</field>
@@ -8,10 +7,10 @@
             <form string="Titre">
                 <sheet>
                     <group>
-                        <field name="name"/>
+                        <field name="name" />
                     </group>
                     <group>
-                        <field name="path"/>
+                        <field name="path" />
                     </group>
                 </sheet>
             </form>
@@ -23,8 +22,8 @@
         <field name="model">it.db.image</field>
         <field name="arch" type="xml">
             <graph string="It db image">
-                <field name="name" type="row"/>
-                <field name="path" type="row"/>
+                <field name="name" type="row" />
+                <field name="path" type="row" />
             </graph>
         </field>
     </record>
@@ -34,8 +33,8 @@
         <field name="model">it.db.image</field>
         <field name="arch" type="xml">
             <kanban class="o_kanban_mobile">
-                <field name="name"/>
-                <field name="path"/>
+                <field name="name" />
+                <field name="path" />
                 <templates>
                     <t t-name="kanban-box">
                         <div t-attf-class="oe_kanban_global_click">
@@ -43,12 +42,12 @@
                                 <ul>
                                     <li class="mb4">
                                         <strong>
-                                            <field name="name"/>
+                                            <field name="name" />
                                         </strong>
                                     </li>
                                     <li class="mb4">
                                         <strong>
-                                            <field name="path"/>
+                                            <field name="path" />
                                         </strong>
                                     </li>
                                 </ul>
@@ -65,8 +64,8 @@
         <field name="model">it.db.image</field>
         <field name="arch" type="xml">
             <pivot string="It db image">
-                <field name="name" type="row"/>
-                <field name="path" type="row"/>
+                <field name="name" type="row" />
+                <field name="path" type="row" />
             </pivot>
         </field>
     </record>
@@ -76,8 +75,8 @@
         <field name="model">it.db.image</field>
         <field name="arch" type="xml">
             <search string="It db image">
-                <filter domain="[('name','!=',False)]" name="name" string="Name"/>
-                <filter domain="[('path','!=',False)]" name="path" string="Path"/>
+                <filter domain="[('name','!=',False)]" name="name" string="Name" />
+                <filter domain="[('path','!=',False)]" name="path" string="Path" />
             </search>
         </field>
     </record>
@@ -87,12 +86,16 @@
         <field name="model">it.db.image</field>
         <field name="arch" type="xml">
             <tree>
-                <field name="name"/>
-                <field name="path"/>
+                <field name="name" />
+                <field name="path" />
             </tree>
         </field>
     </record>
 
-    <act_window id="it_db_image_db_image_action_window" name="Db image" res_model="it.db.image" view_mode="kanban,tree,pivot,graph,form"/>
-
+    <act_window
+        id="it_db_image_db_image_action_window"
+        name="Db image"
+        res_model="it.db.image"
+        view_mode="kanban,tree,pivot,graph,form"
+    />
 </odoo>

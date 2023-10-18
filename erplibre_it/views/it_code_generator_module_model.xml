@@ -1,6 +1,5 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8" ?>
 <odoo>
-
     <record id="it_code_generator_module_model_view_form" model="ir.ui.view">
         <field name="name">it_code_generator_module_model_form</field>
         <field name="model">it.code_generator.module.model</field>
@@ -8,19 +7,19 @@
             <form string="Titre">
                 <sheet>
                     <group>
-                        <field name="name"/>
+                        <field name="name" />
                     </group>
                     <group>
-                        <field name="description"/>
+                        <field name="description" />
                     </group>
                     <group>
-                        <field name="module_id"/>
+                        <field name="module_id" />
                     </group>
                     <group>
-                        <field name="field_ids"/>
+                        <field name="field_ids" />
                     </group>
                     <group>
-                        <field name="it_workspace_ids"/>
+                        <field name="it_workspace_ids" />
                     </group>
                 </sheet>
             </form>
@@ -32,9 +31,9 @@
         <field name="model">it.code_generator.module.model</field>
         <field name="arch" type="xml">
             <graph string="It code generator module model">
-                <field name="name" type="row"/>
-                <field name="description" type="row"/>
-                <field name="module_id" type="row"/>
+                <field name="name" type="row" />
+                <field name="description" type="row" />
+                <field name="module_id" type="row" />
             </graph>
         </field>
     </record>
@@ -44,10 +43,10 @@
         <field name="model">it.code_generator.module.model</field>
         <field name="arch" type="xml">
             <kanban class="o_kanban_mobile">
-                <field name="name"/>
-                <field name="description"/>
-                <field name="module_id"/>
-                <field name="field_ids"/>
+                <field name="name" />
+                <field name="description" />
+                <field name="module_id" />
+                <field name="field_ids" />
                 <templates>
                     <t t-name="kanban-box">
                         <div t-attf-class="oe_kanban_global_click">
@@ -55,22 +54,22 @@
                                 <ul>
                                     <li class="mb4">
                                         <strong>
-                                            <field name="name"/>
+                                            <field name="name" />
                                         </strong>
                                     </li>
                                     <li class="mb4">
                                         <strong>
-                                            <field name="description"/>
+                                            <field name="description" />
                                         </strong>
                                     </li>
                                     <li class="mb4">
                                         <strong>
-                                            <field name="module_id"/>
+                                            <field name="module_id" />
                                         </strong>
                                     </li>
                                     <li class="mb4">
                                         <strong>
-                                            <field name="field_ids"/>
+                                            <field name="field_ids" />
                                         </strong>
                                     </li>
                                 </ul>
@@ -87,9 +86,9 @@
         <field name="model">it.code_generator.module.model</field>
         <field name="arch" type="xml">
             <pivot string="It code generator module model">
-                <field name="name" type="row"/>
-                <field name="description" type="row"/>
-                <field name="module_id" type="row"/>
+                <field name="name" type="row" />
+                <field name="description" type="row" />
+                <field name="module_id" type="row" />
             </pivot>
         </field>
     </record>
@@ -99,10 +98,10 @@
         <field name="model">it.code_generator.module.model</field>
         <field name="arch" type="xml">
             <search string="It code generator module model">
-                <filter domain="[('name','!=',False)]" name="name" string="Name"/>
-                <filter domain="[('description','!=',False)]" name="description" string="Description"/>
-                <filter domain="[('module_id','!=',False)]" name="module_id" string="Module"/>
-                <filter domain="[('field_ids','!=',False)]" name="field_ids" string=""/>
+                <filter domain="[('name','!=',False)]" name="name" string="Name" />
+                <filter domain="[('description','!=',False)]" name="description" string="Description" />
+                <filter domain="[('module_id','!=',False)]" name="module_id" string="Module" />
+                <filter domain="[('field_ids','!=',False)]" name="field_ids" string="" />
             </search>
         </field>
     </record>
@@ -112,14 +111,18 @@
         <field name="model">it.code_generator.module.model</field>
         <field name="arch" type="xml">
             <tree>
-                <field name="name"/>
-                <field name="module_id"/>
-                <field name="description"/>
-                <field name="field_ids"/>
+                <field name="name" />
+                <field name="module_id" />
+                <field name="description" />
+                <field name="field_ids" />
             </tree>
         </field>
     </record>
 
-    <act_window id="it_code_generator_module_model_code_generator_module_model_action_window" name="Code generator module model" res_model="it.code_generator.module.model" view_mode="kanban,tree,pivot,graph,form"/>
-
+    <act_window
+        id="it_code_generator_module_model_code_generator_module_model_action_window"
+        name="Code generator module model"
+        res_model="it.code_generator.module.model"
+        view_mode="kanban,tree,pivot,graph,form"
+    />
 </odoo>

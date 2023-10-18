@@ -1,19 +1,23 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8" ?>
 <odoo>
-
     <record id="it_ide_pycharm_view_form" model="ir.ui.view">
         <field name="name">it_ide_pycharm_form</field>
         <field name="model">it.ide.pycharm</field>
         <field name="arch" type="xml">
             <form string="Titre">
                 <header>
-                    <button class="oe_highlight" name="action_cg_setup_pycharm_debug" string="Setup debug from last execution" type="object"  />
+                    <button
+                        class="oe_highlight"
+                        name="action_cg_setup_pycharm_debug"
+                        string="Setup debug from last execution"
+                        type="object"
+                    />
                 </header>
                 <sheet>
                     <group>
                         <group>
-                            <field name="name"/>
-                            <field name="it_workspace"/>
+                            <field name="name" />
+                            <field name="it_workspace" />
                         </group>
                     </group>
                 </sheet>
@@ -26,7 +30,7 @@
         <field name="model">it.ide.pycharm</field>
         <field name="arch" type="xml">
             <graph string="It ide pycharm">
-                <field name="name" type="row"/>
+                <field name="name" type="row" />
             </graph>
         </field>
     </record>
@@ -36,7 +40,7 @@
         <field name="model">it.ide.pycharm</field>
         <field name="arch" type="xml">
             <kanban class="o_kanban_mobile">
-                <field name="name"/>
+                <field name="name" />
                 <templates>
                     <t t-name="kanban-box">
                         <div t-attf-class="oe_kanban_global_click">
@@ -44,7 +48,7 @@
                                 <ul>
                                     <li class="mb4">
                                         <strong>
-                                            <field name="name"/>
+                                            <field name="name" />
                                         </strong>
                                     </li>
                                 </ul>
@@ -61,7 +65,7 @@
         <field name="model">it.ide.pycharm</field>
         <field name="arch" type="xml">
             <pivot string="It code generator new project">
-                <field name="name" type="row"/>
+                <field name="name" type="row" />
             </pivot>
         </field>
     </record>
@@ -71,7 +75,7 @@
         <field name="model">it.ide.pycharm</field>
         <field name="arch" type="xml">
             <search string="It ide pycharm">
-                <filter domain="[('name','!=',False)]" name="name" string="Name"/>
+                <filter domain="[('name','!=',False)]" name="name" string="Name" />
             </search>
         </field>
     </record>
@@ -81,11 +85,15 @@
         <field name="model">it.ide.pycharm</field>
         <field name="arch" type="xml">
             <tree>
-                <field name="name"/>
+                <field name="name" />
             </tree>
         </field>
     </record>
 
-    <act_window id="it_ide_pycharm_action_window" name="IDe pycharm" res_model="it.ide.pycharm" view_mode="kanban,tree,pivot,graph,form"/>
-
+    <act_window
+        id="it_ide_pycharm_action_window"
+        name="IDe pycharm"
+        res_model="it.ide.pycharm"
+        view_mode="kanban,tree,pivot,graph,form"
+    />
 </odoo>
