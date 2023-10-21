@@ -15,26 +15,51 @@
                             <field name="active" widget="boolean_button" options='{"terminology": "archive"}' />
                         </button>
                     </div>
-                    <group>
-                        <group>
+                    <div class="oe_title">
+                        <h1>
                             <field name="name" />
-                            <field name="create_date"/>
-                            <field name="write_date"/>
-                            <field name="last_new_project"/>
-                            <field name="msg_error" />
-                            <field name="has_error" />
+                        </h1>
+                    </div>
+                    <group string="Date">
+                        <group>
+                            <field name="exec_start_date" />
+                            <field name="exec_stop_date" />
+                            <field name="exec_time_duration" />
                             <field name="execution_finish" />
+                        </group>
+                        <group>
+                            <field name="create_date" />
+                            <field name="write_date" />
+                        </group>
+                    </group>
+                    <group string="Project">
+                        <group>
+                            <field name="last_new_project" />
+                            <field name="it_workspace" />
+                        </group>
+                    </group>
+
+                    <group string="Configuration">
+                        <group>
+                            <field name="code_generator_name" />
+                            <field name="template_name" />
                             <field name="module" />
                             <field name="directory" />
-                            <field name="keep_bd_alive" />
                             <field name="config" />
-                            <field name="code_generator_name" />
-                            <field name="stop_execution_if_env_not_clean" />
-                            <field name="it_workspace" />
-                            <field name="template_name" />
-                            <field name="coverage" />
                             <field name="odoo_config" />
+                        </group>
+                        <group>
+                            <field name="keep_bd_alive" />
+                            <field name="stop_execution_if_env_not_clean" />
+                            <field name="coverage" />
                             <field name="force" />
+                        </group>
+                    </group>
+
+                    <group string="Error">
+                        <group>
+                            <field name="msg_error" />
+                            <field name="has_error" />
                         </group>
                     </group>
                 </sheet>

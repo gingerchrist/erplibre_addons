@@ -50,6 +50,14 @@ class ItCgNewProject(models.Model):
         string="Last new project",
     )
 
+    exec_start_date = fields.Datetime(string="Execution start date")
+
+    exec_stop_date = fields.Datetime(string="Execution stop date")
+
+    exec_time_duration = fields.Float(
+        string="Execution time duration", compute="_compute_exec_time_duration"
+    )
+
     execution_finish = fields.Boolean()
 
     module = fields.Char(required=True)
@@ -82,10 +90,33 @@ class ItCgNewProject(models.Model):
     @api.depends(
         "it_workspace",
         "module",
+        "exec_start_date",
+        "exec_stop_date",
+        "exec_time_duration",
     )
     def _compute_name(self):
         for rec in self:
-            rec.name = f"{rec.it_workspace.name} - {rec.module}"
+            rec.name = f"{rec.id}: {rec.it_workspace.name} - {rec.module}"
+            if rec.exec_stop_date:
+                rec.name += (
+                    f" - finish {rec.exec_stop_date} duration"
+                    f" {rec.exec_time_duration}"
+                )
+            elif rec.exec_start_date:
+                rec.name += f" - start {rec.exec_start_date}"
+
+    @api.depends(
+        "exec_start_date",
+        "exec_stop_date",
+    )
+    def _compute_exec_time_duration(self):
+        for rec in self:
+            if rec.exec_start_date and rec.exec_stop_date:
+                rec.exec_time_duration = (
+                    rec.exec_stop_date - rec.exec_start_date
+                ).total_seconds()
+            else:
+                rec.exec_time_duration = None
 
     @api.multi
     @api.depends("directory")
@@ -101,6 +132,7 @@ class ItCgNewProject(models.Model):
     @api.multi
     def action_new_project(self):
         for rec in self:
+            rec.exec_start_date = fields.Datetime.now(self)
             project = ProjectManagement(
                 rec,
                 rec.module,
@@ -120,6 +152,7 @@ class ItCgNewProject(models.Model):
             if not project.generate_module():
                 rec.has_error = True
 
+            rec.exec_stop_date = fields.Datetime.now(self)
             rec.execution_finish = True
 
 

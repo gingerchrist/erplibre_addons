@@ -62,6 +62,22 @@
     />
 
     <menuitem
+        id="menu_code_generator_new_project"
+        name="New project"
+        action="it_new_project_action_window"
+        sequence="3"
+        parent="menu_process"
+    />
+
+    <menuitem
+        id="menu_code_generator_new_project_stage"
+        name="New project Stage"
+        action="it_cg_new_project_stage_action"
+        sequence="4"
+        parent="menu_process"
+    />
+
+    <menuitem
         id="menu_code_generator"
         name="Project"
         action="it_code_generator_code_generator_action_window"
@@ -94,26 +110,10 @@
     />
 
     <menuitem
-        id="menu_code_generator_new_project"
-        name="New project"
-        action="it_new_project_action_window"
-        sequence="5"
-        parent="menu_code"
-    />
-
-    <menuitem
-        id="menu_code_generator_new_project_stage"
-        name="New project Stage"
-        action="it_cg_new_project_stage_action"
-        sequence="6"
-        parent="menu_code"
-    />
-
-    <menuitem
         id="menu_code_generator_test"
         name="Test"
         action="action_it_test_conf_form"
-        sequence="7"
+        sequence="5"
         parent="menu_code"
     />
 
@@ -121,7 +121,7 @@
         id="menu_it_ide_pycharm"
         name="IDE Pycharm"
         action="it_ide_pycharm_action_window"
-        sequence="8"
+        sequence="6"
         parent="menu_code"
     />
 </odoo>

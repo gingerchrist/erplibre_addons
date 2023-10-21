@@ -355,7 +355,7 @@ class ItWorkspace(models.Model):
     def _compute_name(self):
         for rec in self:
             rec.name = (
-                f"{rec.mode_source} - {rec.mode_exec} -"
+                f"{rec.id}: {rec.mode_source} - {rec.mode_exec} -"
                 f" {rec.mode_environnement} - {rec.mode_version_erplibre} -"
                 f" {rec.mode_version_base} - {rec.folder} - {rec.port_http}"
             )
@@ -551,13 +551,15 @@ class ItWorkspace(models.Model):
                             ("project_type", "=", "cg"),
                         ]
                     )
-                    new_project_ids_disable.active = False
+                    new_project_ids_disable.write({"active": False})
 
                     new_project_id = self.env["it.cg.new_project"].create(
                         dct_new_project
                     )
                     if rec.last_new_project_cg:
-                        new_project_id.last_new_project = rec.last_new_project_cg.id
+                        new_project_id.last_new_project = (
+                            rec.last_new_project_cg.id
+                        )
                     rec.last_new_project_cg = new_project_id.id
                     new_project_id.action_new_project()
                     # cmd = (
