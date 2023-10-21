@@ -325,6 +325,9 @@
                                 />
                             </group>
                         </group>
+                        <group string="Execution">
+                            <field name="last_new_project_cg" />
+                        </group>
                         <group string="Configuration">
                             <field name="path_code_generator_to_generate" />
                             <field name="path_working_erplibre" />
@@ -386,6 +389,9 @@
                                     type="object"
                                 />
                             </group>
+                        </group>
+                        <group string="Execution">
+                            <field name="last_new_project_self" />
                         </group>
                         <group string="Log">
                             <field

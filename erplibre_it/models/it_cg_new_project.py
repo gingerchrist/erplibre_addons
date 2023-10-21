@@ -45,6 +45,11 @@ class ItCgNewProject(models.Model):
         [("self", "Self generate"), ("cg", "Code generator")]
     )
 
+    last_new_project = fields.Many2one(
+        comodel_name="it.cg.new_project",
+        string="Last new project",
+    )
+
     execution_finish = fields.Boolean()
 
     module = fields.Char(required=True)

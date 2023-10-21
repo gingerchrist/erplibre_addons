@@ -18,6 +18,9 @@
                     <group>
                         <group>
                             <field name="name" />
+                            <field name="create_date"/>
+                            <field name="write_date"/>
+                            <field name="last_new_project"/>
                             <field name="msg_error" />
                             <field name="has_error" />
                             <field name="execution_finish" />

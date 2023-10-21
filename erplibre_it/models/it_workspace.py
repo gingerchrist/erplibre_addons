@@ -319,6 +319,16 @@ class ItWorkspace(models.Model):
         string="Workspace Terminal",
     )
 
+    last_new_project_self = fields.Many2one(
+        comodel_name="it.cg.new_project",
+        string="Last new project self",
+    )
+
+    last_new_project_cg = fields.Many2one(
+        comodel_name="it.cg.new_project",
+        string="Last new project cg",
+    )
+
     def _default_image_db_selection(self):
         return self.env["it.db.image"].search(
             [("name", "like", "erplibre_base")], limit=1
@@ -408,6 +418,9 @@ class ItWorkspace(models.Model):
                     "project_type": "self",
                 }
             )
+            if rec.last_new_project_self:
+                new_project_id.last_new_project = rec.last_new_project_self.id
+            rec.last_new_project_self = new_project_id.id
             new_project_id.action_new_project()
             # result = rec.system_id.execute_with_result(
             #     f"cd {rec.folder};./script/code_generator/new_project.py"
@@ -543,6 +556,9 @@ class ItWorkspace(models.Model):
                     new_project_id = self.env["it.cg.new_project"].create(
                         dct_new_project
                     )
+                    if rec.last_new_project_cg:
+                        new_project_id.last_new_project = rec.last_new_project_cg.id
+                    rec.last_new_project_cg = new_project_id.id
                     new_project_id.action_new_project()
                     # cmd = (
                     #     f"cd {rec.path_working_erplibre};./script/code_generator/new_project.py"
