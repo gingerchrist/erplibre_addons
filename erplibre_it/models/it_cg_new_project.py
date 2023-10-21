@@ -24,10 +24,12 @@ class ItCgNewProject(models.Model):
     _description = "Create new project for CG project"
 
     @api.model
-    def _default_stage_id(self):
+    def default_stage_id(self):
         return self.env.ref("erplibre_it.it_cg_new_project_stage_init")
 
-    name = fields.Char()
+    name = fields.Char(compute="_compute_name")
+
+    active = fields.Boolean(default=True)
 
     msg_error = fields.Char()
 
@@ -36,7 +38,11 @@ class ItCgNewProject(models.Model):
     stage_id = fields.Many2one(
         "it.cg.new_project.stage",
         "Stage",
-        default=lambda s: s._default_stage_id(),
+        default=lambda s: s.default_stage_id(),
+    )
+
+    project_type = fields.Selection(
+        [("self", "Self generate"), ("cg", "Code generator")]
     )
 
     execution_finish = fields.Boolean()
@@ -67,6 +73,14 @@ class ItCgNewProject(models.Model):
     )
 
     it_workspace = fields.Many2one(comodel_name="it.workspace")
+
+    @api.depends(
+        "it_workspace",
+        "module",
+    )
+    def _compute_name(self):
+        for rec in self:
+            rec.name = f"{rec.it_workspace.name} - {rec.module}"
 
     @api.multi
     @api.depends("directory")

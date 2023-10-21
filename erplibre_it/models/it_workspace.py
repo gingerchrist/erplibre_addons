@@ -390,11 +390,22 @@ class ItWorkspace(models.Model):
             # rec.need_debugger_cg_erplibre_it = False
             addons_path = "./addons/ERPLibre_erplibre_addons"
             module_name = "erplibre_it"
+
+            # Disable all others
+            new_project_ids_disable = self.env["it.cg.new_project"].search(
+                [
+                    ("it_workspace", "=", rec.id),
+                    ("project_type", "=", "self"),
+                ]
+            )
+            new_project_ids_disable.write({"active": False})
+
             new_project_id = self.env["it.cg.new_project"].create(
                 {
                     "module": module_name,
                     "directory": addons_path,
                     "it_workspace": rec.id,
+                    "project_type": "self",
                 }
             )
             new_project_id.action_new_project()
@@ -511,11 +522,23 @@ class ItWorkspace(models.Model):
                         "directory": rec.path_code_generator_to_generate,
                         "keep_bd_alive": True,
                         "it_workspace": rec.id,
+                        "project_type": "cg",
                     }
                     # extra_arg = ""
                     if model_conf:
                         dct_new_project["config"] = model_conf
                         # extra_arg = f" --config '{model_conf}'"
+
+                    # Disable all others
+                    new_project_ids_disable = self.env[
+                        "it.cg.new_project"
+                    ].search(
+                        [
+                            ("it_workspace", "=", rec.id),
+                            ("project_type", "=", "cg"),
+                        ]
+                    )
+                    new_project_ids_disable.active = False
 
                     new_project_id = self.env["it.cg.new_project"].create(
                         dct_new_project
