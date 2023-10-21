@@ -2,6 +2,7 @@
 
 from . import (
     it_cg_new_project,
+    it_cg_new_project_stage,
     it_code_generator,
     it_code_generator_module,
     it_code_generator_module_model,

@@ -7,6 +7,7 @@
             <form string="Titre">
                 <header>
                     <button class="oe_highlight" name="action_new_project" string="New project" type="object" />
+                    <field name="stage_id" widget="statusbar" clickable="False" options="{'fold_field': 'fold'}" />
                 </header>
                 <sheet>
                     <group>
@@ -84,6 +85,9 @@
         <field name="arch" type="xml">
             <search string="It code generator module model field">
                 <filter domain="[('name','!=',False)]" name="name" string="Name" />
+                <group expand="1" string="Group By">
+                    <filter string="Stage" name="stage" context="{'group_by':'stage_id'}" />
+                </group>
             </search>
         </field>
     </record>

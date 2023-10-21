@@ -13,6 +13,7 @@
     "data": [
         "security/ir.model.access.csv",
         "data/mail_message_subtype.xml",
+        "views/it_cg_new_project_stage.xml",
         "views/it_code_generator.xml",
         "views/it_code_generator_module.xml",
         "views/it_code_generator_module_model.xml",
@@ -27,6 +28,7 @@
         "views/it_test.xml",
         "views/menu.xml",
         "data/ir_cron.xml",
+        "data/it_cg_new_project_stage.xml",
         "data/it_system.xml",
     ],
     "installable": True,

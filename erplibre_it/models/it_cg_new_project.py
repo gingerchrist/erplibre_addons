@@ -23,11 +23,21 @@ class ItCgNewProject(models.Model):
     _name = "it.cg.new_project"
     _description = "Create new project for CG project"
 
+    @api.model
+    def _default_stage_id(self):
+        return self.env.ref("erplibre_it.it_cg_new_project_stage_init")
+
     name = fields.Char()
 
     msg_error = fields.Char()
 
     has_error = fields.Boolean()
+
+    stage_id = fields.Many2one(
+        "it.cg.new_project.stage",
+        "Stage",
+        default=lambda s: s._default_stage_id(),
+    )
 
     execution_finish = fields.Boolean()
 
@@ -73,6 +83,7 @@ class ItCgNewProject(models.Model):
     def action_new_project(self):
         for rec in self:
             project = ProjectManagement(
+                rec,
                 rec.module,
                 rec.directory,
                 cg_name=rec.code_generator_name,
@@ -96,6 +107,7 @@ class ItCgNewProject(models.Model):
 class ProjectManagement:
     def __init__(
         self,
+        rec,
         module_name,
         module_directory,
         cg_name="",
@@ -108,6 +120,7 @@ class ProjectManagement:
         config="",
         odoo_config="./config.conf",
     ):
+        self.rec = rec
         self.force = force
         self._coverage = coverage
         self.keep_bd_alive = keep_bd_alive
@@ -115,6 +128,10 @@ class ProjectManagement:
         self.has_config_update = False
         self.odoo_config = odoo_config
         self.module_directory = module_directory
+
+        self.rec.stage_id = self.rec.env.ref(
+            "erplibre_it.it_cg_new_project_stage_init"
+        )
 
         # if not os.path.exists(self.module_directory):
         #     self.msg_error = (
@@ -296,6 +313,10 @@ class ProjectManagement:
             _logger.error(self.msg_error)
             return False
 
+        self.rec.stage_id = self.rec.env.ref(
+            "erplibre_it.it_cg_new_project_stage_generate_config"
+        )
+
         if not (
             self.validate_path_ready_to_be_override(
                 CODE_GENERATOR_DEMO_NAME, CODE_GENERATOR_DIRECTORY
@@ -334,6 +355,10 @@ class ProjectManagement:
             return False
         config_path = self.update_config()
 
+        self.rec.stage_id = self.rec.env.ref(
+            "erplibre_it.it_cg_new_project_stage_generate_uc0"
+        )
+
         bd_name_demo = f"new_project_code_generator_demo_{uuid.uuid4()}"[:63]
         cmd = f"./script/database/db_restore.py --database {bd_name_demo}"
         _logger.info(cmd)
@@ -371,6 +396,10 @@ class ProjectManagement:
             return False
         else:
             _logger.info(f"Module template exists '{template_path}'")
+
+        self.rec.stage_id = self.rec.env.ref(
+            "erplibre_it.it_cg_new_project_stage_generate_uca"
+        )
 
         lst_template_hooks_py_replace = [
             (
@@ -451,6 +480,10 @@ class ProjectManagement:
         else:
             _logger.info(f"Module cg exists '{cg_path}'")
 
+        self.rec.stage_id = self.rec.env.ref(
+            "erplibre_it.it_cg_new_project_stage_generate_ucb"
+        )
+
         bd_name_generator = f"new_project_code_generator_{uuid.uuid4()}"[:63]
         cmd = f"./script/database/db_restore.py --database {bd_name_generator}"
         _logger.info(cmd)
@@ -521,6 +554,10 @@ class ProjectManagement:
             return False
         else:
             _logger.info(f"Module exists '{module_path}'")
+
+        self.rec.stage_id = self.rec.env.ref(
+            "erplibre_it.it_cg_new_project_stage_generate_terminate"
+        )
 
         return True
 
