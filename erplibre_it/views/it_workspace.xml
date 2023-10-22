@@ -388,6 +388,12 @@
                                     string="Terminal path erplibre it"
                                     type="object"
                                 />
+                                <button
+                                    class="oe_highlight"
+                                    name="workspace_CG_remove_module"
+                                    string="Clear modules"
+                                    type="object"
+                                />
                             </group>
                         </group>
                         <group string="Execution">

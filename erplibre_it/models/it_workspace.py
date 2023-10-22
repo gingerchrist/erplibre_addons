@@ -524,7 +524,7 @@ class ItWorkspace(models.Model):
                                 dct_value_field = field_id.widget
                             lst_field.append(dct_value_field)
                     if rec_cg.force_clean_before_generate:
-                        rec.workspace_remove_module(module_id)
+                        rec.workspace_code_remove_module(module_id)
                     model_conf = (
                         json.dumps(dct_model_conf)
                         # .replace('"', '\\"')
@@ -582,26 +582,46 @@ class ItWorkspace(models.Model):
             start = datetime.now()
             for cg in rec.it_code_generator_ids:
                 for module_id in cg.module_ids:
-                    rec.workspace_remove_module(module_id)
+                    rec.workspace_code_remove_module(module_id)
             end = datetime.now()
             td = (end - start).total_seconds()
             rec.time_exec_action_clear_all_generated_module = f"{td:.03f}s"
         self.action_check_all()
 
     @api.multi
-    def workspace_remove_module(self, module_id):
+    def workspace_code_remove_module(self, module_id):
         for rec in self:
+            path_to_remove = (
+                f"cd {rec.path_working_erplibre}/{rec.path_code_generator_to_generate}"
+            )
+            rec.workspace_remove_module(module_id.name, path_to_remove)
+
+    @api.multi
+    def workspace_CG_remove_module(self):
+        for rec in self:
+            # TODO is it necessary to hardcode it? Why not merge with code section?
+            path_to_remove = (
+                f"cd {rec.path_working_erplibre}/addons/ERPLibre_erplibre_addons"
+            )
+            rec.workspace_remove_module(
+                "erplibre_it", path_to_remove, remove_module=False
+            )
+
+    @api.multi
+    def workspace_remove_module(
+        self, module_name, path_to_remove, remove_module=True
+    ):
+        for rec in self:
+            if remove_module:
+                rec.execute_to_instance(
+                    f"{path_to_remove};rm -rf ./{module_name};",
+                )
             rec.execute_to_instance(
-                f"cd {rec.path_working_erplibre}/{rec.path_code_generator_to_generate};rm"
-                f" -rf ./{module_id.name};",
+                f"{path_to_remove};rm"
+                f" -rf ./code_generator_template_{module_name};",
             )
             rec.execute_to_instance(
-                f"cd {rec.path_working_erplibre}/{rec.path_code_generator_to_generate};rm"
-                f" -rf ./code_generator_template_{module_id.name};",
-            )
-            rec.execute_to_instance(
-                f"cd {rec.path_working_erplibre}/{rec.path_code_generator_to_generate};rm"
-                f" -rf ./code_generator_{module_id.name};",
+                f"{path_to_remove};rm -rf ./code_generator_{module_name};",
             )
 
     @api.multi
