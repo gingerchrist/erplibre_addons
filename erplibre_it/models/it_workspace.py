@@ -354,8 +354,12 @@ class ItWorkspace(models.Model):
     )
     def _compute_name(self):
         for rec in self:
-            rec.name = (
-                f"{rec.id}: {rec.mode_source} - {rec.mode_exec} -"
+            if not isinstance(rec.id, models.NewId):
+                rec.name = f"{rec.id}: "
+            else:
+                rec.name = ""
+            rec.name += (
+                f"{rec.mode_source} - {rec.mode_exec} -"
                 f" {rec.mode_environnement} - {rec.mode_version_erplibre} -"
                 f" {rec.mode_version_base} - {rec.folder} - {rec.port_http}"
             )

@@ -17,6 +17,7 @@ class ItCodeGeneratorModuleModelField(models.Model):
     model_id = fields.Many2one(
         comodel_name="it.code_generator.module.model",
         string="Model",
+        required=True,
         ondelete="cascade",
     )
 
@@ -81,6 +82,7 @@ class ItCodeGeneratorModuleModelField(models.Model):
 
     it_workspace_ids = fields.Many2many(
         comodel_name="it.workspace",
+        required=True,
         string="It Workspace",
     )
 

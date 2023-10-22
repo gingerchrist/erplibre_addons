@@ -96,7 +96,11 @@ class ItCgNewProject(models.Model):
     )
     def _compute_name(self):
         for rec in self:
-            rec.name = f"{rec.id}: {rec.it_workspace.name} - {rec.module}"
+            if not isinstance(rec.id, models.NewId):
+                rec.name = f"{rec.id}: "
+            else:
+                rec.name = ""
+            rec.name += f"{rec.it_workspace.name} - {rec.module}"
             if rec.exec_stop_date:
                 rec.name += (
                     f" - finish {rec.exec_stop_date} duration"

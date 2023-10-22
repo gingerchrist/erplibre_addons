@@ -12,6 +12,7 @@ class ItCodeGenerator(models.Model):
     # TODO if share result, do a command to copy file all and recreate it like a mirror on other workspace
     it_workspace_ids = fields.Many2many(
         comodel_name="it.workspace",
+        required=True,
         string="It Workspace",
     )
 

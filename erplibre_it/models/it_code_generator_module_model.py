@@ -18,10 +18,12 @@ class ItCodeGeneratorModuleModel(models.Model):
     module_id = fields.Many2one(
         comodel_name="it.code_generator.module",
         string="Module",
+        required=True,
         ondelete="cascade",
     )
 
     it_workspace_ids = fields.Many2many(
         comodel_name="it.workspace",
+        required=True,
         string="It Workspace",
     )
