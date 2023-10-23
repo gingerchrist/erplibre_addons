@@ -2,6 +2,7 @@
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
 
 import logging
+from datetime import timedelta
 
 from odoo import _, api, exceptions, fields, models, tools
 
@@ -116,11 +117,13 @@ class ItExec(models.Model):
             out = ""
             if rec.exec_stop_date:
                 out = (
-                    f"{fields.Datetime.context_timestamp(self, rec.exec_stop_date)} duration"
-                    f" {rec.exec_time_duration}s"
+                    f"{fields.Datetime.context_timestamp(self, rec.exec_stop_date)}"
                 )
                 if rec.exec_time_duration:
-                    out += f" duration {rec.exec_time_duration}s"
+                    out += (
+                        " duration"
+                        f" {'{:0>8}'.format(str(timedelta(seconds=rec.exec_time_duration)))}"
+                    )
             elif rec.exec_start_date:
                 out = f" - start {rec.exec_start_date}"
             rec.time_duration_result = out
