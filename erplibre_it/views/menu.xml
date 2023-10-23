@@ -77,6 +77,8 @@
         parent="menu_process"
     />
 
+    <menuitem id="menu_it_exec" name="Executions" action="it_exec_action_window" sequence="5" parent="menu_process" />
+
     <menuitem
         id="menu_code_generator"
         name="Project"

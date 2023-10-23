@@ -24,6 +24,12 @@ class ItWorkspace(models.Model):
         help="Summary of this it_workspace process",
     )
 
+    it_exec_ids = fields.One2many(
+        comodel_name="it.exec",
+        inverse_name="it_workspace",
+        string="Executions",
+    )
+
     it_workspace_format = fields.Selection(
         selection=[
             ("zip", "zip (includes filestore)"),
@@ -426,8 +432,8 @@ class ItWorkspace(models.Model):
                 new_project_id.last_new_project = rec.last_new_project_self.id
             rec.last_new_project_self = new_project_id.id
             new_project_id.action_new_project()
-            # result = rec.system_id.execute_with_result(
-            #     f"cd {rec.folder};./script/code_generator/new_project.py"
+            # result = rec.execute(
+            #     cmd=f"cd {rec.folder};./script/code_generator/new_project.py"
             #     f" -d {addons_path} -m {module_name}",
             # )
             result = ""
@@ -458,7 +464,7 @@ class ItWorkspace(models.Model):
             folder_path = os.path.join(
                 rec.folder, "addons", "ERPLibre_erplibre_addons"
             )
-            rec.system_id.execute_gnome_terminal(folder_path)
+            rec.execute(folder=folder_path, force_open_terminal=True)
 
     @api.multi
     def action_code_generator_generate_all(self):
@@ -468,7 +474,7 @@ class ItWorkspace(models.Model):
             # Start with local storage
             # Increase speed
             # TODO keep old configuration of config.conf and not overwrite all
-            # rec.execute_to_instance(f"cd {rec.path_working_erplibre};make config_gen_code_generator")
+            # rec.execute(cmd=f"cd {rec.path_working_erplibre};make config_gen_code_generator", to_instance=True)
             if rec.it_code_generator_ids and rec.mode_exec in ["docker"]:
                 rec.workspace_docker_id.docker_config_gen_cg = True
                 rec.action_reboot()
@@ -571,11 +577,11 @@ class ItWorkspace(models.Model):
                     #     f" --keep_bd_alive -m {module_name} -d"
                     #     f" {rec.path_code_generator_to_generate}{extra_arg}"
                     # )
-                    # result = rec.execute_to_instance(cmd)
+                    # result = rec.execute(cmd=cmd, to_instance=True)
                     # rec.it_code_generator_log_addons = result
             if rec.it_code_generator_ids and rec.mode_exec in ["docker"]:
                 rec.action_reboot()
-            # rec.execute_to_instance(f"cd {rec.path_working_erplibre};make config_gen_all")
+            # rec.execute(cmd=f"cd {rec.path_working_erplibre};make config_gen_all", to_instance=True)
             end = datetime.now()
             td = (end - start).total_seconds()
             rec.time_exec_action_code_generator_generate_all = f"{td:.03f}s"
@@ -617,15 +623,20 @@ class ItWorkspace(models.Model):
     ):
         for rec in self:
             if remove_module:
-                rec.execute_to_instance(
-                    f"{path_to_remove};rm -rf ./{module_name};",
+                rec.execute(
+                    cmd=f"{path_to_remove};rm -rf ./{module_name};",
+                    to_instance=True,
                 )
-            rec.execute_to_instance(
-                f"{path_to_remove};rm"
-                f" -rf ./code_generator_template_{module_name};",
+            rec.execute(
+                cmd=(
+                    f"{path_to_remove};rm"
+                    f" -rf ./code_generator_template_{module_name};"
+                ),
+                to_instance=True,
             )
-            rec.execute_to_instance(
-                f"{path_to_remove};rm -rf ./code_generator_{module_name};",
+            rec.execute(
+                cmd=f"{path_to_remove};rm -rf ./code_generator_{module_name};",
+                to_instance=True,
             )
 
     @api.multi
@@ -634,36 +645,56 @@ class ItWorkspace(models.Model):
             start = datetime.now()
             # for cg in rec.it_code_generator_ids:
             # Validate git directory exist
-            result = rec.execute_to_instance(
-                f"ls {rec.path_working_erplibre}/{rec.path_code_generator_to_generate}/.git",
+            exec_id = rec.execute(
+                cmd=(
+                    f"ls {rec.path_working_erplibre}/{rec.path_code_generator_to_generate}/.git"
+                ),
+                to_instance=True,
             )
+            result = exec_id.log_all
             if "No such file or directory" in result:
                 # Suppose git not exist
                 # This is not good if .git directory is in parent directory
-                result = rec.execute_to_instance(
-                    f"cd {rec.path_working_erplibre}/{rec.path_code_generator_to_generate};git"
-                    " init;echo '*.pyc' > .gitignore;git add .gitignore;git"
-                    " commit -m 'first commit'",
+                rec.execute(
+                    cmd=(
+                        f"cd {rec.path_working_erplibre}/{rec.path_code_generator_to_generate};git"
+                        " init;echo '*.pyc' > .gitignore;git add"
+                        " .gitignore;git commit -m 'first commit'"
+                    ),
+                    to_instance=True,
                 )
-                result = rec.execute_to_instance(
-                    f"cd {rec.path_working_erplibre}/{rec.path_code_generator_to_generate};git"
-                    " init",
+                rec.execute(
+                    cmd=(
+                        f"cd {rec.path_working_erplibre}/{rec.path_code_generator_to_generate};git"
+                        " init"
+                    ),
+                    to_instance=True,
                 )
 
-            result = rec.execute_to_instance(
-                f"cd {rec.path_working_erplibre}/{rec.path_code_generator_to_generate};git"
-                " status -s",
+            exec_id = rec.execute(
+                cmd=(
+                    f"cd {rec.path_working_erplibre}/{rec.path_code_generator_to_generate};git"
+                    " status -s"
+                ),
+                to_instance=True,
             )
+            result = exec_id.log_all
             if result:
                 # TODO show result to log
                 # Force add file and commit
-                result = rec.execute_to_instance(
-                    f"cd {rec.path_working_erplibre}/{rec.path_code_generator_to_generate};git"
-                    " add .",
+                rec.execute(
+                    cmd=(
+                        f"cd {rec.path_working_erplibre}/{rec.path_code_generator_to_generate};git"
+                        " add ."
+                    ),
+                    to_instance=True,
                 )
-                result = rec.execute_to_instance(
-                    f"cd {rec.path_working_erplibre}/{rec.path_code_generator_to_generate};git"
-                    " commit -m 'Commit by RobotLibre'",
+                rec.execute(
+                    cmd=(
+                        f"cd {rec.path_working_erplibre}/{rec.path_code_generator_to_generate};git"
+                        " commit -m 'Commit by RobotLibre'"
+                    ),
+                    to_instance=True,
                 )
             end = datetime.now()
             td = (end - start).total_seconds()
@@ -678,43 +709,67 @@ class ItWorkspace(models.Model):
             diff = ""
             status = ""
             stat = ""
-            result = rec.execute_to_instance(
-                f"ls {rec.path_working_erplibre}/{rec.path_code_generator_to_generate}/.git",
+            exec_id = rec.execute(
+                cmd=(
+                    f"ls {rec.path_working_erplibre}/{rec.path_code_generator_to_generate}/.git"
+                ),
+                to_instance=True,
             )
+            result = exec_id.log_all
             if result:
                 # Create diff
-                diff += rec.execute_to_instance(
-                    f"cd {rec.path_working_erplibre}/{rec.path_code_generator_to_generate};git"
-                    " diff",
+                exec_id = rec.execute(
+                    cmd=(
+                        f"cd {rec.path_working_erplibre}/{rec.path_code_generator_to_generate};git"
+                        " diff"
+                    ),
+                    to_instance=True,
                 )
+                diff += exec_id.log_all
                 # Create status
-                status += rec.execute_to_instance(
-                    f"cd {rec.path_working_erplibre}/{rec.path_code_generator_to_generate};git"
-                    " status",
+                exec_id = rec.execute(
+                    cmd=(
+                        f"cd {rec.path_working_erplibre}/{rec.path_code_generator_to_generate};git"
+                        " status"
+                    ),
+                    to_instance=True,
                 )
+                status += exec_id.log_all
                 for cg in rec.it_code_generator_ids:
                     # Create statistic
                     for module_id in cg.module_ids:
-                        result = rec.execute_to_instance(
-                            f"cd {rec.path_working_erplibre};./script/statistic/code_count.sh"
-                            f" ./{rec.path_code_generator_to_generate}/{module_id.name};",
+                        exec_id = rec.execute(
+                            cmd=(
+                                f"cd {rec.path_working_erplibre};./script/statistic/code_count.sh"
+                                f" ./{rec.path_code_generator_to_generate}/{module_id.name};"
+                            ),
+                            to_instance=True,
                         )
+                        result = exec_id.log_all
                         if result:
                             stat += f"./{rec.path_code_generator_to_generate}/{module_id.name}"
                             stat += result
 
-                        result = rec.execute_to_instance(
-                            f"cd {rec.path_working_erplibre};./script/statistic/code_count.sh"
-                            f" ./{rec.path_code_generator_to_generate}/code_generator_template_{module_id.name};",
+                        exec_id = rec.execute(
+                            cmd=(
+                                f"cd {rec.path_working_erplibre};./script/statistic/code_count.sh"
+                                f" ./{rec.path_code_generator_to_generate}/code_generator_template_{module_id.name};"
+                            ),
+                            to_instance=True,
                         )
+                        result = exec_id.log_all
                         if result:
                             stat += f"./{rec.path_code_generator_to_generate}/code_generator_template_{module_id.name}"
                             stat += result
 
-                        result = rec.execute_to_instance(
-                            f"cd {rec.path_working_erplibre};./script/statistic/code_count.sh"
-                            f" ./{rec.path_code_generator_to_generate}/code_generator_{module_id.name};",
+                        exec_id = rec.execute(
+                            cmd=(
+                                f"cd {rec.path_working_erplibre};./script/statistic/code_count.sh"
+                                f" ./{rec.path_code_generator_to_generate}/code_generator_{module_id.name};"
+                            ),
+                            to_instance=True,
                         )
+                        result = exec_id.log_all
                         if result:
                             stat += f"./{rec.path_code_generator_to_generate}/code_generator_{module_id.name}"
                             stat += result
@@ -807,7 +862,7 @@ class ItWorkspace(models.Model):
                 rec.action_reboot()
                 rec.workspace_docker_id.docker_cmd_extra = last_cmd
             elif rec.mode_exec in ["terminal"]:
-                result = rec.system_id.execute_with_result(
+                rec.execute(
                     "./script/addons/install_addons.sh"
                     f" {rec.db_name} {module_list}"
                 )
@@ -828,13 +883,19 @@ class ItWorkspace(models.Model):
                     for m in cg.module_ids
                 ]
             )
-            rec.execute_to_instance(
-                f"cd {rec.path_working_erplibre};./script/database/db_restore.py"
-                " --database cg_uca",
+            rec.execute(
+                cmd=(
+                    f"cd {rec.path_working_erplibre};./script/database/db_restore.py"
+                    " --database cg_uca"
+                ),
+                to_instance=True,
             )
-            rec.execute_to_instance(
-                f"cd {rec.path_working_erplibre};./script/addons/install_addons_dev.sh"
-                f" cg_uca {module_list}",
+            rec.execute(
+                cmd=(
+                    f"cd {rec.path_working_erplibre};./script/addons/install_addons_dev.sh"
+                    f" cg_uca {module_list}"
+                ),
+                to_instance=True,
             )
 
             end = datetime.now()
@@ -855,13 +916,19 @@ class ItWorkspace(models.Model):
                     for m in cg.module_ids
                 ]
             )
-            rec.execute_to_instance(
-                f"cd {rec.path_working_erplibre};./script/database/db_restore.py"
-                " --database cg_ucb"
+            rec.execute(
+                cmd=(
+                    f"cd {rec.path_working_erplibre};./script/database/db_restore.py"
+                    " --database cg_ucb"
+                ),
+                to_instance=True,
             )
-            rec.execute_to_instance(
-                f"cd {rec.path_working_erplibre};./script/addons/install_addons_dev.sh"
-                f" cg_ucb {module_list}",
+            rec.execute(
+                cmd=(
+                    f"cd {rec.path_working_erplibre};./script/addons/install_addons_dev.sh"
+                    f" cg_ucb {module_list}"
+                ),
+                to_instance=True,
             )
 
             end = datetime.now()
@@ -888,7 +955,7 @@ class ItWorkspace(models.Model):
     @api.multi
     def action_open_terminal(self):
         for rec in self:
-            rec.system_id.execute_gnome_terminal(rec.folder)
+            rec.execute(force_open_terminal=True)
 
     @api.multi
     def action_open_terminal_addons(self):
@@ -898,9 +965,9 @@ class ItWorkspace(models.Model):
             )
             if rec.is_debug_log:
                 _logger.info(cmd)
-            rec.system_id.execute_gnome_terminal(
-                rec.folder,
+            rec.execute(
                 cmd=cmd,
+                force_open_terminal=True,
                 docker=bool(rec.mode_exec in ["docker"]),
             )
 
@@ -911,7 +978,8 @@ class ItWorkspace(models.Model):
             is_docker = False
             if rec.mode_exec in ["docker"]:
                 is_docker = True
-                result = rec.execute_to_instance("which tig")
+                exec_id = rec.execute(cmd="which tig", to_instance=True)
+                result = exec_id.log_all
                 if not result:
                     # TODO support OS and not only docker
                     self.workspace_docker_id.action_docker_install_dev_soft()
@@ -920,7 +988,8 @@ class ItWorkspace(models.Model):
                 rec.path_code_generator_to_generate,
                 ".git",
             )
-            status_ls = rec.system_id.execute_with_result(f"ls {dir_to_check}")
+            exec_id = rec.execute(cmd=f"ls {dir_to_check}")
+            status_ls = exec_id.log_all
             if "No such file or directory" in status_ls:
                 raise Warning(
                     "Cannot open command 'tig', cannot find directory"
@@ -932,11 +1001,7 @@ class ItWorkspace(models.Model):
             )
             if rec.is_debug_log:
                 _logger.info(cmd)
-            rec.system_id.execute_gnome_terminal(
-                rec.folder,
-                cmd=cmd,
-                docker=is_docker,
-            )
+            rec.execute(cmd=cmd, force_open_terminal=True, docker=is_docker)
 
     @api.multi
     def action_check_all(self):
@@ -944,11 +1009,8 @@ class ItWorkspace(models.Model):
             # Track exception because it's run from cron
             with rec.it_workspace_log():
                 # rec.docker_initiate_succeed = not rec.docker_initiate_succeed
-                lst_file = (
-                    rec.system_id.execute_with_result(f"ls {rec.folder}")
-                    .strip()
-                    .split("\n")
-                )
+                exec_id = rec.execute(cmd=f"ls {rec.folder}")
+                lst_file = exec_id.log_all.strip().split("\n")
                 if any(
                     [
                         "No such file or directory" in str_file
@@ -968,15 +1030,16 @@ class ItWorkspace(models.Model):
                         f" '{rec.mode_exec}'"
                     )
 
+                rec.action_check_tree_addons()
+
     @api.multi
     def action_install_me_workspace(self):
         for rec in self:
             # Set same BD of this instance
             rec.db_name = self.env.cr.dbname
             # Detect the mode exec of this instance
-            status_ls = rec.system_id.execute_with_result(
-                f"ls {rec.folder}/.git"
-            )
+            exec_id = rec.execute(cmd=f"ls {rec.folder}/.git")
+            status_ls = exec_id.log_all
             if "No such file or directory" not in status_ls:
                 rec.mode_source = "git"
                 rec.mode_exec = "terminal"
@@ -986,25 +1049,16 @@ class ItWorkspace(models.Model):
         self.port_longpolling = 8072
 
     @api.multi
-    def execute_to_instance(self, cmd):
-        # TODO search into context if need to parallel or serial
-        self.check_it_workspace_docker()
-        result = []
+    def action_check_tree_addons(self):
         for rec in self:
-            if rec.mode_exec in ["docker"]:
-                result.append(rec.system_id.exec_docker(cmd, rec.folder))
-            elif rec.mode_exec in ["terminal"]:
-                result.append(
-                    rec.system_id.execute_with_result(cmd, rec.folder)
-                )
-            if len(self) == 1:
-                return result[0]
-        return result
+            exec_id = rec.execute(
+                cmd=f"cd {rec.folder};tree", to_instance=True
+            )
+            rec.it_code_generator_tree_addons = exec_id.log_all
 
     @api.multi
     def check_it_workspace_docker(self):
         for rec in self:
-
             if rec.mode_exec in ["docker"]:
                 if not rec.workspace_docker_id:
                     rec.workspace_docker_id = self.env[
@@ -1025,9 +1079,8 @@ class ItWorkspace(models.Model):
         sleep_kill = 2
         self.check_it_workspace_docker()
         for rec in self:
-            out_server_exist = rec.system_id.execute_with_result(
-                f"lsof -i TCP:{rec.port_http} | grep python"
-            )
+            exec_id = rec.execute(f"lsof -i TCP:{rec.port_http} | grep python")
+            out_server_exist = exec_id.log_all
             if rec.mode_exec in ["docker"]:
                 rec.workspace_docker_id.action_start_docker_compose()
             elif rec.mode_exec in ["terminal"]:
@@ -1035,12 +1088,12 @@ class ItWorkspace(models.Model):
                 prefix = ""
                 if rec.is_me and out_server_exist:
                     prefix = f"sleep {sleep_kill * 2};"
-                rec.system_id.execute_gnome_terminal(
-                    rec.folder,
+                rec.execute(
                     cmd=(
                         f"{prefix}./run.sh -d"
                         f" {rec.db_name} --http-port={rec.port_http} --longpolling-port={rec.port_longpolling}"
                     ),
+                    force_open_terminal=True,
                 )
             if out_server_exist:
                 # TODO this cause problem, cannot save all information
@@ -1055,16 +1108,14 @@ class ItWorkspace(models.Model):
                         f" TCP:{rec.port_http} | grep python3 | grep -oE"
                         " '[0-9]+' | sed -n '2p');exit"
                     )
-                    _logger.debug(cmd)
-                    rec.system_id.execute_gnome_terminal(rec.folder, cmd=cmd)
+                    rec.execute(cmd=cmd, force_open_terminal=True)
                 elif out_server_exist.startswith("python "):
                     cmd = (
                         f"sleep {sleep_kill};kill -9 $(lsof -i"
                         f" TCP:{rec.port_http} | grep python | grep -oE"
                         " '[0-9]+' | head -n1);exit"
                     )
-                    _logger.debug(cmd)
-                    rec.system_id.execute_gnome_terminal(rec.folder, cmd=cmd)
+                    rec.execute(cmd=cmd, force_open_terminal=True)
                 else:
                     _logger.warning(
                         f"What is the software for the port {rec.port_http} :"
@@ -1099,11 +1150,8 @@ class ItWorkspace(models.Model):
     )
     def action_install_workspace(self):
         for rec in self:
-            lst_file = (
-                rec.system_id.execute_with_result(f"ls {rec.folder}")
-                .strip()
-                .split("\n")
-            )
+            exec_id = rec.execute(cmd=f"ls {rec.folder}")
+            lst_file = exec_id.log_all.strip().split("\n")
             if rec.mode_source in ["docker"]:
                 if "docker-compose.yml" in lst_file:
                     # TODO try to reuse
@@ -1133,14 +1181,16 @@ class ItWorkspace(models.Model):
                     # self.action_pre_install_workspace(
                     #     ignore_last_directory=True
                     # )
-                    result = rec.system_id.execute_with_result(
-                        f"git clone {rec.git_url}{branch_str} {rec.folder}"
+                    exec_id = rec.execute(
+                        cmd=f"git clone {rec.git_url}{branch_str} {rec.folder}"
                     )
-                    rec.log_workspace = result
-                    result = rec.system_id.execute_with_result(
-                        f"cd {rec.folder};./script/install/install_locally_dev.sh"
+                    rec.log_workspace = exec_id.log_all
+                    exec_id = rec.execute(
+                        cmd=(
+                            f"cd {rec.folder};./script/install/install_locally_dev.sh"
+                        )
                     )
-                    rec.log_workspace += result
+                    rec.log_workspace += exec_id.log_all
                     # TODO fix this bug, but activate into install script
                     # TODO bug only for local, ssh is good
                     # Bug poetry thinks it's installed, so force it
@@ -1149,18 +1199,18 @@ class ItWorkspace(models.Model):
                     #     " ./.venv/bin/activate;poetry install"
                     # )
                     # rec.log_workspace += result
-                    rec.system_id.execute_gnome_terminal(
-                        rec.folder,
+                    rec.execute(
                         cmd=(
                             'bash -c "source ./.venv/bin/activate;poetry'
                             ' install"'
                         ),
+                        force_open_terminal=True,
                     )
                 else:
                     # TODO try te reuse
                     _logger.info("Git project already exist")
 
-                # lst_file = rec.system_id.execute_with_result(f"ls {rec.folder}").strip().split("\n")
+                # lst_file = rec.execute(cmd=f"ls {rec.folder}").log_all.strip().split("\n")
                 # if "docker-compose.yml" in lst_file:
                 # if rec.mode_environnement in ["prod", "test"]:
                 #     result = rec.system_id.execute_with_result(
@@ -1172,12 +1222,84 @@ class ItWorkspace(models.Model):
             rec.is_installed = True
 
     @api.multi
-    def action_poetry_install(self):
+    def execute(
+        self,
+        cmd="",
+        folder="",
+        force_open_terminal=False,
+        force_docker=False,
+        add_stdin_log=False,
+        add_stderr_log=True,
+        # get_stderr=False,
+        # get_status=False,
+        to_instance=False,
+        engine="bash",
+        docker=False,
+    ):
+        # TODO search into context if need to parallel or serial
+        """TODO need to return out, err, status"""
+        lst_result = []
+        first_log_debug = True
+        out = False
+        # out = ""
+        # err = ""
+        # status = False
+        if to_instance:
+            self.check_it_workspace_docker()
         for rec in self:
-            rec.system_id.execute_gnome_terminal(
-                rec.folder,
-                cmd='bash -c "source ./.venv/bin/activate;poetry install"',
+            rec_force_docker = force_docker
+            if to_instance:
+                if rec.mode_exec in ["docker"]:
+                    rec_force_docker = True
+
+            if rec.is_debug_log and cmd:
+                if first_log_debug:
+                    _logger.info(cmd)
+                    first_log_debug = False
+
+            force_folder = folder if folder else rec.folder
+            it_exec = self.env["it.exec"].create(
+                {"it_workspace": rec.id, "cmd": cmd, "folder": force_folder}
             )
+            lst_result.append(it_exec)
+            if force_open_terminal:
+                rec_force_docker = rec_force_docker or docker
+                rec.system_id.execute_gnome_terminal(
+                    force_folder,
+                    cmd=cmd,
+                    docker=rec_force_docker,
+                )
+            elif rec_force_docker:
+                out = rec.system_id.exec_docker(cmd, force_folder)
+            else:
+                out = rec.system_id.execute_with_result(
+                    cmd,
+                    add_stdin_log=add_stdin_log,
+                    add_stderr_log=add_stderr_log,
+                    engine=engine,
+                )
+
+            it_exec.exec_stop_date = fields.Datetime.now()
+            if out is not False:
+                it_exec.log_stdout = out
+
+        #
+        # if get_stderr:
+        #     if get_status:
+        #         return out, err, status
+        #     return out, err
+        # elif get_status:
+        #     return out, status
+        # return out
+        if len(self) == 1:
+            return lst_result[0]
+        return self.env["it.exec"].browse([a.id for a in lst_result])
+
+    @api.multi
+    def action_poetry_install(self):
+        self.execute(
+            cmd='bash -c "source ./.venv/bin/activate;poetry install"'
+        )
 
     @api.multi
     def action_pre_install_workspace(self, ignore_last_directory=False):
@@ -1190,7 +1312,7 @@ class ItWorkspace(models.Model):
             # Directory must exist
             # TODO make test to validate if remove next line, permission root the project /tmp/project/addons root
             addons_path = os.path.join(rec.folder, "addons", "addons")
-            rec.system_id.execute_with_result(f"mkdir -p '{addons_path}'")
+            rec.execute(f"mkdir -p '{addons_path}'")
 
     @api.multi
     @api.model
@@ -1239,11 +1361,11 @@ sock.close()
         """
         if rec.system_id.debug_command:
             _logger.info(script)
-        result = rec.system_id.execute_with_result(
-            script,
+        exec_id = rec.execute(
+            cmd=script,
             engine="python",
         )
-        return result == "Port is open"
+        return exec_id.log_all == "Port is open"
 
     @api.multi
     @contextmanager

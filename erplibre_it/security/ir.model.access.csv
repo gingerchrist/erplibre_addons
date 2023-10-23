@@ -13,3 +13,4 @@ access_it_workspace_docker,access_it_workspace_docker,model_it_workspace_docker,
 access_it_workspace_terminal,access_it_workspace_terminal,model_it_workspace_terminal,base.group_user,1,1,1,1
 access_it_test,access_it_test,model_it_test,base.group_user,1,1,1,1
 access_it_cg_new_project_stage,access_it_cg_new_project_stage,model_it_cg_new_project_stage,base.group_user,1,1,1,1
+access_it_exec,access_it_exec,model_it_exec,base.group_user,1,1,1,1

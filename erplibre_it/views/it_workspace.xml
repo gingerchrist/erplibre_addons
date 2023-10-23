@@ -420,7 +420,7 @@
                         <group>
                             <button
                                 class="oe_highlight"
-                                name="action_docker_check_docker_tree_addons"
+                                name="action_check_tree_addons"
                                 string="Update tree"
                                 type="object"
                             />
@@ -451,6 +451,13 @@
                         <group>
                             <group>
                                 <field name="test_ids" />
+                            </group>
+                        </group>
+                    </page>
+                    <page name="exec" string="Execution">
+                        <group>
+                            <group>
+                                <field name="it_exec_ids" />
                             </group>
                         </group>
                     </page>

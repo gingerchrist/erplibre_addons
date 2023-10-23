@@ -141,18 +141,22 @@ volumes:
             if rec.force_create_docker_compose or not os.path.exists(
                 file_docker_compose
             ):
-                rec.workspace_id.system_id.execute_with_result(
-                    f"echo '{docker_compose_content}' > {file_docker_compose}",
+                rec.workspace_id.execute(
+                    cmd=(
+                        f"echo '{docker_compose_content}' >"
+                        f" {file_docker_compose}"
+                    ),
                     engine="sh",
                 )
 
-            result = rec.workspace_id.system_id.execute_with_result(
-                f"cd {rec.workspace_id.folder};cat docker-compose.yml"
+            exec_id = rec.workspace_id.execute(
+                cmd=f"cd {rec.workspace_id.folder};cat docker-compose.yml"
             )
-            rec.docker_compose_ps = result
-            result = rec.workspace_id.system_id.execute_with_result(
-                f"cd {rec.workspace_id.folder};docker compose up -d"
+            rec.docker_compose_ps = exec_id.log_all
+            exec_id = rec.workspace_id.execute(
+                cmd=f"cd {rec.workspace_id.folder};docker compose up -d"
             )
+            result = exec_id.log_all
 
             if (
                 "Cannot connect to the Docker daemon at"
@@ -163,15 +167,17 @@ volumes:
                 rec.docker_initiate_succeed = False
 
             rec.log_workspace = f"\n{result}"
-            result = rec.workspace_id.system_id.execute_with_result(
-                f"cd {rec.workspace_id.folder};docker compose ps"
+            exec_id = rec.workspace_id.execute(
+                cmd=f"cd {rec.workspace_id.folder};docker compose ps"
             )
+            result = exec_id.log_all
             rec.log_workspace += f"\n{result}"
             rec.update_docker_compose_ps()
 
-            result = rec.workspace_id.system_id.exec_docker(
-                "cat /etc/odoo/odoo.conf;", rec.workspace_id.folder
+            exec_id = rec.workspace_id.execute(
+                cmd="cat /etc/odoo/odoo.conf;", force_docker=True
             )
+            result = exec_id.log_all
             has_change = False
             if "db_host" not in result:
                 # TODO remove this information from executable of docker
@@ -247,64 +253,65 @@ volumes:
 
             if has_change:
                 # TODO rewrite conf file and reformat
-                rec.workspace_id.system_id.exec_docker(
-                    f"echo -e '{result}' > /etc/odoo/odoo.conf",
-                    rec.workspace_id.folder,
+                rec.workspace_id.execute(
+                    cmd=f"echo -e '{result}' > /etc/odoo/odoo.conf",
+                    force_docker=True,
                 )
             # TODO support only one file, and remove /odoo.conf
-            rec.workspace_id.system_id.exec_docker(
-                f"cd {rec.workspace_id.path_working_erplibre};cp"
-                " /etc/odoo/odoo.conf ./config.conf;",
-                rec.workspace_id.folder,
+            rec.workspace_id.execute(
+                cmd=(
+                    f"cd {rec.workspace_id.path_working_erplibre};cp"
+                    " /etc/odoo/odoo.conf ./config.conf;"
+                ),
+                force_docker=True,
             )
             rec.action_docker_check_docker_ps()
 
     @api.multi
     def action_stop_docker_compose(self):
         for rec in self:
-            rec.workspace_id.system_id.execute_with_result(
-                f"cd {rec.workspace_id.folder};docker compose down"
+            rec.workspace_id.execute(
+                cmd=f"cd {rec.workspace_id.folder};docker compose down"
             )
         self.update_docker_compose_ps()
         self.action_docker_check_docker_ps()
 
     def update_docker_compose_ps(self):
         for rec in self:
-            result = rec.workspace_id.system_id.execute_with_result(
-                f"cd {rec.workspace_id.folder};docker compose ps"
+            exec_id = rec.workspace_id.execute(
+                cmd=f"cd {rec.workspace_id.folder};docker compose ps"
             )
+            result = exec_id.log_all
             rec.docker_compose_ps = f"\n{result}"
 
     @api.multi
     def action_docker_status(self):
         for rec in self:
-            result = rec.workspace_id.system_id.execute_with_result(
-                f"cd {rec.workspace_id.folder};docker compose ps"
+            exec_id = rec.workspace_id.execute(
+                cmd=f"cd {rec.workspace_id.folder};docker compose ps"
             )
+            result = exec_id.log_all
             rec.docker_compose_ps = f"\n{result}"
 
     @api.multi
     def action_docker_check_docker_ps(self):
         for rec in self:
-            result = rec.workspace_id.system_id.execute_with_result(
-                f"cd {rec.workspace_id.folder};docker compose ps --format json"
+            exec_id = rec.workspace_id.execute(
+                cmd=(
+                    f"cd {rec.workspace_id.folder};docker compose ps --format"
+                    " json"
+                )
             )
+            result = exec_id.log_all
             # rec.docker_compose_ps = f"\n{result}"
             rec.docker_is_running = result
 
     @api.multi
-    def action_docker_check_docker_tree_addons(self):
-        for rec in self:
-            result = rec.workspace_id.system_id.execute_with_result(
-                f"cd {rec.workspace_id.folder};tree"
-            )
-            rec.workspace_id.it_code_generator_tree_addons = result
-
-    @api.multi
     def action_docker_logs(self):
         for rec in self:
-            rec.workspace_id.system_id.execute_gnome_terminal(
-                rec.workspace_id.folder, cmd="docker compose logs -f"
+            rec.workspace_id.execute(
+                cmd="docker compose logs -f",
+                force_open_terminal=True,
             )
 
     @api.multi
@@ -312,32 +319,32 @@ volumes:
         for rec in self:
             workspace = os.path.basename(rec.workspace_id.folder)
             docker_name = f"{workspace}-ERPLibre-1"
-            rec.workspace_id.system_id.execute_gnome_terminal(
-                rec.workspace_id.folder,
+            rec.workspace_id.execute(
                 cmd=f"docker exec -u root -ti {docker_name} /bin/bash",
+                force_open_terminal=True,
             )
 
     @api.multi
     def action_docker_install_dev_soft(self):
         for rec in self:
-            rec.workspace_id.system_id.exec_docker(
-                f"apt update;apt install -y tig vim htop tree watch",
-                rec.workspace_id.folder,
+            rec.workspace_id.execute(
+                cmd=f"apt update;apt install -y tig vim htop tree watch",
+                force_docker=True,
             )
 
     @api.multi
     def action_os_user_permission_docker(self):
         for rec in self:
-            rec.workspace_id.system_id.execute_gnome_terminal(
-                rec.workspace_id.folder,
+            rec.workspace_id.execute(
                 cmd=(
                     "sudo groupadd docker;sudo usermod -aG docker"
                     f" {rec.workspace_id.system_id.ssh_user}"
                 ),
+                force_open_terminal=True,
             )
-            rec.workspace_id.system_id.execute_gnome_terminal(
-                rec.workspace_id.folder,
+            rec.workspace_id.execute(
                 cmd="sudo systemctl start docker.service",
+                force_open_terminal=True,
             )
             # TODO check if all good
         self.docker_initiate_succeed = True
@@ -345,9 +352,8 @@ volumes:
     @api.multi
     def action_analyse_docker_image(self):
         for rec in self:
-            rec.workspace_id.system_id.execute_gnome_terminal(
-                rec.workspace_id.folder,
-                cmd=f"dive {rec.docker_version}",
+            rec.workspace_id.execute(
+                cmd=f"dive {rec.docker_version}", force_open_terminal=True
             )
 
     @api.multi
@@ -356,7 +362,7 @@ volumes:
             rec.has_error_restore_db = False
             # TODO not working
             # maybe send by network REST web/database/restore
-            # result = rec.workspace_id.system_id.exec_docker(f"cd {rec.workspace_id.path_working_erplibre};time ./script/database/db_restore.py --database test;", rec.workspace_id.folder)
+            # result = rec.workspace_id.execute(cmd=f"cd {rec.workspace_id.path_working_erplibre};time ./script/database/db_restore.py --database test;", force_docker=True)
             # rec.log_workspace = f"\n{result}"
             url_list = f"{rec.workspace_id.url_instance}/web/database/list"
             url_restore = (
@@ -475,4 +481,3 @@ volumes:
     def action_check_all(self):
         self.action_docker_status()
         self.action_docker_check_docker_ps()
-        self.action_docker_check_docker_tree_addons()

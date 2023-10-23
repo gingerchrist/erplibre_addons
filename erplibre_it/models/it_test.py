@@ -41,10 +41,13 @@ class ItTest(models.Model):
                 name_cmd = f"test_full_fast"
                 if rec.debug:
                     name_cmd += "_debug"
-                out = it_workspace_id.execute_to_instance(
-                    f"cd {it_workspace_id.path_working_erplibre};make"
-                    f" {name_cmd}",
+                exec_id = it_workspace_id.execute(
+                    cmd=(
+                        f"cd {it_workspace_id.path_working_erplibre};make"
+                        f" {name_cmd}"
+                    ),
+                    to_instance=True,
                 )
-                lst_out.append(out)
+                lst_out.append(exec_id.log_all)
             rec.log = "\n".join(lst_out)
             rec.is_executed = True
