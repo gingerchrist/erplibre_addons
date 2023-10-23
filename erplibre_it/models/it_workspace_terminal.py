@@ -32,8 +32,6 @@ class ItWorkspaceTerminal(models.Model):
 
     terminal_initiate_succeed = fields.Boolean(help="Terminal is ready to run")
 
-    has_error_restore_db = fields.Boolean()
-
     @api.multi
     @api.depends("workspace_id", "terminal_is_running")
     def _compute_name(self):

@@ -24,12 +24,6 @@
                         string="Terminal docker"
                         type="object"
                     />
-                    <button
-                        class="oe_highlight"
-                        name="action_docker_restore_db_image"
-                        string="Restore DB Image"
-                        type="object"
-                    />
                     <button class="oe_highlight" name="action_docker_logs" string="Docker logs" type="object" />
                     <button
                         class="oe_highlight"
@@ -66,9 +60,6 @@
                     <group string="Status instance">
                         <field name="docker_is_running" />
                         <!--                        <field name="db_is_restored"/>-->
-                    </group>
-                    <group string="Status error">
-                        <field name="has_error_restore_db" />
                     </group>
                 </group>
                 <group string="Configuration">

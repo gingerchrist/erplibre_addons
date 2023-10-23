@@ -128,6 +128,7 @@
                         <field name="url_instance_database_manager" string="URL Instance Database" widget="url" />
                     </group>
                     <group string="DB" attrs="{'invisible': [('is_installed', '=', False)]}">
+                        <button class="oe_highlight" name="action_restore_db_image" string="Restore" type="object" />
                         <field name="image_db_selection" />
                         <field name="db_name" />
                     </group>
@@ -189,6 +190,7 @@
                         <group string="Instance">
                             <!--                            <field name="docker_is_running"/>-->
                             <field name="db_is_restored" />
+                            <field name="has_error_restore_db" />
                         </group>
                     </page>
                     <page name="code_generator" string="Code">

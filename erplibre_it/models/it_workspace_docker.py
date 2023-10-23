@@ -64,8 +64,6 @@ class ItWorkspaceDocker(models.Model):
 
     docker_initiate_succeed = fields.Boolean(help="Docker is ready to run")
 
-    has_error_restore_db = fields.Boolean()
-
     @api.multi
     @api.depends("workspace_id", "docker_is_running")
     def _compute_name(self):
@@ -355,127 +353,6 @@ volumes:
             rec.workspace_id.execute(
                 cmd=f"dive {rec.docker_version}", force_open_terminal=True
             )
-
-    @api.multi
-    def action_docker_restore_db_image(self):
-        for rec in self:
-            rec.has_error_restore_db = False
-            # TODO not working
-            # maybe send by network REST web/database/restore
-            # result = rec.workspace_id.execute(cmd=f"cd {rec.workspace_id.path_working_erplibre};time ./script/database/db_restore.py --database test;", force_docker=True)
-            # rec.log_workspace = f"\n{result}"
-            url_list = f"{rec.workspace_id.url_instance}/web/database/list"
-            url_restore = (
-                f"{rec.workspace_id.url_instance}/web/database/restore"
-            )
-            url_drop = f"{rec.workspace_id.url_instance}/web/database/drop"
-            if not rec.workspace_id.image_db_selection:
-                # TODO create stage, need a stage ready to restore
-                raise exceptions.Warning(_("Error, need field db_selection"))
-            rec.workspace_id.db_is_restored = False
-            backup_file_path = rec.workspace_id.image_db_selection.path
-            session = requests.Session()
-            response = requests.get(
-                url_list,
-                data=json.dumps({}),
-                headers={
-                    "Content-Type": "application/json",
-                    "Accept": "application/json",
-                },
-            )
-            if response.status_code == 200:
-                database_list = response.json()
-                print(database_list)
-            else:
-                # TODO remove print
-                print("une erreur")
-                continue
-
-            # Delete first
-            # TODO cannot delete database if '-d database' argument -d is set
-            result_db_list = database_list.get("result")
-            if rec.workspace_id.db_name in result_db_list:
-                print(result_db_list)
-                files = {
-                    "master_pwd": (None, "admin"),
-                    "name": (None, rec.workspace_id.db_name),
-                }
-                response = session.post(url_drop, files=files)
-                if response.status_code == 200:
-                    print("Le drop a été envoyé avec succès.")
-                else:
-                    rec.docker_cmd_extra = ""
-                    # TODO detect "-d" in execution instead of force action_reboot
-                    rec.workspace_id.action_reboot()
-                    next_second = 5
-                    print(
-                        "Une erreur s'est produite lors du drop, code"
-                        f" '{response.status_code}'. Retry in"
-                        f" {next_second} seconds"
-                    )
-                    # Strange, retry for test
-                    time.sleep(next_second)
-                    # response = requests.get(
-                    #     url_list,
-                    #     data=json.dumps({}),
-                    #     headers={
-                    #         "Content-Type": "application/json",
-                    #         "Accept": "application/json",
-                    #     },
-                    # )
-                    response = session.post(url_drop, files=files)
-                    if response.status_code == 200:
-                        # database_list = response.json()
-                        # print(database_list)
-                        print(
-                            "Seconde essaie, le drop a été envoyé avec succès."
-                        )
-                    else:
-                        print(
-                            "Seconde essaie, une erreur s'est produite"
-                            " lors du drop, code"
-                            f" '{response.status_code}'."
-                        )
-                        rec.has_error_restore_db = True
-                if not rec.has_error_restore_db:
-                    response = requests.get(
-                        url_list,
-                        data=json.dumps({}),
-                        headers={
-                            "Content-Type": "application/json",
-                            "Accept": "application/json",
-                        },
-                    )
-                    if response.status_code == 200:
-                        database_list = response.json()
-                        print(database_list)
-
-            if not rec.has_error_restore_db:
-                with open(backup_file_path, "rb") as backup_file:
-                    files = {
-                        "backup_file": (
-                            backup_file.name,
-                            backup_file,
-                            "application/octet-stream",
-                        ),
-                        "master_pwd": (None, "admin"),
-                        "name": (None, rec.workspace_id.db_name),
-                    }
-                    response = session.post(url_restore, files=files)
-                if response.status_code == 200:
-                    print(
-                        "Le fichier de restauration a été envoyé avec succès."
-                    )
-                    rec.workspace_id.db_is_restored = True
-                else:
-                    print(
-                        "Une erreur s'est produite lors de l'envoi du fichier"
-                        " de restauration."
-                    )
-
-            # f = {'file data': open(f'./image_db{rec.workspace_id.path_working_erplibre}_base.zip', 'rb')}
-            # res = requests.post(url_restore, files=f)
-            # print(res.text)
 
     @api.multi
     def action_check_all(self):
