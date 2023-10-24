@@ -1112,7 +1112,7 @@ class ItWorkspace(models.Model):
         for rec_o in self:
             with rec_o.it_create_exec_bundle("Check tree addons") as rec:
                 exec_id = rec.execute(
-                    cmd=f"cd {rec.path_working_erplibre};tree",
+                    cmd=f"cd {rec.path_working_erplibre}/addons/addons;tree",
                     to_instance=True,
                 )
                 rec.it_code_generator_tree_addons = exec_id.log_all
