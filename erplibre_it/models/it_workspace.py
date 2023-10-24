@@ -423,199 +423,214 @@ class ItWorkspace(models.Model):
 
     @api.multi
     def action_cg_erplibre_it(self):
-        for rec in self:
-            start = datetime.now()
-            rec.it_cg_erplibre_it_error_log = False
-            rec.need_debugger_cg_erplibre_it = False
-            addons_path = "./addons/ERPLibre_erplibre_addons"
-            module_name = "erplibre_it"
+        for rec_o in self:
+            with rec_o.it_create_exec_bundle(
+                "Code generator erplibre IT"
+            ) as rec:
+                start = datetime.now()
+                rec.it_cg_erplibre_it_error_log = False
+                rec.need_debugger_cg_erplibre_it = False
+                addons_path = "./addons/ERPLibre_erplibre_addons"
+                module_name = "erplibre_it"
 
-            # Disable all others
-            new_project_ids_disable = self.env["it.cg.new_project"].search(
-                [
-                    ("it_workspace", "=", rec.id),
-                    ("project_type", "=", "self"),
-                ]
-            )
-            new_project_ids_disable.write({"active": False})
+                # Disable all others
+                new_project_ids_disable = self.env["it.cg.new_project"].search(
+                    [
+                        ("it_workspace", "=", rec.id),
+                        ("project_type", "=", "self"),
+                    ]
+                )
+                new_project_ids_disable.write({"active": False})
 
-            new_project_id = self.env["it.cg.new_project"].create(
-                {
-                    "module": module_name,
-                    "directory": addons_path,
-                    "it_workspace": rec.id,
-                    "project_type": "self",
-                }
-            )
-            if rec.last_new_project_self:
-                new_project_id.last_new_project = rec.last_new_project_self.id
-            rec.last_new_project_self = new_project_id.id
-            new_project_id.action_new_project()
-            # result = rec.execute(
-            #     cmd=f"cd {rec.folder};./script/code_generator/new_project.py"
-            #     f" -d {addons_path} -m {module_name}",
-            # )
-            result = ""
-            rec.it_cg_erplibre_it_log = result
-            index_error = result.rfind("odoo.exceptions.ValidationError")
-            if index_error >= 0:
-                rec.it_cg_erplibre_it_error_log = result[
-                    index_error : result.find("\n", index_error)
-                ]
-                rec.need_debugger_cg_erplibre_it = True
+                new_project_id = self.env["it.cg.new_project"].create(
+                    {
+                        "module": module_name,
+                        "directory": addons_path,
+                        "it_workspace": rec.id,
+                        "project_type": "self",
+                    }
+                )
+                if rec.last_new_project_self:
+                    new_project_id.last_new_project = (
+                        rec.last_new_project_self.id
+                    )
+                rec.last_new_project_self = new_project_id.id
+                new_project_id.action_new_project()
+                # result = rec.execute(
+                #     cmd=f"cd {rec.folder};./script/code_generator/new_project.py"
+                #     f" -d {addons_path} -m {module_name}",
+                # )
+                result = ""
+                rec.it_cg_erplibre_it_log = result
+                index_error = result.rfind("odoo.exceptions.ValidationError")
+                if index_error >= 0:
+                    rec.it_cg_erplibre_it_error_log = result[
+                        index_error : result.find("\n", index_error)
+                    ]
+                    rec.need_debugger_cg_erplibre_it = True
 
-            end = datetime.now()
-            td = (end - start).total_seconds()
-            rec.time_exec_action_cg_erplibre_it = f"{td:.03f}s"
+                end = datetime.now()
+                td = (end - start).total_seconds()
+                rec.time_exec_action_cg_erplibre_it = f"{td:.03f}s"
 
     @api.multi
     def action_cg_setup_pycharm_debug(self):
-        for rec in self:
-            if not rec.ide_pycharm:
-                rec.ide_pycharm = self.env["it.ide.pycharm"].create(
-                    {"it_workspace": rec.id}
-                )
-            rec.ide_pycharm.action_cg_setup_pycharm_debug()
+        for rec_o in self:
+            with rec_o.it_create_exec_bundle("Setup PyCharm debug") as rec:
+                if not rec.ide_pycharm:
+                    rec.ide_pycharm = self.env["it.ide.pycharm"].create(
+                        {"it_workspace": rec.id}
+                    )
+                rec.ide_pycharm.action_cg_setup_pycharm_debug()
 
     @api.multi
     def action_open_terminal_path_erplibre_it(self):
-        for rec in self:
-            folder_path = os.path.join(
-                rec.folder, "addons", "ERPLibre_erplibre_addons"
-            )
-            rec.execute(folder=folder_path, force_open_terminal=True)
+        for rec_o in self:
+            with rec_o.it_create_exec_bundle(
+                "Open terminal ERPLibre IT"
+            ) as rec:
+                folder_path = os.path.join(
+                    rec.folder, "addons", "ERPLibre_erplibre_addons"
+                )
+                rec.execute(folder=folder_path, force_open_terminal=True)
 
     @api.multi
     def action_code_generator_generate_all(self):
-        for rec in self:
-            start = datetime.now()
-            # TODO add try catch, add breakpoint, rerun loop. Careful when lose context
-            # Start with local storage
-            # Increase speed
-            # TODO keep old configuration of config.conf and not overwrite all
-            # rec.execute(cmd=f"cd {rec.path_working_erplibre};make config_gen_code_generator", to_instance=True)
-            if rec.it_code_generator_ids and rec.mode_exec in ["docker"]:
-                rec.workspace_docker_id.docker_config_gen_cg = True
-                rec.action_reboot()
-                rec.workspace_docker_id.docker_config_gen_cg = False
-            for rec_cg in rec.it_code_generator_ids:
-                for module_id in rec_cg.module_ids:
-                    # Support only 1, but can run in parallel multiple if no dependencies between
-                    module_name = module_id.name
-                    lst_model = []
-                    dct_model_conf = {"model": lst_model}
-                    for model_id in module_id.model_ids:
-                        lst_field = []
-                        lst_model.append(
-                            {"name": model_id.name, "fields": lst_field}
-                        )
-                        for field_id in model_id.field_ids:
-                            dct_value_field = {
-                                "name": field_id.name,
-                                "help": field_id.help,
-                                "type": field_id.type,
-                            }
-                            if field_id.type in [
-                                "many2one",
-                                "many2many",
-                                "one2many",
-                            ]:
-                                dct_value_field["relation"] = (
-                                    field_id.relation.name
-                                    if field_id.relation
-                                    else field_id.relation_manual
-                                )
-                                if not dct_value_field["relation"]:
-                                    msg_err = (
-                                        f"Model '{model_id.name}', field"
-                                        f" '{field_id.name}' need a"
-                                        " relation because type is"
-                                        f" '{field_id.type}'"
+        for rec_o in self:
+            with rec_o.it_create_exec_bundle("CG generate module") as rec:
+                start = datetime.now()
+                # TODO add try catch, add breakpoint, rerun loop. Careful when lose context
+                # Start with local storage
+                # Increase speed
+                # TODO keep old configuration of config.conf and not overwrite all
+                # rec.execute(cmd=f"cd {rec.path_working_erplibre};make config_gen_code_generator", to_instance=True)
+                if rec.it_code_generator_ids and rec.mode_exec in ["docker"]:
+                    rec.workspace_docker_id.docker_config_gen_cg = True
+                    rec.action_reboot()
+                    rec.workspace_docker_id.docker_config_gen_cg = False
+                for rec_cg in rec.it_code_generator_ids:
+                    for module_id in rec_cg.module_ids:
+                        # Support only 1, but can run in parallel multiple if no dependencies between
+                        module_name = module_id.name
+                        lst_model = []
+                        dct_model_conf = {"model": lst_model}
+                        for model_id in module_id.model_ids:
+                            lst_field = []
+                            lst_model.append(
+                                {"name": model_id.name, "fields": lst_field}
+                            )
+                            for field_id in model_id.field_ids:
+                                dct_value_field = {
+                                    "name": field_id.name,
+                                    "help": field_id.help,
+                                    "type": field_id.type,
+                                }
+                                if field_id.type in [
+                                    "many2one",
+                                    "many2many",
+                                    "one2many",
+                                ]:
+                                    dct_value_field["relation"] = (
+                                        field_id.relation.name
+                                        if field_id.relation
+                                        else field_id.relation_manual
                                     )
-                                    raise exceptions.Warning(msg_err)
-                            if field_id.type in [
-                                "one2many",
-                            ]:
-                                dct_value_field["relation_field"] = (
-                                    field_id.field_relation.name
-                                    if field_id.field_relation
-                                    else field_id.field_relation_manual
-                                )
-                                if not dct_value_field["relation_field"]:
-                                    msg_err = (
-                                        f"Model '{model_id.name}', field"
-                                        f" '{field_id.name}' need a"
-                                        " relation field because type is"
-                                        f" '{field_id.type}'"
+                                    if not dct_value_field["relation"]:
+                                        msg_err = (
+                                            f"Model '{model_id.name}', field"
+                                            f" '{field_id.name}' need a"
+                                            " relation because type is"
+                                            f" '{field_id.type}'"
+                                        )
+                                        raise exceptions.Warning(msg_err)
+                                if field_id.type in [
+                                    "one2many",
+                                ]:
+                                    dct_value_field["relation_field"] = (
+                                        field_id.field_relation.name
+                                        if field_id.field_relation
+                                        else field_id.field_relation_manual
                                     )
-                                    raise exceptions.Warning(msg_err)
-                            if field_id.widget:
-                                dct_value_field = field_id.widget
-                            lst_field.append(dct_value_field)
-                    if rec_cg.force_clean_before_generate:
-                        rec.workspace_code_remove_module(module_id)
-                    model_conf = (
-                        json.dumps(dct_model_conf)
-                        # .replace('"', '\\"')
-                        # .replace("'", "")
-                    )
-                    dct_new_project = {
-                        "module": module_name,
-                        "directory": rec.path_code_generator_to_generate,
-                        "keep_bd_alive": True,
-                        "it_workspace": rec.id,
-                        "project_type": "cg",
-                    }
-                    # extra_arg = ""
-                    if model_conf:
-                        dct_new_project["config"] = model_conf
-                        # extra_arg = f" --config '{model_conf}'"
-
-                    # Disable all others
-                    new_project_ids_disable = self.env[
-                        "it.cg.new_project"
-                    ].search(
-                        [
-                            ("it_workspace", "=", rec.id),
-                            ("project_type", "=", "cg"),
-                        ]
-                    )
-                    new_project_ids_disable.write({"active": False})
-
-                    new_project_id = self.env["it.cg.new_project"].create(
-                        dct_new_project
-                    )
-                    if rec.last_new_project_cg:
-                        new_project_id.last_new_project = (
-                            rec.last_new_project_cg.id
+                                    if not dct_value_field["relation_field"]:
+                                        msg_err = (
+                                            f"Model '{model_id.name}', field"
+                                            f" '{field_id.name}' need a"
+                                            " relation field because type is"
+                                            f" '{field_id.type}'"
+                                        )
+                                        raise exceptions.Warning(msg_err)
+                                if field_id.widget:
+                                    dct_value_field = field_id.widget
+                                lst_field.append(dct_value_field)
+                        if rec_cg.force_clean_before_generate:
+                            rec.workspace_code_remove_module(module_id)
+                        model_conf = (
+                            json.dumps(dct_model_conf)
+                            # .replace('"', '\\"')
+                            # .replace("'", "")
                         )
-                    rec.last_new_project_cg = new_project_id.id
-                    new_project_id.action_new_project()
-                    # cmd = (
-                    #     f"cd {rec.path_working_erplibre};./script/code_generator/new_project.py"
-                    #     f" --keep_bd_alive -m {module_name} -d"
-                    #     f" {rec.path_code_generator_to_generate}{extra_arg}"
-                    # )
-                    # result = rec.execute(cmd=cmd, to_instance=True)
-                    # rec.it_code_generator_log_addons = result
-            if rec.it_code_generator_ids and rec.mode_exec in ["docker"]:
-                rec.action_reboot()
-            # rec.execute(cmd=f"cd {rec.path_working_erplibre};make config_gen_all", to_instance=True)
-            end = datetime.now()
-            td = (end - start).total_seconds()
-            rec.time_exec_action_code_generator_generate_all = f"{td:.03f}s"
+                        dct_new_project = {
+                            "module": module_name,
+                            "directory": rec.path_code_generator_to_generate,
+                            "keep_bd_alive": True,
+                            "it_workspace": rec.id,
+                            "project_type": "cg",
+                        }
+                        # extra_arg = ""
+                        if model_conf:
+                            dct_new_project["config"] = model_conf
+                            # extra_arg = f" --config '{model_conf}'"
+
+                        # Disable all others
+                        new_project_ids_disable = self.env[
+                            "it.cg.new_project"
+                        ].search(
+                            [
+                                ("it_workspace", "=", rec.id),
+                                ("project_type", "=", "cg"),
+                            ]
+                        )
+                        new_project_ids_disable.write({"active": False})
+
+                        new_project_id = self.env["it.cg.new_project"].create(
+                            dct_new_project
+                        )
+                        if rec.last_new_project_cg:
+                            new_project_id.last_new_project = (
+                                rec.last_new_project_cg.id
+                            )
+                        rec.last_new_project_cg = new_project_id.id
+                        new_project_id.action_new_project()
+                        # cmd = (
+                        #     f"cd {rec.path_working_erplibre};./script/code_generator/new_project.py"
+                        #     f" --keep_bd_alive -m {module_name} -d"
+                        #     f" {rec.path_code_generator_to_generate}{extra_arg}"
+                        # )
+                        # result = rec.execute(cmd=cmd, to_instance=True)
+                        # rec.it_code_generator_log_addons = result
+                if rec.it_code_generator_ids and rec.mode_exec in ["docker"]:
+                    rec.action_reboot()
+                # rec.execute(cmd=f"cd {rec.path_working_erplibre};make config_gen_all", to_instance=True)
+                end = datetime.now()
+                td = (end - start).total_seconds()
+                rec.time_exec_action_code_generator_generate_all = (
+                    f"{td:.03f}s"
+                )
 
     @api.multi
     def action_clear_all_generated_module(self):
-        for rec in self:
-            start = datetime.now()
-            for cg in rec.it_code_generator_ids:
-                for module_id in cg.module_ids:
-                    rec.workspace_code_remove_module(module_id)
-            end = datetime.now()
-            td = (end - start).total_seconds()
-            rec.time_exec_action_clear_all_generated_module = f"{td:.03f}s"
-        self.action_check()
+        for rec_o in self:
+            with rec_o.it_create_exec_bundle(
+                "Clear all generated module"
+            ) as rec:
+                start = datetime.now()
+                for cg in rec.it_code_generator_ids:
+                    for module_id in cg.module_ids:
+                        rec.workspace_code_remove_module(module_id)
+                end = datetime.now()
+                td = (end - start).total_seconds()
+                rec.time_exec_action_clear_all_generated_module = f"{td:.03f}s"
+                rec.action_check()
 
     @api.multi
     def workspace_code_remove_module(self, module_id):
@@ -660,157 +675,161 @@ class ItWorkspace(models.Model):
 
     @api.multi
     def action_git_commit_all_generated_module(self):
-        for rec in self:
-            start = datetime.now()
-            # for cg in rec.it_code_generator_ids:
-            # Validate git directory exist
-            exec_id = rec.execute(
-                cmd=(
-                    f"ls {rec.path_working_erplibre}/{rec.path_code_generator_to_generate}/.git"
-                ),
-                to_instance=True,
-            )
-            result = exec_id.log_all
-            if "No such file or directory" in result:
-                # Suppose git not exist
-                # This is not good if .git directory is in parent directory
-                rec.execute(
+        for rec_o in self:
+            with rec_o.it_create_exec_bundle("CG commit all") as rec:
+                start = datetime.now()
+                # for cg in rec.it_code_generator_ids:
+                # Validate git directory exist
+                exec_id = rec.execute(
                     cmd=(
-                        f"cd {rec.path_working_erplibre}/{rec.path_code_generator_to_generate};git"
-                        " init;echo '*.pyc' > .gitignore;git add"
-                        " .gitignore;git commit -m 'first commit'"
+                        f"ls {rec.path_working_erplibre}/{rec.path_code_generator_to_generate}/.git"
                     ),
                     to_instance=True,
                 )
-                rec.execute(
-                    cmd=(
-                        f"cd {rec.path_working_erplibre}/{rec.path_code_generator_to_generate};git"
-                        " init"
-                    ),
-                    to_instance=True,
-                )
+                result = exec_id.log_all
+                if "No such file or directory" in result:
+                    # Suppose git not exist
+                    # This is not good if .git directory is in parent directory
+                    rec.execute(
+                        cmd=(
+                            f"cd {rec.path_working_erplibre}/{rec.path_code_generator_to_generate};git"
+                            " init;echo '*.pyc' > .gitignore;git add"
+                            " .gitignore;git commit -m 'first commit'"
+                        ),
+                        to_instance=True,
+                    )
+                    rec.execute(
+                        cmd=(
+                            f"cd {rec.path_working_erplibre}/{rec.path_code_generator_to_generate};git"
+                            " init"
+                        ),
+                        to_instance=True,
+                    )
 
-            exec_id = rec.execute(
-                cmd=(
-                    f"cd {rec.path_working_erplibre}/{rec.path_code_generator_to_generate};git"
-                    " status -s"
-                ),
-                to_instance=True,
-            )
-            result = exec_id.log_all
-            if result:
-                # TODO show result to log
-                # Force add file and commit
-                rec.execute(
+                exec_id = rec.execute(
                     cmd=(
                         f"cd {rec.path_working_erplibre}/{rec.path_code_generator_to_generate};git"
-                        " add ."
+                        " status -s"
                     ),
                     to_instance=True,
                 )
-                rec.execute(
-                    cmd=(
-                        f"cd {rec.path_working_erplibre}/{rec.path_code_generator_to_generate};git"
-                        " commit -m 'Commit by RobotLibre'"
-                    ),
-                    to_instance=True,
+                result = exec_id.log_all
+                if result:
+                    # TODO show result to log
+                    # Force add file and commit
+                    rec.execute(
+                        cmd=(
+                            f"cd {rec.path_working_erplibre}/{rec.path_code_generator_to_generate};git"
+                            " add ."
+                        ),
+                        to_instance=True,
+                    )
+                    rec.execute(
+                        cmd=(
+                            f"cd {rec.path_working_erplibre}/{rec.path_code_generator_to_generate};git"
+                            " commit -m 'Commit by RobotLibre'"
+                        ),
+                        to_instance=True,
+                    )
+                end = datetime.now()
+                td = (end - start).total_seconds()
+                rec.time_exec_action_git_commit_all_generated_module = (
+                    f"{td:.03f}s"
                 )
-            end = datetime.now()
-            td = (end - start).total_seconds()
-            rec.time_exec_action_git_commit_all_generated_module = (
-                f"{td:.03f}s"
-            )
 
     @api.multi
     def action_refresh_meta_cg_generated_module(self):
-        for rec in self:
-            start = datetime.now()
-            diff = ""
-            status = ""
-            stat = ""
-            exec_id = rec.execute(
-                cmd=(
-                    f"ls {rec.path_working_erplibre}/{rec.path_code_generator_to_generate}/.git"
-                ),
-                to_instance=True,
-            )
-            result = exec_id.log_all
-            if result:
-                # Create diff
+        for rec_o in self:
+            with rec_o.it_create_exec_bundle("Refresh meta CG") as rec:
+                start = datetime.now()
+                diff = ""
+                status = ""
+                stat = ""
                 exec_id = rec.execute(
                     cmd=(
-                        f"cd {rec.path_working_erplibre}/{rec.path_code_generator_to_generate};git"
-                        " diff"
+                        f"ls {rec.path_working_erplibre}/{rec.path_code_generator_to_generate}/.git"
                     ),
                     to_instance=True,
                 )
-                diff += exec_id.log_all
-                # Create status
-                exec_id = rec.execute(
-                    cmd=(
-                        f"cd {rec.path_working_erplibre}/{rec.path_code_generator_to_generate};git"
-                        " status"
-                    ),
-                    to_instance=True,
+                result = exec_id.log_all
+                if result:
+                    # Create diff
+                    exec_id = rec.execute(
+                        cmd=(
+                            f"cd {rec.path_working_erplibre}/{rec.path_code_generator_to_generate};git"
+                            " diff"
+                        ),
+                        to_instance=True,
+                    )
+                    diff += exec_id.log_all
+                    # Create status
+                    exec_id = rec.execute(
+                        cmd=(
+                            f"cd {rec.path_working_erplibre}/{rec.path_code_generator_to_generate};git"
+                            " status"
+                        ),
+                        to_instance=True,
+                    )
+                    status += exec_id.log_all
+                    for cg in rec.it_code_generator_ids:
+                        # Create statistic
+                        for module_id in cg.module_ids:
+                            exec_id = rec.execute(
+                                cmd=(
+                                    f"cd {rec.path_working_erplibre};./script/statistic/code_count.sh"
+                                    f" ./{rec.path_code_generator_to_generate}/{module_id.name};"
+                                ),
+                                to_instance=True,
+                            )
+                            result = exec_id.log_all
+                            if result:
+                                stat += f"./{rec.path_code_generator_to_generate}/{module_id.name}"
+                                stat += result
+
+                            exec_id = rec.execute(
+                                cmd=(
+                                    f"cd {rec.path_working_erplibre};./script/statistic/code_count.sh"
+                                    f" ./{rec.path_code_generator_to_generate}/code_generator_template_{module_id.name};"
+                                ),
+                                to_instance=True,
+                            )
+                            result = exec_id.log_all
+                            if result:
+                                stat += f"./{rec.path_code_generator_to_generate}/code_generator_template_{module_id.name}"
+                                stat += result
+
+                            exec_id = rec.execute(
+                                cmd=(
+                                    f"cd {rec.path_working_erplibre};./script/statistic/code_count.sh"
+                                    f" ./{rec.path_code_generator_to_generate}/code_generator_{module_id.name};"
+                                ),
+                                to_instance=True,
+                            )
+                            result = exec_id.log_all
+                            if result:
+                                stat += f"./{rec.path_code_generator_to_generate}/code_generator_{module_id.name}"
+                                stat += result
+
+                            # Autofix attached field to workspace
+                            if rec not in module_id.it_workspace_ids:
+                                module_id.it_workspace_ids = [(4, rec.id)]
+                            for model_id in module_id.model_ids:
+                                if rec not in model_id.it_workspace_ids:
+                                    model_id.it_workspace_ids = [(4, rec.id)]
+                                for field_id in model_id.field_ids:
+                                    if rec not in field_id.it_workspace_ids:
+                                        field_id.it_workspace_ids = [
+                                            (4, rec.id)
+                                        ]
+
+                rec.it_code_generator_diff = diff
+                rec.it_code_generator_status = status
+                rec.it_code_generator_stat = stat
+                end = datetime.now()
+                td = (end - start).total_seconds()
+                rec.time_exec_action_refresh_meta_cg_generated_module = (
+                    f"{td:.03f}s"
                 )
-                status += exec_id.log_all
-                for cg in rec.it_code_generator_ids:
-                    # Create statistic
-                    for module_id in cg.module_ids:
-                        exec_id = rec.execute(
-                            cmd=(
-                                f"cd {rec.path_working_erplibre};./script/statistic/code_count.sh"
-                                f" ./{rec.path_code_generator_to_generate}/{module_id.name};"
-                            ),
-                            to_instance=True,
-                        )
-                        result = exec_id.log_all
-                        if result:
-                            stat += f"./{rec.path_code_generator_to_generate}/{module_id.name}"
-                            stat += result
-
-                        exec_id = rec.execute(
-                            cmd=(
-                                f"cd {rec.path_working_erplibre};./script/statistic/code_count.sh"
-                                f" ./{rec.path_code_generator_to_generate}/code_generator_template_{module_id.name};"
-                            ),
-                            to_instance=True,
-                        )
-                        result = exec_id.log_all
-                        if result:
-                            stat += f"./{rec.path_code_generator_to_generate}/code_generator_template_{module_id.name}"
-                            stat += result
-
-                        exec_id = rec.execute(
-                            cmd=(
-                                f"cd {rec.path_working_erplibre};./script/statistic/code_count.sh"
-                                f" ./{rec.path_code_generator_to_generate}/code_generator_{module_id.name};"
-                            ),
-                            to_instance=True,
-                        )
-                        result = exec_id.log_all
-                        if result:
-                            stat += f"./{rec.path_code_generator_to_generate}/code_generator_{module_id.name}"
-                            stat += result
-
-                        # Autofix attached field to workspace
-                        if rec not in module_id.it_workspace_ids:
-                            module_id.it_workspace_ids = [(4, rec.id)]
-                        for model_id in module_id.model_ids:
-                            if rec not in model_id.it_workspace_ids:
-                                model_id.it_workspace_ids = [(4, rec.id)]
-                            for field_id in model_id.field_ids:
-                                if rec not in field_id.it_workspace_ids:
-                                    field_id.it_workspace_ids = [(4, rec.id)]
-
-            rec.it_code_generator_diff = diff
-            rec.it_code_generator_status = status
-            rec.it_code_generator_stat = stat
-            end = datetime.now()
-            td = (end - start).total_seconds()
-            rec.time_exec_action_refresh_meta_cg_generated_module = (
-                f"{td:.03f}s"
-            )
 
     @api.multi
     def write(self, values):
@@ -860,167 +879,182 @@ class ItWorkspace(models.Model):
 
     @api.multi
     def action_install_all_generated_module(self):
-        for rec in self:
-            start = datetime.now()
-            module_list = ",".join(
-                [
-                    m.name
-                    for cg in rec.it_code_generator_ids
-                    for m in cg.module_ids
-                ]
-            )
-            if rec.mode_exec in ["docker"]:
-                last_cmd = rec.workspace_docker_id.docker_cmd_extra
-                rec.workspace_docker_id.docker_cmd_extra = (
-                    f"-d {rec.db_name} -i {module_list} -u {module_list}"
+        for rec_o in self:
+            with rec_o.it_create_exec_bundle(
+                "Install generated module"
+            ) as rec:
+                start = datetime.now()
+                module_list = ",".join(
+                    [
+                        m.name
+                        for cg in rec.it_code_generator_ids
+                        for m in cg.module_ids
+                    ]
                 )
-                # TODO option install continuous or stop execution.
-                # TODO Use install continuous in production, else stop execution for dev
-                # TODO actually, it's continuous
-                # TODO maybe add an auto-update when detect installation finish
-                rec.action_reboot()
-                rec.workspace_docker_id.docker_cmd_extra = last_cmd
-            elif rec.mode_exec in ["terminal"]:
-                rec.execute(
-                    "./script/addons/install_addons.sh"
-                    f" {rec.db_name} {module_list}"
+                if rec.mode_exec in ["docker"]:
+                    last_cmd = rec.workspace_docker_id.docker_cmd_extra
+                    rec.workspace_docker_id.docker_cmd_extra = (
+                        f"-d {rec.db_name} -i {module_list} -u {module_list}"
+                    )
+                    # TODO option install continuous or stop execution.
+                    # TODO Use install continuous in production, else stop execution for dev
+                    # TODO actually, it's continuous
+                    # TODO maybe add an auto-update when detect installation finish
+                    rec.action_reboot()
+                    rec.workspace_docker_id.docker_cmd_extra = last_cmd
+                elif rec.mode_exec in ["terminal"]:
+                    rec.execute(
+                        "./script/addons/install_addons.sh"
+                        f" {rec.db_name} {module_list}"
+                    )
+                    rec.action_reboot()
+                end = datetime.now()
+                td = (end - start).total_seconds()
+                rec.time_exec_action_install_all_generated_module = (
+                    f"{td:.03f}s"
                 )
-                rec.action_reboot()
-            end = datetime.now()
-            td = (end - start).total_seconds()
-            rec.time_exec_action_install_all_generated_module = f"{td:.03f}s"
-        self.action_check()
+                rec.action_check()
 
     @api.multi
     def action_install_all_uca_generated_module(self):
-        for rec in self:
-            start = datetime.now()
-            module_list = ",".join(
-                [
-                    f"code_generator_template_{m.name},{m.name}"
-                    for cg in rec.it_code_generator_ids
-                    for m in cg.module_ids
-                ]
-            )
-            rec.execute(
-                cmd=(
-                    f"cd {rec.path_working_erplibre};./script/database/db_restore.py"
-                    " --database cg_uca"
-                ),
-                to_instance=True,
-            )
-            rec.execute(
-                cmd=(
-                    f"cd {rec.path_working_erplibre};./script/addons/install_addons_dev.sh"
-                    f" cg_uca {module_list}"
-                ),
-                to_instance=True,
-            )
+        for rec_o in self:
+            with rec_o.it_create_exec_bundle("Install all UcA") as rec:
+                start = datetime.now()
+                module_list = ",".join(
+                    [
+                        f"code_generator_template_{m.name},{m.name}"
+                        for cg in rec.it_code_generator_ids
+                        for m in cg.module_ids
+                    ]
+                )
+                rec.execute(
+                    cmd=(
+                        f"cd {rec.path_working_erplibre};./script/database/db_restore.py"
+                        " --database cg_uca"
+                    ),
+                    to_instance=True,
+                )
+                rec.execute(
+                    cmd=(
+                        f"cd {rec.path_working_erplibre};./script/addons/install_addons_dev.sh"
+                        f" cg_uca {module_list}"
+                    ),
+                    to_instance=True,
+                )
 
-            end = datetime.now()
-            td = (end - start).total_seconds()
-            rec.time_exec_action_install_all_uca_generated_module = (
-                f"{td:.03f}s"
-            )
-        self.action_check()
+                end = datetime.now()
+                td = (end - start).total_seconds()
+                rec.time_exec_action_install_all_uca_generated_module = (
+                    f"{td:.03f}s"
+                )
+                rec.action_check()
 
     @api.multi
     def action_install_all_ucb_generated_module(self):
-        for rec in self:
-            start = datetime.now()
-            module_list = ",".join(
-                [
-                    f"code_generator_{m.name}"
-                    for cg in rec.it_code_generator_ids
-                    for m in cg.module_ids
-                ]
-            )
-            rec.execute(
-                cmd=(
-                    f"cd {rec.path_working_erplibre};./script/database/db_restore.py"
-                    " --database cg_ucb"
-                ),
-                to_instance=True,
-            )
-            rec.execute(
-                cmd=(
-                    f"cd {rec.path_working_erplibre};./script/addons/install_addons_dev.sh"
-                    f" cg_ucb {module_list}"
-                ),
-                to_instance=True,
-            )
+        for rec_o in self:
+            with rec_o.it_create_exec_bundle("Install all UcB") as rec:
+                start = datetime.now()
+                module_list = ",".join(
+                    [
+                        f"code_generator_{m.name}"
+                        for cg in rec.it_code_generator_ids
+                        for m in cg.module_ids
+                    ]
+                )
+                rec.execute(
+                    cmd=(
+                        f"cd {rec.path_working_erplibre};./script/database/db_restore.py"
+                        " --database cg_ucb"
+                    ),
+                    to_instance=True,
+                )
+                rec.execute(
+                    cmd=(
+                        f"cd {rec.path_working_erplibre};./script/addons/install_addons_dev.sh"
+                        f" cg_ucb {module_list}"
+                    ),
+                    to_instance=True,
+                )
 
-            end = datetime.now()
-            td = (end - start).total_seconds()
-            rec.time_exec_action_install_all_ucb_generated_module = (
-                f"{td:.03f}s"
-            )
-        self.action_check()
+                end = datetime.now()
+                td = (end - start).total_seconds()
+                rec.time_exec_action_install_all_ucb_generated_module = (
+                    f"{td:.03f}s"
+                )
+                rec.action_check()
 
     @api.multi
     def action_install_and_generate_all_generated_module(self):
-        for rec in self:
-            start = datetime.now()
-            rec.action_code_generator_generate_all()
-            rec.action_git_commit_all_generated_module()
-            rec.action_refresh_meta_cg_generated_module()
-            rec.action_install_all_generated_module()
-            end = datetime.now()
-            td = (end - start).total_seconds()
-            rec.time_exec_action_install_and_generate_all_generated_module = (
-                f"{td:.03f}s"
-            )
+        for rec_o in self:
+            with rec_o.it_create_exec_bundle(
+                "Install and generate all"
+            ) as rec:
+                start = datetime.now()
+                rec.action_code_generator_generate_all()
+                rec.action_git_commit_all_generated_module()
+                rec.action_refresh_meta_cg_generated_module()
+                rec.action_install_all_generated_module()
+                end = datetime.now()
+                td = (end - start).total_seconds()
+                rec.time_exec_action_install_and_generate_all_generated_module = (
+                    f"{td:.03f}s"
+                )
 
     @api.multi
     def action_open_terminal(self):
-        for rec in self:
-            rec.execute(force_open_terminal=True)
+        for rec_o in self:
+            with rec_o.it_create_exec_bundle("Open Terminal") as rec:
+                rec.execute(force_open_terminal=True)
 
     @api.multi
     def action_open_terminal_addons(self):
-        for rec in self:
-            cmd = (
-                f"cd {os.path.join(rec.path_working_erplibre, rec.path_code_generator_to_generate)};ls -l"
-            )
-            if rec.is_debug_log:
-                _logger.info(cmd)
-            rec.execute(
-                cmd=cmd,
-                force_open_terminal=True,
-                docker=bool(rec.mode_exec in ["docker"]),
-            )
+        for rec_o in self:
+            with rec_o.it_create_exec_bundle("Open Terminal addons") as rec:
+                cmd = (
+                    f"cd {os.path.join(rec.path_working_erplibre, rec.path_code_generator_to_generate)};ls -l"
+                )
+                if rec.is_debug_log:
+                    _logger.info(cmd)
+                rec.execute(
+                    cmd=cmd,
+                    force_open_terminal=True,
+                    docker=bool(rec.mode_exec in ["docker"]),
+                )
 
     @api.multi
     def action_open_terminal_tig(self):
         # TODO move to model code_generator ?
-        for rec in self:
-            is_docker = False
-            if rec.mode_exec in ["docker"]:
-                is_docker = True
-                exec_id = rec.execute(cmd="which tig", to_instance=True)
-                result = exec_id.log_all
-                if not result:
-                    # TODO support OS and not only docker
-                    self.workspace_docker_id.action_docker_install_dev_soft()
-            dir_to_check = os.path.join(
-                rec.path_working_erplibre,
-                rec.path_code_generator_to_generate,
-                ".git",
-            )
-            exec_id = rec.execute(cmd=f"ls {dir_to_check}")
-            status_ls = exec_id.log_all
-            if "No such file or directory" in status_ls:
-                raise Warning(
-                    "Cannot open command 'tig', cannot find directory"
-                    f" '{dir_to_check}'."
+        for rec_o in self:
+            with rec_o.it_create_exec_bundle("Open Terminal and tig") as rec:
+                is_docker = False
+                if rec.mode_exec in ["docker"]:
+                    is_docker = True
+                    exec_id = rec.execute(cmd="which tig", to_instance=True)
+                    result = exec_id.log_all
+                    if not result:
+                        # TODO support OS and not only docker
+                        self.workspace_docker_id.action_docker_install_dev_soft()
+                dir_to_check = os.path.join(
+                    rec.path_working_erplibre,
+                    rec.path_code_generator_to_generate,
+                    ".git",
                 )
-            cmd = (
-                f"cd {rec.path_working_erplibre};cd"
-                f" ./{rec.path_code_generator_to_generate};tig"
-            )
-            if rec.is_debug_log:
-                _logger.info(cmd)
-            rec.execute(cmd=cmd, force_open_terminal=True, docker=is_docker)
+                exec_id = rec.execute(cmd=f"ls {dir_to_check}")
+                status_ls = exec_id.log_all
+                if "No such file or directory" in status_ls:
+                    raise Warning(
+                        "Cannot open command 'tig', cannot find directory"
+                        f" '{dir_to_check}'."
+                    )
+                cmd = (
+                    f"cd {rec.path_working_erplibre};cd"
+                    f" ./{rec.path_code_generator_to_generate};tig"
+                )
+                if rec.is_debug_log:
+                    _logger.info(cmd)
+                rec.execute(
+                    cmd=cmd, force_open_terminal=True, docker=is_docker
+                )
 
     @api.model
     def action_check_all(self):
@@ -1058,19 +1092,20 @@ class ItWorkspace(models.Model):
 
     @api.multi
     def action_install_me_workspace(self):
-        for rec in self:
-            # Set same BD of this instance
-            rec.db_name = self.env.cr.dbname
-            # Detect the mode exec of this instance
-            exec_id = rec.execute(cmd=f"ls {rec.folder}/.git")
-            status_ls = exec_id.log_all
-            if "No such file or directory" not in status_ls:
-                rec.mode_source = "git"
-                rec.mode_exec = "terminal"
-            self.action_install_workspace()
-        self.is_me = True
-        self.port_http = 8069
-        self.port_longpolling = 8072
+        for rec_o in self:
+            with rec_o.it_create_exec_bundle("Install ME workspace") as rec:
+                # Set same BD of this instance
+                rec.db_name = self.env.cr.dbname
+                # Detect the mode exec of this instance
+                exec_id = rec.execute(cmd=f"ls {rec.folder}/.git")
+                status_ls = exec_id.log_all
+                if "No such file or directory" not in status_ls:
+                    rec.mode_source = "git"
+                    rec.mode_exec = "terminal"
+                rec.action_install_workspace()
+                rec.is_me = True
+                rec.port_http = 8069
+                rec.port_longpolling = 8072
 
     @api.multi
     def action_check_tree_addons(self):
@@ -1088,135 +1123,136 @@ class ItWorkspace(models.Model):
 
     @api.multi
     def action_restore_db_image(self):
-        for rec in self:
-            rec.has_error_restore_db = False
-            if rec.mode_exec in ["terminal"]:
-                image = ""
-                if rec.image_db_selection:
-                    image = f" --image {rec.image_db_selection.name}"
-                cmd = (
-                    f"cd {rec.path_working_erplibre};"
-                    "./script/database/db_restore.py --database"
-                    f" {rec.db_name}{image};"
-                )
-                exec_id = rec.execute(cmd=cmd)
-                rec.log_workspace = f"\n{exec_id.log_all}"
-            elif rec.mode_exec in ["docker"]:
-                # maybe send by network REST web/database/restore
-                url_list = f"{rec.url_instance}/web/database/list"
-                url_restore = f"{rec.url_instance}/web/database/restore"
-                url_drop = f"{rec.url_instance}/web/database/drop"
-                if not rec.image_db_selection:
-                    # TODO create stage, need a stage ready to restore
-                    raise exceptions.Warning(
-                        _("Error, need field db_selection")
+        for rec_o in self:
+            with rec_o.it_create_exec_bundle("Restore DB image") as rec:
+                rec.has_error_restore_db = False
+                if rec.mode_exec in ["terminal"]:
+                    image = ""
+                    if rec.image_db_selection:
+                        image = f" --image {rec.image_db_selection.name}"
+                    cmd = (
+                        f"cd {rec.path_working_erplibre};"
+                        "./script/database/db_restore.py --database"
+                        f" {rec.db_name}{image};"
                     )
-                rec.db_is_restored = False
-                backup_file_path = rec.image_db_selection.path
-                session = requests.Session()
-                response = requests.get(
-                    url_list,
-                    data=json.dumps({}),
-                    headers={
-                        "Content-Type": "application/json",
-                        "Accept": "application/json",
-                    },
-                )
-                if response.status_code == 200:
-                    database_list = response.json()
-                    print(database_list)
-                else:
-                    # TODO remove print
-                    print("une erreur")
-                    continue
-
-                # Delete first
-                # TODO cannot delete database if '-d database' argument -d is set
-                result_db_list = database_list.get("result")
-                if rec.db_name in result_db_list:
-                    print(result_db_list)
-                    files = {
-                        "master_pwd": (None, "admin"),
-                        "name": (None, rec.db_name),
-                    }
-                    response = session.post(url_drop, files=files)
+                    exec_id = rec.execute(cmd=cmd)
+                    rec.log_workspace = f"\n{exec_id.log_all}"
+                elif rec.mode_exec in ["docker"]:
+                    # maybe send by network REST web/database/restore
+                    url_list = f"{rec.url_instance}/web/database/list"
+                    url_restore = f"{rec.url_instance}/web/database/restore"
+                    url_drop = f"{rec.url_instance}/web/database/drop"
+                    if not rec.image_db_selection:
+                        # TODO create stage, need a stage ready to restore
+                        raise exceptions.Warning(
+                            _("Error, need field db_selection")
+                        )
+                    rec.db_is_restored = False
+                    backup_file_path = rec.image_db_selection.path
+                    session = requests.Session()
+                    response = requests.get(
+                        url_list,
+                        data=json.dumps({}),
+                        headers={
+                            "Content-Type": "application/json",
+                            "Accept": "application/json",
+                        },
+                    )
                     if response.status_code == 200:
-                        print("Le drop a été envoyé avec succès.")
+                        database_list = response.json()
+                        print(database_list)
                     else:
-                        rec.workspace_docker_id.docker_cmd_extra = ""
-                        # TODO detect "-d" in execution instead of force action_reboot
-                        rec.action_reboot()
-                        next_second = 5
-                        print(
-                            "Une erreur s'est produite lors du drop, code"
-                            f" '{response.status_code}'. Retry in"
-                            f" {next_second} seconds"
-                        )
-                        # Strange, retry for test
-                        time.sleep(next_second)
-                        # response = requests.get(
-                        #     url_list,
-                        #     data=json.dumps({}),
-                        #     headers={
-                        #         "Content-Type": "application/json",
-                        #         "Accept": "application/json",
-                        #     },
-                        # )
-                        response = session.post(url_drop, files=files)
-                        if response.status_code == 200:
-                            # database_list = response.json()
-                            # print(database_list)
-                            print(
-                                "Seconde essaie, le drop a été envoyé avec"
-                                " succès."
-                            )
-                        else:
-                            print(
-                                "Seconde essaie, une erreur s'est produite"
-                                " lors du drop, code"
-                                f" '{response.status_code}'."
-                            )
-                            rec.has_error_restore_db = True
-                    if not rec.has_error_restore_db:
-                        response = requests.get(
-                            url_list,
-                            data=json.dumps({}),
-                            headers={
-                                "Content-Type": "application/json",
-                                "Accept": "application/json",
-                            },
-                        )
-                        if response.status_code == 200:
-                            database_list = response.json()
-                            print(database_list)
+                        # TODO remove print
+                        print("une erreur")
+                        continue
 
-                if not rec.has_error_restore_db:
-                    with open(backup_file_path, "rb") as backup_file:
+                    # Delete first
+                    # TODO cannot delete database if '-d database' argument -d is set
+                    result_db_list = database_list.get("result")
+                    if rec.db_name in result_db_list:
+                        print(result_db_list)
                         files = {
-                            "backup_file": (
-                                backup_file.name,
-                                backup_file,
-                                "application/octet-stream",
-                            ),
                             "master_pwd": (None, "admin"),
                             "name": (None, rec.db_name),
                         }
-                        response = session.post(url_restore, files=files)
-                    if response.status_code == 200:
-                        print(
-                            "Le fichier de restauration a été envoyé avec"
-                            " succès."
-                        )
-                        rec.db_is_restored = True
-                    else:
-                        print(
-                            "Une erreur s'est produite lors de l'envoi du"
-                            " fichier de restauration."
-                        )
+                        response = session.post(url_drop, files=files)
+                        if response.status_code == 200:
+                            print("Le drop a été envoyé avec succès.")
+                        else:
+                            rec.workspace_docker_id.docker_cmd_extra = ""
+                            # TODO detect "-d" in execution instead of force action_reboot
+                            rec.action_reboot()
+                            next_second = 5
+                            print(
+                                "Une erreur s'est produite lors du drop, code"
+                                f" '{response.status_code}'. Retry in"
+                                f" {next_second} seconds"
+                            )
+                            # Strange, retry for test
+                            time.sleep(next_second)
+                            # response = requests.get(
+                            #     url_list,
+                            #     data=json.dumps({}),
+                            #     headers={
+                            #         "Content-Type": "application/json",
+                            #         "Accept": "application/json",
+                            #     },
+                            # )
+                            response = session.post(url_drop, files=files)
+                            if response.status_code == 200:
+                                # database_list = response.json()
+                                # print(database_list)
+                                print(
+                                    "Seconde essaie, le drop a été envoyé avec"
+                                    " succès."
+                                )
+                            else:
+                                print(
+                                    "Seconde essaie, une erreur s'est produite"
+                                    " lors du drop, code"
+                                    f" '{response.status_code}'."
+                                )
+                                rec.has_error_restore_db = True
+                        if not rec.has_error_restore_db:
+                            response = requests.get(
+                                url_list,
+                                data=json.dumps({}),
+                                headers={
+                                    "Content-Type": "application/json",
+                                    "Accept": "application/json",
+                                },
+                            )
+                            if response.status_code == 200:
+                                database_list = response.json()
+                                print(database_list)
 
-                # f = {'file data': open(f'./image_db{rec.path_working_erplibre}_base.zip', 'rb')}
-                # res = requests.post(url_restore, files=f)
-                # print(res.text)
+                    if not rec.has_error_restore_db:
+                        with open(backup_file_path, "rb") as backup_file:
+                            files = {
+                                "backup_file": (
+                                    backup_file.name,
+                                    backup_file,
+                                    "application/octet-stream",
+                                ),
+                                "master_pwd": (None, "admin"),
+                                "name": (None, rec.db_name),
+                            }
+                            response = session.post(url_restore, files=files)
+                        if response.status_code == 200:
+                            print(
+                                "Le fichier de restauration a été envoyé avec"
+                                " succès."
+                            )
+                            rec.db_is_restored = True
+                        else:
+                            print(
+                                "Une erreur s'est produite lors de l'envoi du"
+                                " fichier de restauration."
+                            )
+
+                    # f = {'file data': open(f'./image_db{rec.path_working_erplibre}_base.zip', 'rb')}
+                    # res = requests.post(url_restore, files=f)
+                    # print(res.text)
 
     @api.multi
     def check_it_workspace_docker(self):
@@ -1239,68 +1275,74 @@ class ItWorkspace(models.Model):
         # Not work sleep 0 with gnome_terminal
         # need enough second to write to database
         sleep_kill = 2
-        self.check_it_workspace_docker()
-        for rec in self:
-            exec_id = rec.execute(f"lsof -i TCP:{rec.port_http} | grep python")
-            out_server_exist = exec_id.log_all
-            if rec.mode_exec in ["docker"]:
-                rec.workspace_docker_id.action_start_docker_compose()
-            elif rec.mode_exec in ["terminal"]:
-                # TODO support is_me with docker
-                prefix = ""
-                if rec.is_me and out_server_exist:
-                    prefix = f"sleep {sleep_kill * 2};"
-                rec.execute(
-                    cmd=(
-                        f"{prefix}./run.sh -d"
-                        f" {rec.db_name} --http-port={rec.port_http} --longpolling-port={rec.port_longpolling}"
-                    ),
-                    force_open_terminal=True,
+        for rec_o in self:
+            with rec_o.it_create_exec_bundle("Start") as rec:
+                rec.check_it_workspace_docker()
+                exec_id = rec.execute(
+                    f"lsof -i TCP:{rec.port_http} | grep python"
                 )
-            if out_server_exist:
-                # TODO this cause problem, cannot save all information
-                # kill me if I exist
-                # kill first application with python3 with this port
-                # Ignore the browser with the same page, that's why need grep
-                # The first number is the 3 from python3, so take second number
-                # Force to kill, because execution is running, a simple sigint will not work. Cannot write this request
-                if out_server_exist.startswith("python3 "):
-                    cmd = (
-                        f"sleep {sleep_kill};kill -9 $(lsof -i"
-                        f" TCP:{rec.port_http} | grep python3 | grep -oE"
-                        " '[0-9]+' | sed -n '2p');exit"
+                out_server_exist = exec_id.log_all
+                if rec.mode_exec in ["docker"]:
+                    rec.workspace_docker_id.action_start_docker_compose()
+                elif rec.mode_exec in ["terminal"]:
+                    # TODO support is_me with docker
+                    prefix = ""
+                    if rec.is_me and out_server_exist:
+                        prefix = f"sleep {sleep_kill * 2};"
+                    rec.execute(
+                        cmd=(
+                            f"{prefix}./run.sh -d"
+                            f" {rec.db_name} --http-port={rec.port_http} --longpolling-port={rec.port_longpolling}"
+                        ),
+                        force_open_terminal=True,
                     )
-                    rec.execute(cmd=cmd, force_open_terminal=True)
-                elif out_server_exist.startswith("python "):
-                    cmd = (
-                        f"sleep {sleep_kill};kill -9 $(lsof -i"
-                        f" TCP:{rec.port_http} | grep python | grep -oE"
-                        " '[0-9]+' | head -n1);exit"
-                    )
-                    rec.execute(cmd=cmd, force_open_terminal=True)
-                else:
-                    _logger.warning(
-                        f"What is the software for the port {rec.port_http} :"
-                        f" {out_server_exist}"
-                    )
+                if out_server_exist:
+                    # TODO this cause problem, cannot save all information
+                    # kill me if I exist
+                    # kill first application with python3 with this port
+                    # Ignore the browser with the same page, that's why need grep
+                    # The first number is the 3 from python3, so take second number
+                    # Force to kill, because execution is running, a simple sigint will not work. Cannot write this request
+                    if out_server_exist.startswith("python3 "):
+                        cmd = (
+                            f"sleep {sleep_kill};kill -9 $(lsof -i"
+                            f" TCP:{rec.port_http} | grep python3 | grep -oE"
+                            " '[0-9]+' | sed -n '2p');exit"
+                        )
+                        rec.execute(cmd=cmd, force_open_terminal=True)
+                    elif out_server_exist.startswith("python "):
+                        cmd = (
+                            f"sleep {sleep_kill};kill -9 $(lsof -i"
+                            f" TCP:{rec.port_http} | grep python | grep -oE"
+                            " '[0-9]+' | head -n1);exit"
+                        )
+                        rec.execute(cmd=cmd, force_open_terminal=True)
+                    else:
+                        _logger.warning(
+                            "What is the software for the port"
+                            f" {rec.port_http} : {out_server_exist}"
+                        )
 
-            rec.action_check()
+                rec.action_check()
 
     @api.multi
     def action_stop(self):
-        self.check_it_workspace_docker()
-        for rec in self:
-            if rec.mode_exec in ["docker"]:
-                rec.workspace_docker_id.action_stop_docker_compose()
-            elif rec.mode_exec in ["terminal"]:
-                # TODO support it
-                pass
-            rec.action_check()
+        for rec_o in self:
+            with rec_o.it_create_exec_bundle("Stop") as rec:
+                rec.check_it_workspace_docker()
+                if rec.mode_exec in ["docker"]:
+                    rec.workspace_docker_id.action_stop_docker_compose()
+                elif rec.mode_exec in ["terminal"]:
+                    # TODO support it
+                    pass
+                rec.action_check()
 
     @api.multi
     def action_reboot(self):
-        self.action_stop()
-        self.action_start()
+        for rec_o in self:
+            with rec_o.it_create_exec_bundle("Reboot") as rec:
+                rec.action_stop()
+                rec.action_start()
 
     @api.multi
     @api.depends(
@@ -1311,77 +1353,83 @@ class ItWorkspace(models.Model):
         "mode_version_base",
     )
     def action_install_workspace(self):
-        for rec in self:
-            exec_id = rec.execute(cmd=f"ls {rec.folder}")
-            lst_file = exec_id.log_all.strip().split("\n")
-            if rec.mode_source in ["docker"]:
-                if "docker-compose.yml" in lst_file:
-                    # TODO try to reuse
-                    _logger.info("detect docker-compose.yml, please read it")
-                rec.action_pre_install_workspace()
-                rec.path_working_erplibre = "/ERPLibre"
-            elif rec.mode_source in ["git"]:
-                if rec.mode_exec in ["docker"]:
-                    rec.path_working_erplibre = "/ERPLibre"
-                else:
-                    rec.path_working_erplibre = rec.folder
-                branch_str = ""
-                if rec.mode_version_erplibre:
-                    if rec.mode_version_erplibre[0].isnumeric():
-                        branch_str = f" -b v{rec.mode_version_erplibre}"
-                    else:
-                        branch_str = f" -b {rec.mode_version_erplibre}"
-
-                # TODO bug if file has same key
-                # if any(["ls:cannot access " in str_file for str_file in lst_file]):
-                if any(
-                    [
-                        "No such file or directory" in str_file
-                        for str_file in lst_file
-                    ]
-                ):
-                    # self.action_pre_install_workspace(
-                    #     ignore_last_directory=True
-                    # )
-                    exec_id = rec.execute(
-                        cmd=f"git clone {rec.git_url}{branch_str} {rec.folder}"
-                    )
-                    rec.log_workspace = exec_id.log_all
-                    exec_id = rec.execute(
-                        cmd=(
-                            f"cd {rec.folder};./script/install/install_locally_dev.sh"
+        for rec_o in self:
+            with rec_o.it_create_exec_bundle("Install workspace") as rec:
+                exec_id = rec.execute(cmd=f"ls {rec.folder}")
+                lst_file = exec_id.log_all.strip().split("\n")
+                if rec.mode_source in ["docker"]:
+                    if "docker-compose.yml" in lst_file:
+                        # TODO try to reuse
+                        _logger.info(
+                            "detect docker-compose.yml, please read it"
                         )
-                    )
-                    rec.log_workspace += exec_id.log_all
-                    # TODO fix this bug, but activate into install script
-                    # TODO bug only for local, ssh is good
-                    # Bug poetry thinks it's installed, so force it
-                    # result = rec.system_id.execute_with_result(
-                    #     f"cd {rec.folder};source"
-                    #     " ./.venv/bin/activate;poetry install"
-                    # )
-                    # rec.log_workspace += result
-                    rec.execute(
-                        cmd=(
-                            'bash -c "source ./.venv/bin/activate;poetry'
-                            ' install"'
-                        ),
-                        force_open_terminal=True,
-                    )
-                else:
-                    # TODO try te reuse
-                    _logger.info("Git project already exist")
+                    rec.action_pre_install_workspace()
+                    rec.path_working_erplibre = "/ERPLibre"
+                elif rec.mode_source in ["git"]:
+                    if rec.mode_exec in ["docker"]:
+                        rec.path_working_erplibre = "/ERPLibre"
+                    else:
+                        rec.path_working_erplibre = rec.folder
+                    branch_str = ""
+                    if rec.mode_version_erplibre:
+                        if rec.mode_version_erplibre[0].isnumeric():
+                            branch_str = f" -b v{rec.mode_version_erplibre}"
+                        else:
+                            branch_str = f" -b {rec.mode_version_erplibre}"
 
-                # lst_file = rec.execute(cmd=f"ls {rec.folder}").log_all.strip().split("\n")
-                # if "docker-compose.yml" in lst_file:
-                # if rec.mode_environnement in ["prod", "test"]:
-                #     result = rec.system_id.execute_with_result(
-                #         f"git clone https://github.com{rec.path_working_erplibre}{rec.path_working_erplibre}"
-                #         f"{branch_str}"
-                #     )
-                # else:
-            rec.action_network_change_port_random()
-            rec.is_installed = True
+                    # TODO bug if file has same key
+                    # if any(["ls:cannot access " in str_file for str_file in lst_file]):
+                    if any(
+                        [
+                            "No such file or directory" in str_file
+                            for str_file in lst_file
+                        ]
+                    ):
+                        # self.action_pre_install_workspace(
+                        #     ignore_last_directory=True
+                        # )
+                        exec_id = rec.execute(
+                            cmd=(
+                                "git clone"
+                                f" {rec.git_url}{branch_str} {rec.folder}"
+                            )
+                        )
+                        rec.log_workspace = exec_id.log_all
+                        exec_id = rec.execute(
+                            cmd=(
+                                f"cd {rec.folder};./script/install/install_locally_dev.sh"
+                            )
+                        )
+                        rec.log_workspace += exec_id.log_all
+                        # TODO fix this bug, but activate into install script
+                        # TODO bug only for local, ssh is good
+                        # Bug poetry thinks it's installed, so force it
+                        # result = rec.system_id.execute_with_result(
+                        #     f"cd {rec.folder};source"
+                        #     " ./.venv/bin/activate;poetry install"
+                        # )
+                        # rec.log_workspace += result
+                        rec.execute(
+                            cmd=(
+                                'bash -c "source ./.venv/bin/activate;poetry'
+                                ' install"'
+                            ),
+                            force_open_terminal=True,
+                        )
+                    else:
+                        # TODO try te reuse
+                        _logger.info("Git project already exist")
+
+                    # lst_file = rec.execute(cmd=f"ls {rec.folder}").log_all.strip().split("\n")
+                    # if "docker-compose.yml" in lst_file:
+                    # if rec.mode_environnement in ["prod", "test"]:
+                    #     result = rec.system_id.execute_with_result(
+                    #         f"git clone https://github.com{rec.path_working_erplibre}{rec.path_working_erplibre}"
+                    #         f"{branch_str}"
+                    #     )
+                    # else:
+                rec.action_network_change_port_random()
+                rec.is_installed = True
 
     @api.multi
     def execute(
@@ -1465,54 +1513,63 @@ class ItWorkspace(models.Model):
 
     @api.multi
     def action_poetry_install(self):
-        self.execute(
-            cmd='bash -c "source ./.venv/bin/activate;poetry install"'
-        )
+        for rec_o in self:
+            with rec_o.it_create_exec_bundle("Poetry install") as rec:
+                rec.execute(
+                    cmd='bash -c "source ./.venv/bin/activate;poetry install"'
+                )
 
     @api.multi
     def action_pre_install_workspace(self, ignore_last_directory=False):
-        for rec in self:
-            # folder = (
-            #     rec.folder
-            #     if not ignore_last_directory
-            #     else os.path.basename(rec.folder)
-            # )
-            # Directory must exist
-            # TODO make test to validate if remove next line, permission root the project /tmp/project/addons root
-            addons_path = os.path.join(rec.folder, "addons", "addons")
-            rec.execute(f"mkdir -p '{addons_path}'")
+        for rec_o in self:
+            with rec_o.it_create_exec_bundle("Pre install workspace") as rec:
+                # folder = (
+                #     rec.folder
+                #     if not ignore_last_directory
+                #     else os.path.basename(rec.folder)
+                # )
+                # Directory must exist
+                # TODO make test to validate if remove next line, permission root the project /tmp/project/addons root
+                addons_path = os.path.join(rec.folder, "addons", "addons")
+                rec.execute(f"mkdir -p '{addons_path}'")
 
     @api.multi
     @api.model
     def action_network_change_port_default(
         self, ctx=None, default_port_http=8069, default_port_longpolling=8072
     ):
-        for rec in self:
-            rec.port_http = default_port_http
-            rec.port_longpolling = default_port_longpolling
+        for rec_o in self:
+            with rec_o.it_create_exec_bundle(
+                "Network change port default"
+            ) as rec:
+                rec.port_http = default_port_http
+                rec.port_longpolling = default_port_longpolling
 
     @api.multi
     def action_network_change_port_random(
         self, ctx=None, min_port=10000, max_port=20000
     ):
         # Choose 2 sequence
-        for rec in self:
-            # port_1
-            while rec.check_port_is_open(
-                rec, rec.system_id.iterator_port_generator
-            ):
+        for rec_o in self:
+            with rec_o.it_create_exec_bundle(
+                "Network change port random"
+            ) as rec:
+                # port_1
+                while rec.check_port_is_open(
+                    rec, rec.system_id.iterator_port_generator
+                ):
+                    rec.system_id.iterator_port_generator += 1
+                rec.port_http = rec.system_id.iterator_port_generator
                 rec.system_id.iterator_port_generator += 1
-            rec.port_http = rec.system_id.iterator_port_generator
-            rec.system_id.iterator_port_generator += 1
-            # port_2
-            while rec.check_port_is_open(
-                rec, rec.system_id.iterator_port_generator
-            ):
+                # port_2
+                while rec.check_port_is_open(
+                    rec, rec.system_id.iterator_port_generator
+                ):
+                    rec.system_id.iterator_port_generator += 1
+                rec.port_longpolling = rec.system_id.iterator_port_generator
                 rec.system_id.iterator_port_generator += 1
-            rec.port_longpolling = rec.system_id.iterator_port_generator
-            rec.system_id.iterator_port_generator += 1
-            if rec.system_id.iterator_port_generator >= max_port:
-                rec.system_id.iterator_port_generator = min_port
+                if rec.system_id.iterator_port_generator >= max_port:
+                    rec.system_id.iterator_port_generator = min_port
 
     @staticmethod
     def check_port_is_open(rec, port):
