@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 
 import requests
 
-from odoo import _, api, exceptions, fields, models, tools
+from odoo import _, api, exceptions, fields, models, service, tools
 
 _logger = logging.getLogger(__name__)
 
@@ -1082,6 +1082,9 @@ class ItWorkspace(models.Model):
                 )
                 rec.it_code_generator_tree_addons = exec_id.log_all
 
+    @api.multi
+    def action_restart_odoo(self):
+        service.server.restart()
 
     @api.multi
     def action_restore_db_image(self):

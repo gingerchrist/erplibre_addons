@@ -70,6 +70,14 @@
                         attrs="{'invisible': [('is_conflict_mode_exec', '=', True)]}"
                         groups="base.group_no_one"
                     />
+                    <button
+                        class="oe_highlight"
+                        name="action_restart_odoo"
+                        string="Restart"
+                        type="object"
+                        attrs="{'invisible': [('is_me', '=', False)]}"
+                        groups="base.group_no_one"
+                    />
                 </header>
                 <div
                     class="badge-pill badge-success float-right"
