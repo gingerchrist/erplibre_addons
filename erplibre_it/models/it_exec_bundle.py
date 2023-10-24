@@ -9,11 +9,24 @@ from odoo import _, api, exceptions, fields, models, tools
 _logger = logging.getLogger(__name__)
 
 
-class ItExec(models.Model):
-    _name = "it.exec"
-    _description = "Execution process"
+class ItExecBundle(models.Model):
+    _name = "it.exec.bundle"
+    _description = (
+        "Bundle of execution process, package of multiple process to"
+        " regroup it."
+    )
 
     name = fields.Char(compute="_compute_name")
+
+    description = fields.Char()
+
+    parent_id = fields.Many2one(
+        "it.exec.bundle", string="Parent bundle", index=True
+    )
+
+    child_ids = fields.One2many(
+        "it.exec.bundle", "parent_id", string="Child bundle"
+    )
 
     active = fields.Boolean(default=True)
 
@@ -33,45 +46,40 @@ class ItExec(models.Model):
         help="Time in second, duration of execution",
     )
 
-    cmd = fields.Char(readonly=True)
-
-    folder = fields.Char(readonly=True)
-
     time_duration_result = fields.Char(compute="_compute_time_duration_result")
 
     execution_finish = fields.Boolean(compute="_compute_execution_finish")
 
-    module = fields.Char()
-
     it_workspace = fields.Many2one(comodel_name="it.workspace", readonly=True)
 
-    it_exec_bundle_id = fields.Many2one(
-        comodel_name="it.exec.bundle", readonly=True
+    it_exec_ids = fields.One2many(
+        comodel_name="it.exec",
+        inverse_name="it_exec_bundle_id",
+        string="Executions",
+        readonly=True,
     )
 
-    log_stdin = fields.Text(readonly=True)
-
-    log_stdout = fields.Text(readonly=True)
-
-    log_stderr = fields.Text(readonly=True)
-
-    log_all = fields.Text(compute="_compute_log_all")
+    @api.multi
+    def get_last_exec(self):
+        self.ensure_one()
+        if self.it_exec_ids:
+            return self.it_exec_ids[-1]
 
     @api.depends(
         "it_workspace",
-        "module",
         "time_duration_result",
         "execution_finish",
+        "description",
     )
     def _compute_name(self):
         for rec in self:
             if not isinstance(rec.id, models.NewId):
-                rec.name = f"{rec.id}: "
+                rec.name = f"{rec.id:03d}"
             else:
                 rec.name = ""
-            rec.name += f"workspace {rec.it_workspace.id}"
-            if rec.module:
-                rec.name += f" - {rec.module}"
+            # rec.name += f"workspace {rec.it_workspace.id}"
+            if rec.description:
+                rec.name += f" '{rec.description}'"
             if rec.execution_finish:
                 rec.name += " - finish"
             if rec.time_duration_result:
@@ -91,18 +99,6 @@ class ItExec(models.Model):
                 ).total_seconds()
             else:
                 rec.exec_time_duration = False
-
-    @api.depends(
-        "log_stdout",
-        "log_stderr",
-    )
-    def _compute_log_all(self):
-        for rec in self:
-            rec.log_all = ""
-            if rec.log_stdout:
-                rec.log_all += rec.log_stdout
-            if rec.log_stderr:
-                rec.log_all += rec.log_stderr
 
     @api.depends(
         "exec_stop_date",
@@ -129,5 +125,5 @@ class ItExec(models.Model):
                         f" {'{:0>8}'.format(str(timedelta(seconds=rec.exec_time_duration)))}"
                     )
             elif rec.exec_start_date:
-                out = f" - start {rec.exec_start_date}"
+                out = f"start {rec.exec_start_date}"
             rec.time_duration_result = out

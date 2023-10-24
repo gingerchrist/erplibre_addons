@@ -13,3 +13,6 @@ def post_init_hook(cr, e):
 
         # Refresh DB image
         env["it.system"].action_refresh_db_image()
+
+        # Force inbox for admin user
+        env.ref("base.user_admin").write({"notification_type": "inbox"})

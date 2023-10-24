@@ -355,6 +355,6 @@ volumes:
             )
 
     @api.multi
-    def action_check_all(self):
+    def action_check(self):
         self.action_docker_status()
         self.action_docker_check_docker_ps()

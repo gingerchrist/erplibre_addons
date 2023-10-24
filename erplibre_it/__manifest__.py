@@ -20,6 +20,8 @@
         "views/it_code_generator_module_model.xml",
         "views/it_code_generator_module_model_field.xml",
         "views/it_exec.xml",
+        "views/it_exec_bundle.xml",
+        "views/it_exec_error.xml",
         "views/it_ide_pycharm.xml",
         "views/it_db_image.xml",
         "views/it_workspace.xml",

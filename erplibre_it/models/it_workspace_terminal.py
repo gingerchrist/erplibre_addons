@@ -39,5 +39,5 @@ class ItWorkspaceTerminal(models.Model):
             rec.name = f"{rec.workspace_id.name} - {rec.terminal_is_running}"
 
     @api.multi
-    def action_check_all(self):
+    def action_check(self):
         pass

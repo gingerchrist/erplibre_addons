@@ -18,7 +18,7 @@ _logger = logging.getLogger(__name__)
 
 class ItWorkspace(models.Model):
     _name = "it.workspace"
-    _inherit = "mail.thread"
+    _inherit = ["mail.thread", "mail.activity.mixin"]
     _description = "ERPLibre IT Workspace"
 
     name = fields.Char(
@@ -31,6 +31,18 @@ class ItWorkspace(models.Model):
         comodel_name="it.exec",
         inverse_name="it_workspace",
         string="Executions",
+    )
+
+    it_exec_bundle_ids = fields.One2many(
+        comodel_name="it.exec.bundle",
+        inverse_name="it_workspace",
+        string="Executions bundle",
+    )
+
+    it_exec_error_ids = fields.One2many(
+        comodel_name="it.exec.error",
+        inverse_name="it_workspace",
+        string="Executions error",
     )
 
     it_workspace_format = fields.Selection(
@@ -47,6 +59,8 @@ class ItWorkspace(models.Model):
     need_debugger_cg_erplibre_it = fields.Boolean(
         help="CG erplibre_it got error, detect can use the debugger"
     )
+
+    show_error_chatter = fields.Boolean(help="Show error to chatter")
 
     path_code_generator_to_generate = fields.Char(default="addons/addons")
 
@@ -601,7 +615,7 @@ class ItWorkspace(models.Model):
             end = datetime.now()
             td = (end - start).total_seconds()
             rec.time_exec_action_clear_all_generated_module = f"{td:.03f}s"
-        self.action_check_all()
+        self.action_check()
 
     @api.multi
     def workspace_code_remove_module(self, module_id):
@@ -875,7 +889,7 @@ class ItWorkspace(models.Model):
             end = datetime.now()
             td = (end - start).total_seconds()
             rec.time_exec_action_install_all_generated_module = f"{td:.03f}s"
-        self.action_check_all()
+        self.action_check()
 
     @api.multi
     def action_install_all_uca_generated_module(self):
@@ -908,7 +922,7 @@ class ItWorkspace(models.Model):
             rec.time_exec_action_install_all_uca_generated_module = (
                 f"{td:.03f}s"
             )
-        self.action_check_all()
+        self.action_check()
 
     @api.multi
     def action_install_all_ucb_generated_module(self):
@@ -941,7 +955,7 @@ class ItWorkspace(models.Model):
             rec.time_exec_action_install_all_ucb_generated_module = (
                 f"{td:.03f}s"
             )
-        self.action_check_all()
+        self.action_check()
 
     @api.multi
     def action_install_and_generate_all_generated_module(self):
@@ -1008,11 +1022,16 @@ class ItWorkspace(models.Model):
                 _logger.info(cmd)
             rec.execute(cmd=cmd, force_open_terminal=True, docker=is_docker)
 
-    @api.multi
+    @api.model
     def action_check_all(self):
-        for rec in self:
+        """Run all scheduled check."""
+        return self.search([]).action_check()
+
+    @api.multi
+    def action_check(self):
+        for rec_o in self:
             # Track exception because it's run from cron
-            with rec.it_workspace_log():
+            with rec_o.it_create_exec_bundle("Check all") as rec:
                 # rec.docker_initiate_succeed = not rec.docker_initiate_succeed
                 exec_id = rec.execute(cmd=f"ls {rec.folder}")
                 lst_file = exec_id.log_all.strip().split("\n")
@@ -1025,10 +1044,10 @@ class ItWorkspace(models.Model):
                     rec.is_installed = False
                 if rec.mode_exec in ["docker"]:
                     rec.is_running = rec.workspace_docker_id.docker_is_running
-                    rec.workspace_docker_id.action_check_all()
+                    rec.workspace_docker_id.action_check()
                 elif rec.mode_exec in ["terminal"]:
                     # TODO missing detect is running
-                    rec.workspace_terminal_id.action_check_all()
+                    rec.workspace_terminal_id.action_check()
                 else:
                     _logger.warning(
                         "Support other mode_exec to detect is_running"
@@ -1055,11 +1074,14 @@ class ItWorkspace(models.Model):
 
     @api.multi
     def action_check_tree_addons(self):
-        for rec in self:
-            exec_id = rec.execute(
-                cmd=f"cd {rec.folder};tree", to_instance=True
-            )
-            rec.it_code_generator_tree_addons = exec_id.log_all
+        for rec_o in self:
+            with rec_o.it_create_exec_bundle("Check tree addons") as rec:
+                exec_id = rec.execute(
+                    cmd=f"cd {rec.path_working_erplibre};tree",
+                    to_instance=True,
+                )
+                rec.it_code_generator_tree_addons = exec_id.log_all
+
 
     @api.multi
     def action_restore_db_image(self):
@@ -1259,7 +1281,7 @@ class ItWorkspace(models.Model):
                         f" {out_server_exist}"
                     )
 
-            rec.action_check_all()
+            rec.action_check()
 
     @api.multi
     def action_stop(self):
@@ -1270,7 +1292,7 @@ class ItWorkspace(models.Model):
             elif rec.mode_exec in ["terminal"]:
                 # TODO support it
                 pass
-            rec.action_check_all()
+            rec.action_check()
 
     @api.multi
     def action_reboot(self):
@@ -1395,9 +1417,15 @@ class ItWorkspace(models.Model):
                     first_log_debug = False
 
             force_folder = folder if folder else rec.folder
-            it_exec = self.env["it.exec"].create(
-                {"it_workspace": rec.id, "cmd": cmd, "folder": force_folder}
-            )
+            it_exec_value = {
+                "it_workspace": rec.id,
+                "cmd": cmd,
+                "folder": force_folder,
+            }
+            it_exec_bundle = self.env.context.get("it_exec_bundle")
+            if it_exec_bundle:
+                it_exec_value["it_exec_bundle_id"] = it_exec_bundle
+            it_exec = self.env["it.exec"].create(it_exec_value)
             lst_result.append(it_exec)
             if force_open_terminal:
                 rec_force_docker = rec_force_docker or docker
@@ -1525,3 +1553,120 @@ sock.close()
         else:
             _logger.info("Database it_workspace succeeded: %s", self.name)
             self.message_post(body=_("Database it_workspace succeeded."))
+
+    @api.multi
+    @contextmanager
+    def it_create_exec_bundle(
+        self, description, ignore_parent=False, succeed_msg=False
+    ):
+        self.ensure_one()
+        value_bundle = {"it_workspace": self.id, "description": description}
+        if not ignore_parent:
+            it_exec_bundle_parent = self.env.context.get("it_exec_bundle")
+            if it_exec_bundle_parent:
+                value_bundle["parent_id"] = it_exec_bundle_parent
+        it_exec_bundle_id = self.env["it.exec.bundle"].create(value_bundle)
+        rec = self.with_context(it_exec_bundle=it_exec_bundle_id.id)
+        try:
+            yield rec
+        except Warning as e:
+            raise e
+        except Exception as e:
+            _logger.exception(
+                f"'{description}' it.exec.bundle id '{it_exec_bundle_id.id}'"
+                " failed"
+            )
+            escaped_tb = tools.html_escape(traceback.format_exc())
+            error_value = {
+                "description": description,
+                "escaped_tb": escaped_tb,
+                "it_workspace": rec.id,
+                "it_exec_bundle_ids": it_exec_bundle_id.id,
+            }
+            partner_ids = [
+                (
+                    6,
+                    0,
+                    [
+                        a.partner_id.id
+                        for a in rec.message_follower_ids
+                        if a.partner_id
+                    ],
+                )
+            ]
+            if partner_ids:
+                error_value["partner_ids"] = partner_ids
+            channel_ids = [
+                (
+                    6,
+                    0,
+                    [
+                        a.channel_id.id
+                        for a in rec.message_follower_ids
+                        if a.channel_id
+                    ],
+                )
+            ]
+            if channel_ids:
+                error_value["channel_ids"] = channel_ids
+            # this is not true, cannot associate exec_id to this error
+            # exec_id = it_exec_bundle_id.get_last_exec()
+            # if exec_id:
+            #     error_value["it_exec_ids"] = exec_id.id
+            self.env["it.exec.error"].create(error_value)
+            if rec.show_error_chatter:
+                self.message_post(  # pylint: disable=translation-required
+                    body="<p>%s</p><pre>%s</pre>"
+                    % (
+                        _("it.workspace '%s' failed.") % description,
+                        escaped_tb,
+                    ),
+                    subtype=self.env.ref(
+                        "erplibre_it.mail_message_subtype_failure"
+                    ),
+                    author_id=self.env.ref("base.user_root").partner_id.id,
+                    partner_ids=partner_ids,
+                    channel_ids=channel_ids,
+                )
+        else:
+            if succeed_msg:
+                _logger.info(
+                    "it_workspace succeeded '%s': %s", self.name, description
+                )
+
+                partner_ids = [
+                    (
+                        6,
+                        0,
+                        [
+                            a.partner_id.id
+                            for a in rec.message_follower_ids
+                            if a.partner_id
+                        ],
+                    )
+                ]
+                channel_ids = [
+                    (
+                        6,
+                        0,
+                        [
+                            a.channel_id.id
+                            for a in rec.message_follower_ids
+                            if a.channel_id
+                        ],
+                    )
+                ]
+
+                self.message_post(
+                    body=_("it_workspace succeeded '%s': %s")
+                    % (self.name, description),
+                    subtype=self.env.ref(
+                        "erplibre_it.mail_message_subtype_success"
+                    ),
+                    author_id=self.env.ref("base.user_root").partner_id.id,
+                    partner_ids=partner_ids,
+                    channel_ids=channel_ids,
+                )
+        finally:
+            # Finish bundle
+            it_exec_bundle_id.exec_stop_date = fields.Datetime.now()

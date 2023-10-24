@@ -4,7 +4,7 @@
         <field name="name">it.workspace form</field>
         <field name="model">it.workspace</field>
         <field name="arch" type="xml">
-            <form>
+            <form string="It Workspace">
                 <header>
                     <button
                         class="oe_highlight"
@@ -22,8 +22,8 @@
                     />
                     <button
                         class="oe_highlight"
-                        name="action_check_all"
-                        string="Status check"
+                        name="action_check"
+                        string="Status"
                         type="object"
                         attrs="{'invisible': ['|', ('is_installed', '=', False), ('is_conflict_mode_exec', '=', True)]}"
                     />
@@ -96,6 +96,7 @@
                         <field name="mode_version_erplibre" />
                         <field name="mode_version_base" />
                         <field name="is_debug_log" />
+                        <field name="show_error_chatter" />
                         <field name="is_conflict_mode_exec" invisible="True" />
                         <field name="is_self_instance" invisible="True" />
                         <field name="is_installed" invisible="True" />
@@ -340,21 +341,25 @@
                                 name="it_code_generator_ids"
                                 widget="many2many"
                                 context="{'default_it_workspace_ids': [id]}"
+                                options="{'always_reload': True}"
                             />
                             <field
                                 name="it_code_generator_module_ids"
                                 widget="many2many"
                                 context="{'default_it_workspace_ids': [id]}"
+                                options="{'always_reload': True}"
                             />
                             <field
                                 name="it_code_generator_model_ids"
                                 widget="many2many"
                                 context="{'default_it_workspace_ids': [id]}"
+                                options="{'always_reload': True}"
                             />
                             <field
                                 name="it_code_generator_field_ids"
                                 widget="many2many"
                                 context="{'default_it_workspace_ids': [id]}"
+                                options="{'always_reload': True}"
                             />
                         </group>
                     </page>
@@ -457,13 +462,20 @@
                         </group>
                     </page>
                     <page name="exec" string="Execution">
-                        <group>
-                            <group>
-                                <field name="it_exec_ids" />
-                            </group>
-                        </group>
+                        <field name="it_exec_ids" />
+                    </page>
+                    <page name="exec_bundle" string="Bundle exec">
+                        <field name="it_exec_bundle_ids" />
+                    </page>
+                    <page name="exec_error" string="Error exec">
+                        <field name="it_exec_error_ids" />
                     </page>
                 </notebook>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids" widget="mail_followers" />
+                    <field name="activity_ids" widget="mail_activity" />
+                    <field name="message_ids" widget="mail_thread" />
+                </div>
             </form>
         </field>
     </record>
@@ -529,7 +541,7 @@
         <field name="model_id" ref="model_it_workspace" />
         <field name="binding_model_id" ref="model_it_workspace" />
         <field name="state">code</field>
-        <field name="code">records.action_check_all()</field>
+        <field name="code">records.action_check()</field>
     </record>
 
     <record id="action_server_it_workspace_open_terminal_folder" model="ir.actions.server">
