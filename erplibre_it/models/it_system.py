@@ -28,7 +28,18 @@ class ItSystem(models.Model):
     method = fields.Selection(
         selection=[("local", "Local disk"), ("ssh", "SSH remote server")],
         default="local",
+        require=True,
         help="Choose the communication method.",
+    )
+
+    terminal = fields.Selection(
+        selection=[("gnome_terminal", "Gnome-terminal"), ("xterm", "Xterm")],
+        default="gnome_terminal",
+        require=True,
+        help=(
+            "xterm block the process, not gnome-terminal. But xterm is wide"
+            " supported."
+        ),
     )
 
     ssh_host = fields.Char(
@@ -190,7 +201,7 @@ class ItSystem(models.Model):
         # TODO if folder not exist, cannot CD. don't execute the command if wrong directory
         for rec in self.filtered(lambda r: r.method == "local"):
             str_keep_open = ""
-            if rec.keep_terminal_open:
+            if rec.keep_terminal_open and rec.terminal == "gnome_terminal":
                 str_keep_open = ";bash"
             if cmd:
                 docker_wrap_cmd = f"{cmd}{str_keep_open}"
@@ -205,14 +216,26 @@ class ItSystem(models.Model):
                 if cmd:
                     docker_wrap_cmd += f' -c "{cmd}{str_keep_open}"'
             if docker_wrap_cmd:
-                cmd_output = (
-                    f"cd {folder};gnome-terminal --window -- bash -c"
-                    f" '{docker_wrap_cmd}'"
-                )
-                rec.execute_process(cmd_output)
+                cmd_output = ""
+                if rec.terminal == "xterm":
+                    cmd_output = (
+                        f"cd {folder};xterm -e bash -c '{docker_wrap_cmd}'"
+                    )
+                elif rec.terminal == "gnome_terminal":
+                    cmd_output = (
+                        f"cd {folder};gnome-terminal --window -- bash -c"
+                        f" '{docker_wrap_cmd}'"
+                    )
+                if cmd_output:
+                    rec.execute_process(cmd_output)
             else:
-                cmd_output = f"cd {folder};gnome-terminal --window -- bash"
-                rec.execute_process(cmd_output)
+                cmd_output = ""
+                if rec.terminal == "xterm":
+                    cmd_output = f"cd {folder};xterm"
+                elif rec.terminal == "gnome_terminal":
+                    cmd_output = f"cd {folder};gnome-terminal --window -- bash"
+                if cmd_output:
+                    rec.execute_process(cmd_output)
             if rec.debug_command:
                 print(cmd_output)
         for rec in self.filtered(lambda r: r.method == "ssh"):
@@ -221,6 +244,11 @@ class ItSystem(models.Model):
                 str_keep_open = ";bash"
             sshpass = ""
             if rec.ssh_use_sshpass:
+                if not rec.ssh_password:
+                    raise exceptions.Warning(
+                        "Please, configure your password, because you enable"
+                        " the feature 'ssh_use_sshpass'"
+                    )
                 # TODO validate it exist before use it
                 sshpass = f"sshpass -p {rec.ssh_password} "
             if cmd:

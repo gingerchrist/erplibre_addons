@@ -21,6 +21,7 @@
                 <group>
                     <group string="Basic">
                         <field name="method" />
+                        <field name="terminal" />
                         <field name="keep_terminal_open" />
                         <field name="debug_command" />
                     </group>

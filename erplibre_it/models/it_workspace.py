@@ -250,7 +250,7 @@ class ItWorkspace(models.Model):
     mode_exec = fields.Selection(
         selection=[
             ("docker", "Docker"),
-            ("terminal", "Gnome-terminal"),
+            ("terminal", "Terminal"),
             # ("systemd", "SystemD"),
         ],
         default="docker",
