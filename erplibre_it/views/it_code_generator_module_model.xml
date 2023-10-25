@@ -114,7 +114,8 @@
                 <field name="name" />
                 <field name="module_id" />
                 <field name="description" />
-                <field name="field_ids" />
+                <field name="field_ids" widget="many2many_tags" />
+                <field name="it_workspace_ids" widget="many2many_tags" />
             </tree>
         </field>
     </record>

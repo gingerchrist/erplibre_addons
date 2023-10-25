@@ -148,11 +148,18 @@ class ItSystem(models.Model):
         return result
 
     def execute_with_result(
-        self, cmd, add_stdin_log=False, add_stderr_log=True, engine="bash"
+        self,
+        cmd,
+        folder,
+        add_stdin_log=False,
+        add_stderr_log=True,
+        engine="bash",
     ):
         """
         engine can be bash, python or sh
         """
+        if folder:
+            cmd = f"cd {folder};{cmd}"
         if engine == "python":
             cmd = f"python -c '{cmd}'"
         elif engine == "bash":
@@ -255,13 +262,10 @@ class ItSystem(models.Model):
         docker_name = f"{workspace}-ERPLibre-1"
         # for "docker exec", command line need "-ti", but "popen" no need
         # TODO catch error, stderr with stdout
-        cmd_output = (
-            f"cd {folder};docker exec -u root {docker_name}"
-            f' /bin/bash -c "{cmd}"'
-        )
+        cmd_output = f'docker exec -u root {docker_name} /bin/bash -c "{cmd}"'
         if self.debug_command:
             print(cmd_output)
-        return self.execute_with_result(cmd_output)
+        return self.execute_with_result(cmd_output, folder)
 
     @api.multi
     def action_ssh_test_connection(self):

@@ -131,6 +131,7 @@
                 <field name="field_relation" />
                 <field name="field_relation_manual" />
                 <field name="help" />
+                <field name="it_workspace_ids" widget="many2many_tags" />
             </tree>
         </field>
     </record>

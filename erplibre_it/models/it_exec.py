@@ -72,12 +72,6 @@ class ItExec(models.Model):
             rec.name += f"workspace {rec.it_workspace.id}"
             if rec.module:
                 rec.name += f" - {rec.module}"
-            if rec.execution_finish:
-                rec.name += " - finish"
-            if rec.time_duration_result:
-                if not rec.execution_finish:
-                    rec.name += " -"
-                rec.name += f" {rec.time_duration_result}"
 
     @api.depends(
         "exec_start_date",
@@ -112,22 +106,10 @@ class ItExec(models.Model):
             rec.execution_finish = bool(rec.exec_stop_date)
 
     @api.depends(
-        "exec_start_date",
-        "exec_stop_date",
         "exec_time_duration",
     )
     def _compute_time_duration_result(self):
         for rec in self:
-            out = ""
-            if rec.exec_stop_date:
-                out = (
-                    f"{fields.Datetime.context_timestamp(self, rec.exec_stop_date)}"
-                )
-                if rec.exec_time_duration:
-                    out += (
-                        " duration"
-                        f" {'{:0>8}'.format(str(timedelta(seconds=rec.exec_time_duration)))}"
-                    )
-            elif rec.exec_start_date:
-                out = f" - start {rec.exec_start_date}"
-            rec.time_duration_result = out
+            rec.time_duration_result = (
+                f" {'{:0>8}'.format(str(timedelta(seconds=rec.exec_time_duration)))}"
+            )

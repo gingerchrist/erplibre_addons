@@ -302,7 +302,8 @@ volumes:
             )
             result = exec_id.log_all
             # rec.docker_compose_ps = f"\n{result}"
-            rec.docker_is_running = result
+            rec.docker_is_running = bool(result)
+            rec.workspace_id.is_running = rec.docker_is_running
 
     @api.multi
     def action_docker_logs(self):

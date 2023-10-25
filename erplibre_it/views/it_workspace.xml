@@ -70,14 +70,6 @@
                         attrs="{'invisible': [('is_conflict_mode_exec', '=', True)]}"
                         groups="base.group_no_one"
                     />
-                    <button
-                        class="oe_highlight"
-                        name="action_restart_odoo"
-                        string="Restart"
-                        type="object"
-                        attrs="{'invisible': [('is_me', '=', False)]}"
-                        groups="base.group_no_one"
-                    />
                 </header>
                 <div
                     class="badge-pill badge-success float-right"
@@ -103,13 +95,19 @@
                         <field name="mode_environnement" />
                         <field name="mode_version_erplibre" />
                         <field name="mode_version_base" />
-                        <field name="is_debug_log" />
-                        <field name="show_error_chatter" />
                         <field name="is_conflict_mode_exec" invisible="True" />
                         <field name="is_self_instance" invisible="True" />
                         <field name="is_installed" invisible="True" />
                         <field name="is_running" invisible="True" />
                         <field name="is_me" invisible="True" />
+                    </group>
+                    <group string="Execution">
+                        <field name="is_debug_log" />
+                        <field name="show_error_chatter" />
+                        <field
+                            name="exec_reboot_process"
+                            attrs="{'invisible': ['|', ('mode_exec', '=', 'docker'), ('is_me', '=', False)]}"
+                        />
                     </group>
                     <group string="Network" attrs="{'invisible': [('is_installed', '=', False)]}">
                         <button
@@ -117,6 +115,7 @@
                             name="action_network_change_port_random"
                             string="Random port"
                             type="object"
+                            attrs="{'invisible': [('exec_reboot_process', '=', False)]}"
                         />
                         <button
                             class="oe_highlight"
@@ -146,6 +145,7 @@
                     </group>
                     <group string="Action">
                         <button class="oe_highlight" name="action_open_terminal" string="Terminal" type="object" />
+                        <button class="oe_highlight" name="action_clear_cache" string="Clear cache" type="object" />
                         <!--                            <button class="oe_highlight" name="action_open_terminal_docker" string="Terminal docker" type="object" />-->
                     </group>
                 </group>
@@ -203,7 +203,7 @@
                         </group>
                     </page>
                     <page name="code_generator" string="Code">
-                        <group string="Action">
+                        <group string="Action CG">
                             <group>
                                 <button
                                     class="oe_highlight"
@@ -291,6 +291,8 @@
                                     <field name="time_exec_action_install_all_ucb_generated_module" nolabel="1" />
                                 </div>
                             </group>
+                        </group>
+                        <group string="Action addons">
                             <group>
                                 <button
                                     class="oe_highlight"
@@ -334,6 +336,18 @@
                                     string="Terminal addons"
                                     type="object"
                                 />
+                            </group>
+                        </group>
+                        <group string="Action other">
+                            <group>
+                                <button
+                                    class="oe_highlight"
+                                    name="action_cg_generate_demo"
+                                    string="Generate demo"
+                                    type="object"
+                                />
+                                <field name="is_clear_before_cg_demo" />
+                                <field name="cg_demo_type_data" />
                             </group>
                         </group>
                         <group string="Execution">
@@ -473,7 +487,7 @@
                         <field name="it_exec_ids" />
                     </page>
                     <page name="exec_bundle" string="Bundle exec">
-                        <field name="it_exec_bundle_ids" />
+                        <field name="it_exec_bundle_root_ids" />
                     </page>
                     <page name="exec_error" string="Error exec">
                         <field name="it_exec_error_ids" />

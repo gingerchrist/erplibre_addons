@@ -96,8 +96,9 @@
         <field name="arch" type="xml">
             <tree>
                 <field name="name" />
-                <field name="it_workspace_ids" />
-                <field name="module_ids" />
+                <field name="module_ids" widget="many2many_tags" />
+                <field name="force_clean_before_generate" />
+                <field name="it_workspace_ids" widget="many2many_tags" />
             </tree>
         </field>
     </record>

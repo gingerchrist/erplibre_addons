@@ -101,7 +101,8 @@
             <tree>
                 <field name="name" />
                 <field name="code_generator" />
-                <field name="model_ids" />
+                <field name="model_ids" widget="many2many_tags" />
+                <field name="it_workspace_ids" widget="many2many_tags" />
             </tree>
         </field>
     </record>

@@ -14,6 +14,10 @@ import requests
 from odoo import _, api, exceptions, fields, models, service, tools
 
 _logger = logging.getLogger(__name__)
+# TODO move into configuration or erplibre_it
+SLEEP_KILL = 2
+SLEEP_WAIT_KILL = 3
+SLEEP_ERROR_RESTORE_KILL = 5
 
 
 class ItWorkspace(models.Model):
@@ -37,6 +41,13 @@ class ItWorkspace(models.Model):
         comodel_name="it.exec.bundle",
         inverse_name="it_workspace",
         string="Executions bundle",
+    )
+
+    it_exec_bundle_root_ids = fields.One2many(
+        comodel_name="it.exec.bundle",
+        inverse_name="it_workspace",
+        string="Executions bundle root",
+        domain=[("parent_id", "=", False)],
     )
 
     it_exec_error_ids = fields.One2many(
@@ -72,6 +83,7 @@ class ItWorkspace(models.Model):
 
     is_debug_log = fields.Boolean(help="Will print cmd to debug.")
 
+    # TODO transform in in compute with it_workspace_docker.is_running
     is_running = fields.Boolean(
         readonly=True,
         default=False,
@@ -124,6 +136,15 @@ class ItWorkspace(models.Model):
 
     db_is_restored = fields.Boolean(
         readonly=True, help="When false, it's because actually restoring a DB."
+    )
+
+    exec_reboot_process = fields.Boolean(
+        help=(
+            "Reboot means kill and reborn, but from operating system, where is"
+            " the origin! False mean keep same parent process, reboot the ERP"
+            " only. When False, a bug occur and the transaction cannot finish."
+            " Only work with is_me."
+        )
     )
 
     url_instance = fields.Char(
@@ -195,7 +216,7 @@ class ItWorkspace(models.Model):
     it_cg_erplibre_it_log = fields.Text(
         string="Log CG erplibre_it new_project",
         help=(
-            "Will show code generator log for new project erplibr_it, last"
+            "Will show code generator log for new project erplibre_it, last"
             " execution"
         ),
         readonly=True,
@@ -204,7 +225,7 @@ class ItWorkspace(models.Model):
     it_cg_erplibre_it_error_log = fields.Text(
         string="Error CG erplibre_it new_project",
         help=(
-            "Will show code generator error for new project erplibr_it, last"
+            "Will show code generator error for new project erplibre_it, last"
             " execution"
         ),
         readonly=True,
@@ -254,6 +275,24 @@ class ItWorkspace(models.Model):
     is_conflict_mode_exec = fields.Boolean(
         compute="_compute_is_conflict_mode_exec",
         store=True,
+    )
+
+    is_clear_before_cg_demo = fields.Boolean(
+        default=True,
+        help=(
+            "When generate data demo for code generator, delete all data"
+            " before."
+        ),
+    )
+
+    cg_demo_type_data = fields.Selection(
+        selection=[
+            ("simple", "Simple"),
+            ("ore", "ORE"),
+        ],
+        required=True,
+        default="simple",
+        help="Generate a set of data depend of the type to generate.",
     )
 
     mode_version_erplibre = fields.Selection(
@@ -569,9 +608,13 @@ class ItWorkspace(models.Model):
                             # .replace('"', '\\"')
                             # .replace("'", "")
                         )
+                        directory = os.path.join(
+                            rec.path_working_erplibre,
+                            rec.path_code_generator_to_generate,
+                        )
                         dct_new_project = {
                             "module": module_name,
-                            "directory": rec.path_code_generator_to_generate,
+                            "directory": directory,
                             "keep_bd_alive": True,
                             "it_workspace": rec.id,
                             "project_type": "cg",
@@ -635,8 +678,8 @@ class ItWorkspace(models.Model):
     @api.multi
     def workspace_code_remove_module(self, module_id):
         for rec in self:
-            path_to_remove = (
-                f"cd {rec.path_working_erplibre}/{rec.path_code_generator_to_generate}"
+            path_to_remove = os.path.join(
+                rec.path_working_erplibre, rec.path_code_generator_to_generate
             )
             rec.workspace_remove_module(module_id.name, path_to_remove)
 
@@ -644,8 +687,9 @@ class ItWorkspace(models.Model):
     def workspace_CG_remove_module(self):
         for rec in self:
             # TODO is it necessary to hardcode it? Why not merge with code section?
-            path_to_remove = (
-                f"cd {rec.path_working_erplibre}/addons/ERPLibre_erplibre_addons"
+
+            path_to_remove = os.path.join(
+                rec.path_working_erplibre, "addons", "ERPLibre_erplibre_addons"
             )
             rec.workspace_remove_module(
                 "erplibre_it", path_to_remove, remove_module=False
@@ -658,18 +702,18 @@ class ItWorkspace(models.Model):
         for rec in self:
             if remove_module:
                 rec.execute(
-                    cmd=f"{path_to_remove};rm -rf ./{module_name};",
+                    cmd=f"rm -rf ./{module_name};",
+                    folder=path_to_remove,
                     to_instance=True,
                 )
             rec.execute(
-                cmd=(
-                    f"{path_to_remove};rm"
-                    f" -rf ./code_generator_template_{module_name};"
-                ),
+                cmd=f"rm -rf ./code_generator_template_{module_name};",
+                folder=path_to_remove,
                 to_instance=True,
             )
             rec.execute(
-                cmd=f"{path_to_remove};rm -rf ./code_generator_{module_name};",
+                cmd=f"rm -rf ./code_generator_{module_name};",
+                folder=path_to_remove,
                 to_instance=True,
             )
 
@@ -677,13 +721,15 @@ class ItWorkspace(models.Model):
     def action_git_commit_all_generated_module(self):
         for rec_o in self:
             with rec_o.it_create_exec_bundle("CG commit all") as rec:
+                folder = os.path.join(
+                    rec.path_working_erplibre,
+                    rec.path_code_generator_to_generate,
+                )
                 start = datetime.now()
                 # for cg in rec.it_code_generator_ids:
                 # Validate git directory exist
                 exec_id = rec.execute(
-                    cmd=(
-                        f"ls {rec.path_working_erplibre}/{rec.path_code_generator_to_generate}/.git"
-                    ),
+                    cmd=f"ls {folder}/.git",
                     to_instance=True,
                 )
                 result = exec_id.log_all
@@ -692,25 +738,22 @@ class ItWorkspace(models.Model):
                     # This is not good if .git directory is in parent directory
                     rec.execute(
                         cmd=(
-                            f"cd {rec.path_working_erplibre}/{rec.path_code_generator_to_generate};git"
+                            "git"
                             " init;echo '*.pyc' > .gitignore;git add"
                             " .gitignore;git commit -m 'first commit'"
                         ),
+                        folder=folder,
                         to_instance=True,
                     )
                     rec.execute(
-                        cmd=(
-                            f"cd {rec.path_working_erplibre}/{rec.path_code_generator_to_generate};git"
-                            " init"
-                        ),
+                        cmd="git init",
+                        folder=folder,
                         to_instance=True,
                     )
 
                 exec_id = rec.execute(
-                    cmd=(
-                        f"cd {rec.path_working_erplibre}/{rec.path_code_generator_to_generate};git"
-                        " status -s"
-                    ),
+                    cmd=f"git status -s",
+                    folder=folder,
                     to_instance=True,
                 )
                 result = exec_id.log_all
@@ -718,17 +761,13 @@ class ItWorkspace(models.Model):
                     # TODO show result to log
                     # Force add file and commit
                     rec.execute(
-                        cmd=(
-                            f"cd {rec.path_working_erplibre}/{rec.path_code_generator_to_generate};git"
-                            " add ."
-                        ),
+                        cmd=f"git add .",
+                        folder=folder,
                         to_instance=True,
                     )
                     rec.execute(
-                        cmd=(
-                            f"cd {rec.path_working_erplibre}/{rec.path_code_generator_to_generate};git"
-                            " commit -m 'Commit by RobotLibre'"
-                        ),
+                        cmd=f"git commit -m 'Commit by RobotLibre'",
+                        folder=folder,
                         to_instance=True,
                     )
                 end = datetime.now()
@@ -741,33 +780,31 @@ class ItWorkspace(models.Model):
     def action_refresh_meta_cg_generated_module(self):
         for rec_o in self:
             with rec_o.it_create_exec_bundle("Refresh meta CG") as rec:
+                folder = os.path.join(
+                    rec.path_working_erplibre,
+                    rec.path_code_generator_to_generate,
+                )
                 start = datetime.now()
                 diff = ""
                 status = ""
                 stat = ""
                 exec_id = rec.execute(
-                    cmd=(
-                        f"ls {rec.path_working_erplibre}/{rec.path_code_generator_to_generate}/.git"
-                    ),
+                    cmd=f"ls {folder}/.git",
                     to_instance=True,
                 )
                 result = exec_id.log_all
                 if result:
                     # Create diff
                     exec_id = rec.execute(
-                        cmd=(
-                            f"cd {rec.path_working_erplibre}/{rec.path_code_generator_to_generate};git"
-                            " diff"
-                        ),
+                        cmd=f"git diff",
+                        folder=folder,
                         to_instance=True,
                     )
                     diff += exec_id.log_all
                     # Create status
                     exec_id = rec.execute(
-                        cmd=(
-                            f"cd {rec.path_working_erplibre}/{rec.path_code_generator_to_generate};git"
-                            " status"
-                        ),
+                        cmd=f"git status",
+                        folder=folder,
                         to_instance=True,
                     )
                     status += exec_id.log_all
@@ -776,9 +813,10 @@ class ItWorkspace(models.Model):
                         for module_id in cg.module_ids:
                             exec_id = rec.execute(
                                 cmd=(
-                                    f"cd {rec.path_working_erplibre};./script/statistic/code_count.sh"
+                                    "./script/statistic/code_count.sh"
                                     f" ./{rec.path_code_generator_to_generate}/{module_id.name};"
                                 ),
+                                folder=rec.path_working_erplibre,
                                 to_instance=True,
                             )
                             result = exec_id.log_all
@@ -788,9 +826,10 @@ class ItWorkspace(models.Model):
 
                             exec_id = rec.execute(
                                 cmd=(
-                                    f"cd {rec.path_working_erplibre};./script/statistic/code_count.sh"
+                                    "./script/statistic/code_count.sh"
                                     f" ./{rec.path_code_generator_to_generate}/code_generator_template_{module_id.name};"
                                 ),
+                                folder=rec.path_working_erplibre,
                                 to_instance=True,
                             )
                             result = exec_id.log_all
@@ -800,9 +839,10 @@ class ItWorkspace(models.Model):
 
                             exec_id = rec.execute(
                                 cmd=(
-                                    f"cd {rec.path_working_erplibre};./script/statistic/code_count.sh"
+                                    "./script/statistic/code_count.sh"
                                     f" ./{rec.path_code_generator_to_generate}/code_generator_{module_id.name};"
                                 ),
+                                folder=rec.path_working_erplibre,
                                 to_instance=True,
                             )
                             result = exec_id.log_all
@@ -905,7 +945,8 @@ class ItWorkspace(models.Model):
                 elif rec.mode_exec in ["terminal"]:
                     rec.execute(
                         "./script/addons/install_addons.sh"
-                        f" {rec.db_name} {module_list}"
+                        f" {rec.db_name} {module_list}",
+                        to_instance=True,
                     )
                     rec.action_reboot()
                 end = datetime.now()
@@ -928,17 +969,16 @@ class ItWorkspace(models.Model):
                     ]
                 )
                 rec.execute(
-                    cmd=(
-                        f"cd {rec.path_working_erplibre};./script/database/db_restore.py"
-                        " --database cg_uca"
-                    ),
+                    cmd=f"./script/database/db_restore.py --database cg_uca",
+                    folder=rec.path_working_erplibre,
                     to_instance=True,
                 )
                 rec.execute(
                     cmd=(
-                        f"cd {rec.path_working_erplibre};./script/addons/install_addons_dev.sh"
+                        "./script/addons/install_addons_dev.sh"
                         f" cg_uca {module_list}"
                     ),
+                    folder=rec.path_working_erplibre,
                     to_instance=True,
                 )
 
@@ -962,17 +1002,16 @@ class ItWorkspace(models.Model):
                     ]
                 )
                 rec.execute(
-                    cmd=(
-                        f"cd {rec.path_working_erplibre};./script/database/db_restore.py"
-                        " --database cg_ucb"
-                    ),
+                    cmd=f"./script/database/db_restore.py --database cg_ucb",
+                    folder=rec.path_working_erplibre,
                     to_instance=True,
                 )
                 rec.execute(
                     cmd=(
-                        f"cd {rec.path_working_erplibre};./script/addons/install_addons_dev.sh"
+                        "./script/addons/install_addons_dev.sh"
                         f" cg_ucb {module_list}"
                     ),
+                    folder=rec.path_working_erplibre,
                     to_instance=True,
                 )
 
@@ -1007,19 +1046,262 @@ class ItWorkspace(models.Model):
                 rec.execute(force_open_terminal=True)
 
     @api.multi
+    def action_clear_cache(self):
+        for rec in self:
+            rec.time_exec_action_code_generator_generate_all = False
+            rec.time_exec_action_cg_erplibre_it = False
+            rec.time_exec_action_clear_all_generated_module = False
+            rec.time_exec_action_install_all_generated_module = False
+            rec.time_exec_action_install_all_uca_generated_module = False
+            rec.time_exec_action_install_all_ucb_generated_module = False
+            rec.time_exec_action_install_and_generate_all_generated_module = (
+                False
+            )
+            rec.time_exec_action_refresh_meta_cg_generated_module = False
+            rec.time_exec_action_git_commit_all_generated_module = False
+            rec.it_code_generator_status = False
+            rec.it_code_generator_diff = False
+            rec.it_code_generator_stat = False
+            rec.it_code_generator_tree_addons = False
+            rec.log_workspace = False
+            rec.it_code_generator_log_addons = False
+
+    @api.multi
     def action_open_terminal_addons(self):
         for rec_o in self:
             with rec_o.it_create_exec_bundle("Open Terminal addons") as rec:
-                cmd = (
-                    f"cd {os.path.join(rec.path_working_erplibre, rec.path_code_generator_to_generate)};ls -l"
+                folder = os.path.join(
+                    rec.path_working_erplibre,
+                    rec.path_code_generator_to_generate,
                 )
+                cmd = f"ls -l"
                 if rec.is_debug_log:
                     _logger.info(cmd)
                 rec.execute(
                     cmd=cmd,
+                    folder=folder,
                     force_open_terminal=True,
                     docker=bool(rec.mode_exec in ["docker"]),
                 )
+
+    @api.multi
+    def action_cg_generate_demo(self):
+        for rec_o in self:
+            with rec_o.it_create_exec_bundle("Generate data demo") as rec:
+                if rec.cg_demo_type_data == "simple":
+                    # Project
+                    cg_id = self.env["it.code_generator"].create(
+                        {
+                            "name": "Parc de voiture",
+                            "it_workspace_ids": [(6, 0, rec.ids)],
+                            "force_clean_before_generate": True,
+                        }
+                    )
+                    # Module
+                    cg_module_id = self.env["it.code_generator.module"].create(
+                        {
+                            "name": "parc",
+                            "code_generator": cg_id.id,
+                            "it_workspace_ids": [(6, 0, rec.ids)],
+                        }
+                    )
+                    # Model
+                    cg_model_voiture_id = self.env[
+                        "it.code_generator.module.model"
+                    ].create(
+                        {
+                            "name": "parc.voiture",
+                            "description": "Ensemble de voiture dans le parc",
+                            "module_id": cg_module_id.id,
+                            "it_workspace_ids": [(6, 0, rec.ids)],
+                        }
+                    )
+                    # Field
+                    cg_field_voiture_couleur_id = self.env[
+                        "it.code_generator.module.model.field"
+                    ].create(
+                        {
+                            "name": "couleur",
+                            "help": "Couleur de la voiture.",
+                            "type": "char",
+                            "model_id": cg_model_voiture_id.id,
+                            "it_workspace_ids": [(6, 0, rec.ids)],
+                        }
+                    )
+                    if rec.is_clear_before_cg_demo:
+                        rec.it_code_generator_ids = [(6, 0, cg_id.ids)]
+                        rec.it_code_generator_module_ids = [
+                            (6, 0, cg_module_id.ids)
+                        ]
+                        rec.it_code_generator_model_ids = [
+                            (
+                                6,
+                                0,
+                                [
+                                    cg_model_voiture_id.id,
+                                ],
+                            )
+                        ]
+                        rec.it_code_generator_field_ids = [
+                            (
+                                6,
+                                0,
+                                [
+                                    cg_field_voiture_couleur_id.id,
+                                ],
+                            )
+                        ]
+                    else:
+                        rec.it_code_generator_ids = [(4, cg_id.id)]
+                        rec.it_code_generator_module_ids = [
+                            (4, cg_module_id.id)
+                        ]
+                        rec.it_code_generator_model_ids = [
+                            (4, cg_model_voiture_id.id),
+                        ]
+                        rec.it_code_generator_field_ids = [
+                            (4, cg_field_voiture_couleur_id.id),
+                        ]
+                elif rec.cg_demo_type_data == "ore":
+                    # Project
+                    cg_id = self.env["it.code_generator"].create(
+                        {
+                            "name": "Offrir Recevoir Échanger",
+                            "it_workspace_ids": [(6, 0, rec.ids)],
+                            "force_clean_before_generate": True,
+                        }
+                    )
+                    # Module
+                    cg_module_id = self.env["it.code_generator.module"].create(
+                        {
+                            "name": "ore",
+                            "code_generator": cg_id.id,
+                            "it_workspace_ids": [(6, 0, rec.ids)],
+                        }
+                    )
+                    # Model
+                    cg_model_offre_id = self.env[
+                        "it.code_generator.module.model"
+                    ].create(
+                        {
+                            "name": "ore.offre.service",
+                            "description": (
+                                "Permet de créer une offre de service"
+                                " publiable dans la communauté."
+                            ),
+                            "module_id": cg_module_id.id,
+                            "it_workspace_ids": [(6, 0, rec.ids)],
+                        }
+                    )
+                    cg_model_demande_id = self.env[
+                        "it.code_generator.module.model"
+                    ].create(
+                        {
+                            "name": "ore.demande.service",
+                            "description": (
+                                "Permet de créer une demande de service"
+                                " publiable dans la communauté."
+                            ),
+                            "module_id": cg_module_id.id,
+                            "it_workspace_ids": [(6, 0, rec.ids)],
+                        }
+                    )
+                    # Field
+                    cg_field_offre_date_afficher_id = self.env[
+                        "it.code_generator.module.model.field"
+                    ].create(
+                        {
+                            "name": "date_service_afficher",
+                            "help": (
+                                "Date à laquelle l'offre de service sera"
+                                " affiché."
+                            ),
+                            "type": "date",
+                            "model_id": cg_model_offre_id.id,
+                            "it_workspace_ids": [(6, 0, rec.ids)],
+                        }
+                    )
+                    cg_field_offre_temps_estime_id = self.env[
+                        "it.code_generator.module.model.field"
+                    ].create(
+                        {
+                            "name": "temp_estime",
+                            "help": (
+                                "Temps estimé pour effectuer le service à"
+                                " offrir."
+                            ),
+                            "type": "float",
+                            "model_id": cg_model_offre_id.id,
+                            "it_workspace_ids": [(6, 0, rec.ids)],
+                        }
+                    )
+                    cg_field_demande_date_afficher_id = self.env[
+                        "it.code_generator.module.model.field"
+                    ].create(
+                        {
+                            "name": "date_service_afficher",
+                            "help": (
+                                "Date à laquelle la demande de service sera"
+                                " affiché."
+                            ),
+                            "type": "date",
+                            "model_id": cg_model_demande_id.id,
+                            "it_workspace_ids": [(6, 0, rec.ids)],
+                        }
+                    )
+                    cg_field_demande_condition_id = self.env[
+                        "it.code_generator.module.model.field"
+                    ].create(
+                        {
+                            "name": "condition",
+                            "help": "Condition sur la demande de service.",
+                            "type": "text",
+                            "model_id": cg_model_demande_id.id,
+                            "it_workspace_ids": [(6, 0, rec.ids)],
+                        }
+                    )
+                    if rec.is_clear_before_cg_demo:
+                        rec.it_code_generator_ids = [(6, 0, cg_id.ids)]
+                        rec.it_code_generator_module_ids = [
+                            (6, 0, cg_module_id.ids)
+                        ]
+                        rec.it_code_generator_model_ids = [
+                            (
+                                6,
+                                0,
+                                [
+                                    cg_model_offre_id.id,
+                                    cg_model_demande_id.id,
+                                ],
+                            )
+                        ]
+                        rec.it_code_generator_field_ids = [
+                            (
+                                6,
+                                0,
+                                [
+                                    cg_field_offre_date_afficher_id.id,
+                                    cg_field_offre_temps_estime_id.id,
+                                    cg_field_demande_date_afficher_id.id,
+                                    cg_field_demande_condition_id.id,
+                                ],
+                            )
+                        ]
+                    else:
+                        rec.it_code_generator_ids = [(4, cg_id.id)]
+                        rec.it_code_generator_module_ids = [
+                            (4, cg_module_id.id)
+                        ]
+                        rec.it_code_generator_model_ids = [
+                            (4, cg_model_offre_id.id),
+                            (4, cg_model_demande_id.id),
+                        ]
+                        rec.it_code_generator_field_ids = [
+                            (4, cg_field_offre_date_afficher_id.id),
+                            (4, cg_field_offre_temps_estime_id.id),
+                            (4, cg_field_demande_date_afficher_id.id),
+                            (4, cg_field_demande_condition_id.id),
+                        ]
 
     @api.multi
     def action_open_terminal_tig(self):
@@ -1042,18 +1324,22 @@ class ItWorkspace(models.Model):
                 exec_id = rec.execute(cmd=f"ls {dir_to_check}")
                 status_ls = exec_id.log_all
                 if "No such file or directory" in status_ls:
-                    raise Warning(
+                    raise exceptions.Warning(
                         "Cannot open command 'tig', cannot find directory"
                         f" '{dir_to_check}'."
                     )
-                cmd = (
-                    f"cd {rec.path_working_erplibre};cd"
-                    f" ./{rec.path_code_generator_to_generate};tig"
+                folder = os.path.join(
+                    rec.path_working_erplibre,
+                    rec.path_code_generator_to_generate,
                 )
+                cmd = f"tig"
                 if rec.is_debug_log:
                     _logger.info(cmd)
                 rec.execute(
-                    cmd=cmd, force_open_terminal=True, docker=is_docker
+                    cmd=cmd,
+                    force_open_terminal=True,
+                    folder=folder,
+                    docker=is_docker,
                 )
 
     @api.model
@@ -1080,7 +1366,10 @@ class ItWorkspace(models.Model):
                     rec.is_running = rec.workspace_docker_id.docker_is_running
                     rec.workspace_docker_id.action_check()
                 elif rec.mode_exec in ["terminal"]:
-                    # TODO missing detect is running
+                    exec_id = rec.execute(
+                        f"lsof -i TCP:{rec.port_http} | grep python"
+                    )
+                    rec.is_running = bool(exec_id.log_all)
                     rec.workspace_terminal_id.action_check()
                 else:
                     _logger.warning(
@@ -1106,20 +1395,21 @@ class ItWorkspace(models.Model):
                 rec.is_me = True
                 rec.port_http = 8069
                 rec.port_longpolling = 8072
+                rec.is_running = True
 
     @api.multi
     def action_check_tree_addons(self):
         for rec_o in self:
             with rec_o.it_create_exec_bundle("Check tree addons") as rec:
+                folder = os.path.join(
+                    rec.path_working_erplibre, "addons", "addons"
+                )
                 exec_id = rec.execute(
-                    cmd=f"cd {rec.path_working_erplibre}/addons/addons;tree",
+                    cmd=f"tree",
+                    folder=folder,
                     to_instance=True,
                 )
                 rec.it_code_generator_tree_addons = exec_id.log_all
-
-    @api.multi
-    def action_restart_odoo(self):
-        service.server.restart()
 
     @api.multi
     def action_restore_db_image(self):
@@ -1131,11 +1421,12 @@ class ItWorkspace(models.Model):
                     if rec.image_db_selection:
                         image = f" --image {rec.image_db_selection.name}"
                     cmd = (
-                        f"cd {rec.path_working_erplibre};"
                         "./script/database/db_restore.py --database"
                         f" {rec.db_name}{image};"
                     )
-                    exec_id = rec.execute(cmd=cmd)
+                    exec_id = rec.execute(
+                        cmd=cmd, folder=rec.path_working_erplibre
+                    )
                     rec.log_workspace = f"\n{exec_id.log_all}"
                 elif rec.mode_exec in ["docker"]:
                     # maybe send by network REST web/database/restore
@@ -1160,36 +1451,37 @@ class ItWorkspace(models.Model):
                     )
                     if response.status_code == 200:
                         database_list = response.json()
-                        print(database_list)
+                        _logger.info(database_list)
                     else:
-                        # TODO remove print
-                        print("une erreur")
+                        _logger.error(
+                            "Restore image response error"
+                            f" {response.status_code}"
+                        )
                         continue
 
                     # Delete first
                     # TODO cannot delete database if '-d database' argument -d is set
                     result_db_list = database_list.get("result")
                     if rec.db_name in result_db_list:
-                        print(result_db_list)
+                        _logger.info(result_db_list)
                         files = {
                             "master_pwd": (None, "admin"),
                             "name": (None, rec.db_name),
                         }
                         response = session.post(url_drop, files=files)
                         if response.status_code == 200:
-                            print("Le drop a été envoyé avec succès.")
+                            _logger.info("Le drop a été envoyé avec succès.")
                         else:
                             rec.workspace_docker_id.docker_cmd_extra = ""
                             # TODO detect "-d" in execution instead of force action_reboot
                             rec.action_reboot()
-                            next_second = 5
-                            print(
+                            _logger.error(
                                 "Une erreur s'est produite lors du drop, code"
                                 f" '{response.status_code}'. Retry in"
-                                f" {next_second} seconds"
+                                f" {SLEEP_ERROR_RESTORE_KILL} seconds"
                             )
                             # Strange, retry for test
-                            time.sleep(next_second)
+                            time.sleep(SLEEP_ERROR_RESTORE_KILL)
                             # response = requests.get(
                             #     url_list,
                             #     data=json.dumps({}),
@@ -1202,12 +1494,12 @@ class ItWorkspace(models.Model):
                             if response.status_code == 200:
                                 # database_list = response.json()
                                 # print(database_list)
-                                print(
+                                _logger.info(
                                     "Seconde essaie, le drop a été envoyé avec"
                                     " succès."
                                 )
                             else:
-                                print(
+                                _logger.error(
                                     "Seconde essaie, une erreur s'est produite"
                                     " lors du drop, code"
                                     f" '{response.status_code}'."
@@ -1224,7 +1516,7 @@ class ItWorkspace(models.Model):
                             )
                             if response.status_code == 200:
                                 database_list = response.json()
-                                print(database_list)
+                                _logger.info(database_list)
 
                     if not rec.has_error_restore_db:
                         with open(backup_file_path, "rb") as backup_file:
@@ -1239,13 +1531,13 @@ class ItWorkspace(models.Model):
                             }
                             response = session.post(url_restore, files=files)
                         if response.status_code == 200:
-                            print(
+                            _logger.info(
                                 "Le fichier de restauration a été envoyé avec"
                                 " succès."
                             )
                             rec.db_is_restored = True
                         else:
-                            print(
+                            _logger.error(
                                 "Une erreur s'est produite lors de l'envoi du"
                                 " fichier de restauration."
                             )
@@ -1255,7 +1547,7 @@ class ItWorkspace(models.Model):
                     # print(res.text)
 
     @api.multi
-    def check_it_workspace_docker(self):
+    def check_it_workspace(self):
         for rec in self:
             if rec.mode_exec in ["docker"]:
                 if not rec.workspace_docker_id:
@@ -1268,81 +1560,102 @@ class ItWorkspace(models.Model):
                         "it.workspace.terminal"
                     ].create({"workspace_id": rec.id})
             else:
-                raise Warning(f"Cannot support '{rec.mode_exec}'")
+                raise exceptions.Warning(f"Cannot support '{rec.mode_exec}'")
 
     @api.multi
     def action_start(self):
-        # Not work sleep 0 with gnome_terminal
-        # need enough second to write to database
-        sleep_kill = 2
         for rec_o in self:
             with rec_o.it_create_exec_bundle("Start") as rec:
-                rec.check_it_workspace_docker()
-                exec_id = rec.execute(
-                    f"lsof -i TCP:{rec.port_http} | grep python"
-                )
-                out_server_exist = exec_id.log_all
+                rec.check_it_workspace()
                 if rec.mode_exec in ["docker"]:
                     rec.workspace_docker_id.action_start_docker_compose()
                 elif rec.mode_exec in ["terminal"]:
-                    # TODO support is_me with docker
-                    prefix = ""
-                    if rec.is_me and out_server_exist:
-                        prefix = f"sleep {sleep_kill * 2};"
                     rec.execute(
                         cmd=(
-                            f"{prefix}./run.sh -d"
+                            "./run.sh -d"
                             f" {rec.db_name} --http-port={rec.port_http} --longpolling-port={rec.port_longpolling}"
                         ),
                         force_open_terminal=True,
                     )
-                if out_server_exist:
-                    # TODO this cause problem, cannot save all information
-                    # kill me if I exist
-                    # kill first application with python3 with this port
-                    # Ignore the browser with the same page, that's why need grep
-                    # The first number is the 3 from python3, so take second number
-                    # Force to kill, because execution is running, a simple sigint will not work. Cannot write this request
-                    if out_server_exist.startswith("python3 "):
-                        cmd = (
-                            f"sleep {sleep_kill};kill -9 $(lsof -i"
-                            f" TCP:{rec.port_http} | grep python3 | grep -oE"
-                            " '[0-9]+' | sed -n '2p');exit"
-                        )
-                        rec.execute(cmd=cmd, force_open_terminal=True)
-                    elif out_server_exist.startswith("python "):
-                        cmd = (
-                            f"sleep {sleep_kill};kill -9 $(lsof -i"
-                            f" TCP:{rec.port_http} | grep python | grep -oE"
-                            " '[0-9]+' | head -n1);exit"
-                        )
-                        rec.execute(cmd=cmd, force_open_terminal=True)
-                    else:
-                        _logger.warning(
-                            "What is the software for the port"
-                            f" {rec.port_http} : {out_server_exist}"
-                        )
-
-                rec.action_check()
+                    # TODO validate output if execution conflict port to remove time.sleep
+                    rec.is_running = True
+                    # Time to start services, because action_check need time to detect port is open
+                    time.sleep(SLEEP_KILL)
 
     @api.multi
     def action_stop(self):
         for rec_o in self:
             with rec_o.it_create_exec_bundle("Stop") as rec:
-                rec.check_it_workspace_docker()
+                rec.check_it_workspace()
                 if rec.mode_exec in ["docker"]:
                     rec.workspace_docker_id.action_stop_docker_compose()
                 elif rec.mode_exec in ["terminal"]:
-                    # TODO support it
-                    pass
+                    exec_id = rec.execute(
+                        f"lsof -i TCP:{rec.port_http} | grep python"
+                    )
+                    if exec_id.log_all:
+                        rec.kill_process(exec_id.log_all)
+
                 rec.action_check()
 
     @api.multi
     def action_reboot(self):
         for rec_o in self:
             with rec_o.it_create_exec_bundle("Reboot") as rec:
-                rec.action_stop()
-                rec.action_start()
+                if rec.is_me:
+                    if not rec.exec_reboot_process:
+                        service.server.restart()
+                    else:
+                        # Expect already run ;-), no need to validate
+                        pid = os.getpid()
+                        rec.execute(
+                            cmd=f"sleep {SLEEP_KILL};kill -9 {pid}",
+                            force_open_terminal=True,
+                            force_exit=True,
+                        )
+                        rec.execute(
+                            cmd=(
+                                f"sleep {SLEEP_WAIT_KILL};./run.sh -d"
+                                f" {rec.db_name} --http-port={rec.port_http} --longpolling-port={rec.port_longpolling}"
+                            ),
+                            force_open_terminal=True,
+                        )
+                else:
+                    rec.action_stop()
+                    rec.action_start()
+
+    @api.model
+    def kill_process(self, log_lsof, sleep_kill=0):
+        # TODO this cause problem, cannot save all information
+        # kill me if I exist
+        # kill first application with python3 with this port
+        # Ignore the browser with the same page, that's why need grep
+        # The first number is the 3 from python3, so take second number
+        # Force to kill, because execution is running, a simple sigint will not work.
+        # Cannot write this request
+        if sleep_kill:
+            cmd = f"sleep {SLEEP_KILL};"
+        else:
+            cmd = ""
+        if log_lsof.startswith("python3 "):
+            cmd += (
+                "kill -9 $(lsof -i"
+                f" TCP:{self.port_http} | grep python3 | grep -oE"
+                " '[0-9]+' | sed -n '2p')"
+            )
+            self.execute(cmd=cmd, force_open_terminal=True, force_exit=True)
+        elif log_lsof.startswith("python "):
+            cmd += (
+                "kill -9 $(lsof -i"
+                f" TCP:{self.port_http} | grep python | grep -oE"
+                " '[0-9]+' | head -n1)"
+            )
+            self.execute(cmd=cmd, force_open_terminal=True, force_exit=True)
+        else:
+            _logger.warning(
+                "What is the software for the port"
+                f" {self.port_http} : {log_lsof}"
+            )
 
     @api.multi
     @api.depends(
@@ -1385,9 +1698,6 @@ class ItWorkspace(models.Model):
                             for str_file in lst_file
                         ]
                     ):
-                        # self.action_pre_install_workspace(
-                        #     ignore_last_directory=True
-                        # )
                         exec_id = rec.execute(
                             cmd=(
                                 "git clone"
@@ -1396,9 +1706,8 @@ class ItWorkspace(models.Model):
                         )
                         rec.log_workspace = exec_id.log_all
                         exec_id = rec.execute(
-                            cmd=(
-                                f"cd {rec.folder};./script/install/install_locally_dev.sh"
-                            )
+                            cmd=f"./script/install/install_locally_dev.sh",
+                            folder=rec.folder,
                         )
                         rec.log_workspace += exec_id.log_all
                         # TODO fix this bug, but activate into install script
@@ -1437,6 +1746,7 @@ class ItWorkspace(models.Model):
         cmd="",
         folder="",
         force_open_terminal=False,
+        force_exit=False,
         force_docker=False,
         add_stdin_log=False,
         add_stderr_log=True,
@@ -1447,18 +1757,20 @@ class ItWorkspace(models.Model):
         docker=False,
     ):
         # TODO search into context if need to parallel or serial
-        """TODO need to return out, err, status"""
         lst_result = []
         first_log_debug = True
         out = False
         # out = ""
         # err = ""
         # status = False
-        if to_instance:
-            self.check_it_workspace_docker()
+        if force_exit:
+            cmd = f"{cmd};exit"
         for rec in self:
             rec_force_docker = force_docker
             if to_instance:
+                rec.check_it_workspace()
+                if not folder:
+                    folder = rec.path_working_erplibre
                 if rec.mode_exec in ["docker"]:
                     rec_force_docker = True
 
@@ -1490,6 +1802,7 @@ class ItWorkspace(models.Model):
             else:
                 out = rec.system_id.execute_with_result(
                     cmd,
+                    folder,
                     add_stdin_log=add_stdin_log,
                     add_stderr_log=add_stderr_log,
                     engine=engine,
@@ -1499,14 +1812,6 @@ class ItWorkspace(models.Model):
             if out is not False:
                 it_exec.log_stdout = out
 
-        #
-        # if get_stderr:
-        #     if get_status:
-        #         return out, err, status
-        #     return out, err
-        # elif get_status:
-        #     return out, status
-        # return out
         if len(self) == 1:
             return lst_result[0]
         return self.env["it.exec"].browse([a.id for a in lst_result])
@@ -1520,14 +1825,9 @@ class ItWorkspace(models.Model):
                 )
 
     @api.multi
-    def action_pre_install_workspace(self, ignore_last_directory=False):
+    def action_pre_install_workspace(self):
         for rec_o in self:
             with rec_o.it_create_exec_bundle("Pre install workspace") as rec:
-                # folder = (
-                #     rec.folder
-                #     if not ignore_last_directory
-                #     else os.path.basename(rec.folder)
-                # )
                 # Directory must exist
                 # TODO make test to validate if remove next line, permission root the project /tmp/project/addons root
                 addons_path = os.path.join(rec.folder, "addons", "addons")
@@ -1573,8 +1873,17 @@ class ItWorkspace(models.Model):
 
     @staticmethod
     def check_port_is_open(rec, port):
+        """
+        Return False or the PID integer of the open port
+        """
         # TODO move to it_network
-        # TODO use lsof instead of this script
+
+        # lsof need sudo when it's another process, like a docker run by root
+        # exec_id = rec.execute(f"lsof -FF -i TCP:{port}")
+        # if not exec_id.log_all:
+        #     return False
+        # return int(exec_id.log_all[1 : exec_id.log_all.find("\n")])
+
         script = f"""import socket
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 result = sock.connect_ex(("127.0.0.1",{port}))
@@ -1583,36 +1892,14 @@ if result == 0:
 else:
    print("Port is not open")
 sock.close()
-        """
+"""
         if rec.system_id.debug_command:
             _logger.info(script)
         exec_id = rec.execute(
             cmd=script,
             engine="python",
         )
-        return exec_id.log_all == "Port is open"
-
-    @api.multi
-    @contextmanager
-    def it_workspace_log(self):
-        # TODO adapt for erplibre_it
-        """Log a it_workspace result."""
-        try:
-            _logger.info("Starting database it_workspace: %s", self.name)
-            yield
-        except Exception:
-            _logger.exception("Database it_workspace failed: %s", self.name)
-            escaped_tb = tools.html_escape(traceback.format_exc())
-            self.message_post(  # pylint: disable=translation-required
-                body="<p>%s</p><pre>%s</pre>"
-                % (_("Database it_workspace failed."), escaped_tb),
-                subtype=self.env.ref(
-                    "erplibre_it.mail_message_subtype_failure"
-                ),
-            )
-        else:
-            _logger.info("Database it_workspace succeeded: %s", self.name)
-            self.message_post(body=_("Database it_workspace succeeded."))
+        return exec_id.log_all.strip() == "Port is open"
 
     @api.multi
     @contextmanager
@@ -1629,7 +1916,7 @@ sock.close()
         rec = self.with_context(it_exec_bundle=it_exec_bundle_id.id)
         try:
             yield rec
-        except Warning as e:
+        except exceptions.Warning as e:
             raise e
         except Exception as e:
             _logger.exception(

@@ -126,7 +126,8 @@
             <tree>
                 <field name="name" />
                 <field name="time_duration_result" />
-                <field name="execution_finish" />
+                <field name="exec_start_date" />
+                <field name="exec_stop_date" />
                 <field name="folder" />
                 <field name="cmd" />
                 <field name="it_workspace" />

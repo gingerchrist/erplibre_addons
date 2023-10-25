@@ -194,8 +194,7 @@ class ProjectManagement:
         #         f"Path directory '{self.module_directory}' not exist. You"
         #         f" actual path is: '{os.getcwd()}'."
         #     )
-        #     _logger.error(self.msg_error)
-        #     return
+        #     raise Exception(self.msg_error)
 
         self.cg_directory = cg_directory if cg_directory else module_directory
         if not os.path.exists(self.cg_directory):
@@ -203,8 +202,7 @@ class ProjectManagement:
                 f"Path cg directory '{self.cg_directory}' not exist. You"
                 f" actual path is: '{os.getcwd()}'."
             )
-            _logger.error(self.msg_error)
-            return
+            raise Exception(self.msg_error)
 
         self.template_directory = (
             template_directory if template_directory else module_directory
@@ -214,13 +212,11 @@ class ProjectManagement:
                 f"Path template directory '{self.template_directory}' not"
                 " exist."
             )
-            _logger.error(self.msg_error)
-            return
+            raise Exception(self.msg_error)
 
         if not module_name:
             self.msg_error = "Module name is missing."
-            _logger.error(self.msg_error)
-            return
+            raise Exception(self.msg_error)
 
         # Get module name
         self.module_name = module_name
@@ -262,8 +258,7 @@ class ProjectManagement:
                     self.msg_error = (
                         f"Cannot find '{search}' in file '{filepath}'"
                     )
-                    _logger.error(self.msg_error)
-                    return False
+                    raise Exception(self.msg_error)
                 txt = txt.replace(search, replace)
         with open(filepath, "w") as file:
             file.write(txt)
@@ -279,25 +274,22 @@ class ProjectManagement:
         try:
             git_repo = Repo(directory)
         except NoSuchPathError:
-            _logger.error(f"Directory not existing '{directory}'")
-            return False
+            raise Exception(f"Directory not existing '{directory}'")
         except InvalidGitRepositoryError:
-            _logger.error(
+            raise Exception(
                 f"The path '{path}' exist, but no git repo, use force to"
                 " ignore it."
             )
-            return False
 
         # TODO wait refactoring to use rec
         # if rec.stop_execution_if_env_not_clean:
         status = git_repo.git.status(name, porcelain=True)
         if status:
-            _logger.error(
+            msg = (
                 f"The directory '{path}' has git difference, use force to"
                 " ignore it."
             )
-            print(status)
-            return False
+            raise Exception(msg)
         return True
 
     @staticmethod
@@ -307,15 +299,13 @@ class ProjectManagement:
         try:
             git_repo = Repo(code_generator_demo_path)
         except NoSuchPathError:
-            _logger.error(
+            raise Exception(
                 f"Directory not existing '{code_generator_demo_path}'"
             )
-            return False
         except InvalidGitRepositoryError:
-            _logger.error(
+            raise Exception(
                 f"The path '{code_generator_demo_path}' exist, but no git repo"
             )
-            return False
 
         git_repo.git.restore(relative_path)
 
@@ -326,8 +316,7 @@ class ProjectManagement:
             self.module_name, self.module_directory, path=module_path
         ):
             self.msg_error = f"Cannot generate on module path '{module_path}'"
-            _logger.error(self.msg_error)
-            return False
+            raise Exception(self.msg_error)
 
         cg_path = os.path.join(self.cg_directory, self.cg_name)
         cg_hooks_py = os.path.join(cg_path, "hooks.py")
@@ -335,8 +324,7 @@ class ProjectManagement:
             self.cg_name, self.cg_directory, path=cg_path
         ):
             self.msg_error = f"Cannot generate on cg path '{cg_path}'"
-            _logger.error(self.msg_error)
-            return False
+            raise Exception(self.msg_error)
 
         template_path = os.path.join(
             self.template_directory, self.template_name
@@ -348,8 +336,7 @@ class ProjectManagement:
             self.msg_error = (
                 f"Cannot generate on template path '{template_path}'"
             )
-            _logger.error(self.msg_error)
-            return False
+            raise Exception(self.msg_error)
 
         # Validate code_generator_demo
         code_generator_demo_path = os.path.join(
@@ -366,8 +353,7 @@ class ProjectManagement:
                 "code_generator_demo is not accessible"
                 f" '{code_generator_demo_path}'"
             )
-            _logger.error(self.msg_error)
-            return False
+            raise Exception(self.msg_error)
 
         self.rec.stage_id = self.rec.env.ref(
             "erplibre_it.it_cg_new_project_stage_generate_config"
@@ -448,8 +434,7 @@ class ProjectManagement:
 
         # Validate
         if not os.path.exists(template_path):
-            _logger.error(f"Module template not exists '{template_path}'")
-            return False
+            raise Exception(f"Module template not exists '{template_path}'")
         else:
             _logger.info(f"Module template exists '{template_path}'")
 
@@ -531,8 +516,7 @@ class ProjectManagement:
 
         # Validate
         if not os.path.exists(cg_path):
-            _logger.error(f"Module cg not exists '{cg_path}'")
-            return False
+            raise Exception(f"Module cg not exists '{cg_path}'")
         else:
             _logger.info(f"Module cg exists '{cg_path}'")
 
@@ -606,8 +590,7 @@ class ProjectManagement:
 
         # Validate
         if not os.path.exists(template_path):
-            _logger.error(f"Module not exists '{module_path}'")
-            return False
+            raise Exception(f"Module not exists '{module_path}'")
         else:
             _logger.info(f"Module exists '{module_path}'")
 
