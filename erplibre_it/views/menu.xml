@@ -17,7 +17,7 @@
 
     <menuitem id="menu_process" name="Process" sequence="3" parent="menu_erplibre_it" />
 
-    <menuitem id="menu_config" name="Configuration" sequence="4" parent="menu_erplibre_it" />
+    <menuitem id="menu_config" name="Configuration" sequence="100" parent="menu_erplibre_it" />
 
     <!--Child menu-->
 
@@ -141,5 +141,14 @@
         action="it_ide_pycharm_action_window"
         sequence="6"
         parent="menu_code"
+    />
+
+    <menuitem
+        id="erplibre_it_config_settings_menu_action"
+        name="Settings"
+        parent="menu_config"
+        sequence="0"
+        action="erplibre_it_config_settings_action"
+        groups="base.group_system"
     />
 </odoo>

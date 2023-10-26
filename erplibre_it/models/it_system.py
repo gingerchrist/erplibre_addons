@@ -28,17 +28,18 @@ class ItSystem(models.Model):
     method = fields.Selection(
         selection=[("local", "Local disk"), ("ssh", "SSH remote server")],
         default="local",
-        require=True,
+        required=True,
         help="Choose the communication method.",
     )
 
     terminal = fields.Selection(
-        selection=[("gnome_terminal", "Gnome-terminal"), ("xterm", "Xterm")],
-        default="gnome_terminal",
-        require=True,
+        selection=[
+            ("gnome-terminal", "Gnome-terminal"),
+            ("xterm", "Xterm"),
+        ],
         help=(
-            "xterm block the process, not gnome-terminal. But xterm is wide"
-            " supported."
+            "xterm block the process, not gnome-terminal. xterm not work on"
+            " osx, use osascript instead."
         ),
     )
 
@@ -125,6 +126,7 @@ class ItSystem(models.Model):
                     rec.ssh_port,
                 )
 
+    @api.model
     def execute_process(self, cmd, add_stdin_log=False, add_stderr_log=True):
         # subprocess.Popen("date", stdout=subprocess.PIPE, shell=True)
         # (output, err) = p.communicate()
@@ -201,7 +203,7 @@ class ItSystem(models.Model):
         # TODO if folder not exist, cannot CD. don't execute the command if wrong directory
         for rec in self.filtered(lambda r: r.method == "local"):
             str_keep_open = ""
-            if rec.keep_terminal_open and rec.terminal == "gnome_terminal":
+            if rec.keep_terminal_open and rec.terminal == "gnome-terminal":
                 str_keep_open = ";bash"
             if cmd:
                 docker_wrap_cmd = f"{cmd}{str_keep_open}"
@@ -221,7 +223,7 @@ class ItSystem(models.Model):
                     cmd_output = (
                         f"cd {folder};xterm -e bash -c '{docker_wrap_cmd}'"
                     )
-                elif rec.terminal == "gnome_terminal":
+                elif rec.terminal == "gnome-terminal":
                     cmd_output = (
                         f"cd {folder};gnome-terminal --window -- bash -c"
                         f" '{docker_wrap_cmd}'"
@@ -232,7 +234,7 @@ class ItSystem(models.Model):
                 cmd_output = ""
                 if rec.terminal == "xterm":
                     cmd_output = f"cd {folder};xterm"
-                elif rec.terminal == "gnome_terminal":
+                elif rec.terminal == "gnome-terminal":
                     cmd_output = f"cd {folder};gnome-terminal --window -- bash"
                 if cmd_output:
                     rec.execute_process(cmd_output)

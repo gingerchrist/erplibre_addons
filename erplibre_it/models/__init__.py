@@ -17,4 +17,5 @@ from . import (
     it_workspace,
     it_workspace_docker,
     it_workspace_terminal,
+    res_config_settings,
 )

@@ -29,6 +29,7 @@
         "views/it_workspace_terminal.xml",
         "views/it_system.xml",
         "views/it_test.xml",
+        "views/res_config_settings.xml",
         "views/menu.xml",
         "data/ir_cron.xml",
         "data/it_cg_new_project_stage.xml",
