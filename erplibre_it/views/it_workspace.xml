@@ -122,10 +122,10 @@
                             name="action_network_change_port_default"
                             string="Default port"
                             type="object"
-                            attrs="{'invisible': [('is_me', '=', False)]}"
+                            attrs="{'invisible': ['|', ('exec_reboot_process', '=', False), ('is_me', '=', False)]}"
                         />
-                        <field name="port_http" />
-                        <field name="port_longpolling" />
+                        <field name="port_http" attrs="{'readonly': [('exec_reboot_process', '=', False)]}" />
+                        <field name="port_longpolling" attrs="{'readonly': [('exec_reboot_process', '=', False)]}" />
                     </group>
                     <group string="Git">
                         <field name="git_branch" />

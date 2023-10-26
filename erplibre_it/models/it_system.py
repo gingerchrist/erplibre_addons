@@ -35,6 +35,10 @@ class ItSystem(models.Model):
     terminal = fields.Selection(
         selection=[
             ("gnome-terminal", "Gnome-terminal"),
+            (
+                "osascript",
+                "Execute AppleScripts and other OSA language scripts",
+            ),
             ("xterm", "Xterm"),
         ],
         help=(
@@ -199,45 +203,51 @@ class ItSystem(models.Model):
                 lst_result.append(result)
         return lst_result
 
-    def execute_gnome_terminal(self, folder, cmd="", docker=False):
+    def execute_terminal_gui(self, folder, cmd="", docker=False):
         # TODO if folder not exist, cannot CD. don't execute the command if wrong directory
         for rec in self.filtered(lambda r: r.method == "local"):
             str_keep_open = ""
             if rec.keep_terminal_open and rec.terminal == "gnome-terminal":
                 str_keep_open = ";bash"
             if cmd:
-                docker_wrap_cmd = f"{cmd}{str_keep_open}"
+                wrap_cmd = f"{cmd}{str_keep_open}"
             else:
-                docker_wrap_cmd = ""
+                wrap_cmd = ""
+            if folder:
+                wrap_cmd = f'cd "{folder}";{wrap_cmd}'
             if docker:
                 workspace = os.path.basename(folder)
                 docker_name = f"{workspace}-ERPLibre-1"
-                docker_wrap_cmd = (
-                    f"docker exec -u root -ti {docker_name} /bin/bash"
-                )
+                wrap_cmd = f"docker exec -u root -ti {docker_name} /bin/bash"
                 if cmd:
-                    docker_wrap_cmd += f' -c "{cmd}{str_keep_open}"'
-            if docker_wrap_cmd:
+                    wrap_cmd += f' -c "{cmd}{str_keep_open}"'
+            if wrap_cmd:
                 cmd_output = ""
                 if rec.terminal == "xterm":
-                    cmd_output = (
-                        f"cd {folder};xterm -e bash -c '{docker_wrap_cmd}'"
-                    )
+                    cmd_output = f"xterm -e bash -c '{wrap_cmd}'"
                 elif rec.terminal == "gnome-terminal":
                     cmd_output = (
-                        f"cd {folder};gnome-terminal --window -- bash -c"
-                        f" '{docker_wrap_cmd}'"
+                        f"gnome-terminal --window -- bash -c '{wrap_cmd}'"
                     )
-                if cmd_output:
-                    rec.execute_process(cmd_output)
+                elif rec.terminal == "osascript":
+                    wrap_cmd = wrap_cmd.replace('"', '\\"')
+                    cmd_output = (
+                        'osascript -e \'tell app "Terminal" to do script'
+                        f' "{wrap_cmd}"\''
+                    )
             else:
                 cmd_output = ""
                 if rec.terminal == "xterm":
-                    cmd_output = f"cd {folder};xterm"
+                    cmd_output = f"xterm"
                 elif rec.terminal == "gnome-terminal":
-                    cmd_output = f"cd {folder};gnome-terminal --window -- bash"
-                if cmd_output:
-                    rec.execute_process(cmd_output)
+                    cmd_output = f"gnome-terminal --window -- bash"
+                elif rec.terminal == "osascript":
+                    cmd_output = (
+                        f'osascript -e \'tell app "Terminal" to do script'
+                        f' "ls"\''
+                    )
+            if cmd_output:
+                rec.execute_process(cmd_output)
             if rec.debug_command:
                 print(cmd_output)
         for rec in self.filtered(lambda r: r.method == "ssh"):
@@ -254,20 +264,18 @@ class ItSystem(models.Model):
                 # TODO validate it exist before use it
                 sshpass = f"sshpass -p {rec.ssh_password} "
             if cmd:
-                docker_wrap_cmd = f"{cmd}{str_keep_open}"
+                wrap_cmd = f"{cmd}{str_keep_open}"
             else:
-                docker_wrap_cmd = ""
+                wrap_cmd = ""
             if docker:
                 workspace = os.path.basename(folder)
                 docker_name = f"{workspace}-ERPLibre-1"
-                docker_wrap_cmd = (
-                    f"docker exec -u root -ti {docker_name} /bin/bash"
-                )
+                wrap_cmd = f"docker exec -u root -ti {docker_name} /bin/bash"
                 if cmd:
-                    docker_wrap_cmd += f' -c \\"{cmd}{str_keep_open}\\"'
+                    wrap_cmd += f' -c \\"{cmd}{str_keep_open}\\"'
             else:
                 # force replace " to \"
-                docker_wrap_cmd = docker_wrap_cmd.replace('"', '\\"')
+                wrap_cmd = wrap_cmd.replace('"', '\\"')
             argument_ssh = ""
             if rec.ssh_public_host_key:
                 # TODO use public host key instead of ignore it
@@ -275,13 +283,14 @@ class ItSystem(models.Model):
                     ' -o "UserKnownHostsFile=/dev/null" -o'
                     ' "StrictHostKeyChecking=no"'
                 )
-            if not docker_wrap_cmd:
-                docker_wrap_cmd = "bash --login"
+            if not wrap_cmd:
+                wrap_cmd = "bash --login"
+            # TODO support other terminal
             cmd_output = (
                 "gnome-terminal --window -- bash -c"
                 f" '{sshpass}ssh{argument_ssh} -t"
                 f' {rec.ssh_user}@{rec.ssh_host} "cd {folder};'
-                f" {docker_wrap_cmd}\"'"
+                f" {wrap_cmd}\"'"
             )
             rec.execute_process(cmd_output)
             if rec.debug_command:

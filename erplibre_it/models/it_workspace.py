@@ -1792,7 +1792,7 @@ class ItWorkspace(models.Model):
             lst_result.append(it_exec)
             if force_open_terminal:
                 rec_force_docker = rec_force_docker or docker
-                rec.system_id.execute_gnome_terminal(
+                rec.system_id.execute_terminal_gui(
                     force_folder,
                     cmd=cmd,
                     docker=rec_force_docker,
