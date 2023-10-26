@@ -1590,12 +1590,15 @@ class ItWorkspace(models.Model):
                 if rec.mode_exec in ["docker"]:
                     rec.workspace_docker_id.action_stop_docker_compose()
                 elif rec.mode_exec in ["terminal"]:
-                    exec_id = rec.execute(
-                        f"lsof -i TCP:{rec.port_http} | grep python"
-                    )
-                    if exec_id.log_all:
-                        rec.kill_process(exec_id.log_all)
-
+                    if rec.is_me:
+                        pid = os.getpid()
+                        rec.execute(
+                            cmd=f"kill -9 {pid}",
+                            force_open_terminal=True,
+                            force_exit=True,
+                        )
+                    else:
+                        rec.kill_process()
                 rec.action_check()
 
     @api.multi
@@ -1624,38 +1627,33 @@ class ItWorkspace(models.Model):
                     rec.action_stop()
                     rec.action_start()
 
-    @api.model
-    def kill_process(self, log_lsof, sleep_kill=0):
-        # TODO this cause problem, cannot save all information
-        # kill me if I exist
-        # kill first application with python3 with this port
-        # Ignore the browser with the same page, that's why need grep
-        # The first number is the 3 from python3, so take second number
-        # Force to kill, because execution is running, a simple sigint will not work.
-        # Cannot write this request
-        if sleep_kill:
-            cmd = f"sleep {SLEEP_KILL};"
-        else:
-            cmd = ""
-        if log_lsof.startswith("python3 "):
-            cmd += (
-                "kill -9 $(lsof -i"
-                f" TCP:{self.port_http} | grep python3 | grep -oE"
-                " '[0-9]+' | sed -n '2p')"
-            )
-            self.execute(cmd=cmd, force_open_terminal=True, force_exit=True)
-        elif log_lsof.startswith("python "):
-            cmd += (
-                "kill -9 $(lsof -i"
-                f" TCP:{self.port_http} | grep python | grep -oE"
-                " '[0-9]+' | head -n1)"
-            )
-            self.execute(cmd=cmd, force_open_terminal=True, force_exit=True)
-        else:
-            _logger.warning(
-                "What is the software for the port"
-                f" {self.port_http} : {log_lsof}"
-            )
+    @api.multi
+    def kill_process(self, port=None, sleep_kill=0):
+        for rec_o in self:
+            with rec_o.it_create_exec_bundle("Kill process") as rec:
+                if sleep_kill:
+                    cmd = f"sleep {SLEEP_KILL};"
+                else:
+                    cmd = ""
+                if not port:
+                    port = rec.port_http
+                exec_id = rec.execute(f"lsof -FF -c python -i TCP:{port} -a")
+                if exec_id.log_all:
+                    lines = [
+                        a
+                        for a in exec_id.log_all.split("\n")
+                        if a.startswith("p")
+                    ]
+                    if len(lines) > 1:
+                        _logger.warning(
+                            "What is the software for the port"
+                            f" {port} : {exec_id.log_all}"
+                        )
+                    elif len(lines) == 1:
+                        cmd += f"kill -9 {lines[0][1:]}"
+                        rec.execute(
+                            cmd=cmd, force_open_terminal=True, force_exit=True
+                        )
 
     @api.multi
     @api.depends(
