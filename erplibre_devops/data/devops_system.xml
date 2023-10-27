@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <data noupdate="1">
+        <record model="devops.system" id="devops_system_local">
+            <field name="name">Self local</field>
+        </record>
+        <record model="devops.system" id="devops_system_local">
+            <field name="name">Local</field>
+        </record>
+        <record model="devops.system" id="devops_system_ssh_localhost">
+            <field name="name">SSH Local</field>
+            <field name="method">ssh</field>
+            <field name="ssh_host">localhost</field>
+        </record>
+    </data>
+</odoo>

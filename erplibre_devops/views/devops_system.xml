@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <record id="view_devops_system_conf_form" model="ir.ui.view">
+        <field name="name">devops.system form</field>
+        <field name="model">devops.system</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button
+                        class="oe_highlight"
+                        name="action_refresh_db_image"
+                        string="Reload db image"
+                        type="object"
+                    />
+                </header>
+                <div class="oe_title">
+                    <h1>
+                        <field name="name" />
+                    </h1>
+                </div>
+                <div class="bg-danger" attrs="{'invisible': [('terminal', '!=', False)]}">
+                    <h3>Error:</h3>
+                    The system need to select a validate terminal option for a good execution.
+                </div>
+                <group>
+                    <group string="Basic">
+                        <field name="method" />
+                        <field name="terminal" />
+                        <field name="keep_terminal_open" />
+                        <field name="debug_command" />
+                    </group>
+                </group>
+
+                <div attrs="{'invisible': [('method', '!=', 'ssh')]}">
+                    <div class="bg-warning">
+                        <h3>Warning:</h3>
+                        Use SSH with caution!
+                        <div attrs="{'invisible': [('ssh_use_sshpass', '=', False)]}">
+                            The password can be visible into log.
+                        </div>
+                    </div>
+                    <group string="SSH Settings">
+                        <field name="ssh_host" placeholder="ssh.example.com" />
+                        <field name="ssh_use_sshpass" />
+
+                        <field name="ssh_port" />
+                        <field name="ssh_user" placeholder="john" />
+                        <field name="ssh_password" password="True" />
+                        <field name="ssh_private_key" placeholder="/home/odoo/.ssh/id_rsa" />
+                        <field name="ssh_public_host_key" placeholder="AAAA..." />
+                        <button
+                            icon="fa-television"
+                            name="action_ssh_test_connection"
+                            string="Test SSH Connection"
+                            type="object"
+                        />
+                    </group>
+                </div>
+                <notebook>
+                    <page name="docker" string="Docker">
+                        <group string="Action">
+                            <!--                            <button class="oe_highlight" name="action_docker_install_dev_soft" string="Docker install dev" type="object" />-->
+                        </group>
+                    </page>
+                </notebook>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_devops_system_conf_search" model="ir.ui.view">
+        <field name="name">devops.system search</field>
+        <field name="model">devops.system</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name" />
+                <field name="ssh_host" />
+            </search>
+        </field>
+    </record>
+
+    <record id="view_devops_system_conf_tree" model="ir.ui.view">
+        <field name="name">devops.system tree</field>
+        <field name="model">devops.system</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name" />
+                <field name="ssh_host" />
+                <field name="method" />
+                <field name="terminal" />
+            </tree>
+        </field>
+    </record>
+
+    <act_window id="action_devops_check_system_conf_form" name="Automated devops_systems" res_model="devops.system" />
+</odoo>

@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <record id="devops_new_project_view_form" model="ir.ui.view">
+        <field name="name">devops_new_project_form</field>
+        <field name="model">devops.cg.new_project</field>
+        <field name="arch" type="xml">
+            <form string="Titre">
+                <header>
+                    <button class="oe_highlight" name="action_new_project" string="New project" type="object" />
+                    <field name="stage_id" widget="statusbar" clickable="False" options="{'fold_field': 'fold'}" />
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button class="oe_stat_button" name="toggle_active" type="object" icon="fa-archive">
+                            <field name="active" widget="boolean_button" options='{"terminology": "archive"}' />
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" />
+                        </h1>
+                    </div>
+                    <group string="Date">
+                        <group>
+                            <field name="exec_start_date" />
+                            <field name="exec_stop_date" />
+                            <field name="exec_time_duration" />
+                            <field name="execution_finish" />
+                        </group>
+                        <group>
+                            <field name="create_date" />
+                            <field name="write_date" />
+                        </group>
+                    </group>
+                    <group string="Project">
+                        <group>
+                            <field name="last_new_project" />
+                            <field name="devops_workspace" />
+                        </group>
+                    </group>
+
+                    <group string="Configuration">
+                        <group>
+                            <field name="code_generator_name" />
+                            <field name="template_name" />
+                            <field name="module" />
+                            <field name="directory" />
+                            <field name="config" />
+                            <field name="odoo_config" />
+                        </group>
+                        <group>
+                            <field name="keep_bd_alive" />
+                            <field name="stop_execution_if_env_not_clean" />
+                            <field name="coverage" />
+                            <field name="force" />
+                        </group>
+                    </group>
+
+                    <group string="Error">
+                        <group>
+                            <field name="msg_error" />
+                            <field name="has_error" />
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="devops_new_project_view_graph" model="ir.ui.view">
+        <field name="name">devops_new_project_graph</field>
+        <field name="model">devops.cg.new_project</field>
+        <field name="arch" type="xml">
+            <graph string="DevOps code generator module model field">
+                <field name="name" type="row" />
+            </graph>
+        </field>
+    </record>
+
+    <record id="devops_new_project_view_kanban" model="ir.ui.view">
+        <field name="name">devops_new_project_kanban</field>
+        <field name="model">devops.cg.new_project</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile">
+                <field name="name" />
+                <templates>
+                    <t t-name="kanban-box">
+                        <div t-attf-class="oe_kanban_global_click">
+                            <div class="oe_kanban_details">
+                                <ul>
+                                    <li class="mb4">
+                                        <strong>
+                                            <field name="name" />
+                                        </strong>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="devops_new_project_view_pivot" model="ir.ui.view">
+        <field name="name">devops_new_project_pivot</field>
+        <field name="model">devops.cg.new_project</field>
+        <field name="arch" type="xml">
+            <pivot string="DevOps code generator new project">
+                <field name="name" type="row" />
+            </pivot>
+        </field>
+    </record>
+
+    <record id="devops_new_project_view_search" model="ir.ui.view">
+        <field name="name">devops_new_project_search</field>
+        <field name="model">devops.cg.new_project</field>
+        <field name="arch" type="xml">
+            <search string="DevOps code generator module model field">
+                <field name="name" string="Name" />
+                <field name="active" />
+                <filter name="active" string="Active" domain="[('active','=',True)]" help="Show active" />
+                <filter name="inactive" string="Inactive" domain="[('active','=',False)]" help="Show inactive" />
+                <group expand="1" string="Group By">
+                    <filter string="Stage" name="stage" context="{'group_by':'stage_id'}" />
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="devops_new_project_view_tree" model="ir.ui.view">
+        <field name="name">devops_new_project_tree</field>
+        <field name="model">devops.cg.new_project</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name" />
+            </tree>
+        </field>
+    </record>
+
+    <act_window
+        id="devops_new_project_action_window"
+        name="Code generator new project"
+        res_model="devops.cg.new_project"
+        view_mode="kanban,tree,pivot,graph,form"
+    />
+</odoo>
