@@ -541,6 +541,34 @@ class DevopsWorkspace(models.Model):
                 rec.execute(folder=folder_path, force_open_terminal=True)
 
     @api.multi
+    def action_format_erplibre_devops(self):
+        for rec_o in self:
+            with rec_o.devops_create_exec_bundle(
+                "Format ERPLibre DevOps"
+            ) as rec:
+                rec.execute(
+                    cmd=(
+                        "./script/maintenance/format.sh"
+                        " ./addons/ERPLibre_erplibre_addons/erplibre_devops"
+                    )
+                )
+
+    @api.multi
+    def action_update_erplibre_devops(self):
+        for rec_o in self:
+            with rec_o.devops_create_exec_bundle(
+                "Update ERPLibre DevOps"
+            ) as rec:
+                # TODO change db_name from this db
+                rec.execute(
+                    cmd=(
+                        "./run.sh --limit-time-real 999999 --no-http"
+                        f" --stop-after-init --dev cg -d {rec.db_name} -i"
+                        " erplibre_devops -u erplibre_devops"
+                    )
+                )
+
+    @api.multi
     def action_code_generator_generate_all(self):
         for rec_o in self:
             with rec_o.devops_create_exec_bundle("CG generate module") as rec:
@@ -1824,7 +1852,7 @@ class DevopsWorkspace(models.Model):
             if force_open_terminal:
                 rec_force_docker = rec_force_docker or docker
                 rec.system_id.execute_terminal_gui(
-                    force_folder,
+                    folder=force_folder,
                     cmd=cmd,
                     docker=rec_force_docker,
                 )

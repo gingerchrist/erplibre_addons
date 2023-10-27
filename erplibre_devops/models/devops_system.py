@@ -203,7 +203,7 @@ class DevopsSystem(models.Model):
                 lst_result.append(result)
         return lst_result
 
-    def execute_terminal_gui(self, folder, cmd="", docker=False):
+    def execute_terminal_gui(self, folder="", cmd="", docker=False):
         # TODO if folder not exist, cannot CD. don't execute the command if wrong directory
         for rec in self.filtered(lambda r: r.method == "local"):
             str_keep_open = ""

@@ -414,7 +414,19 @@
                                 <button
                                     class="oe_highlight"
                                     name="action_open_terminal_path_erplibre_devops"
-                                    string="Terminal path erplibre it"
+                                    string="Terminal path erplibre_devops"
+                                    type="object"
+                                />
+                                <button
+                                    class="oe_highlight"
+                                    name="action_format_erplibre_devops"
+                                    string="Format module erplibre_devops"
+                                    type="object"
+                                />
+                                <button
+                                    class="oe_highlight"
+                                    name="action_update_erplibre_devops"
+                                    string="Update module erplibre_devops"
                                     type="object"
                                 />
                                 <button
