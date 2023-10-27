@@ -209,12 +209,12 @@ class DevopsSystem(models.Model):
             str_keep_open = ""
             if rec.keep_terminal_open and rec.terminal == "gnome-terminal":
                 str_keep_open = ";bash"
-            if cmd:
-                wrap_cmd = f"{cmd}{str_keep_open}"
-            else:
-                wrap_cmd = ""
+            wrap_cmd = f"{cmd}{str_keep_open}"
             if folder:
-                wrap_cmd = f'cd "{folder}";{wrap_cmd}'
+                if wrap_cmd.startswith(";"):
+                    wrap_cmd = f'cd "{folder}"{wrap_cmd}'
+                else:
+                    wrap_cmd = f'cd "{folder}";{wrap_cmd}'
             if docker:
                 workspace = os.path.basename(folder)
                 docker_name = f"{workspace}-ERPLibre-1"
