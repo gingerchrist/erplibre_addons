@@ -322,7 +322,7 @@ class ItSystem(models.Model):
             _logger.info("Connection Test Failed!", exc_info=True)
             raise exceptions.Warning(_("Connection Test Failed!"))
 
-    @api.multi
+    @api.model
     def ssh_connection(self):
         """Return a new SSH connection with found parameters."""
         self.ensure_one()

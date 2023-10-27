@@ -23,24 +23,25 @@ class ItIdePycharm(models.Model):
     )
 
     @api.multi
-    def action_cg_setup_pycharm_debug(self):
+    def action_cg_setup_pycharm_debug(self, ctx=None, log=None):
         for rec in self:
-            index_error = rec.it_workspace.it_cg_erplibre_it_log.rfind(
-                "odoo.exceptions.ValidationError"
-            )
+            if not log:
+                log = rec.it_workspace.it_cg_erplibre_it_log
+            lst_exception = ("odoo.exceptions.ValidationError", "Exception")
+            for exception in lst_exception:
+                index_error = log.rfind(exception)
+                if index_error >= 0:
+                    break
+            else:
+                _logger.info("Not exception found from log.")
+                continue
             search_path = (
                 "File"
-                f' "{os.path.normpath(os.path.join(rec.folder, "./addons"))}'
+                f' "{os.path.normpath(os.path.join(rec.it_workspace.folder, "./addons"))}'
             )
-            no_last_file_error = rec.it_workspace.it_cg_erplibre_it_log.rfind(
-                search_path, 0, index_error
-            )
-            no_end_line_error = rec.it_workspace.it_cg_erplibre_it_log.find(
-                "\n", no_last_file_error
-            )
-            error_line = rec.it_workspace.it_cg_erplibre_it_log[
-                no_last_file_error:no_end_line_error
-            ]
+            no_last_file_error = log.rfind(search_path, 0, index_error)
+            no_end_line_error = log.find("\n", no_last_file_error)
+            error_line = log[no_last_file_error:no_end_line_error]
             # Detect no line
             regex = r"line (\d+),"
             result_regex = re.search(regex, error_line)
@@ -57,23 +58,24 @@ class ItIdePycharm(models.Model):
                 _logger.error("Cannot find breakpoint information")
                 continue
             # -1 to line because start 0, but show 1
-            dct_config_breakpoint = {
-                "@enabled": "true",
-                "@suspend": "THREAD",
-                "@type": "python-line",
-                "url": filepath_breakpoint.replace(
-                    rec.it_workspace.folder, "file://$PROJECT_DIR$/"
-                ),
-                "line": str(line_breakpoint - 1),
-                # "option": {"@name": "timeStamp", "@value": "104"},
-            }
-            self._add_breakpoint(
-                rec.it_workspace.folder, dct_config_breakpoint
-            )
+            line = str(line_breakpoint - 1)
+            rec.add_breakpoint(filepath_breakpoint, line)
 
-    def _add_breakpoint(self, folder_name, dct_config_breakpoint):
+    @api.model
+    def add_breakpoint(self, file_path, line):
+        url = file_path.replace(
+            self.it_workspace.folder, "file://$PROJECT_DIR$/"
+        )
+        dct_config_breakpoint = {
+            "@enabled": "true",
+            "@suspend": "THREAD",
+            "@type": "python-line",
+            "url": url,
+            "line": line,
+            # "option": {"@name": "timeStamp", "@value": "104"},
+        }
         workspace_xml_path = os.path.join(
-            folder_name, ".idea", "workspace.xml"
+            self.it_workspace.folder, ".idea", "workspace.xml"
         )
         with open(workspace_xml_path) as xml:
             xml_as_string = xml.read()

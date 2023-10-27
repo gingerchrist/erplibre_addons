@@ -69,3 +69,29 @@ class ItExecError(models.Model):
             # rec.name += f"workspace {rec.it_workspace.id}"
             if rec.description:
                 rec.name += f" '{rec.description}'"
+
+    @api.multi
+    def action_kill_pycharm(self):
+        self.ensure_one()
+        cmd = "pkill -f $(ps aux | grep pycharm | grep -v grep | grep bin/java | awk '{print $11}')"
+        self.it_workspace.system_id.execute_process(cmd)
+
+    @api.multi
+    def action_start_pycharm(self):
+        self.ensure_one()
+        cmd = "~/.local/share/JetBrains/Toolbox/scripts/pycharm"
+        self.it_workspace.system_id.execute_terminal_gui("", cmd=cmd)
+
+    @api.multi
+    def action_set_breakpoint_pycharm(self):
+        for rec_o in self:
+            with rec_o.it_workspace.it_create_exec_bundle(
+                "Set breakpoint on error"
+            ) as rec:
+                if not rec.ide_pycharm:
+                    rec.ide_pycharm = self.env["it.ide.pycharm"].create(
+                        {"it_workspace": rec.id}
+                    )
+                rec.ide_pycharm.action_cg_setup_pycharm_debug(
+                    log=rec_o.escaped_tb.replace("&quot;", '"')
+                )

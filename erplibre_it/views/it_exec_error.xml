@@ -5,6 +5,26 @@
         <field name="model">it.exec.error</field>
         <field name="arch" type="xml">
             <form string="Titre">
+                <header>
+                    <button
+                        class="oe_highlight"
+                        name="action_set_breakpoint_pycharm"
+                        string="Set breakpoint Pycharm"
+                        type="object"
+                    />
+                    <button
+                        class="oe_highlight"
+                        name="action_start_pycharm"
+                        string="Start pycharm"
+                        type="object"
+                    />
+                    <button
+                        class="oe_highlight"
+                        name="action_kill_pycharm"
+                        string="Kill Pycharm"
+                        type="object"
+                    />
+                </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
                         <button class="oe_stat_button" name="toggle_active" type="object" icon="fa-archive">
