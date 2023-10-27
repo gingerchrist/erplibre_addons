@@ -402,6 +402,15 @@ class DevopsWorkspace(models.Model):
         comodel_name="devops.db.image", default=_default_image_db_selection
     )
 
+    @api.model_create_multi
+    def create(self, vals_list):
+        r = super().create(vals_list)
+        if not r.ide_pycharm:
+            r.ide_pycharm = self.env["devops.ide.pycharm"].create(
+                {"devops_workspace": r.id}
+            )
+        return r
+
     @api.model
     def _default_folder(self):
         return os.getcwd()
@@ -518,10 +527,6 @@ class DevopsWorkspace(models.Model):
     def action_cg_setup_pycharm_debug(self):
         for rec_o in self:
             with rec_o.devops_create_exec_bundle("Setup PyCharm debug") as rec:
-                if not rec.ide_pycharm:
-                    rec.ide_pycharm = self.env["devops.ide.pycharm"].create(
-                        {"devops_workspace": rec.id}
-                    )
                 rec.ide_pycharm.action_cg_setup_pycharm_debug()
 
     @api.multi
@@ -1614,17 +1619,19 @@ class DevopsWorkspace(models.Model):
                 rec.check_devops_workspace()
                 if rec.mode_exec in ["docker"]:
                     rec.workspace_docker_id.action_stop_docker_compose()
+                    rec.action_check()
                 elif rec.mode_exec in ["terminal"]:
                     if rec.is_me:
                         pid = os.getpid()
                         rec.execute(
-                            cmd=f"kill -9 {pid}",
+                            cmd=f"sleep {SLEEP_KILL};kill -9 {pid}",
                             force_open_terminal=True,
                             force_exit=True,
                         )
+                        rec_o.is_running = False
                     else:
                         rec.kill_process()
-                rec.action_check()
+                        rec.action_check()
 
     @api.multi
     def action_reboot(self):
@@ -1679,6 +1686,7 @@ class DevopsWorkspace(models.Model):
                         rec.execute(
                             cmd=cmd, force_open_terminal=True, force_exit=True
                         )
+                        rec_o.is_running = False
 
     @api.multi
     @api.depends(

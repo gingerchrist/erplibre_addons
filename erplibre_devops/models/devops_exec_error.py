@@ -75,17 +75,12 @@ class DevopsExecError(models.Model):
     @api.multi
     def action_kill_pycharm(self):
         self.ensure_one()
-        cmd = (
-            "pkill -f $(ps aux | grep pycharm | grep -v grep | grep bin/java |"
-            " awk '{print $11}')"
-        )
-        self.devops_workspace.system_id.execute_process(cmd)
+        self.devops_workspace.ide_pycharm.action_kill_pycharm()
 
     @api.multi
     def action_start_pycharm(self):
         self.ensure_one()
-        cmd = "~/.local/share/JetBrains/Toolbox/scripts/pycharm"
-        self.devops_workspace.system_id.execute_terminal_gui("", cmd=cmd)
+        self.devops_workspace.ide_pycharm.action_start_pycharm()
 
     @api.multi
     def action_set_breakpoint_pycharm(self):
@@ -93,10 +88,6 @@ class DevopsExecError(models.Model):
             with rec_o.devops_workspace.devops_create_exec_bundle(
                 "Set breakpoint on error"
             ) as rec:
-                if not rec.ide_pycharm:
-                    rec.ide_pycharm = self.env["devops.ide.pycharm"].create(
-                        {"devops_workspace": rec.id}
-                    )
                 rec.ide_pycharm.action_cg_setup_pycharm_debug(
                     log=rec_o.escaped_tb.replace("&quot;", '"')
                 )
