@@ -505,7 +505,7 @@ class DevopsWorkspace(models.Model):
                         rec.last_new_project_self.id
                     )
                 rec.last_new_project_self = new_project_id.id
-                new_project_id.action_new_project()
+                new_project_id.with_context(rec._context).action_new_project()
                 # result = rec.execute(
                 #     cmd=f"cd {rec.folder};./script/code_generator/new_project.py"
                 #     f" -d {addons_path} -m {module_name}",

@@ -593,7 +593,7 @@ class ProjectManagement:
                 rec_ws.execute(cmd=cmd)
 
             # Validate
-            if not os.path.exists(template_path):
+            if not os.path.exists(module_path):
                 raise Exception(f"Module not exists '{module_path}'")
             else:
                 _logger.info(f"Module exists '{module_path}'")
