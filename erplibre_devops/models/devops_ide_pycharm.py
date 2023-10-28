@@ -56,6 +56,8 @@ class DevopsIdePycharm(models.Model):
                     "Exception:",
                     "NameError:",
                     "AttributeError:",
+                    "ValueError:",
+                    "Traceback (most recent call last):",
                 )
                 for exception in lst_exception:
                     index_error = log.rfind(exception)
