@@ -310,293 +310,297 @@ class ProjectManagement:
         git_repo.git.restore(relative_path)
 
     def generate_module(self):
-        # TODO copy directory in temp workspace file before update it
-        module_path = os.path.join(self.module_directory, self.module_name)
-        if not self.force and not self.validate_path_ready_to_be_override(
-            self.module_name, self.module_directory, path=module_path
-        ):
-            self.msg_error = f"Cannot generate on module path '{module_path}'"
-            raise Exception(self.msg_error)
+        with self.rec.devops_workspace.devops_create_exec_bundle(
+            "Generate new project with CG"
+        ) as rec_ws:
+            rec = self.rec
+            # TODO copy directory in temp workspace file before update it
+            module_path = os.path.join(self.module_directory, self.module_name)
+            if not self.force and not self.validate_path_ready_to_be_override(
+                self.module_name, self.module_directory, path=module_path
+            ):
+                self.msg_error = f"Cannot generate on module path '{module_path}'"
+                raise Exception(self.msg_error)
 
-        cg_path = os.path.join(self.cg_directory, self.cg_name)
-        cg_hooks_py = os.path.join(cg_path, "hooks.py")
-        if not self.force and not self.validate_path_ready_to_be_override(
-            self.cg_name, self.cg_directory, path=cg_path
-        ):
-            self.msg_error = f"Cannot generate on cg path '{cg_path}'"
-            raise Exception(self.msg_error)
+            cg_path = os.path.join(self.cg_directory, self.cg_name)
+            cg_hooks_py = os.path.join(cg_path, "hooks.py")
+            if not self.force and not self.validate_path_ready_to_be_override(
+                self.cg_name, self.cg_directory, path=cg_path
+            ):
+                self.msg_error = f"Cannot generate on cg path '{cg_path}'"
+                raise Exception(self.msg_error)
 
-        template_path = os.path.join(
-            self.template_directory, self.template_name
-        )
-        template_hooks_py = os.path.join(template_path, "hooks.py")
-        if not self.force and not self.validate_path_ready_to_be_override(
-            self.template_name, self.template_directory, path=template_path
-        ):
-            self.msg_error = (
-                f"Cannot generate on template path '{template_path}'"
+            template_path = os.path.join(
+                self.template_directory, self.template_name
             )
-            raise Exception(self.msg_error)
+            template_hooks_py = os.path.join(template_path, "hooks.py")
+            if not self.force and not self.validate_path_ready_to_be_override(
+                self.template_name, self.template_directory, path=template_path
+            ):
+                self.msg_error = (
+                    f"Cannot generate on template path '{template_path}'"
+                )
+                raise Exception(self.msg_error)
 
-        # Validate code_generator_demo
-        code_generator_demo_path = os.path.join(
-            CODE_GENERATOR_DIRECTORY, CODE_GENERATOR_DEMO_NAME
-        )
-        code_generator_demo_hooks_py = os.path.join(
-            code_generator_demo_path, "hooks.py"
-        )
-        code_generator_hooks_path_relative = os.path.join(
-            CODE_GENERATOR_DEMO_NAME, "hooks.py"
-        )
-        if not os.path.exists(code_generator_demo_path):
-            self.msg_error = (
-                "code_generator_demo is not accessible"
-                f" '{code_generator_demo_path}'"
+            # Validate code_generator_demo
+            code_generator_demo_path = os.path.join(
+                CODE_GENERATOR_DIRECTORY, CODE_GENERATOR_DEMO_NAME
             )
-            raise Exception(self.msg_error)
-
-        self.rec.stage_id = self.rec.env.ref(
-            "erplibre_devops.devops_cg_new_project_stage_generate_config"
-        )
-
-        if not (
-            self.validate_path_ready_to_be_override(
-                CODE_GENERATOR_DEMO_NAME, CODE_GENERATOR_DIRECTORY
+            code_generator_demo_hooks_py = os.path.join(
+                code_generator_demo_path, "hooks.py"
             )
-            and self.search_and_replace_file(
-                code_generator_demo_hooks_py,
-                [
-                    (
-                        KEY_REPLACE_CODE_GENERATOR_DEMO
-                        % CODE_GENERATOR_DEMO_NAME,
-                        KEY_REPLACE_CODE_GENERATOR_DEMO % self.template_name,
-                    ),
-                    (
-                        'value["enable_sync_template"] = False',
-                        'value["enable_sync_template"] = True',
-                    ),
-                    (
-                        "# path_module_generate ="
-                        " os.path.normpath(os.path.join(os.path.dirname(__file__),"
-                        " '..'))",
-                        f'path_module_generate = "{self.module_directory}"',
-                    ),
-                    (
-                        '# "path_sync_code": path_module_generate,',
-                        '"path_sync_code": path_module_generate,',
-                    ),
-                    (
-                        '# value["template_module_path_generated_extension"]'
-                        ' = "."',
-                        'value["template_module_path_generated_extension"] ='
-                        f' "{self.cg_directory}"',
-                    ),
-                ],
+            code_generator_hooks_path_relative = os.path.join(
+                CODE_GENERATOR_DEMO_NAME, "hooks.py"
             )
-        ):
-            return False
-        config_path = self.update_config()
+            if not os.path.exists(code_generator_demo_path):
+                self.msg_error = (
+                    "code_generator_demo is not accessible"
+                    f" '{code_generator_demo_path}'"
+                )
+                raise Exception(self.msg_error)
 
-        self.rec.stage_id = self.rec.env.ref(
-            "erplibre_devops.devops_cg_new_project_stage_generate_uc0"
-        )
-
-        bd_name_demo = f"new_project_code_generator_demo_{uuid.uuid4()}"[:63]
-        cmd = f"./script/database/db_restore.py --database {bd_name_demo}"
-        _logger.info(cmd)
-        os.system(cmd)
-        _logger.info("========= GENERATE code_generator_demo =========")
-
-        if self._coverage:
-            cmd = (
-                "./script/addons/coverage_install_addons_dev.sh"
-                f" {bd_name_demo} code_generator_demo {config_path}"
+            rec.stage_id = rec.env.ref(
+                "erplibre_devops.devops_cg_new_project_stage_generate_config"
             )
-        else:
-            cmd = (
-                f"./script/addons/install_addons_dev.sh {bd_name_demo}"
-                f" code_generator_demo {config_path}"
-            )
-        os.system(cmd)
 
-        if not self.keep_bd_alive:
-            cmd = (
-                "./.venv/bin/python3 ./odoo/odoo-bin db --drop --database"
-                f" {bd_name_demo}"
+            if not (
+                self.validate_path_ready_to_be_override(
+                    CODE_GENERATOR_DEMO_NAME, CODE_GENERATOR_DIRECTORY
+                )
+                and self.search_and_replace_file(
+                    code_generator_demo_hooks_py,
+                    [
+                        (
+                            KEY_REPLACE_CODE_GENERATOR_DEMO
+                            % CODE_GENERATOR_DEMO_NAME,
+                            KEY_REPLACE_CODE_GENERATOR_DEMO % self.template_name,
+                        ),
+                        (
+                            'value["enable_sync_template"] = False',
+                            'value["enable_sync_template"] = True',
+                        ),
+                        (
+                            "# path_module_generate ="
+                            " os.path.normpath(os.path.join(os.path.dirname(__file__),"
+                            " '..'))",
+                            f'path_module_generate = "{self.module_directory}"',
+                        ),
+                        (
+                            '# "path_sync_code": path_module_generate,',
+                            '"path_sync_code": path_module_generate,',
+                        ),
+                        (
+                            '# value["template_module_path_generated_extension"]'
+                            ' = "."',
+                            'value["template_module_path_generated_extension"]'
+                            f' = "{self.cg_directory}"',
+                        ),
+                    ],
+                )
+            ):
+                return False
+            config_path = self.update_config()
+
+            rec.stage_id = rec.env.ref(
+                "erplibre_devops.devops_cg_new_project_stage_generate_uc0"
             )
+
+            bd_name_demo = f"new_project_code_generator_demo_{uuid.uuid4()}"[:63]
+            cmd = f"./script/database/db_restore.py --database {bd_name_demo}"
             _logger.info(cmd)
-            os.system(cmd)
+            rec_ws.execute(cmd=cmd)
+            _logger.info("========= GENERATE code_generator_demo =========")
 
-        # Revert code_generator_demo
-        self.restore_git_code_generator_demo(
-            CODE_GENERATOR_DIRECTORY, code_generator_hooks_path_relative
-        )
-
-        # Validate
-        if not os.path.exists(template_path):
-            raise Exception(f"Module template not exists '{template_path}'")
-        else:
-            _logger.info(f"Module template exists '{template_path}'")
-
-        self.rec.stage_id = self.rec.env.ref(
-            "erplibre_devops.devops_cg_new_project_stage_generate_uca"
-        )
-
-        lst_template_hooks_py_replace = [
-            (
-                'value["enable_template_wizard_view"] = False',
-                'value["enable_template_wizard_view"] = True',
-            ),
-        ]
-
-        # Add model from config
-        if self.config:
-            str_lst_model = "; ".join(
-                [a.get("name") for a in self.config_lst_model]
-            )
-            old_str = 'value["template_model_name"] = ""'
-            new_str = f'value["template_model_name"] = "{str_lst_model}"'
-            lst_template_hooks_py_replace.append((old_str, new_str))
-
-            self.search_and_replace_file(
-                template_hooks_py,
-                lst_template_hooks_py_replace,
-            )
-
-        # Execute all
-        bd_name_template = (
-            f"new_project_code_generator_template_{uuid.uuid4()}"[:63]
-        )
-        cmd = f"./script/database/db_restore.py --database {bd_name_template}"
-        os.system(cmd)
-        _logger.info(cmd)
-        _logger.info(f"========= GENERATE {self.template_name} =========")
-        # TODO maybe the module exist somewhere else
-        if os.path.exists(module_path):
-            # Install module before running code generator
-            cmd = (
-                "./script/code_generator/search_class_model.py --quiet -d"
-                f" {module_path} -t {template_path}"
-            )
-            _logger.info(cmd)
-            os.system(cmd)
             if self._coverage:
                 cmd = (
                     "./script/addons/coverage_install_addons_dev.sh"
-                    f" {bd_name_template} {self.module_name} {config_path}"
+                    f" {bd_name_demo} code_generator_demo {config_path}"
+                )
+            else:
+                cmd = (
+                    f"./script/addons/install_addons_dev.sh {bd_name_demo}"
+                    f" code_generator_demo {config_path}"
+                )
+            rec_ws.execute(cmd=cmd)
+
+            if not self.keep_bd_alive:
+                cmd = (
+                    "./.venv/bin/python3 ./odoo/odoo-bin db --drop --database"
+                    f" {bd_name_demo}"
+                )
+                _logger.info(cmd)
+                rec_ws.execute(cmd=cmd)
+
+            # Revert code_generator_demo
+            self.restore_git_code_generator_demo(
+                CODE_GENERATOR_DIRECTORY, code_generator_hooks_path_relative
+            )
+
+            # Validate
+            if not os.path.exists(template_path):
+                raise Exception(f"Module template not exists '{template_path}'")
+            else:
+                _logger.info(f"Module template exists '{template_path}'")
+
+            rec.stage_id = rec.env.ref(
+                "erplibre_devops.devops_cg_new_project_stage_generate_uca"
+            )
+
+            lst_template_hooks_py_replace = [
+                (
+                    'value["enable_template_wizard_view"] = False',
+                    'value["enable_template_wizard_view"] = True',
+                ),
+            ]
+
+            # Add model from config
+            if self.config:
+                str_lst_model = "; ".join(
+                    [a.get("name") for a in self.config_lst_model]
+                )
+                old_str = 'value["template_model_name"] = ""'
+                new_str = f'value["template_model_name"] = "{str_lst_model}"'
+                lst_template_hooks_py_replace.append((old_str, new_str))
+
+                self.search_and_replace_file(
+                    template_hooks_py,
+                    lst_template_hooks_py_replace,
+                )
+
+            # Execute all
+            bd_name_template = (
+                f"new_project_code_generator_template_{uuid.uuid4()}"[:63]
+            )
+            cmd = f"./script/database/db_restore.py --database {bd_name_template}"
+            rec_ws.execute(cmd=cmd)
+            _logger.info(cmd)
+            _logger.info(f"========= GENERATE {self.template_name} =========")
+            # TODO maybe the module exist somewhere else
+            if os.path.exists(module_path):
+                # Install module before running code generator
+                cmd = (
+                    "./script/code_generator/search_class_model.py --quiet -d"
+                    f" {module_path} -t {template_path}"
+                )
+                _logger.info(cmd)
+                rec_ws.execute(cmd=cmd)
+                if self._coverage:
+                    cmd = (
+                        "./script/addons/coverage_install_addons_dev.sh"
+                        f" {bd_name_template} {self.module_name} {config_path}"
+                    )
+                else:
+                    cmd = (
+                        "./script/addons/install_addons_dev.sh"
+                        f" {bd_name_template} {self.module_name} {config_path}"
+                    )
+                _logger.info(cmd)
+                rec_ws.execute(cmd=cmd)
+
+            if self._coverage:
+                cmd = (
+                    "./script/addons/coverage_install_addons_dev.sh"
+                    f" {bd_name_template} {self.template_name} {config_path}"
                 )
             else:
                 cmd = (
                     f"./script/addons/install_addons_dev.sh {bd_name_template}"
-                    f" {self.module_name} {config_path}"
+                    f" {self.template_name} {config_path}"
                 )
             _logger.info(cmd)
-            os.system(cmd)
+            rec_ws.execute(cmd=cmd)
 
-        if self._coverage:
-            cmd = (
-                "./script/addons/coverage_install_addons_dev.sh"
-                f" {bd_name_template} {self.template_name} {config_path}"
-            )
-        else:
-            cmd = (
-                f"./script/addons/install_addons_dev.sh {bd_name_template}"
-                f" {self.template_name} {config_path}"
-            )
-        _logger.info(cmd)
-        os.system(cmd)
-
-        if not self.keep_bd_alive:
-            cmd = (
-                "./.venv/bin/python3 ./odoo/odoo-bin db --drop --database"
-                f" {bd_name_template}"
-            )
-            _logger.info(cmd)
-            os.system(cmd)
-
-        # Validate
-        if not os.path.exists(cg_path):
-            raise Exception(f"Module cg not exists '{cg_path}'")
-        else:
-            _logger.info(f"Module cg exists '{cg_path}'")
-
-        self.rec.stage_id = self.rec.env.ref(
-            "erplibre_devops.devops_cg_new_project_stage_generate_ucb"
-        )
-
-        bd_name_generator = f"new_project_code_generator_{uuid.uuid4()}"[:63]
-        cmd = f"./script/database/db_restore.py --database {bd_name_generator}"
-        _logger.info(cmd)
-        os.system(cmd)
-        _logger.info(f"========= GENERATE {self.cg_name} =========")
-
-        # Add field from config
-        if self.config:
-            lst_update_cg = []
-            for model in self.config_lst_model:
-                model_name = model.get("name")
-                dct_field = {}
-                for a in model.get("fields"):
-                    dct_value = {"ttype": a.get("type")}
-                    if "relation" in a.keys():
-                        dct_value["relation"] = a["relation"]
-                    if "relation_field" in a.keys():
-                        dct_value["relation_field"] = a["relation_field"]
-                    if "description" in a.keys():
-                        dct_value["field_description"] = a["description"]
-                    dct_field[a.get("name")] = dct_value
-                if "name" not in dct_field.keys():
-                    dct_field["name"] = {"ttype": "char"}
-                old_str = (
-                    f'model_model = "{model_name}"\n       '
-                    " code_generator_id.add_update_model(model_model)"
+            if not self.keep_bd_alive:
+                cmd = (
+                    "./.venv/bin/python3 ./odoo/odoo-bin db --drop --database"
+                    f" {bd_name_template}"
                 )
-                new_str = (
-                    f'model_model = "{model_name}"\n        dct_field ='
-                    f" {dct_field}\n       "
-                    " code_generator_id.add_update_model(model_model,"
-                    " dct_field=dct_field)"
-                )
-                lst_update_cg.append((old_str, new_str))
+                _logger.info(cmd)
+                rec_ws.execute(cmd=cmd)
 
-            # Force add menu and access
-            lst_update_cg.append(('"disable_generate_menu": True,', ""))
-            lst_update_cg.append(('"disable_generate_access": True,', ""))
-            self.search_and_replace_file(
-                cg_hooks_py,
-                lst_update_cg,
+            # Validate
+            if not os.path.exists(cg_path):
+                raise Exception(f"Module cg not exists '{cg_path}'")
+            else:
+                _logger.info(f"Module cg exists '{cg_path}'")
+
+            rec.stage_id = rec.env.ref(
+                "erplibre_devops.devops_cg_new_project_stage_generate_ucb"
             )
 
-        if self._coverage:
-            cmd = (
-                "./script/addons/coverage_install_addons_dev.sh"
-                f" {bd_name_generator} {self.cg_name} {config_path}"
-            )
-        else:
-            cmd = (
-                f"./script/addons/install_addons_dev.sh {bd_name_generator}"
-                f" {self.cg_name} {config_path}"
-            )
-        _logger.info(cmd)
-        os.system(cmd)
-
-        if not self.keep_bd_alive:
-            cmd = (
-                "./.venv/bin/python3 ./odoo/odoo-bin db --drop --database"
-                f" {bd_name_generator}"
-            )
+            bd_name_generator = f"new_project_code_generator_{uuid.uuid4()}"[:63]
+            cmd = f"./script/database/db_restore.py --database {bd_name_generator}"
             _logger.info(cmd)
-            os.system(cmd)
+            rec_ws.execute(cmd=cmd)
+            _logger.info(f"========= GENERATE {self.cg_name} =========")
 
-        # Validate
-        if not os.path.exists(template_path):
-            raise Exception(f"Module not exists '{module_path}'")
-        else:
-            _logger.info(f"Module exists '{module_path}'")
+            # Add field from config
+            if self.config:
+                lst_update_cg = []
+                for model in self.config_lst_model:
+                    model_name = model.get("name")
+                    dct_field = {}
+                    for a in model.get("fields"):
+                        dct_value = {"ttype": a.get("type")}
+                        if "relation" in a.keys():
+                            dct_value["relation"] = a["relation"]
+                        if "relation_field" in a.keys():
+                            dct_value["relation_field"] = a["relation_field"]
+                        if "description" in a.keys():
+                            dct_value["field_description"] = a["description"]
+                        dct_field[a.get("name")] = dct_value
+                    if "name" not in dct_field.keys():
+                        dct_field["name"] = {"ttype": "char"}
+                    old_str = (
+                        f'model_model = "{model_name}"\n       '
+                        " code_generator_id.add_update_model(model_model)"
+                    )
+                    new_str = (
+                        f'model_model = "{model_name}"\n        dct_field ='
+                        f" {dct_field}\n       "
+                        " code_generator_id.add_update_model(model_model,"
+                        " dct_field=dct_field)"
+                    )
+                    lst_update_cg.append((old_str, new_str))
 
-        self.rec.stage_id = self.rec.env.ref(
-            "erplibre_devops.devops_cg_new_project_stage_generate_terminate"
-        )
+                # Force add menu and access
+                lst_update_cg.append(('"disable_generate_menu": True,', ""))
+                lst_update_cg.append(('"disable_generate_access": True,', ""))
+                self.search_and_replace_file(
+                    cg_hooks_py,
+                    lst_update_cg,
+                )
+
+            if self._coverage:
+                cmd = (
+                    "./script/addons/coverage_install_addons_dev.sh"
+                    f" {bd_name_generator} {self.cg_name} {config_path}"
+                )
+            else:
+                cmd = (
+                    "./script/addons/install_addons_dev.sh"
+                    f" {bd_name_generator} {self.cg_name} {config_path}"
+                )
+            _logger.info(cmd)
+            rec_ws.execute(cmd=cmd)
+
+            if not self.keep_bd_alive:
+                cmd = (
+                    "./.venv/bin/python3 ./odoo/odoo-bin db --drop --database"
+                    f" {bd_name_generator}"
+                )
+                _logger.info(cmd)
+                rec_ws.execute(cmd=cmd)
+
+            # Validate
+            if not os.path.exists(template_path):
+                raise Exception(f"Module not exists '{module_path}'")
+            else:
+                _logger.info(f"Module exists '{module_path}'")
+
+            rec.stage_id = rec.env.ref(
+                "erplibre_devops.devops_cg_new_project_stage_generate_terminate"
+            )
 
         return True
 
