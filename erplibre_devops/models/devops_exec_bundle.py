@@ -61,11 +61,25 @@ class DevopsExecBundle(models.Model):
         readonly=True,
     )
 
+    devops_exec_error_ids = fields.One2many(
+        comodel_name="devops.exec.error",
+        inverse_name="devops_exec_bundle_id",
+        string="Executions errors",
+        readonly=True,
+    )
+
     @api.multi
     def get_last_exec(self):
         self.ensure_one()
         if self.devops_exec_ids:
             return self.devops_exec_ids[-1]
+
+    @api.model
+    def get_parent_root(self):
+        rec = self
+        while rec.parent_id:
+            rec = rec.parent_id
+        return rec
 
     @api.depends(
         "devops_workspace",

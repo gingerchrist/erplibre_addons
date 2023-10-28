@@ -1674,11 +1674,22 @@ class DevopsWorkspace(models.Model):
                         rec.action_check()
 
     @api.multi
+    def action_update(self):
+        for rec_o in self:
+            with rec_o.devops_create_exec_bundle("Update DevOps") as rec:
+                rec.action_format_erplibre_devops()
+                rec.action_update_erplibre_devops()
+                rec.action_reboot()
+
+    @api.multi
     def action_reboot(self):
         for rec_o in self:
             with rec_o.devops_create_exec_bundle("Reboot") as rec:
+                exec_reboot_process = rec._context.get(
+                    "default_exec_reboot_process", rec.exec_reboot_process
+                )
                 if rec.is_me:
-                    if not rec.exec_reboot_process:
+                    if not exec_reboot_process:
                         service.server.restart()
                     else:
                         # Expect already run ;-), no need to validate
@@ -2004,43 +2015,56 @@ sock.close()
                 f" '{devops_exec_bundle_id.id}' failed"
             )
             escaped_tb = tools.html_escape(traceback.format_exc())
-            error_value = {
-                "description": description,
-                "escaped_tb": escaped_tb,
-                "devops_workspace": rec.id,
-                "devops_exec_bundle_ids": devops_exec_bundle_id.id,
-            }
-            partner_ids = [
-                (
-                    6,
-                    0,
-                    [
-                        a.partner_id.id
-                        for a in rec.message_follower_ids
-                        if a.partner_id
-                    ],
+            parent_root_id = devops_exec_bundle_id.get_parent_root().id
+            # detect is different to reduce recursion depth exceeded
+            found_same_error_ids = self.env["devops.exec.error"].search(
+                [
+                    ("parent_root_exec_bundle_id", "=", parent_root_id),
+                    ("description", "=", description),
+                    ("escaped_tb", "=", escaped_tb),
+                ]
+            )
+            if not found_same_error_ids:
+                error_value = {
+                    "description": description,
+                    "escaped_tb": escaped_tb,
+                    "devops_workspace": rec.id,
+                    "devops_exec_bundle_ids": devops_exec_bundle_id.id,
+                    "parent_root_exec_bundle_id": parent_root_id,
+                }
+                partner_ids = [
+                    (
+                        6,
+                        0,
+                        [
+                            a.partner_id.id
+                            for a in rec.message_follower_ids
+                            if a.partner_id
+                        ],
+                    )
+                ]
+                if partner_ids:
+                    error_value["partner_ids"] = partner_ids
+                channel_ids = [
+                    (
+                        6,
+                        0,
+                        [
+                            a.channel_id.id
+                            for a in rec.message_follower_ids
+                            if a.channel_id
+                        ],
+                    )
+                ]
+                if channel_ids:
+                    error_value["channel_ids"] = channel_ids
+                # this is not true, cannot associate exec_id to this error
+                # exec_id = devops_exec_bundle_id.get_last_exec()
+                # if exec_id:
+                #     error_value["devops_exec_ids"] = exec_id.id
+                exec_error_id = self.env["devops.exec.error"].create(
+                    error_value
                 )
-            ]
-            if partner_ids:
-                error_value["partner_ids"] = partner_ids
-            channel_ids = [
-                (
-                    6,
-                    0,
-                    [
-                        a.channel_id.id
-                        for a in rec.message_follower_ids
-                        if a.channel_id
-                    ],
-                )
-            ]
-            if channel_ids:
-                error_value["channel_ids"] = channel_ids
-            # this is not true, cannot associate exec_id to this error
-            # exec_id = devops_exec_bundle_id.get_last_exec()
-            # if exec_id:
-            #     error_value["devops_exec_ids"] = exec_id.id
-            self.env["devops.exec.error"].create(error_value)
             if rec.show_error_chatter:
                 self.message_post(  # pylint: disable=translation-required
                     body="<p>%s</p><pre>%s</pre>"

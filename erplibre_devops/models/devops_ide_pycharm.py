@@ -86,8 +86,8 @@ class DevopsIdePycharm(models.Model):
                 if result_regex:
                     filepath_breakpoint = result_regex.group(1)
                 if line_breakpoint is None or filepath_breakpoint is None:
-                    _logger.error("Cannot find breakpoint information")
-                    continue
+                    # continue
+                    raise Exception("Cannot find breakpoint information")
                 # -1 to line because start 0, but show 1
                 line = str(line_breakpoint - 1)
                 rec.add_breakpoint(filepath_breakpoint, line)
@@ -116,24 +116,21 @@ class DevopsIdePycharm(models.Model):
             # Add a line-breakpoint
             project = dct_project_xml.get("project")
             if not project:
-                _logger.error(
+                raise Exception(
                     f"Cannot find <project> into {workspace_xml_path}"
                 )
-                return
             component = project.get("component")
             if not component:
-                _logger.error(
+                raise Exception(
                     f"Cannot find <component> into {workspace_xml_path}"
                 )
-                return
             for x_debug_manager in component:
                 if x_debug_manager.get("@name") == "XDebuggerManager":
                     break
             else:
-                _logger.error(
+                raise Exception(
                     f"Cannot find <XDebuggerManager> into {workspace_xml_path}"
                 )
-                return
 
             has_update = False
             breakpoints = None

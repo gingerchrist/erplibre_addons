@@ -264,8 +264,7 @@ class ProjectManagement:
             file.write(txt)
         return True
 
-    @staticmethod
-    def validate_path_ready_to_be_override(name, directory, path=""):
+    def validate_path_ready_to_be_override(self, name, directory, path=""):
         if not path:
             path = os.path.join(directory, name)
         if not os.path.exists(path):
@@ -281,15 +280,14 @@ class ProjectManagement:
                 " ignore it."
             )
 
-        # TODO wait refactoring to use rec
-        # if rec.stop_execution_if_env_not_clean:
-        status = git_repo.git.status(name, porcelain=True)
-        if status:
-            msg = (
-                f"The directory '{path}' has git difference, use force to"
-                " ignore it."
-            )
-            raise Exception(msg)
+        if self.rec.stop_execution_if_env_not_clean:
+            status = git_repo.git.status(name, porcelain=True)
+            if status:
+                msg = (
+                    f"The directory '{path}' has git difference, use force to"
+                    " ignore it."
+                )
+                raise Exception(msg)
         return True
 
     @staticmethod
@@ -316,15 +314,18 @@ class ProjectManagement:
             rec = self.rec
             # TODO copy directory in temp workspace file before update it
             module_path = os.path.join(self.module_directory, self.module_name)
-            if not self.force and not self.validate_path_ready_to_be_override(
+            is_over = self.validate_path_ready_to_be_override(
                 self.module_name, self.module_directory, path=module_path
-            ):
-                self.msg_error = f"Cannot generate on module path '{module_path}'"
+            )
+            if not rec.force and not is_over:
+                self.msg_error = (
+                    f"Cannot generate on module path '{module_path}'"
+                )
                 raise Exception(self.msg_error)
 
             cg_path = os.path.join(self.cg_directory, self.cg_name)
             cg_hooks_py = os.path.join(cg_path, "hooks.py")
-            if not self.force and not self.validate_path_ready_to_be_override(
+            if not rec.force and not self.validate_path_ready_to_be_override(
                 self.cg_name, self.cg_directory, path=cg_path
             ):
                 self.msg_error = f"Cannot generate on cg path '{cg_path}'"
@@ -334,7 +335,7 @@ class ProjectManagement:
                 self.template_directory, self.template_name
             )
             template_hooks_py = os.path.join(template_path, "hooks.py")
-            if not self.force and not self.validate_path_ready_to_be_override(
+            if not rec.force and not self.validate_path_ready_to_be_override(
                 self.template_name, self.template_directory, path=template_path
             ):
                 self.msg_error = (
@@ -373,7 +374,8 @@ class ProjectManagement:
                         (
                             KEY_REPLACE_CODE_GENERATOR_DEMO
                             % CODE_GENERATOR_DEMO_NAME,
-                            KEY_REPLACE_CODE_GENERATOR_DEMO % self.template_name,
+                            KEY_REPLACE_CODE_GENERATOR_DEMO
+                            % self.template_name,
                         ),
                         (
                             'value["enable_sync_template"] = False',
@@ -383,7 +385,8 @@ class ProjectManagement:
                             "# path_module_generate ="
                             " os.path.normpath(os.path.join(os.path.dirname(__file__),"
                             " '..'))",
-                            f'path_module_generate = "{self.module_directory}"',
+                            "path_module_generate ="
+                            f' "{self.module_directory}"',
                         ),
                         (
                             '# "path_sync_code": path_module_generate,',
@@ -405,7 +408,9 @@ class ProjectManagement:
                 "erplibre_devops.devops_cg_new_project_stage_generate_uc0"
             )
 
-            bd_name_demo = f"new_project_code_generator_demo_{uuid.uuid4()}"[:63]
+            bd_name_demo = f"new_project_code_generator_demo_{uuid.uuid4()}"[
+                :63
+            ]
             cmd = f"./script/database/db_restore.py --database {bd_name_demo}"
             _logger.info(cmd)
             rec_ws.execute(cmd=cmd)
@@ -438,7 +443,9 @@ class ProjectManagement:
 
             # Validate
             if not os.path.exists(template_path):
-                raise Exception(f"Module template not exists '{template_path}'")
+                raise Exception(
+                    f"Module template not exists '{template_path}'"
+                )
             else:
                 _logger.info(f"Module template exists '{template_path}'")
 
@@ -471,7 +478,10 @@ class ProjectManagement:
             bd_name_template = (
                 f"new_project_code_generator_template_{uuid.uuid4()}"[:63]
             )
-            cmd = f"./script/database/db_restore.py --database {bd_name_template}"
+            cmd = (
+                "./script/database/db_restore.py --database"
+                f" {bd_name_template}"
+            )
             rec_ws.execute(cmd=cmd)
             _logger.info(cmd)
             _logger.info(f"========= GENERATE {self.template_name} =========")
@@ -528,8 +538,13 @@ class ProjectManagement:
                 "erplibre_devops.devops_cg_new_project_stage_generate_ucb"
             )
 
-            bd_name_generator = f"new_project_code_generator_{uuid.uuid4()}"[:63]
-            cmd = f"./script/database/db_restore.py --database {bd_name_generator}"
+            bd_name_generator = f"new_project_code_generator_{uuid.uuid4()}"[
+                :63
+            ]
+            cmd = (
+                "./script/database/db_restore.py --database"
+                f" {bd_name_generator}"
+            )
             _logger.info(cmd)
             rec_ws.execute(cmd=cmd)
             _logger.info(f"========= GENERATE {self.cg_name} =========")

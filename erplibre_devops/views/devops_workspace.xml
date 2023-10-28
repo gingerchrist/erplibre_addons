@@ -64,6 +64,13 @@
                     />
                     <button
                         class="oe_highlight"
+                        name="action_update"
+                        string="Update"
+                        type="object"
+                        attrs="{'invisible': ['|', ('is_installed', '=', False), ('is_conflict_mode_exec', '=', True)]}"
+                    />
+                    <button
+                        class="oe_highlight"
                         name="action_install_workspace"
                         string="Re-install"
                         type="object"

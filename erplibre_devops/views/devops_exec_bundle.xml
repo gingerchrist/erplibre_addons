@@ -19,6 +19,7 @@
                     <group string="IT">
                         <field name="devops_workspace" />
                         <field name="devops_exec_ids" />
+                        <field name="devops_exec_error_ids" />
                     </group>
                     <group string="Dependencies">
                         <field name="parent_id" />
@@ -115,6 +116,7 @@
                 <field name="exec_stop_date" />
                 <field name="devops_workspace" />
                 <field name="devops_exec_ids" widget="many2many_tags" options="{'no_create':True}" />
+                <field name="devops_exec_error_ids" widget="many2many_tags" options="{'no_create':True}" />
             </tree>
         </field>
     </record>

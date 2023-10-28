@@ -35,7 +35,12 @@ class DevopsExecError(models.Model):
         readonly=True,
     )
 
-    devops_exec_bundle_ids = fields.Many2one(
+    devops_exec_bundle_id = fields.Many2one(
+        comodel_name="devops.exec.bundle",
+        readonly=True,
+    )
+
+    parent_root_exec_bundle_id = fields.Many2one(
         comodel_name="devops.exec.bundle",
         readonly=True,
     )
@@ -61,6 +66,7 @@ class DevopsExecError(models.Model):
                 partner_ids=[(6, 0, rec.partner_ids.ids)],
                 channel_ids=[(6, 0, rec.channel_ids.ids)],
             )
+
             rec.devops_workspace.ide_pycharm.action_cg_setup_pycharm_debug(
                 log=rec.escaped_tb.replace("&quot;", '"')
             )
@@ -78,6 +84,18 @@ class DevopsExecError(models.Model):
             # rec.name += f"workspace {rec.devops_workspace.id}"
             if rec.description:
                 rec.name += f" '{rec.description}'"
+
+    @api.multi
+    def action_reboot_force_os_workspace(self):
+        self.ensure_one()
+        self.devops_workspace.with_context(
+            default_exec_reboot_process=True
+        ).action_reboot()
+
+    @api.multi
+    def action_kill_workspace(self):
+        self.ensure_one()
+        self.devops_workspace.action_stop()
 
     @api.multi
     def action_kill_pycharm(self):
