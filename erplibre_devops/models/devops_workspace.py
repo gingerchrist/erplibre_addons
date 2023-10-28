@@ -512,12 +512,24 @@ class DevopsWorkspace(models.Model):
                 # )
                 result = ""
                 rec.devops_cg_erplibre_devops_log = result
-                index_error = result.rfind("odoo.exceptions.ValidationError")
-                if index_error >= 0:
-                    rec.devops_cg_erplibre_devops_error_log = result[
-                        index_error : result.find("\n", index_error)
-                    ]
-                    rec.need_debugger_cg_erplibre_devops = True
+                lst_exception = (
+                    "odoo.exceptions.ValidationError:",
+                    "Exception:",
+                    "NameError:",
+                    "AttributeError:",
+                    "ValueError:",
+                    "Traceback (most recent call last):",
+                )
+                for exception in lst_exception:
+                    # TODO "Traceback (most recent call last):" can cause a crash, it's not an exception
+                    # TODO move lst_exception into model devops.exec.exception
+                    index_error = result.rfind(exception)
+                    if index_error >= 0:
+                        rec.devops_cg_erplibre_devops_error_log = result[
+                            index_error : result.find("\n", index_error)
+                        ]
+                        rec.need_debugger_cg_erplibre_devops = True
+                        break
 
                 end = datetime.now()
                 td = (end - start).total_seconds()
