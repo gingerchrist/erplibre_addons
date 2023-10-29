@@ -520,27 +520,6 @@ class DevopsWorkspace(models.Model):
                 #     cmd=f"cd {rec.folder};./script/code_generator/new_project.py"
                 #     f" -d {addons_path} -m {module_name}",
                 # )
-                result = ""
-                rec.devops_cg_erplibre_devops_log = result
-                lst_exception = (
-                    "odoo.exceptions.ValidationError:",
-                    "Exception:",
-                    "NameError:",
-                    "AttributeError:",
-                    "ValueError:",
-                    "Traceback (most recent call last):",
-                )
-                for exception in lst_exception:
-                    # TODO "Traceback (most recent call last):" can cause a crash, it's not an exception
-                    # TODO move lst_exception into model devops.exec.exception
-                    index_error = result.rfind(exception)
-                    if index_error >= 0:
-                        rec.devops_cg_erplibre_devops_error_log = result[
-                            index_error : result.find("\n", index_error)
-                        ]
-                        rec.need_debugger_cg_erplibre_devops = True
-                        break
-
                 end = datetime.now()
                 td = (end - start).total_seconds()
                 rec.time_exec_action_cg_erplibre_devops = f"{td:.03f}s"
@@ -738,55 +717,72 @@ class DevopsWorkspace(models.Model):
 
     @api.multi
     def workspace_code_remove_module(self, module_id):
-        for rec in self:
-            path_to_remove = os.path.join(
-                rec.path_working_erplibre, rec.path_code_generator_to_generate
-            )
-            rec.workspace_remove_module(module_id.name, path_to_remove)
+        for rec_o in self:
+            with rec_o.devops_create_exec_bundle(
+                "Workspace code remove module"
+            ) as rec:
+                path_to_remove = os.path.join(
+                    rec.path_working_erplibre,
+                    rec.path_code_generator_to_generate,
+                )
+                rec.workspace_remove_module(module_id.name, path_to_remove)
 
     @api.multi
     def workspace_CG_remove_module(self):
-        for rec in self:
-            # TODO is it necessary to hardcode it? Why not merge with code section?
-
-            path_to_remove = os.path.join(
-                rec.path_working_erplibre, "addons", "ERPLibre_erplibre_addons"
-            )
-            rec.workspace_remove_module(
-                "erplibre_devops", path_to_remove, remove_module=False
-            )
+        for rec_o in self:
+            with rec_o.devops_create_exec_bundle(
+                "Workspace CG remove module"
+            ) as rec:
+                # TODO is it necessary to hardcode it? Why not merge with code section?
+                path_to_remove = os.path.join(
+                    rec.path_working_erplibre,
+                    "addons",
+                    "ERPLibre_erplibre_addons",
+                )
+                rec.workspace_remove_module(
+                    "erplibre_devops", path_to_remove, remove_module=False
+                )
 
     @api.multi
     def workspace_CG_git_commit(self):
-        for rec in self:
-            folder_path = os.path.join(
-                rec.folder, "addons", "ERPLibre_erplibre_addons"
-            )
-            rec.execute(
-                cmd="git cola", folder=folder_path, force_open_terminal=True, force_exit=True
-            )
+        for rec_o in self:
+            with rec_o.devops_create_exec_bundle(
+                "Workspace CG git commit"
+            ) as rec:
+                folder_path = os.path.join(
+                    rec.folder, "addons", "ERPLibre_erplibre_addons"
+                )
+                rec.execute(
+                    cmd="git cola",
+                    folder=folder_path,
+                    force_open_terminal=True,
+                    force_exit=True,
+                )
 
     @api.multi
     def workspace_remove_module(
         self, module_name, path_to_remove, remove_module=True
     ):
-        for rec in self:
-            if remove_module:
+        for rec_o in self:
+            with rec_o.devops_create_exec_bundle(
+                "Workspace remove module"
+            ) as rec:
+                if remove_module:
+                    rec.execute(
+                        cmd=f"rm -rf ./{module_name};",
+                        folder=path_to_remove,
+                        to_instance=True,
+                    )
                 rec.execute(
-                    cmd=f"rm -rf ./{module_name};",
+                    cmd=f"rm -rf ./code_generator_template_{module_name};",
                     folder=path_to_remove,
                     to_instance=True,
                 )
-            rec.execute(
-                cmd=f"rm -rf ./code_generator_template_{module_name};",
-                folder=path_to_remove,
-                to_instance=True,
-            )
-            rec.execute(
-                cmd=f"rm -rf ./code_generator_{module_name};",
-                folder=path_to_remove,
-                to_instance=True,
-            )
+                rec.execute(
+                    cmd=f"rm -rf ./code_generator_{module_name};",
+                    folder=path_to_remove,
+                    to_instance=True,
+                )
 
     @api.multi
     def action_git_commit_all_generated_module(self):
@@ -1888,7 +1884,13 @@ class DevopsWorkspace(models.Model):
                 "folder": force_folder,
             }
             devops_exec_bundle = self.env.context.get("devops_exec_bundle")
+            devops_exec_bundle_id = None
             if devops_exec_bundle:
+                devops_exec_bundle_id = (
+                    self.env["devops.exec.bundle"]
+                    .browse(devops_exec_bundle)
+                    .exists()
+                )
                 devops_exec_value["devops_exec_bundle_id"] = devops_exec_bundle
             devops_exec = self.env["devops.exec"].create(devops_exec_value)
             lst_result.append(devops_exec)
@@ -1913,10 +1915,80 @@ class DevopsWorkspace(models.Model):
             devops_exec.exec_stop_date = fields.Datetime.now()
             if out is not False:
                 devops_exec.log_stdout = out
+                rec.find_exec_error_from_log(
+                    out, devops_exec, devops_exec_bundle_id
+                )
 
         if len(self) == 1:
             return lst_result[0]
         return self.env["devops.exec"].browse([a.id for a in lst_result])
+
+    @api.model
+    def find_exec_error_from_log(
+        self, log, devops_exec, devops_exec_bundle_id
+    ):
+        # nb_error_estimate = log.count("During handling of the above exception, another exception occurred:")
+        if not devops_exec_bundle_id:
+            _logger.warning(
+                f"Executable command {devops_exec.cmd} missing exec.bundle."
+            )
+            return
+
+        index_first_traceback = log.find("Traceback (most recent call last):")
+        if index_first_traceback == -1:
+            # cannot find exception
+            return
+        index_last_traceback = index_first_traceback
+
+        lst_exception = (
+            "odoo.exceptions.ValidationError:",
+            "Exception:",
+            "NameError:",
+            "AttributeError:",
+            "ValueError:",
+        )
+        # TODO move lst_exception into model devops.exec.exception
+        for exception in lst_exception:
+            index_error = log.rfind(exception)
+            if index_last_traceback < index_error:
+                index_last_traceback = index_error
+            # index_endline_error = log.find("\n", index_error)
+
+        if index_last_traceback <= index_first_traceback:
+            raise Exception("Cannot find exception")
+
+        parent_root_id = devops_exec_bundle_id.get_parent_root()
+        escaped_tb_all = log[index_first_traceback:index_last_traceback]
+        lst_escaped_tb = escaped_tb_all.split(
+            "During handling of the above exception, another exception"
+            " occurred:"
+        )
+        for escaped_tb in lst_escaped_tb:
+            escaped_tb = escaped_tb.strip()
+            found_same_error_ids = self.env["devops.exec.error"].search(
+                [
+                    (
+                        "parent_root_exec_bundle_id",
+                        "=",
+                        parent_root_id.id,
+                    ),
+                    (
+                        "description",
+                        "=",
+                        devops_exec_bundle_id.description,
+                    ),
+                    ("escaped_tb", "=", escaped_tb),
+                ]
+            )
+            if not found_same_error_ids:
+                exec_error_id = self.create_exec_error(
+                    devops_exec_bundle_id.description,
+                    escaped_tb,
+                    self,
+                    devops_exec_bundle_id,
+                    parent_root_id,
+                    "execution",
+                )
 
     @api.multi
     def action_poetry_install(self):
@@ -2005,6 +2077,67 @@ sock.close()
         )
         return exec_id.log_all.strip() == "Port is open"
 
+    @api.model
+    def get_partner_channel(self):
+        partner_ids = [
+            (
+                6,
+                0,
+                [
+                    a.partner_id.id
+                    for a in self.message_follower_ids
+                    if a.partner_id
+                ],
+            )
+        ]
+        channel_ids = [
+            (
+                6,
+                0,
+                [
+                    a.channel_id.id
+                    for a in self.message_follower_ids
+                    if a.channel_id
+                ],
+            )
+        ]
+        return partner_ids, channel_ids
+
+    @api.multi
+    def create_exec_error(
+        self,
+        description,
+        escaped_tb,
+        devops_workspace_id,
+        devops_exec_bundle_id,
+        parent_root_id,
+        type_error,
+    ):
+        lst_result = []
+        for rec in self:
+            error_value = {
+                "description": description,
+                "escaped_tb": escaped_tb,
+                "devops_workspace": devops_workspace_id.id,
+                "devops_exec_bundle_id": devops_exec_bundle_id.id,
+                "parent_root_exec_bundle_id": parent_root_id.id,
+                "type_error": type_error,
+            }
+            # this is not true, cannot associate exec_id to this error
+            # exec_id = devops_exec_bundle_id.get_last_exec()
+            # if exec_id:
+            #     error_value["devops_exec_ids"] = exec_id.id
+            partner_ids, channel_ids = rec.get_partner_channel()
+            if partner_ids:
+                error_value["partner_ids"] = partner_ids
+            if channel_ids:
+                error_value["channel_ids"] = channel_ids
+            exec_error_id = self.env["devops.exec.error"].create(error_value)
+            lst_result.append(exec_error_id)
+        if len(self) == 1:
+            return lst_result[0]
+        return self.env["devops.exec.error"].browse([a.id for a in lst_result])
+
     @api.multi
     @contextmanager
     def devops_create_exec_bundle(
@@ -2035,57 +2168,26 @@ sock.close()
                 f" '{devops_exec_bundle_id.id}' failed"
             )
             escaped_tb = tools.html_escape(traceback.format_exc())
-            parent_root_id = devops_exec_bundle_id.get_parent_root().id
+            parent_root_id = devops_exec_bundle_id.get_parent_root()
             # detect is different to reduce recursion depth exceeded
             found_same_error_ids = self.env["devops.exec.error"].search(
                 [
-                    ("parent_root_exec_bundle_id", "=", parent_root_id),
+                    ("parent_root_exec_bundle_id", "=", parent_root_id.id),
                     ("description", "=", description),
                     ("escaped_tb", "=", escaped_tb),
                 ]
             )
             if not found_same_error_ids:
-                error_value = {
-                    "description": description,
-                    "escaped_tb": escaped_tb,
-                    "devops_workspace": rec.id,
-                    "devops_exec_bundle_ids": devops_exec_bundle_id.id,
-                    "parent_root_exec_bundle_id": parent_root_id,
-                }
-                partner_ids = [
-                    (
-                        6,
-                        0,
-                        [
-                            a.partner_id.id
-                            for a in rec.message_follower_ids
-                            if a.partner_id
-                        ],
-                    )
-                ]
-                if partner_ids:
-                    error_value["partner_ids"] = partner_ids
-                channel_ids = [
-                    (
-                        6,
-                        0,
-                        [
-                            a.channel_id.id
-                            for a in rec.message_follower_ids
-                            if a.channel_id
-                        ],
-                    )
-                ]
-                if channel_ids:
-                    error_value["channel_ids"] = channel_ids
-                # this is not true, cannot associate exec_id to this error
-                # exec_id = devops_exec_bundle_id.get_last_exec()
-                # if exec_id:
-                #     error_value["devops_exec_ids"] = exec_id.id
-                exec_error_id = self.env["devops.exec.error"].create(
-                    error_value
+                rec.create_exec_error(
+                    description,
+                    escaped_tb,
+                    rec,
+                    devops_exec_bundle_id,
+                    parent_root_id,
+                    "internal",
                 )
             if rec.show_error_chatter:
+                partner_ids, channel_ids = rec.get_partner_channel()
                 self.message_post(  # pylint: disable=translation-required
                     body="<p>%s</p><pre>%s</pre>"
                     % (

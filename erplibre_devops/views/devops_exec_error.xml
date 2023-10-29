@@ -40,6 +40,7 @@
                     </group>
                     <group>
                         <group string="Info">
+                            <field name="type_error" />
                             <field name="description" />
                         </group>
                         <group string="Date">
@@ -129,6 +130,7 @@
         <field name="arch" type="xml">
             <tree>
                 <field name="name" />
+                <field name="type_error" />
                 <field name="description" />
                 <field name="escaped_tb" />
                 <field name="devops_workspace" />

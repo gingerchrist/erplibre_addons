@@ -30,6 +30,10 @@ class DevopsExecError(models.Model):
 
     channel_ids = fields.Many2many(comodel_name="mail.channel")
 
+    type_error = fields.Selection(
+        selection=[("internal", "Internal"), ("execution", "Execution")]
+    )
+
     devops_exec_ids = fields.Many2one(
         comodel_name="devops.exec",
         readonly=True,
