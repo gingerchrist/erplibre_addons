@@ -51,8 +51,9 @@ class DevopsExecError(models.Model):
         for rec in result:
             # ERROR, cannot support error into error if generate error, each error will generate error
             # with rec.devops_workspace.devops_create_exec_bundle(
-            #         "Create "
+            #         "Create exec error"
             # ) as rec_ws:
+            #     raise Exception("test error into error, no infinity")
             rec.message_post(  # pylint: disable=translation-required
                 body="<p>%s</p><pre>%s</pre>"
                 % (
@@ -66,7 +67,6 @@ class DevopsExecError(models.Model):
                 partner_ids=[(6, 0, rec.partner_ids.ids)],
                 channel_ids=[(6, 0, rec.channel_ids.ids)],
             )
-
             rec.devops_workspace.ide_pycharm.action_cg_setup_pycharm_debug(
                 log=rec.escaped_tb.replace("&quot;", '"')
             )
