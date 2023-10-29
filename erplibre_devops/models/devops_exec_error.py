@@ -30,12 +30,25 @@ class DevopsExecError(models.Model):
 
     channel_ids = fields.Many2many(comodel_name="mail.channel")
 
+    type_error = fields.Selection(
+        selection=[("internal", "Internal"), ("execution", "Execution")]
+    )
+
+    line_file_tb_detected = fields.Char(
+        help="Detected line to add breakpoint."
+    )
+
     devops_exec_ids = fields.Many2one(
         comodel_name="devops.exec",
         readonly=True,
     )
 
-    devops_exec_bundle_ids = fields.Many2one(
+    devops_exec_bundle_id = fields.Many2one(
+        comodel_name="devops.exec.bundle",
+        readonly=True,
+    )
+
+    parent_root_exec_bundle_id = fields.Many2one(
         comodel_name="devops.exec.bundle",
         readonly=True,
     )
@@ -44,6 +57,11 @@ class DevopsExecError(models.Model):
     def create(self, vals_list):
         result = super().create(vals_list)
         for rec in result:
+            # ERROR, cannot support error into error if generate error, each error will generate error
+            # with rec.devops_workspace.devops_create_exec_bundle(
+            #         "Create exec error"
+            # ) as rec_ws:
+            #     raise Exception("test error into error, no infinity")
             rec.message_post(  # pylint: disable=translation-required
                 body="<p>%s</p><pre>%s</pre>"
                 % (
@@ -56,6 +74,9 @@ class DevopsExecError(models.Model):
                 author_id=self.env.ref("base.user_root").partner_id.id,
                 partner_ids=[(6, 0, rec.partner_ids.ids)],
                 channel_ids=[(6, 0, rec.channel_ids.ids)],
+            )
+            rec.devops_workspace.ide_pycharm.action_cg_setup_pycharm_debug(
+                log=rec.escaped_tb.replace("&quot;", '"'), exec_error_id=rec
             )
         return result
 
@@ -73,19 +94,26 @@ class DevopsExecError(models.Model):
                 rec.name += f" '{rec.description}'"
 
     @api.multi
+    def action_reboot_force_os_workspace(self):
+        self.ensure_one()
+        self.devops_workspace.with_context(
+            default_exec_reboot_process=True
+        ).action_reboot()
+
+    @api.multi
+    def action_kill_workspace(self):
+        self.ensure_one()
+        self.devops_workspace.action_stop()
+
+    @api.multi
     def action_kill_pycharm(self):
         self.ensure_one()
-        cmd = (
-            "pkill -f $(ps aux | grep pycharm | grep -v grep | grep bin/java |"
-            " awk '{print $11}')"
-        )
-        self.devops_workspace.system_id.execute_process(cmd)
+        self.devops_workspace.ide_pycharm.action_kill_pycharm()
 
     @api.multi
     def action_start_pycharm(self):
         self.ensure_one()
-        cmd = "~/.local/share/JetBrains/Toolbox/scripts/pycharm"
-        self.devops_workspace.system_id.execute_terminal_gui("", cmd=cmd)
+        self.devops_workspace.ide_pycharm.action_start_pycharm()
 
     @api.multi
     def action_set_breakpoint_pycharm(self):
@@ -93,10 +121,8 @@ class DevopsExecError(models.Model):
             with rec_o.devops_workspace.devops_create_exec_bundle(
                 "Set breakpoint on error"
             ) as rec:
-                if not rec.ide_pycharm:
-                    rec.ide_pycharm = self.env["devops.ide.pycharm"].create(
-                        {"devops_workspace": rec.id}
-                    )
                 rec.ide_pycharm.action_cg_setup_pycharm_debug(
-                    log=rec_o.escaped_tb.replace("&quot;", '"')
+                    log=rec_o.escaped_tb.replace(
+                        "&quot;", '"', exec_error_id=rec
+                    )
                 )

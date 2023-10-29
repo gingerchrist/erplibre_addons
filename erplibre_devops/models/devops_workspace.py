@@ -81,6 +81,8 @@ class DevopsWorkspace(models.Model):
         help="Need to install environnement before execute it."
     )
 
+    namespace = fields.Char(help="Specific name for this workspace")
+
     is_debug_log = fields.Boolean(help="Will print cmd to debug.")
 
     # TODO transform in in compute with devops_workspace_docker.is_running
@@ -129,7 +131,7 @@ class DevopsWorkspace(models.Model):
         default="test",
     )
 
-    is_me = fields.Char(
+    is_me = fields.Boolean(
         string="Self instance",
         help="Add more automatisation about manage itself.",
     )
@@ -371,6 +373,8 @@ class DevopsWorkspace(models.Model):
         string="Workspace Docker",
     )
 
+    stop_execution_if_env_not_clean = fields.Boolean(default=True)
+
     test_ids = fields.Many2many(
         comodel_name="devops.test",
         string="Tests",
@@ -401,6 +405,15 @@ class DevopsWorkspace(models.Model):
     image_db_selection = fields.Many2one(
         comodel_name="devops.db.image", default=_default_image_db_selection
     )
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        r = super().create(vals_list)
+        if not r.ide_pycharm:
+            r.ide_pycharm = self.env["devops.ide.pycharm"].create(
+                {"devops_workspace": r.id}
+            )
+        return r
 
     @api.model
     def _default_folder(self):
@@ -483,12 +496,20 @@ class DevopsWorkspace(models.Model):
                 )
                 new_project_ids_disable.write({"active": False})
 
+                devops_exec_bundle_parent_root_id = (
+                    self.env["devops.exec.bundle"]
+                    .browse(rec._context.get("devops_exec_bundle"))
+                    .get_parent_root()
+                )
+
                 new_project_id = self.env["devops.cg.new_project"].create(
                     {
                         "module": module_name,
                         "directory": addons_path,
                         "devops_workspace": rec.id,
                         "project_type": "self",
+                        "stop_execution_if_env_not_clean": rec.stop_execution_if_env_not_clean,
+                        "devops_exec_bundle_id": devops_exec_bundle_parent_root_id.id,
                     }
                 )
                 if rec.last_new_project_self:
@@ -496,20 +517,11 @@ class DevopsWorkspace(models.Model):
                         rec.last_new_project_self.id
                     )
                 rec.last_new_project_self = new_project_id.id
-                new_project_id.action_new_project()
+                new_project_id.with_context(rec._context).action_new_project()
                 # result = rec.execute(
                 #     cmd=f"cd {rec.folder};./script/code_generator/new_project.py"
                 #     f" -d {addons_path} -m {module_name}",
                 # )
-                result = ""
-                rec.devops_cg_erplibre_devops_log = result
-                index_error = result.rfind("odoo.exceptions.ValidationError")
-                if index_error >= 0:
-                    rec.devops_cg_erplibre_devops_error_log = result[
-                        index_error : result.find("\n", index_error)
-                    ]
-                    rec.need_debugger_cg_erplibre_devops = True
-
                 end = datetime.now()
                 td = (end - start).total_seconds()
                 rec.time_exec_action_cg_erplibre_devops = f"{td:.03f}s"
@@ -518,10 +530,6 @@ class DevopsWorkspace(models.Model):
     def action_cg_setup_pycharm_debug(self):
         for rec_o in self:
             with rec_o.devops_create_exec_bundle("Setup PyCharm debug") as rec:
-                if not rec.ide_pycharm:
-                    rec.ide_pycharm = self.env["devops.ide.pycharm"].create(
-                        {"devops_workspace": rec.id}
-                    )
                 rec.ide_pycharm.action_cg_setup_pycharm_debug()
 
     @api.multi
@@ -534,6 +542,34 @@ class DevopsWorkspace(models.Model):
                     rec.folder, "addons", "ERPLibre_erplibre_addons"
                 )
                 rec.execute(folder=folder_path, force_open_terminal=True)
+
+    @api.multi
+    def action_format_erplibre_devops(self):
+        for rec_o in self:
+            with rec_o.devops_create_exec_bundle(
+                "Format ERPLibre DevOps"
+            ) as rec:
+                rec.execute(
+                    cmd=(
+                        "./script/maintenance/format.sh"
+                        " ./addons/ERPLibre_erplibre_addons/erplibre_devops"
+                    )
+                )
+
+    @api.multi
+    def action_update_erplibre_devops(self):
+        for rec_o in self:
+            with rec_o.devops_create_exec_bundle(
+                "Update ERPLibre DevOps"
+            ) as rec:
+                # TODO change db_name from this db
+                rec.execute(
+                    cmd=(
+                        "./run.sh --limit-time-real 999999 --no-http"
+                        f" --stop-after-init --dev cg -d {rec.db_name} -i"
+                        " erplibre_devops -u erplibre_devops"
+                    )
+                )
 
     @api.multi
     def action_code_generator_generate_all(self):
@@ -683,45 +719,72 @@ class DevopsWorkspace(models.Model):
 
     @api.multi
     def workspace_code_remove_module(self, module_id):
-        for rec in self:
-            path_to_remove = os.path.join(
-                rec.path_working_erplibre, rec.path_code_generator_to_generate
-            )
-            rec.workspace_remove_module(module_id.name, path_to_remove)
+        for rec_o in self:
+            with rec_o.devops_create_exec_bundle(
+                "Workspace code remove module"
+            ) as rec:
+                path_to_remove = os.path.join(
+                    rec.path_working_erplibre,
+                    rec.path_code_generator_to_generate,
+                )
+                rec.workspace_remove_module(module_id.name, path_to_remove)
 
     @api.multi
     def workspace_CG_remove_module(self):
-        for rec in self:
-            # TODO is it necessary to hardcode it? Why not merge with code section?
+        for rec_o in self:
+            with rec_o.devops_create_exec_bundle(
+                "Workspace CG remove module"
+            ) as rec:
+                # TODO is it necessary to hardcode it? Why not merge with code section?
+                path_to_remove = os.path.join(
+                    rec.path_working_erplibre,
+                    "addons",
+                    "ERPLibre_erplibre_addons",
+                )
+                rec.workspace_remove_module(
+                    "erplibre_devops", path_to_remove, remove_module=False
+                )
 
-            path_to_remove = os.path.join(
-                rec.path_working_erplibre, "addons", "ERPLibre_erplibre_addons"
-            )
-            rec.workspace_remove_module(
-                "erplibre_devops", path_to_remove, remove_module=False
-            )
+    @api.multi
+    def workspace_CG_git_commit(self):
+        for rec_o in self:
+            with rec_o.devops_create_exec_bundle(
+                "Workspace CG git commit"
+            ) as rec:
+                folder_path = os.path.join(
+                    rec.folder, "addons", "ERPLibre_erplibre_addons"
+                )
+                rec.execute(
+                    cmd="git cola",
+                    folder=folder_path,
+                    force_open_terminal=True,
+                    force_exit=True,
+                )
 
     @api.multi
     def workspace_remove_module(
         self, module_name, path_to_remove, remove_module=True
     ):
-        for rec in self:
-            if remove_module:
+        for rec_o in self:
+            with rec_o.devops_create_exec_bundle(
+                "Workspace remove module"
+            ) as rec:
+                if remove_module:
+                    rec.execute(
+                        cmd=f"rm -rf ./{module_name};",
+                        folder=path_to_remove,
+                        to_instance=True,
+                    )
                 rec.execute(
-                    cmd=f"rm -rf ./{module_name};",
+                    cmd=f"rm -rf ./code_generator_template_{module_name};",
                     folder=path_to_remove,
                     to_instance=True,
                 )
-            rec.execute(
-                cmd=f"rm -rf ./code_generator_template_{module_name};",
-                folder=path_to_remove,
-                to_instance=True,
-            )
-            rec.execute(
-                cmd=f"rm -rf ./code_generator_{module_name};",
-                folder=path_to_remove,
-                to_instance=True,
-            )
+                rec.execute(
+                    cmd=f"rm -rf ./code_generator_{module_name};",
+                    folder=path_to_remove,
+                    to_instance=True,
+                )
 
     @api.multi
     def action_git_commit_all_generated_module(self):
@@ -1614,24 +1677,37 @@ class DevopsWorkspace(models.Model):
                 rec.check_devops_workspace()
                 if rec.mode_exec in ["docker"]:
                     rec.workspace_docker_id.action_stop_docker_compose()
+                    rec.action_check()
                 elif rec.mode_exec in ["terminal"]:
                     if rec.is_me:
                         pid = os.getpid()
                         rec.execute(
-                            cmd=f"kill -9 {pid}",
+                            cmd=f"sleep {SLEEP_KILL};kill -9 {pid}",
                             force_open_terminal=True,
                             force_exit=True,
                         )
+                        rec_o.is_running = False
                     else:
                         rec.kill_process()
-                rec.action_check()
+                        rec.action_check()
+
+    @api.multi
+    def action_update(self):
+        for rec_o in self:
+            with rec_o.devops_create_exec_bundle("Update DevOps") as rec:
+                rec.action_format_erplibre_devops()
+                rec.action_update_erplibre_devops()
+                rec.action_reboot()
 
     @api.multi
     def action_reboot(self):
         for rec_o in self:
             with rec_o.devops_create_exec_bundle("Reboot") as rec:
+                exec_reboot_process = rec._context.get(
+                    "default_exec_reboot_process", rec.exec_reboot_process
+                )
                 if rec.is_me:
-                    if not rec.exec_reboot_process:
+                    if not exec_reboot_process:
                         service.server.restart()
                     else:
                         # Expect already run ;-), no need to validate
@@ -1679,20 +1755,15 @@ class DevopsWorkspace(models.Model):
                         rec.execute(
                             cmd=cmd, force_open_terminal=True, force_exit=True
                         )
+                        rec_o.is_running = False
 
     @api.multi
-    @api.depends(
-        "mode_source",
-        "mode_exec",
-        "mode_environnement",
-        "mode_version_erplibre",
-        "mode_version_base",
-    )
     def action_install_workspace(self):
         for rec_o in self:
             with rec_o.devops_create_exec_bundle("Install workspace") as rec:
                 exec_id = rec.execute(cmd=f"ls {rec.folder}")
                 lst_file = exec_id.log_all.strip().split("\n")
+                rec.namespace = os.path.basename(rec.folder)
                 if rec.mode_source in ["docker"]:
                     if "docker-compose.yml" in lst_file:
                         # TODO try to reuse
@@ -1809,14 +1880,20 @@ class DevopsWorkspace(models.Model):
                 "folder": force_folder,
             }
             devops_exec_bundle = self.env.context.get("devops_exec_bundle")
+            devops_exec_bundle_id = None
             if devops_exec_bundle:
+                devops_exec_bundle_id = (
+                    self.env["devops.exec.bundle"]
+                    .browse(devops_exec_bundle)
+                    .exists()
+                )
                 devops_exec_value["devops_exec_bundle_id"] = devops_exec_bundle
             devops_exec = self.env["devops.exec"].create(devops_exec_value)
             lst_result.append(devops_exec)
             if force_open_terminal:
                 rec_force_docker = rec_force_docker or docker
                 rec.system_id.execute_terminal_gui(
-                    force_folder,
+                    folder=force_folder,
                     cmd=cmd,
                     docker=rec_force_docker,
                 )
@@ -1834,10 +1911,80 @@ class DevopsWorkspace(models.Model):
             devops_exec.exec_stop_date = fields.Datetime.now()
             if out is not False:
                 devops_exec.log_stdout = out
+                rec.find_exec_error_from_log(
+                    out, devops_exec, devops_exec_bundle_id
+                )
 
         if len(self) == 1:
             return lst_result[0]
         return self.env["devops.exec"].browse([a.id for a in lst_result])
+
+    @api.model
+    def find_exec_error_from_log(
+        self, log, devops_exec, devops_exec_bundle_id
+    ):
+        # nb_error_estimate = log.count("During handling of the above exception, another exception occurred:")
+        if not devops_exec_bundle_id:
+            _logger.warning(
+                f"Executable command {devops_exec.cmd} missing exec.bundle."
+            )
+            return
+
+        index_first_traceback = log.find("Traceback (most recent call last):")
+        if index_first_traceback == -1:
+            # cannot find exception
+            return
+        index_last_traceback = index_first_traceback
+
+        lst_exception = (
+            "odoo.exceptions.ValidationError:",
+            "Exception:",
+            "NameError:",
+            "AttributeError:",
+            "ValueError:",
+        )
+        # TODO move lst_exception into model devops.exec.exception
+        for exception in lst_exception:
+            index_error = log.rfind(exception)
+            if index_last_traceback < index_error:
+                index_last_traceback = index_error
+            # index_endline_error = log.find("\n", index_error)
+
+        if index_last_traceback <= index_first_traceback:
+            raise Exception("Cannot find exception")
+
+        parent_root_id = devops_exec_bundle_id.get_parent_root()
+        escaped_tb_all = log[index_first_traceback:index_last_traceback]
+        lst_escaped_tb = escaped_tb_all.split(
+            "During handling of the above exception, another exception"
+            " occurred:"
+        )
+        for escaped_tb in lst_escaped_tb:
+            escaped_tb = escaped_tb.strip()
+            found_same_error_ids = self.env["devops.exec.error"].search(
+                [
+                    (
+                        "parent_root_exec_bundle_id",
+                        "=",
+                        parent_root_id.id,
+                    ),
+                    (
+                        "description",
+                        "=",
+                        devops_exec_bundle_id.description,
+                    ),
+                    ("escaped_tb", "=", escaped_tb),
+                ]
+            )
+            if not found_same_error_ids:
+                exec_error_id = self.create_exec_error(
+                    devops_exec_bundle_id.description,
+                    escaped_tb,
+                    self,
+                    devops_exec_bundle_id,
+                    parent_root_id,
+                    "execution",
+                )
 
     @api.multi
     def action_poetry_install(self):
@@ -1926,6 +2073,67 @@ sock.close()
         )
         return exec_id.log_all.strip() == "Port is open"
 
+    @api.model
+    def get_partner_channel(self):
+        partner_ids = [
+            (
+                6,
+                0,
+                [
+                    a.partner_id.id
+                    for a in self.message_follower_ids
+                    if a.partner_id
+                ],
+            )
+        ]
+        channel_ids = [
+            (
+                6,
+                0,
+                [
+                    a.channel_id.id
+                    for a in self.message_follower_ids
+                    if a.channel_id
+                ],
+            )
+        ]
+        return partner_ids, channel_ids
+
+    @api.multi
+    def create_exec_error(
+        self,
+        description,
+        escaped_tb,
+        devops_workspace_id,
+        devops_exec_bundle_id,
+        parent_root_id,
+        type_error,
+    ):
+        lst_result = []
+        for rec in self:
+            error_value = {
+                "description": description,
+                "escaped_tb": escaped_tb.replace("&quot;", '"'),
+                "devops_workspace": devops_workspace_id.id,
+                "devops_exec_bundle_id": devops_exec_bundle_id.id,
+                "parent_root_exec_bundle_id": parent_root_id.id,
+                "type_error": type_error,
+            }
+            # this is not true, cannot associate exec_id to this error
+            # exec_id = devops_exec_bundle_id.get_last_exec()
+            # if exec_id:
+            #     error_value["devops_exec_ids"] = exec_id.id
+            partner_ids, channel_ids = rec.get_partner_channel()
+            if partner_ids:
+                error_value["partner_ids"] = partner_ids
+            if channel_ids:
+                error_value["channel_ids"] = channel_ids
+            exec_error_id = self.env["devops.exec.error"].create(error_value)
+            lst_result.append(exec_error_id)
+        if len(self) == 1:
+            return lst_result[0]
+        return self.env["devops.exec.error"].browse([a.id for a in lst_result])
+
     @api.multi
     @contextmanager
     def devops_create_exec_bundle(
@@ -1956,44 +2164,26 @@ sock.close()
                 f" '{devops_exec_bundle_id.id}' failed"
             )
             escaped_tb = tools.html_escape(traceback.format_exc())
-            error_value = {
-                "description": description,
-                "escaped_tb": escaped_tb,
-                "devops_workspace": rec.id,
-                "devops_exec_bundle_ids": devops_exec_bundle_id.id,
-            }
-            partner_ids = [
-                (
-                    6,
-                    0,
-                    [
-                        a.partner_id.id
-                        for a in rec.message_follower_ids
-                        if a.partner_id
-                    ],
+            parent_root_id = devops_exec_bundle_id.get_parent_root()
+            # detect is different to reduce recursion depth exceeded
+            found_same_error_ids = self.env["devops.exec.error"].search(
+                [
+                    ("parent_root_exec_bundle_id", "=", parent_root_id.id),
+                    ("description", "=", description),
+                    ("escaped_tb", "=", escaped_tb),
+                ]
+            )
+            if not found_same_error_ids:
+                rec.create_exec_error(
+                    description,
+                    escaped_tb,
+                    rec,
+                    devops_exec_bundle_id,
+                    parent_root_id,
+                    "internal",
                 )
-            ]
-            if partner_ids:
-                error_value["partner_ids"] = partner_ids
-            channel_ids = [
-                (
-                    6,
-                    0,
-                    [
-                        a.channel_id.id
-                        for a in rec.message_follower_ids
-                        if a.channel_id
-                    ],
-                )
-            ]
-            if channel_ids:
-                error_value["channel_ids"] = channel_ids
-            # this is not true, cannot associate exec_id to this error
-            # exec_id = devops_exec_bundle_id.get_last_exec()
-            # if exec_id:
-            #     error_value["devops_exec_ids"] = exec_id.id
-            self.env["devops.exec.error"].create(error_value)
             if rec.show_error_chatter:
+                partner_ids, channel_ids = rec.get_partner_channel()
                 self.message_post(  # pylint: disable=translation-required
                     body="<p>%s</p><pre>%s</pre>"
                     % (

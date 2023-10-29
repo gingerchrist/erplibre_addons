@@ -36,6 +36,7 @@
                         <group>
                             <field name="last_new_project" />
                             <field name="devops_workspace" />
+                            <field name="devops_exec_bundle_id" />
                         </group>
                     </group>
 

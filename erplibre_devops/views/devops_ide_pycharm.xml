@@ -12,12 +12,15 @@
                         string="Setup debug from last execution"
                         type="object"
                     />
+                    <button class="oe_highlight" name="action_start_pycharm" string="Start pycharm" type="object" />
+                    <button class="oe_highlight" name="action_kill_pycharm" string="Kill Pycharm" type="object" />
                 </header>
                 <sheet>
                     <group>
                         <group>
                             <field name="name" />
                             <field name="devops_workspace" />
+                            <field name="line_file_tb_detected" />
                         </group>
                     </group>
                 </sheet>

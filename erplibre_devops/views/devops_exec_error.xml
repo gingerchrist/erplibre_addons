@@ -12,8 +12,15 @@
                         string="Set breakpoint Pycharm"
                         type="object"
                     />
-                    <button class="oe_highlight" name="action_start_pycharm" string="Start pycharm" type="object" />
-                    <button class="oe_highlight" name="action_kill_pycharm" string="Kill Pycharm" type="object" />
+                    <button class="oe_highlight" name="action_start_pycharm" string="Start PyCharm" type="object" />
+                    <button class="oe_highlight" name="action_kill_pycharm" string="Kill PyCharm" type="object" />
+                    <button
+                        class="oe_highlight"
+                        name="action_reboot_force_os_workspace"
+                        string="Reboot outside PyCharm"
+                        type="object"
+                    />
+                    <button class="oe_highlight" name="action_kill_workspace" string="Stop outside" type="object" />
                 </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
@@ -28,17 +35,21 @@
                     </div>
                     <group string="IT">
                         <field name="devops_workspace" />
-                        <field name="devops_exec_bundle_ids" />
+                        <field name="devops_exec_bundle_id" />
                         <field name="devops_exec_ids" />
                     </group>
                     <group>
                         <group string="Info">
+                            <field name="type_error" />
                             <field name="description" />
                         </group>
                         <group string="Date">
                             <field name="create_date" />
                             <field name="write_date" />
                         </group>
+                    </group>
+                    <group>
+                        <field name="line_file_tb_detected" />
                     </group>
                     <notebook>
                         <page string="Traceback">
@@ -122,9 +133,12 @@
         <field name="arch" type="xml">
             <tree>
                 <field name="name" />
+                <field name="type_error" />
                 <field name="description" />
                 <field name="escaped_tb" />
+                <field name="line_file_tb_detected" />
                 <field name="devops_workspace" />
+                <field name="create_date" />
             </tree>
         </field>
     </record>

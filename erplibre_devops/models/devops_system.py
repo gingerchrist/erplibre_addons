@@ -203,18 +203,18 @@ class DevopsSystem(models.Model):
                 lst_result.append(result)
         return lst_result
 
-    def execute_terminal_gui(self, folder, cmd="", docker=False):
+    def execute_terminal_gui(self, folder="", cmd="", docker=False):
         # TODO if folder not exist, cannot CD. don't execute the command if wrong directory
         for rec in self.filtered(lambda r: r.method == "local"):
             str_keep_open = ""
             if rec.keep_terminal_open and rec.terminal == "gnome-terminal":
                 str_keep_open = ";bash"
-            if cmd:
-                wrap_cmd = f"{cmd}{str_keep_open}"
-            else:
-                wrap_cmd = ""
+            wrap_cmd = f"{cmd}{str_keep_open}"
             if folder:
-                wrap_cmd = f'cd "{folder}";{wrap_cmd}'
+                if wrap_cmd.startswith(";"):
+                    wrap_cmd = f'cd "{folder}"{wrap_cmd}'
+                else:
+                    wrap_cmd = f'cd "{folder}";{wrap_cmd}'
             if docker:
                 workspace = os.path.basename(folder)
                 docker_name = f"{workspace}-ERPLibre-1"
@@ -376,6 +376,52 @@ class DevopsSystem(models.Model):
         return ssh_client
 
     @api.multi
+    def action_search_workspace(self):
+        for rec in self:
+            out = rec.execute_process(
+                'locate default.xml|grep -i erplibre|grep -v ".repo"'
+            )
+            lst_dir = out.strip().split("\n")
+            # TODO detect is_me if not exist
+            # TODO do more validation it's a ERPLibre workspace
+            for dir_path in lst_dir:
+                dirname = os.path.dirname(dir_path)
+                # Check if already exist
+                rec_ws = rec.devops_workspace_ids.filtered(
+                    lambda r: r.folder == dirname
+                )
+                if rec_ws:
+                    continue
+                git_dir = os.path.join(dirname, ".git")
+                docker_compose_dir = os.path.join(
+                    dirname, "docker-compose.yml"
+                )
+                out_git = rec.execute_process(f"ls {git_dir}")
+                out_dc = rec.execute_process(f"ls {docker_compose_dir}")
+                if not dirname:
+                    raise Exception("Missing dirname when search workspace")
+
+                value = {
+                    "folder": dirname,
+                    "system_id": rec.id,
+                }
+                mode_source = ""
+                mode_exec = ""
+                if not out_git.startswith("ls: cannot access"):
+                    # Create it git
+                    mode_source = "git"
+                    mode_exec = "terminal"
+                elif not out_dc.startswith("ls: cannot access"):
+                    # create it docker
+                    mode_source = "docker"
+                    mode_exec = "docker"
+                if mode_source:
+                    value["mode_source"] = mode_source
+                    value["mode_exec"] = mode_exec
+                    ws_id = self.env["devops.workspace"].create(value)
+                    ws_id.action_install_workspace()
+
+    @api.model
     def action_refresh_db_image(self):
         path_image_db = os.path.join(os.getcwd(), "image_db")
         for file_name in os.listdir(path_image_db):
