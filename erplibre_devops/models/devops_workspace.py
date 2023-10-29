@@ -494,6 +494,12 @@ class DevopsWorkspace(models.Model):
                 )
                 new_project_ids_disable.write({"active": False})
 
+                devops_exec_bundle_parent_root_id = (
+                    self.env["devops.exec.bundle"]
+                    .browse(rec._context.get("devops_exec_bundle"))
+                    .get_parent_root()
+                )
+
                 new_project_id = self.env["devops.cg.new_project"].create(
                     {
                         "module": module_name,
@@ -501,6 +507,7 @@ class DevopsWorkspace(models.Model):
                         "devops_workspace": rec.id,
                         "project_type": "self",
                         "stop_execution_if_env_not_clean": rec.stop_execution_if_env_not_clean,
+                        "devops_exec_bundle_id": devops_exec_bundle_parent_root_id.id,
                     }
                 )
                 if rec.last_new_project_self:

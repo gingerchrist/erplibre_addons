@@ -132,6 +132,7 @@
                 <field name="description" />
                 <field name="escaped_tb" />
                 <field name="devops_workspace" />
+                <field name="create_date" />
             </tree>
         </field>
     </record>

@@ -5,41 +5,39 @@
         <field name="model">devops.exec.bundle</field>
         <field name="arch" type="xml">
             <form string="Bundle execution">
-                <sheet>
-                    <div class="oe_button_box" name="button_box">
-                        <button class="oe_stat_button" name="toggle_active" type="object" icon="fa-archive">
-                            <field name="active" widget="boolean_button" options='{"terminology": "archive"}' />
-                        </button>
-                    </div>
-                    <div class="oe_title">
-                        <h1>
-                            <field name="name" />
-                        </h1>
-                    </div>
-                    <group string="IT">
-                        <field name="devops_workspace" />
-                        <field name="devops_exec_ids" />
-                        <field name="devops_exec_error_ids" />
+                <div class="oe_button_box" name="button_box">
+                    <button class="oe_stat_button" name="toggle_active" type="object" icon="fa-archive">
+                        <field name="active" widget="boolean_button" options='{"terminology": "archive"}' />
+                    </button>
+                </div>
+                <div class="oe_title">
+                    <h1>
+                        <field name="name" />
+                    </h1>
+                </div>
+                <group string="IT">
+                    <field name="devops_workspace" />
+                    <field name="devops_exec_ids" />
+                    <field name="devops_exec_error_ids" />
+                </group>
+                <group string="Dependencies">
+                    <field name="parent_id" />
+                    <field name="child_ids" />
+                </group>
+                <group>
+                    <group string="Date">
+                        <field name="execution_finish" />
+                        <field name="time_duration_result" />
+                        <field name="exec_start_date" />
+                        <field name="exec_stop_date" />
+                        <field name="exec_time_duration" />
+                        <field name="create_date" />
+                        <field name="write_date" />
                     </group>
-                    <group string="Dependencies">
-                        <field name="parent_id" />
-                        <field name="child_ids" />
+                    <group string="Info">
+                        <field name="description" />
                     </group>
-                    <group>
-                        <group string="Date">
-                            <field name="execution_finish" />
-                            <field name="time_duration_result" />
-                            <field name="exec_start_date" />
-                            <field name="exec_stop_date" />
-                            <field name="exec_time_duration" />
-                            <field name="create_date" />
-                            <field name="write_date" />
-                        </group>
-                        <group string="Info">
-                            <field name="description" />
-                        </group>
-                    </group>
-                </sheet>
+                </group>
             </form>
         </field>
     </record>

@@ -85,6 +85,8 @@ class DevopsCgNewProject(models.Model):
         store=True,
     )
 
+    devops_exec_bundle_id = fields.Many2one(comodel_name="devops.exec.bundle")
+
     devops_workspace = fields.Many2one(comodel_name="devops.workspace")
 
     @api.depends(
