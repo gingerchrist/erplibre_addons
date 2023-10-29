@@ -81,6 +81,8 @@ class DevopsWorkspace(models.Model):
         help="Need to install environnement before execute it."
     )
 
+    namespace = fields.Char(help="Specific name for this workspace")
+
     is_debug_log = fields.Boolean(help="Will print cmd to debug.")
 
     # TODO transform in in compute with devops_workspace_docker.is_running
@@ -129,7 +131,7 @@ class DevopsWorkspace(models.Model):
         default="test",
     )
 
-    is_me = fields.Char(
+    is_me = fields.Boolean(
         string="Self instance",
         help="Add more automatisation about manage itself.",
     )
@@ -1756,18 +1758,12 @@ class DevopsWorkspace(models.Model):
                         rec_o.is_running = False
 
     @api.multi
-    @api.depends(
-        "mode_source",
-        "mode_exec",
-        "mode_environnement",
-        "mode_version_erplibre",
-        "mode_version_base",
-    )
     def action_install_workspace(self):
         for rec_o in self:
             with rec_o.devops_create_exec_bundle("Install workspace") as rec:
                 exec_id = rec.execute(cmd=f"ls {rec.folder}")
                 lst_file = exec_id.log_all.strip().split("\n")
+                rec.namespace = os.path.basename(rec.folder)
                 if rec.mode_source in ["docker"]:
                     if "docker-compose.yml" in lst_file:
                         # TODO try to reuse

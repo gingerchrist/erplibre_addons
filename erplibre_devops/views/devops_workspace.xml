@@ -548,12 +548,14 @@
             <tree>
                 <field name="name" />
                 <field name="folder" />
+                <field name="namespace" />
                 <field name="system_id" />
                 <field name="mode_source" />
                 <field name="mode_exec" />
                 <field name="mode_environnement" />
                 <field name="mode_version_erplibre" />
                 <field name="mode_version_base" />
+                <field name="is_me" />
                 <field name="is_installed" />
             </tree>
         </field>
