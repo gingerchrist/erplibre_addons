@@ -1,0 +1,18 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_devops_workspace_read,Read devops.workspace,model_devops_workspace,base.group_erp_manager,1,0,0,0
+access_devops_workspace_write,Write devops.workspace,model_devops_workspace,base.group_system,1,1,1,1
+access_devops_db_image,access_devops_db_image,model_devops_db_image,base.group_user,1,1,1,1
+devops_code_generator_access_user_types_/_internal_user,devops_code_generator Access User types / Internal User,model_devops_code_generator,base.group_user,1,1,1,1
+devops_code_generator_module_access_user_types_/_internal_user,devops_code_generator_module Access User types / Internal User,model_devops_code_generator_module,base.group_user,1,1,1,1
+devops_code_generator_module_model_access_user_types_/_internal_user,devops_code_generator_module_model Access User types / Internal User,model_devops_code_generator_module_model,base.group_user,1,1,1,1
+devops_code_generator_module_model_field_access_user_types_/_internal_user,devops_code_generator_module_model_field Access User types / Internal User,model_devops_code_generator_module_model_field,base.group_user,1,1,1,1
+devops_system_access_user_types_/_internal_user,devops_system Access User types / Internal User,model_devops_system,base.group_user,1,1,1,1
+access_devops_cg_new_project,access_devops_cg_new_project,model_devops_cg_new_project,base.group_user,1,1,1,1
+access_devops_ide_pycharm,access_devops_ide_pycharm,model_devops_ide_pycharm,base.group_user,1,1,1,1
+access_devops_workspace_docker,access_devops_workspace_docker,model_devops_workspace_docker,base.group_user,1,1,1,1
+access_devops_workspace_terminal,access_devops_workspace_terminal,model_devops_workspace_terminal,base.group_user,1,1,1,1
+access_devops_test,access_devops_test,model_devops_test,base.group_user,1,1,1,1
+access_devops_cg_new_project_stage,access_devops_cg_new_project_stage,model_devops_cg_new_project_stage,base.group_user,1,1,1,1
+access_devops_exec,access_devops_exec,model_devops_exec,base.group_user,1,1,1,1
+access_devops_exec_bundle,access_devops_exec_bundle,model_devops_exec_bundle,base.group_user,1,1,1,1
+access_devops_exec_error,access_devops_exec_error,model_devops_exec_error,base.group_user,1,1,1,1
