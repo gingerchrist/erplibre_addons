@@ -442,6 +442,12 @@
                                     string="Clear modules"
                                     type="object"
                                 />
+                                <button
+                                    class="oe_highlight"
+                                    name="workspace_CG_git_commit"
+                                    string="Git commit"
+                                    type="object"
+                                />
                             </group>
                             <group>
                                 <field name="stop_execution_if_env_not_clean" />

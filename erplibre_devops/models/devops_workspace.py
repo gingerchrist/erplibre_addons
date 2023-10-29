@@ -757,6 +757,16 @@ class DevopsWorkspace(models.Model):
             )
 
     @api.multi
+    def workspace_CG_git_commit(self):
+        for rec in self:
+            folder_path = os.path.join(
+                rec.folder, "addons", "ERPLibre_erplibre_addons"
+            )
+            rec.execute(
+                cmd="git cola", folder=folder_path, force_open_terminal=True, force_exit=True
+            )
+
+    @api.multi
     def workspace_remove_module(
         self, module_name, path_to_remove, remove_module=True
     ):
