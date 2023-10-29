@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <record id="it_code_generator_view_form" model="ir.ui.view">
+        <field name="name">it_code_generator_form</field>
+        <field name="model">it.code_generator</field>
+        <field name="arch" type="xml">
+            <form string="Titre">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name" />
+                            <field name="it_workspace_ids" />
+                            <field name="module_ids" />
+                            <field name="default_workspace_master" />
+                            <field name="force_clean_before_generate" />
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="it_code_generator_view_graph" model="ir.ui.view">
+        <field name="name">it_code_generator_graph</field>
+        <field name="model">it.code_generator</field>
+        <field name="arch" type="xml">
+            <graph string="It code generator">
+                <field name="name" type="row" />
+                <field name="it_workspace_ids" type="row" />
+            </graph>
+        </field>
+    </record>
+
+    <record id="it_code_generator_view_kanban" model="ir.ui.view">
+        <field name="name">it_code_generator_kanban</field>
+        <field name="model">it.code_generator</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile">
+                <field name="name" />
+                <field name="it_workspace_ids" />
+                <field name="module_ids" />
+                <templates>
+                    <t t-name="kanban-box">
+                        <div t-attf-class="oe_kanban_global_click">
+                            <div class="oe_kanban_details">
+                                <ul>
+                                    <li class="mb4">
+                                        <strong>
+                                            <field name="name" />
+                                        </strong>
+                                    </li>
+                                    <li class="mb4">
+                                        <strong>
+                                            <field name="it_workspace_ids" />
+                                        </strong>
+                                    </li>
+                                    <li class="mb4">
+                                        <strong>
+                                            <field name="module_ids" />
+                                        </strong>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="it_code_generator_view_pivot" model="ir.ui.view">
+        <field name="name">it_code_generator_pivot</field>
+        <field name="model">it.code_generator</field>
+        <field name="arch" type="xml">
+            <pivot string="It code generator">
+                <field name="name" type="row" />
+                <field name="it_workspace_ids" type="row" />
+            </pivot>
+        </field>
+    </record>
+
+    <record id="it_code_generator_view_search" model="ir.ui.view">
+        <field name="name">it_code_generator_search</field>
+        <field name="model">it.code_generator</field>
+        <field name="arch" type="xml">
+            <search string="It code generator">
+                <filter domain="[('name','!=',False)]" name="name" string="Name" />
+                <filter domain="[('module_ids','!=',False)]" name="module_ids" string="" />
+            </search>
+        </field>
+    </record>
+
+    <record id="it_code_generator_view_tree" model="ir.ui.view">
+        <field name="name">it_code_generator_tree</field>
+        <field name="model">it.code_generator</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name" />
+                <field name="module_ids" widget="many2many_tags" />
+                <field name="force_clean_before_generate" />
+                <field name="it_workspace_ids" widget="many2many_tags" />
+            </tree>
+        </field>
+    </record>
+
+    <act_window
+        id="it_code_generator_code_generator_action_window"
+        name="Code generator"
+        res_model="it.code_generator"
+        view_mode="kanban,tree,pivot,graph,form"
+    />
+</odoo>

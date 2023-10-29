@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <!--Root menu-->
+
+    <menuitem
+        id="menu_erplibre_it"
+        name="Erplibre It"
+        sequence="20"
+        web_icon="erplibre_it,static/description/icon.png"
+    />
+
+    <!--Sub menu-->
+
+    <menuitem id="menu_workspace" name="IT" sequence="1" parent="menu_erplibre_it" />
+
+    <menuitem id="menu_code" name="Code" sequence="2" parent="menu_erplibre_it" />
+
+    <menuitem id="menu_process" name="Process" sequence="3" parent="menu_erplibre_it" />
+
+    <menuitem id="menu_config" name="Configuration" sequence="100" parent="menu_erplibre_it" />
+
+    <!--Child menu-->
+
+    <menuitem
+        id="menu_workspace_item"
+        name="Workspace"
+        action="action_it_check_workspace_conf_form"
+        sequence="1"
+        parent="menu_workspace"
+    />
+
+    <menuitem
+        id="menu_system_item"
+        name="System"
+        action="action_it_check_system_conf_form"
+        sequence="4"
+        parent="menu_workspace"
+    />
+
+    <menuitem
+        id="menu_db_image"
+        name="Db image"
+        action="it_db_image_db_image_action_window"
+        sequence="5"
+        parent="menu_workspace"
+    />
+
+    <menuitem
+        id="menu_workspace_docker_item"
+        name="Workspace docker"
+        action="action_it_check_workspace_docker_conf_form"
+        sequence="1"
+        parent="menu_process"
+    />
+
+    <menuitem
+        id="menu_workspace_terminal_item"
+        name="Workspace terminal"
+        action="action_it_check_workspace_terminal_conf_form"
+        sequence="2"
+        parent="menu_process"
+    />
+
+    <menuitem
+        id="menu_code_generator_new_project"
+        name="New project"
+        action="it_new_project_action_window"
+        sequence="3"
+        parent="menu_process"
+    />
+
+    <menuitem
+        id="menu_code_generator_new_project_stage"
+        name="New project Stage"
+        action="it_cg_new_project_stage_action"
+        sequence="4"
+        parent="menu_process"
+    />
+
+    <menuitem id="menu_it_exec" name="Executions" action="it_exec_action_window" sequence="5" parent="menu_process" />
+
+    <menuitem
+        id="menu_it_exec_bundle_error"
+        name="Exec bundle"
+        action="it_exec_bundle_action_window"
+        sequence="6"
+        parent="menu_process"
+    />
+
+    <menuitem
+        id="menu_it_exec_error"
+        name="Exec error"
+        action="it_exec_error_action_window"
+        sequence="7"
+        parent="menu_process"
+    />
+
+    <menuitem
+        id="menu_code_generator"
+        name="Project"
+        action="it_code_generator_code_generator_action_window"
+        sequence="1"
+        parent="menu_code"
+    />
+
+    <menuitem
+        id="menu_code_generator_module"
+        name="Module"
+        action="it_code_generator_module_code_generator_module_action_window"
+        sequence="2"
+        parent="menu_code"
+    />
+
+    <menuitem
+        id="menu_code_generator_module_model"
+        name="Model"
+        action="it_code_generator_module_model_code_generator_module_model_action_window"
+        sequence="3"
+        parent="menu_code"
+    />
+
+    <menuitem
+        id="menu_code_generator_module_model_field"
+        name="Field"
+        action="it_code_generator_module_model_field_code_generator_module_model_field_action_window"
+        sequence="4"
+        parent="menu_code"
+    />
+
+    <menuitem
+        id="menu_code_generator_test"
+        name="Test"
+        action="action_it_test_conf_form"
+        sequence="5"
+        parent="menu_code"
+    />
+
+    <menuitem
+        id="menu_it_ide_pycharm"
+        name="IDE Pycharm"
+        action="it_ide_pycharm_action_window"
+        sequence="6"
+        parent="menu_code"
+    />
+
+    <menuitem
+        id="erplibre_it_config_settings_menu_action"
+        name="Settings"
+        parent="menu_config"
+        sequence="0"
+        action="erplibre_it_config_settings_action"
+        groups="base.group_system"
+    />
+</odoo>
