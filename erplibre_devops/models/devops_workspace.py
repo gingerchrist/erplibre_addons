@@ -371,6 +371,8 @@ class DevopsWorkspace(models.Model):
         string="Workspace Docker",
     )
 
+    stop_execution_if_env_not_clean = fields.Boolean(default=True)
+
     test_ids = fields.Many2many(
         comodel_name="devops.test",
         string="Tests",
@@ -498,6 +500,7 @@ class DevopsWorkspace(models.Model):
                         "directory": addons_path,
                         "devops_workspace": rec.id,
                         "project_type": "self",
+                        "stop_execution_if_env_not_clean": rec.stop_execution_if_env_not_clean,
                     }
                 )
                 if rec.last_new_project_self:
