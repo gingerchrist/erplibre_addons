@@ -20,6 +20,7 @@
                         <group>
                             <field name="name" />
                             <field name="devops_workspace" />
+                            <field name="line_file_tb_detected" />
                         </group>
                     </group>
                 </sheet>

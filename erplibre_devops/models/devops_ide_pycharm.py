@@ -22,6 +22,10 @@ class DevopsIdePycharm(models.Model):
         required=True,
     )
 
+    line_file_tb_detected = fields.Char(
+        help="Detected line to add breakpoint."
+    )
+
     @api.multi
     def action_kill_pycharm(self):
         self.ensure_one()
@@ -44,7 +48,9 @@ class DevopsIdePycharm(models.Model):
             rec.execute(cmd=cmd, force_open_terminal=True)
 
     @api.multi
-    def action_cg_setup_pycharm_debug(self, ctx=None, log=None):
+    def action_cg_setup_pycharm_debug(
+        self, ctx=None, log=None, exec_error_id=None
+    ):
         for rec in self:
             with rec.devops_workspace.devops_create_exec_bundle(
                 "Setup PyCharm debug"
@@ -66,6 +72,7 @@ class DevopsIdePycharm(models.Model):
                 else:
                     _logger.info("Not exception found from log.")
                     continue
+                # TODO search multiple path
                 search_path = (
                     "File"
                     f' "{os.path.normpath(os.path.join(rec_ws.folder, "./addons"))}'
@@ -73,6 +80,7 @@ class DevopsIdePycharm(models.Model):
                 no_last_file_error = log.rfind(search_path, 0, index_error)
                 no_end_line_error = log.find("\n", no_last_file_error)
                 error_line = log[no_last_file_error:no_end_line_error]
+                rec.line_file_tb_detected = error_line
                 # Detect no line
                 regex = r"line (\d+),"
                 result_regex = re.search(regex, error_line)
@@ -90,6 +98,9 @@ class DevopsIdePycharm(models.Model):
                     raise Exception("Cannot find breakpoint information")
                 # -1 to line because start 0, but show 1
                 line = str(line_breakpoint - 1)
+                rec.line_file_tb_detected = error_line
+                if exec_error_id:
+                    exec_error_id.line_file_tb_detected = error_line
                 rec.add_breakpoint(filepath_breakpoint, line)
 
     @api.model

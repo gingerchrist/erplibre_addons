@@ -2117,7 +2117,7 @@ sock.close()
         for rec in self:
             error_value = {
                 "description": description,
-                "escaped_tb": escaped_tb,
+                "escaped_tb": escaped_tb.replace("&quot;", '"'),
                 "devops_workspace": devops_workspace_id.id,
                 "devops_exec_bundle_id": devops_exec_bundle_id.id,
                 "parent_root_exec_bundle_id": parent_root_id.id,

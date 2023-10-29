@@ -48,6 +48,9 @@
                             <field name="write_date" />
                         </group>
                     </group>
+                    <group>
+                        <field name="line_file_tb_detected" />
+                    </group>
                     <notebook>
                         <page string="Traceback">
                             <field name="escaped_tb" />
@@ -133,6 +136,7 @@
                 <field name="type_error" />
                 <field name="description" />
                 <field name="escaped_tb" />
+                <field name="line_file_tb_detected" />
                 <field name="devops_workspace" />
                 <field name="create_date" />
             </tree>
