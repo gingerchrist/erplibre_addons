@@ -34,6 +34,7 @@
         "data/ir_cron.xml",
         "data/devops_cg_new_project_stage.xml",
         "data/devops_system.xml",
+        "data/devops_workspace.xml",
     ],
     "installable": True,
     "post_init_hook": "post_init_hook",
