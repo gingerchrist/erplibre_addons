@@ -138,28 +138,31 @@ class DevopsCgNewProject(models.Model):
     @api.multi
     def action_new_project(self):
         for rec in self:
-            rec.exec_start_date = fields.Datetime.now(self)
-            project = ProjectManagement(
-                rec,
-                rec.module,
-                rec.directory,
-                cg_name=rec.code_generator_name,
-                template_name=rec.template_name,
-                force=rec.force,
-                keep_bd_alive=rec.keep_bd_alive,
-                coverage=rec.coverage,
-                config=rec.config,
-                odoo_config=rec.odoo_config,
-            )
-            if project.msg_error:
-                rec.msg_error = project.msg_error
-                rec.has_error = True
+            with rec.devops_workspace.devops_create_exec_bundle(
+                "New project"
+            ) as rec_ws:
+                rec.exec_start_date = fields.Datetime.now(self)
+                project = ProjectManagement(
+                    rec,
+                    rec.module,
+                    rec.directory,
+                    cg_name=rec.code_generator_name,
+                    template_name=rec.template_name,
+                    force=rec.force,
+                    keep_bd_alive=rec.keep_bd_alive,
+                    coverage=rec.coverage,
+                    config=rec.config,
+                    odoo_config=rec.odoo_config,
+                )
+                if project.msg_error:
+                    rec.msg_error = project.msg_error
+                    rec.has_error = True
 
-            if not project.generate_module():
-                rec.has_error = True
+                if not project.generate_module():
+                    rec.has_error = True
 
-            rec.exec_stop_date = fields.Datetime.now(self)
-            rec.execution_finish = True
+                rec.exec_stop_date = fields.Datetime.now(self)
+                rec.execution_finish = True
 
 
 class ProjectManagement:

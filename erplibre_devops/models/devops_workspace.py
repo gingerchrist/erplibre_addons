@@ -415,12 +415,13 @@ class DevopsWorkspace(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
-        r = super().create(vals_list)
-        if not r.ide_pycharm:
-            r.ide_pycharm = self.env["devops.ide.pycharm"].create(
-                {"devops_workspace": r.id}
-            )
-        return r
+        r_ids = super().create(vals_list)
+        for r in r_ids:
+            if not r.ide_pycharm:
+                r.ide_pycharm = self.env["devops.ide.pycharm"].create(
+                    {"devops_workspace": r.id}
+                )
+        return r_ids
 
     @api.model
     def _default_folder(self):
@@ -1984,6 +1985,7 @@ class DevopsWorkspace(models.Model):
             "NameError:",
             "AttributeError:",
             "ValueError:",
+            "FileNotFoundError:",
         )
         # TODO move lst_exception into model devops.exec.exception
         for exception in lst_exception:

@@ -63,6 +63,7 @@ class DevopsIdePycharm(models.Model):
                     "NameError:",
                     "AttributeError:",
                     "ValueError:",
+                    "FileNotFoundError:",
                     "Traceback (most recent call last):",
                 )
                 for exception in lst_exception:
