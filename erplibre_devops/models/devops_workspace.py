@@ -4,6 +4,7 @@
 import json
 import logging
 import os
+import re
 import time
 import traceback
 from contextlib import contextmanager
@@ -74,6 +75,12 @@ class DevopsWorkspace(models.Model):
     show_error_chatter = fields.Boolean(help="Show error to chatter")
 
     path_code_generator_to_generate = fields.Char(default="addons/addons")
+
+    log_makefile_target_ids = fields.One2many(
+        comodel_name="devops.log.makefile.target",
+        inverse_name="devops_workspace_id",
+        string="Makefile Targets",
+    )
 
     path_working_erplibre = fields.Char(default="/ERPLibre")
 
@@ -1822,6 +1829,7 @@ class DevopsWorkspace(models.Model):
                     else:
                         # TODO try te reuse
                         _logger.info("Git project already exist")
+                    rec.update_makefile_from_git()
 
                     # lst_file = rec.execute(cmd=f"ls {rec.folder}").log_all.strip().split("\n")
                     # if "docker-compose.yml" in lst_file:
@@ -1833,6 +1841,33 @@ class DevopsWorkspace(models.Model):
                     # else:
                 rec.action_network_change_port_random()
                 rec.is_installed = True
+
+    @api.multi
+    def update_makefile_from_git(self):
+        for rec_o in self:
+            with rec_o.devops_create_exec_bundle("Update makefile") as rec:
+                exec_mk_ref_id = rec.execute(
+                    cmd=f"git show v{rec.mode_version_erplibre}:Makefile",
+                    to_instance=True,
+                )
+                ref_makefile_content = exec_mk_ref_id.log_all
+                exec_mk_now_id = rec.execute(
+                    cmd=f"cat Makefile", to_instance=True
+                )
+                now_makefile_content = exec_mk_now_id.log_all
+
+                lst_ref = rec.get_lst_target_makefile(ref_makefile_content)
+                lst_now = rec.get_lst_target_makefile(now_makefile_content)
+
+                diff = set(lst_now).difference(set(lst_ref))
+                lst_diff = list(diff)
+                lst_ignore_target = ("PHONY",)
+                for target in lst_diff:
+                    if target in lst_ignore_target:
+                        continue
+                    self.env["devops.log.makefile.target"].create(
+                        {"name": target, "devops_workspace_id": rec.id}
+                    )
 
     @api.multi
     def execute(
@@ -1918,6 +1953,13 @@ class DevopsWorkspace(models.Model):
         if len(self) == 1:
             return lst_result[0]
         return self.env["devops.exec"].browse([a.id for a in lst_result])
+
+    @api.model
+    def get_lst_target_makefile(self, content):
+        regex = r"^\.PHONY:.*|([\w]+):\s"
+        targets = re.findall(regex, content, re.MULTILINE)
+        targets = list(set([target for target in targets if target]))
+        return targets
 
     @api.model
     def find_exec_error_from_log(

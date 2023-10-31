@@ -150,6 +150,14 @@
     />
 
     <menuitem
+        id="menu_devops_log_makefile_target"
+        name="Makefile target"
+        action="devops_log_makefile_target_action_window"
+        sequence="7"
+        parent="menu_code"
+    />
+
+    <menuitem
         id="erplibre_devops_config_settings_menu_action"
         name="Settings"
         parent="menu_config"

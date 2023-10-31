@@ -27,6 +27,7 @@
         "views/devops_workspace.xml",
         "views/devops_workspace_docker.xml",
         "views/devops_workspace_terminal.xml",
+        "views/devops_log_makefile_target.xml",
         "views/devops_system.xml",
         "views/devops_test.xml",
         "views/res_config_settings.xml",

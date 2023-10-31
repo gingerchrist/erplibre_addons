@@ -473,6 +473,9 @@
                     <page name="code_generator_info_stat" string="Stat">
                         <field name="devops_code_generator_stat" />
                     </page>
+                    <page name="makefile" string="Makefile">
+                        <field name="log_makefile_target_ids" />
+                    </page>
                     <page name="code_generator_info_tree" string="Tree">
                         <group>
                             <button
