@@ -53,6 +53,17 @@ class DevopsExecError(models.Model):
         readonly=True,
     )
 
+    find_resolution = fields.Selection(
+        selection=[
+            ("find", "Find"),
+            ("error", "Error"),
+            ("diagnostic", "Diagnostic"),
+        ],
+        help="If resolution to resolv the error was found.",
+    )
+
+    diagnostic_idea = fields.Text(help="Auto correction try to diagnostic.")
+
     @api.model_create_multi
     def create(self, vals_list):
         result = super().create(vals_list)

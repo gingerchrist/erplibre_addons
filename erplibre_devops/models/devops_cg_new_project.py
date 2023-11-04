@@ -602,7 +602,7 @@ class ProjectManagement:
                     f" {bd_name_generator} {self.cg_name} {config_path}"
                 )
             _logger.info(cmd)
-            rec_ws.execute(cmd=cmd)
+            rec_ws.with_context(devops_cg_new_project=rec.id).execute(cmd=cmd)
 
             if not self.keep_bd_alive:
                 cmd = (

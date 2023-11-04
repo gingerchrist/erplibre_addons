@@ -64,6 +64,7 @@ class DevopsIdePycharm(models.Model):
                     "AttributeError:",
                     "ValueError:",
                     "FileNotFoundError:",
+                    "raise ValidationError",
                     "Traceback (most recent call last):",
                 )
                 for exception in lst_exception:
@@ -95,14 +96,72 @@ class DevopsIdePycharm(models.Model):
                 if result_regex:
                     filepath_breakpoint = result_regex.group(1)
                 if line_breakpoint is None or filepath_breakpoint is None:
-                    # continue
+                    exec_error_id.find_resolution = "error"
+                    rec.try_find_why(log, exception, rec_ws, exec_error_id)
                     raise Exception("Cannot find breakpoint information")
                 # -1 to line because start 0, but show 1
                 line = str(line_breakpoint - 1)
                 rec.line_file_tb_detected = error_line
                 if exec_error_id:
                     exec_error_id.line_file_tb_detected = error_line
+                    exec_error_id.find_resolution = "find"
                 rec.add_breakpoint(filepath_breakpoint, line)
+
+    def try_find_why(self, log, exception, ws, exec_error_id):
+        id_devops_cg_new_project = self._context.get("devops_cg_new_project")
+        if not id_devops_cg_new_project:
+            return False
+        devops_cg_new_project_id = (
+            self.env["devops.cg.new_project"]
+            .browse(id_devops_cg_new_project)
+            .exists()
+        )
+        if not devops_cg_new_project_id:
+            return False
+        work_dir = os.path.normpath(
+            os.path.join(
+                ws.folder,
+                devops_cg_new_project_id.directory,
+                devops_cg_new_project_id.module,
+            )
+        )
+        if exception == "NameError:":
+            # Check 1, is not defined
+            result = re.search(r"NameError: name '(\w+)' is not defined", log)
+            if result:
+                name_error = result.group(1)
+                result = ws.execute(
+                    to_instance=True,
+                    folder=work_dir,
+                    cmd=f'grep -nr "{name_error}" --include=\*.{{py,xml,js}}',
+                )
+                if exec_error_id and result.log_all:
+                    exec_error_id.diagnostic_idea = result.log_all
+                    exec_error_id.find_resolution = "diagnostic"
+                    return True
+        elif exception == "ValueError:":
+            # Check 1, while evaluating
+            if 'while evaluating\n"' in log:
+                value_error = log.split('while evaluating\n"')[1][:-1]
+                if value_error:
+                    s_value_error = value_error
+                    if value_error[0] == "[":
+                        s_value_error = f"\\{value_error}"
+                    result = ws.execute(
+                        to_instance=True,
+                        folder=work_dir,
+                        cmd=(
+                            f'grep -nr \\"{s_value_error}\\"'
+                            " --include=\*.{py,xml,js}"
+                        ),
+                        delimiter_bash='"',
+                    )
+                    if exec_error_id and result.log_all:
+                        exec_error_id.diagnostic_idea = result.log_all
+                        exec_error_id.find_resolution = "diagnostic"
+                        return True
+
+        return False
 
     @api.model
     def add_breakpoint(self, file_path, line):

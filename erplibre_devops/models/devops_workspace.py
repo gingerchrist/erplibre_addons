@@ -1885,6 +1885,7 @@ class DevopsWorkspace(models.Model):
         to_instance=False,
         engine="bash",
         docker=False,
+        delimiter_bash="'",
     ):
         # TODO search into context if need to parallel or serial
         lst_result = []
@@ -1942,6 +1943,7 @@ class DevopsWorkspace(models.Model):
                     add_stdin_log=add_stdin_log,
                     add_stderr_log=add_stderr_log,
                     engine=engine,
+                    delimiter_bash=delimiter_bash,
                 )
 
             devops_exec.exec_stop_date = fields.Datetime.now()
@@ -1986,6 +1988,7 @@ class DevopsWorkspace(models.Model):
             "AttributeError:",
             "ValueError:",
             "FileNotFoundError:",
+            "raise ValidationError",
         )
         # TODO move lst_exception into model devops.exec.exception
         for exception in lst_exception:
