@@ -133,7 +133,6 @@ class DevopsExecError(models.Model):
                 "Set breakpoint on error"
             ) as rec:
                 rec.ide_pycharm.action_cg_setup_pycharm_debug(
-                    log=rec_o.escaped_tb.replace(
-                        "&quot;", '"', exec_error_id=rec
-                    )
+                    log=rec_o.escaped_tb.replace("&quot;", '"'),
+                    exec_error_id=rec,
                 )
