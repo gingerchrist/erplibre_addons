@@ -1965,15 +1965,20 @@ class DevopsWorkspace(models.Model):
         return targets
 
     @api.model
+    def os_path_exists(self, path, to_instance=False):
+        cmd = f'[ -e "{path}" ] && echo "true" || echo "false"'
+        result = self.execute(cmd=cmd, to_instance=to_instance)
+        return result.log_all.strip() == "true"
+
+    @api.model
     def find_exec_error_from_log(
         self, log, devops_exec, devops_exec_bundle_id
     ):
         # nb_error_estimate = log.count("During handling of the above exception, another exception occurred:")
         if not devops_exec_bundle_id:
-            _logger.warning(
+            raise exceptions.Warning(
                 f"Executable command {devops_exec.cmd} missing exec.bundle."
             )
-            return
 
         index_first_traceback = log.find("Traceback (most recent call last):")
         if index_first_traceback == -1:
@@ -1989,6 +1994,7 @@ class DevopsWorkspace(models.Model):
             "ValueError:",
             "FileNotFoundError:",
             "raise ValidationError",
+            "odoo.exceptions.CacheMiss:",
         )
         # TODO move lst_exception into model devops.exec.exception
         for exception in lst_exception:

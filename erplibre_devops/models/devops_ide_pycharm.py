@@ -65,6 +65,7 @@ class DevopsIdePycharm(models.Model):
                     "ValueError:",
                     "FileNotFoundError:",
                     "raise ValidationError",
+                    "odoo.exceptions.CacheMiss:",
                     "Traceback (most recent call last):",
                 )
                 for exception in lst_exception:
