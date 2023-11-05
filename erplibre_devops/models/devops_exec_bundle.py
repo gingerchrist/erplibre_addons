@@ -68,6 +68,13 @@ class DevopsExecBundle(models.Model):
         readonly=True,
     )
 
+    devops_exec_parent_error_ids = fields.One2many(
+        comodel_name="devops.exec.error",
+        inverse_name="parent_root_exec_bundle_id",
+        string="Executions parent errors",
+        readonly=True,
+    )
+
     @api.multi
     def get_last_exec(self):
         self.ensure_one()

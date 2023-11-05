@@ -196,10 +196,20 @@ class DevopsCgNewProject(models.Model):
                 # if not project.generate_module():
                 #     rec.has_error = True
                 rec.action_init(rec_ws=rec_ws)
-                rec.action_generate_config(rec_ws=rec_ws)
-                rec.action_generate_uc0(rec_ws=rec_ws)
-                rec.action_generate_uca(rec_ws=rec_ws)
-                rec.action_generate_ucb(rec_ws=rec_ws)
+
+                id_exec_bundle = self.env.context.get("devops_exec_bundle")
+                exec_bundle_parent_id = self.env["devops.exec.bundle"].browse(
+                    id_exec_bundle
+                )
+
+                if not exec_bundle_parent_id.devops_exec_parent_error_ids:
+                    rec.action_generate_config(rec_ws=rec_ws)
+                if not exec_bundle_parent_id.devops_exec_parent_error_ids:
+                    rec.action_generate_uc0(rec_ws=rec_ws)
+                if not exec_bundle_parent_id.devops_exec_parent_error_ids:
+                    rec.action_generate_uca(rec_ws=rec_ws)
+                if not exec_bundle_parent_id.devops_exec_parent_error_ids:
+                    rec.action_generate_ucb(rec_ws=rec_ws)
 
                 rec.exec_stop_date = fields.Datetime.now(self)
                 rec.execution_finish = True
