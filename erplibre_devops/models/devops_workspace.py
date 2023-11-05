@@ -2166,7 +2166,7 @@ sock.close()
         for rec in self:
             error_value = {
                 "description": description,
-                "escaped_tb": escaped_tb.replace("&quot;", '"'),
+                "escaped_tb": escaped_tb,
                 "devops_workspace": devops_workspace_id.id,
                 "devops_exec_bundle_id": devops_exec_bundle_id.id,
                 "parent_root_exec_bundle_id": parent_root_id.id,
@@ -2216,7 +2216,9 @@ sock.close()
                 f"'{description}' it.exec.bundle id"
                 f" '{devops_exec_bundle_id.id}' failed"
             )
-            escaped_tb = tools.html_escape(traceback.format_exc())
+            escaped_tb = tools.html_escape(traceback.format_exc()).replace(
+                "&quot;", '"'
+            )
             parent_root_id = devops_exec_bundle_id.get_parent_root()
             # detect is different to reduce recursion depth exceeded
             found_same_error_ids = self.env["devops.exec.error"].search(
