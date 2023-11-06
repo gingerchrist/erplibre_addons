@@ -50,6 +50,7 @@
                             <field name="last_new_project" />
                             <field name="devops_workspace" />
                             <field name="devops_exec_bundle_id" />
+                            <field name="devops_exec_error_ids" />
                         </group>
                     </group>
 
