@@ -2030,6 +2030,7 @@ class DevopsWorkspace(models.Model):
                     escaped_tb,
                     self,
                     devops_exec_bundle_id,
+                    devops_exec,
                     parent_root_id,
                     "execution",
                 )
@@ -2167,6 +2168,7 @@ sock.close()
         escaped_tb,
         devops_workspace_id,
         devops_exec_bundle_id,
+        devops_exec_id,
         parent_root_id,
         type_error,
     ):
@@ -2180,6 +2182,8 @@ sock.close()
                 "parent_root_exec_bundle_id": parent_root_id.id,
                 "type_error": type_error,
             }
+            if devops_exec_id:
+                error_value["devops_exec_id"] = devops_exec_id.id
             # this is not true, cannot associate exec_id to this error
             # exec_id = devops_exec_bundle_id.get_last_exec()
             # if exec_id:
@@ -2237,11 +2241,15 @@ sock.close()
                 ]
             )
             if not found_same_error_ids:
+                devops_exec = devops_exec_bundle_id.devops_exec_ids.exists()
+                if devops_exec:
+                    devops_exec = devops_exec[0]
                 rec.create_exec_error(
                     description,
                     escaped_tb,
                     rec,
                     devops_exec_bundle_id,
+                    devops_exec,
                     parent_root_id,
                     "internal",
                 )

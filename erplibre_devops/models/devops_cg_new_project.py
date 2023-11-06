@@ -455,7 +455,12 @@ class DevopsCgNewProject(models.Model):
                     f" {bd_name_demo}"
                 )
                 _logger.info(cmd)
-                rec_ws.execute(cmd=cmd)
+                exec_id = rec_ws.with_context(
+                    devops_cg_new_project=rec.id
+                ).execute(cmd=cmd, to_instance=True)
+                rec.has_error = bool(exec_id.devops_exec_error_ids.exists())
+                if rec.has_error:
+                    continue
                 _logger.info(
                     "========= GENERATE code_generator_demo ========="
                 )
@@ -471,7 +476,12 @@ class DevopsCgNewProject(models.Model):
                         f"./script/addons/install_addons_dev.sh {bd_name_demo}"
                         f" code_generator_demo {rec.config_path}"
                     )
-                rec_ws.execute(cmd=cmd)
+                exec_id = rec_ws.with_context(
+                    devops_cg_new_project=rec.id
+                ).execute(cmd=cmd, to_instance=True)
+                rec.has_error = bool(exec_id.devops_exec_error_ids.exists())
+                if rec.has_error:
+                    continue
 
                 if not self.keep_bd_alive:
                     cmd = (
@@ -479,7 +489,9 @@ class DevopsCgNewProject(models.Model):
                         f" --database {bd_name_demo}"
                     )
                     _logger.info(cmd)
-                    rec_ws.execute(cmd=cmd)
+                    rec_ws.with_context(devops_cg_new_project=rec.id).execute(
+                        cmd=cmd, to_instance=True
+                    )
 
                 # Revert code_generator_demo
                 self.restore_git_code_generator_demo(
@@ -496,9 +508,10 @@ class DevopsCgNewProject(models.Model):
                     _logger.info(
                         f"Module template exists '{rec.template_path}'"
                     )
-                rec.stage_id = self.env.ref(
-                    "erplibre_devops.devops_cg_new_project_stage_generate_uca"
-                )
+                if not rec.has_error:
+                    rec.stage_id = self.env.ref(
+                        "erplibre_devops.devops_cg_new_project_stage_generate_uca"
+                    )
 
     @api.multi
     def action_generate_uca(self, ctx=None, rec_ws=None):
@@ -539,7 +552,12 @@ class DevopsCgNewProject(models.Model):
                     "./script/database/db_restore.py --database"
                     f" {bd_name_template}"
                 )
-                rec_ws.execute(cmd=cmd)
+                exec_id = rec_ws.with_context(
+                    devops_cg_new_project=rec.id
+                ).execute(cmd=cmd, to_instance=True)
+                rec.has_error = bool(exec_id.devops_exec_error_ids.exists())
+                if rec.has_error:
+                    continue
                 _logger.info(cmd)
                 _logger.info(
                     f"========= GENERATE {rec.template_name} ========="
@@ -552,7 +570,15 @@ class DevopsCgNewProject(models.Model):
                         f" --quiet -d {rec.module_path} -t {rec.template_path}"
                     )
                     _logger.info(cmd)
-                    rec_ws.execute(cmd=cmd)
+                    exec_id = rec_ws.with_context(
+                        devops_cg_new_project=rec.id
+                    ).execute(cmd=cmd, to_instance=True)
+                    rec.has_error = bool(
+                        exec_id.devops_exec_error_ids.exists()
+                    )
+                    if rec.has_error:
+                        continue
+
                     if rec.active_coverage:
                         cmd = (
                             "./script/addons/coverage_install_addons_dev.sh"
@@ -564,7 +590,14 @@ class DevopsCgNewProject(models.Model):
                             f" {bd_name_template} {rec.module} {rec.config_path}"
                         )
                     _logger.info(cmd)
-                    rec_ws.execute(cmd=cmd)
+                    exec_id = rec_ws.with_context(
+                        devops_cg_new_project=rec.id
+                    ).execute(cmd=cmd, to_instance=True)
+                    rec.has_error = bool(
+                        exec_id.devops_exec_error_ids.exists()
+                    )
+                    if rec.has_error:
+                        continue
 
                 if rec.active_coverage:
                     cmd = (
@@ -578,7 +611,11 @@ class DevopsCgNewProject(models.Model):
                         f" {rec.template_name} {rec.config_path}"
                     )
                 _logger.info(cmd)
-                rec_ws.execute(cmd=cmd)
+                exec_id = rec_ws.with_context(
+                    devops_cg_new_project=rec.id
+                ).execute(cmd=cmd, to_instance=True)
+
+                rec.has_error = bool(exec_id.devops_exec_error_ids.exists())
 
                 if not self.keep_bd_alive:
                     cmd = (
@@ -586,16 +623,20 @@ class DevopsCgNewProject(models.Model):
                         f" --database {bd_name_template}"
                     )
                     _logger.info(cmd)
-                    rec_ws.execute(cmd=cmd)
+                    rec_ws.with_context(devops_cg_new_project=rec.id).execute(
+                        cmd=cmd, to_instance=True
+                    )
 
                 # Validate
                 if not ws.os_path_exists(rec.cg_path, to_instance=True):
                     raise Exception(f"Module cg not exists '{rec.cg_path}'")
                 else:
                     _logger.info(f"Module cg exists '{rec.cg_path}'")
-                rec.stage_id = self.env.ref(
-                    "erplibre_devops.devops_cg_new_project_stage_generate_ucb"
-                )
+
+                if not rec.has_error:
+                    rec.stage_id = self.env.ref(
+                        "erplibre_devops.devops_cg_new_project_stage_generate_ucb"
+                    )
 
     @api.multi
     def action_generate_ucb(self, ctx=None, rec_ws=None):
@@ -613,10 +654,16 @@ class DevopsCgNewProject(models.Model):
                     f" {bd_name_generator}"
                 )
                 _logger.info(cmd)
-                rec_ws.execute(cmd=cmd)
+                exec_id = rec_ws.with_context(
+                    devops_cg_new_project=rec.id
+                ).execute(cmd=cmd, to_instance=True)
                 _logger.info(
                     f"========= GENERATE {rec.code_generator_name} ========="
                 )
+
+                rec.has_error = bool(exec_id.devops_exec_error_ids.exists())
+                if rec.has_error:
+                    continue
 
                 # Add field from config
                 if self.config:
@@ -674,9 +721,14 @@ class DevopsCgNewProject(models.Model):
                         f" {bd_name_generator} {rec.code_generator_name} {rec.config_path}"
                     )
                 _logger.info(cmd)
-                rec_ws.with_context(devops_cg_new_project=rec.id).execute(
-                    cmd=cmd
+                exec_id = rec_ws.with_context(
+                    devops_cg_new_project=rec.id
+                ).execute(
+                    cmd=cmd,
+                    to_instance=True,
                 )
+
+                rec.has_error = bool(exec_id.devops_exec_error_ids.exists())
 
                 if not self.keep_bd_alive:
                     cmd = (
@@ -684,7 +736,9 @@ class DevopsCgNewProject(models.Model):
                         f" --database {bd_name_generator}"
                     )
                     _logger.info(cmd)
-                    rec_ws.execute(cmd=cmd)
+                    rec_ws.with_context(devops_cg_new_project=rec.id).execute(
+                        cmd=cmd, to_instance=True
+                    )
 
                 # Validate
                 if not ws.os_path_exists(rec.module_path, to_instance=True):
@@ -692,9 +746,10 @@ class DevopsCgNewProject(models.Model):
                 else:
                     _logger.info(f"Module exists '{rec.module_path}'")
 
-                rec.stage_id = rec.env.ref(
-                    "erplibre_devops.devops_cg_new_project_stage_generate_terminate"
-                )
+                if not rec.has_error:
+                    rec.stage_id = rec.env.ref(
+                        "erplibre_devops.devops_cg_new_project_stage_generate_terminate"
+                    )
 
     def validate_path_ready_to_be_override(self, name, directory, ws, path=""):
         if not path:

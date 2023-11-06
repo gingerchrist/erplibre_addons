@@ -36,7 +36,7 @@
                     <group string="IT">
                         <field name="devops_workspace" />
                         <field name="devops_exec_bundle_id" />
-                        <field name="devops_exec_ids" />
+                        <field name="devops_exec_id" />
                     </group>
                     <group>
                         <group string="Info">

@@ -47,6 +47,13 @@ class DevopsExec(models.Model):
         comodel_name="devops.workspace", readonly=True
     )
 
+    devops_exec_error_ids = fields.One2many(
+        comodel_name="devops.exec.error",
+        inverse_name="devops_exec_id",
+        string="Executions errors",
+        readonly=True,
+    )
+
     devops_exec_bundle_id = fields.Many2one(
         comodel_name="devops.exec.bundle", readonly=True
     )

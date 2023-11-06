@@ -38,7 +38,7 @@ class DevopsExecError(models.Model):
         help="Detected line to add breakpoint."
     )
 
-    devops_exec_ids = fields.Many2one(
+    devops_exec_id = fields.Many2one(
         comodel_name="devops.exec",
         readonly=True,
     )
