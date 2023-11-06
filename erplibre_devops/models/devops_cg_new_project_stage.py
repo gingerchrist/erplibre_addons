@@ -24,7 +24,7 @@ class DevopsCgNewProjectStage(models.Model):
     )
 
     fold = fields.Boolean(
-        "Folded in Pipeline",
+        string="Folded in Pipeline",
         help=(
             "This stage is folded in the kanban view when there are no records"
             " in that stage to display."

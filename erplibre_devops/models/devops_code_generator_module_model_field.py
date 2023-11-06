@@ -56,8 +56,8 @@ class DevopsCodeGeneratorModuleModelField(models.Model):
     # TODO cg support domain into fields
     # domain="[('model_id', '=', relation)]",
     field_relation = fields.Many2one(
-        string="Inverse field",
         comodel_name="devops.code_generator.module.model.field",
+        string="Inverse field",
         help="inverse_name - Need for one2many to associate with many2one.",
     )
 
@@ -83,8 +83,8 @@ class DevopsCodeGeneratorModuleModelField(models.Model):
 
     devops_workspace_ids = fields.Many2many(
         comodel_name="devops.workspace",
-        required=True,
         string="DevOps Workspace",
+        required=True,
     )
 
     @api.depends(

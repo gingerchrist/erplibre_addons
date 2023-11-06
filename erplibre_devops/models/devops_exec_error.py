@@ -91,9 +91,7 @@ class DevopsExecError(models.Model):
             )
         return result
 
-    @api.depends(
-        "devops_workspace",
-    )
+    @api.depends("devops_workspace")
     def _compute_name(self):
         for rec in self:
             if not isinstance(rec.id, models.NewId):

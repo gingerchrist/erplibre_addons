@@ -27,7 +27,10 @@ class DevopsCgNewProject(models.Model):
     def default_stage_id(self):
         return self.env.ref("erplibre_devops.devops_cg_new_project_stage_init")
 
-    name = fields.Char(compute="_compute_name")
+    name = fields.Char(
+        compute="_compute_name",
+        store=True,
+    )
 
     active = fields.Boolean(default=True)
 
@@ -36,13 +39,13 @@ class DevopsCgNewProject(models.Model):
     has_error = fields.Boolean()
 
     stage_id = fields.Many2one(
-        "devops.cg.new_project.stage",
-        "Stage",
+        comodel_name="devops.cg.new_project.stage",
+        string="Stage",
         default=lambda s: s.default_stage_id(),
     )
 
     project_type = fields.Selection(
-        [("self", "Self generate"), ("cg", "Code generator")]
+        selection=[("self", "Self generate"), ("cg", "Code generator")]
     )
 
     last_new_project = fields.Many2one(
@@ -55,7 +58,9 @@ class DevopsCgNewProject(models.Model):
     exec_stop_date = fields.Datetime(string="Execution stop date")
 
     exec_time_duration = fields.Float(
-        string="Execution time duration", compute="_compute_exec_time_duration"
+        string="Execution time duration",
+        compute="_compute_exec_time_duration",
+        store=True,
     )
 
     execution_finish = fields.Boolean()
@@ -89,15 +94,13 @@ class DevopsCgNewProject(models.Model):
     keep_bd_alive = fields.Boolean()
 
     # internal_error = fields.Char(
-    #     compute="_compute_internal_error",
-    #     store=True,
+    # compute="_compute_internal_error",
+    # store=True,
     # )
-
     # TODO need to support related field
     # devops_exec_error_ids = fields.One2many(
-    #     related="devops_exec_bundle_id.devops_exec_parent_error_ids"
+    # related="devops_exec_bundle_id.devops_exec_parent_error_ids"
     # )
-
     cg_hooks_py = fields.Char(help="Path of hooks python file.")
 
     template_hooks_py = fields.Char(help="Path of template hooks python file.")
@@ -122,7 +125,10 @@ class DevopsCgNewProject(models.Model):
 
     code_generator_demo_path = fields.Char(help="Path of the uc0.")
 
-    devops_exec_bundle_id = fields.Many2one(comodel_name="devops.exec.bundle")
+    devops_exec_bundle_id = fields.Many2one(
+        comodel_name="devops.exec.bundle",
+        string="Devops Exec Bundle",
+    )
 
     devops_workspace = fields.Many2one(comodel_name="devops.workspace")
 
@@ -148,10 +154,7 @@ class DevopsCgNewProject(models.Model):
             elif rec.exec_start_date:
                 rec.name += f" - start {rec.exec_start_date}"
 
-    @api.depends(
-        "exec_start_date",
-        "exec_stop_date",
-    )
+    @api.depends("exec_start_date", "exec_stop_date")
     def _compute_exec_time_duration(self):
         for rec in self:
             if rec.exec_start_date and rec.exec_stop_date:

@@ -24,6 +24,6 @@ class DevopsCodeGeneratorModuleModel(models.Model):
 
     devops_workspace_ids = fields.Many2many(
         comodel_name="devops.workspace",
-        required=True,
         string="DevOps Workspace",
+        required=True,
     )

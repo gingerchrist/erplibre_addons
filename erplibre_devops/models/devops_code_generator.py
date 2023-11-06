@@ -12,8 +12,8 @@ class DevopsCodeGenerator(models.Model):
     # TODO if share result, do a command to copy file all and recreate it like a mirror on other workspace
     devops_workspace_ids = fields.Many2many(
         comodel_name="devops.workspace",
-        required=True,
         string="DevOps Workspace",
+        required=True,
     )
 
     # TODO create boolean cache with default workspace to work for the other

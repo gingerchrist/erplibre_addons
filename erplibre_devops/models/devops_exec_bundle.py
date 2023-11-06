@@ -16,16 +16,23 @@ class DevopsExecBundle(models.Model):
         " regroup it."
     )
 
-    name = fields.Char(compute="_compute_name")
+    name = fields.Char(
+        compute="_compute_name",
+        store=True,
+    )
 
     description = fields.Char()
 
     parent_id = fields.Many2one(
-        "devops.exec.bundle", string="Parent bundle", index=True
+        comodel_name="devops.exec.bundle",
+        index=True,
+        string="Parent bundle",
     )
 
     child_ids = fields.One2many(
-        "devops.exec.bundle", "parent_id", string="Child bundle"
+        comodel_name="devops.exec.bundle",
+        inverse_name="parent_id",
+        string="Child bundle",
     )
 
     active = fields.Boolean(default=True)
@@ -43,12 +50,19 @@ class DevopsExecBundle(models.Model):
     exec_time_duration = fields.Integer(
         string="Execution time duration",
         compute="_compute_exec_time_duration",
+        store=True,
         help="Time in second, duration of execution",
     )
 
-    time_duration_result = fields.Char(compute="_compute_time_duration_result")
+    time_duration_result = fields.Char(
+        compute="_compute_time_duration_result",
+        store=True,
+    )
 
-    execution_finish = fields.Boolean(compute="_compute_execution_finish")
+    execution_finish = fields.Boolean(
+        compute="_compute_execution_finish",
+        store=True,
+    )
 
     devops_workspace = fields.Many2one(
         comodel_name="devops.workspace", readonly=True
@@ -111,10 +125,7 @@ class DevopsExecBundle(models.Model):
             if rec.description:
                 rec.name += f" '{rec.description}'"
 
-    @api.depends(
-        "exec_start_date",
-        "exec_stop_date",
-    )
+    @api.depends("exec_start_date", "exec_stop_date")
     def _compute_exec_time_duration(self):
         for rec in self:
             if rec.exec_start_date and rec.exec_stop_date:
@@ -124,16 +135,12 @@ class DevopsExecBundle(models.Model):
             else:
                 rec.exec_time_duration = False
 
-    @api.depends(
-        "exec_stop_date",
-    )
+    @api.depends("exec_stop_date")
     def _compute_execution_finish(self):
         for rec in self:
             rec.execution_finish = bool(rec.exec_stop_date)
 
-    @api.depends(
-        "exec_time_duration",
-    )
+    @api.depends("exec_time_duration")
     def _compute_time_duration_result(self):
         for rec in self:
             rec.time_duration_result = (
