@@ -164,44 +164,57 @@ class DevopsCgNewProject(models.Model):
             ) as rec_ws:
                 rec.exec_start_date = fields.Datetime.now(self)
                 rec.has_error = False
-                # project = ProjectManagement(
-                #     rec,
-                #     rec.module,
-                #     rec.directory,
-                #     cg_name=rec.code_generator_name,
-                #     template_name=rec.template_name,
-                #     force=rec.force,
-                #     keep_bd_alive=rec.keep_bd_alive,
-                #     coverage=rec.coverage,
-                #     config=rec.config,
-                #     odoo_config=rec.odoo_config,
-                # )
-                # if project.msg_error:
-                #     rec.msg_error = project.msg_error
-                #     rec.has_error = True
-                #
-                # if not project.generate_module():
-                #     rec.has_error = True
-                rec.action_init(rec_ws=rec_ws)
-
                 id_exec_bundle = self.env.context.get("devops_exec_bundle")
                 exec_bundle_parent_id = self.env["devops.exec.bundle"].browse(
                     id_exec_bundle
                 )
+                stage_init_id = self.env.ref(
+                    "erplibre_devops.devops_cg_new_project_stage_init"
+                )
+                stage_gen_conf_id = self.env.ref(
+                    "erplibre_devops.devops_cg_new_project_stage_generate_config"
+                )
+                stage_uc0_id = self.env.ref(
+                    "erplibre_devops.devops_cg_new_project_stage_generate_uc0"
+                )
+                stage_uca_id = self.env.ref(
+                    "erplibre_devops.devops_cg_new_project_stage_generate_uca"
+                )
+                stage_ucb_id = self.env.ref(
+                    "erplibre_devops.devops_cg_new_project_stage_generate_ucb"
+                )
+                # stage_terminate_id = self.env.ref(
+                #     "erplibre_devops.devops_cg_new_project_stage_generate_terminate"
+                # )
 
-                if not exec_bundle_parent_id.devops_exec_parent_error_ids:
+                if rec.stage_id == stage_init_id:
+                    rec.action_init(rec_ws=rec_ws)
+
+                if (
+                    not exec_bundle_parent_id.devops_exec_parent_error_ids
+                    and rec.stage_id == stage_gen_conf_id
+                ):
                     rec.action_generate_config(rec_ws=rec_ws)
                 else:
                     rec.has_error = True
-                if not exec_bundle_parent_id.devops_exec_parent_error_ids:
+                if (
+                    not exec_bundle_parent_id.devops_exec_parent_error_ids
+                    and rec.stage_id == stage_uc0_id
+                ):
                     rec.action_generate_uc0(rec_ws=rec_ws)
                 else:
                     rec.has_error = True
-                if not exec_bundle_parent_id.devops_exec_parent_error_ids:
+                if (
+                    not exec_bundle_parent_id.devops_exec_parent_error_ids
+                    and rec.stage_id == stage_uca_id
+                ):
                     rec.action_generate_uca(rec_ws=rec_ws)
                 else:
                     rec.has_error = True
-                if not exec_bundle_parent_id.devops_exec_parent_error_ids:
+                if (
+                    not exec_bundle_parent_id.devops_exec_parent_error_ids
+                    and rec.stage_id == stage_ucb_id
+                ):
                     rec.action_generate_ucb(rec_ws=rec_ws)
                 else:
                     rec.has_error = True

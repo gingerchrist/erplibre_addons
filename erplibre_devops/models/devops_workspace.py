@@ -286,6 +286,11 @@ class DevopsWorkspace(models.Model):
         store=True,
     )
 
+    has_re_execute_new_project = fields.Boolean(
+        compute="_compute_has_re_execute_new_project",
+        store=True,
+    )
+
     is_clear_before_cg_demo = fields.Boolean(
         default=True,
         help=(
@@ -458,6 +463,15 @@ class DevopsWorkspace(models.Model):
         for rec in self:
             rec.is_conflict_mode_exec = (
                 rec.mode_source == "docker" and rec.mode_exec != "docker"
+            )
+
+    @api.multi
+    @api.depends("last_new_project_self", "last_new_project_self.has_error")
+    def _compute_has_re_execute_new_project(self):
+        for rec in self:
+            rec.has_re_execute_new_project = bool(
+                rec.last_new_project_self
+                and rec.last_new_project_self.has_error
             )
 
     @api.multi
@@ -2038,6 +2052,19 @@ class DevopsWorkspace(models.Model):
                 # TODO make test to validate if remove next line, permission root the project /tmp/project/addons root
                 addons_path = os.path.join(rec.folder, "addons", "addons")
                 rec.execute(f"mkdir -p '{addons_path}'")
+
+    @api.multi
+    def action_execute_last_stage_new_project(self):
+        for rec_o in self:
+            with rec_o.devops_create_exec_bundle(
+                "Re-execute last new project"
+            ) as rec:
+                # TODO create a copy of new project and not modify older version
+                # TODO next sentence is not useful if made a copy
+                rec.last_new_project_self.devops_exec_bundle_id = (
+                    rec._context.get("devops_exec_bundle")
+                )
+                rec.last_new_project_self.action_new_project()
 
     @api.multi
     @api.model

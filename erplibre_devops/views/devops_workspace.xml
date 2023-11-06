@@ -77,6 +77,13 @@
                         attrs="{'invisible': [('is_conflict_mode_exec', '=', True)]}"
                         groups="base.group_no_one"
                     />
+                    <button
+                        class="btn-warning"
+                        name="action_execute_last_stage_new_project"
+                        string="Re-execute last"
+                        type="object"
+                        attrs="{'invisible': ['|', ('is_conflict_mode_exec', '=', True), ('has_re_execute_new_project', '=', False)]}"
+                    />
                 </header>
                 <div
                     class="badge-pill badge-success float-right"
@@ -107,6 +114,7 @@
                         <field name="is_installed" invisible="True" />
                         <field name="is_running" invisible="True" />
                         <field name="is_me" invisible="True" />
+                        <field name="has_re_execute_new_project" invisible="True" />
                     </group>
                     <group string="Execution">
                         <field name="is_debug_log" />
