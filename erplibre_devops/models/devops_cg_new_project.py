@@ -273,14 +273,6 @@ class DevopsCgNewProject(models.Model):
                 if not rec.template_name:
                     rec.template_name = f"code_generator_template_{rec.module}"
 
-                # TODO il faut refaire la conception de config_lst_model et passer par les objets
-                # if not config:
-                #     self.config = {}
-                #     self.config_lst_model = []
-                # else:
-                #     self.config = json.loads(config)
-                #     self.config_lst_model = self.config.get("model")
-
                 # TODO copy directory in temp workspace file before update it
                 rec.module_path = os.path.join(rec.directory, rec.module)
                 is_over = self.validate_path_ready_to_be_override(
@@ -538,8 +530,10 @@ class DevopsCgNewProject(models.Model):
 
                 # Add model from config
                 if self.config:
+                    config = json.loads(self.config)
+                    config_lst_model = config.get("model")
                     str_lst_model = "; ".join(
-                        [a.get("name") for a in self.config_lst_model]
+                        [a.get("name") for a in config_lst_model]
                     )
                     old_str = 'value["template_model_name"] = ""'
                     new_str = (
@@ -676,7 +670,9 @@ class DevopsCgNewProject(models.Model):
                 # Add field from config
                 if self.config:
                     lst_update_cg = []
-                    for model in self.config_lst_model:
+                    config = json.loads(self.config)
+                    config_lst_model = config.get("model")
+                    for model in config_lst_model:
                         model_name = model.get("name")
                         dct_field = {}
                         for a in model.get("fields"):
