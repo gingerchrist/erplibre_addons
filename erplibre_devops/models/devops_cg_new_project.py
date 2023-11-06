@@ -93,9 +93,10 @@ class DevopsCgNewProject(models.Model):
     #     store=True,
     # )
 
-    devops_exec_error_ids = fields.One2many(
-        related="devops_exec_bundle_id.devops_exec_parent_error_ids"
-    )
+    # TODO need to support related field
+    # devops_exec_error_ids = fields.One2many(
+    #     related="devops_exec_bundle_id.devops_exec_parent_error_ids"
+    # )
 
     cg_hooks_py = fields.Char(help="Path of hooks python file.")
 
