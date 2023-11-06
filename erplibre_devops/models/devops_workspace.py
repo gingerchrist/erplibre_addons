@@ -666,12 +666,18 @@ class DevopsWorkspace(models.Model):
                             rec.path_working_erplibre,
                             rec.path_code_generator_to_generate,
                         )
+                        devops_exec_bundle_parent_root_id = (
+                            self.env["devops.exec.bundle"]
+                            .browse(rec._context.get("devops_exec_bundle"))
+                            .get_parent_root()
+                        )
                         dct_new_project = {
                             "module": module_name,
                             "directory": directory,
                             "keep_bd_alive": True,
                             "devops_workspace": rec.id,
                             "project_type": "cg",
+                            "devops_exec_bundle_id": devops_exec_bundle_parent_root_id.id,
                         }
                         # extra_arg = ""
                         if model_conf:
