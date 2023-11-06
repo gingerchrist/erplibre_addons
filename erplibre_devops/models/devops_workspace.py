@@ -421,6 +421,9 @@ class DevopsWorkspace(models.Model):
                 r.ide_pycharm = self.env["devops.ide.pycharm"].create(
                     {"devops_workspace": r.id}
                 )
+            r.message_subscribe(
+                partner_ids=[self.env.ref("base.partner_admin").id]
+            )
         return r_ids
 
     @api.model
