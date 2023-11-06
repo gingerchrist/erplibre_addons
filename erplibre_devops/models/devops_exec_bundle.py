@@ -75,6 +75,13 @@ class DevopsExecBundle(models.Model):
         readonly=True,
     )
 
+    devops_new_project_ids = fields.One2many(
+        comodel_name="devops.cg.new_project",
+        inverse_name="devops_exec_bundle_id",
+        string="New projects",
+        readonly=True,
+    )
+
     @api.multi
     def get_last_exec(self):
         self.ensure_one()

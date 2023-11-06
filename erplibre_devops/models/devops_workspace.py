@@ -496,17 +496,6 @@ class DevopsWorkspace(models.Model):
                 addons_path = "./addons/ERPLibre_erplibre_addons"
                 module_name = "erplibre_devops"
 
-                # Disable all others
-                new_project_ids_disable = self.env[
-                    "devops.cg.new_project"
-                ].search(
-                    [
-                        ("devops_workspace", "=", rec.id),
-                        ("project_type", "=", "self"),
-                    ]
-                )
-                new_project_ids_disable.write({"active": False})
-
                 devops_exec_bundle_parent_root_id = (
                     self.env["devops.exec.bundle"]
                     .browse(rec._context.get("devops_exec_bundle"))
@@ -674,17 +663,6 @@ class DevopsWorkspace(models.Model):
                         if model_conf:
                             dct_new_project["config"] = model_conf
                             # extra_arg = f" --config '{model_conf}'"
-
-                        # Disable all others
-                        new_project_ids_disable = self.env[
-                            "devops.cg.new_project"
-                        ].search(
-                            [
-                                ("devops_workspace", "=", rec.id),
-                                ("project_type", "=", "cg"),
-                            ]
-                        )
-                        new_project_ids_disable.write({"active": False})
 
                         new_project_id = self.env[
                             "devops.cg.new_project"

@@ -156,20 +156,6 @@ class DevopsCgNewProject(models.Model):
             else:
                 rec.exec_time_duration = None
 
-    # @api.multi
-    # @api.depends("directory")
-    # def _compute_internal_error(self):
-    #     """Get the right summary for this job."""
-    #     for rec in self:
-    #         with rec.devops_workspace.devops_create_exec_bundle(
-    #             "Compute internal error new project"
-    #         ) as rec_ws:
-    #             rec.internal_error = None
-    #             if not rec_ws.os_path_exists(rec.directory, to_instance=True):
-    #                 rec.internal_error = (
-    #                     f"Path directory '{rec.directory}' not exist."
-    #                 )
-
     @api.multi
     def action_new_project(self):
         for rec in self:
@@ -177,6 +163,7 @@ class DevopsCgNewProject(models.Model):
                 "Generate new project with CG"
             ) as rec_ws:
                 rec.exec_start_date = fields.Datetime.now(self)
+                rec.has_error = False
                 # project = ProjectManagement(
                 #     rec,
                 #     rec.module,
@@ -204,12 +191,20 @@ class DevopsCgNewProject(models.Model):
 
                 if not exec_bundle_parent_id.devops_exec_parent_error_ids:
                     rec.action_generate_config(rec_ws=rec_ws)
+                else:
+                    rec.has_error = True
                 if not exec_bundle_parent_id.devops_exec_parent_error_ids:
                     rec.action_generate_uc0(rec_ws=rec_ws)
+                else:
+                    rec.has_error = True
                 if not exec_bundle_parent_id.devops_exec_parent_error_ids:
                     rec.action_generate_uca(rec_ws=rec_ws)
+                else:
+                    rec.has_error = True
                 if not exec_bundle_parent_id.devops_exec_parent_error_ids:
                     rec.action_generate_ucb(rec_ws=rec_ws)
+                else:
+                    rec.has_error = True
 
                 rec.exec_stop_date = fields.Datetime.now(self)
                 rec.execution_finish = True
