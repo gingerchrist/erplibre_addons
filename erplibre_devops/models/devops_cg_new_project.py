@@ -132,6 +132,16 @@ class DevopsCgNewProject(models.Model):
 
     devops_workspace = fields.Many2one(comodel_name="devops.workspace")
 
+    new_project_with_code_generator = fields.Boolean(
+        default=True,
+        help=(
+            "Need to enable this feature if the goal is to do new_project with"
+            " the code generator. Because by default, it will be installed."
+            " Not working how I assume, its take 40 seconds more. Stay it at"
+            " default = True."
+        ),
+    )
+
     @api.depends(
         "devops_workspace",
         "module",
@@ -450,10 +460,17 @@ class DevopsCgNewProject(models.Model):
                 bd_name_demo = (
                     f"new_project_code_generator_demo_{uuid.uuid4()}"[:63]
                 )
-                cmd = (
-                    "./script/database/db_restore.py --database"
-                    f" {bd_name_demo}"
-                )
+                if rec.new_project_with_code_generator:
+                    cmd = (
+                        "./script/database/db_restore.py --database"
+                        f" {bd_name_demo}"
+                    )
+                else:
+                    cmd = (
+                        "./script/database/db_restore.py --database"
+                        f" {bd_name_demo} --restore_image"
+                        " addons_install_code_generator_basic"
+                    )
                 _logger.info(cmd)
                 exec_id = rec_ws.with_context(
                     devops_cg_new_project=rec.id
@@ -550,10 +567,17 @@ class DevopsCgNewProject(models.Model):
                 bd_name_template = (
                     f"new_project_code_generator_template_{uuid.uuid4()}"[:63]
                 )
-                cmd = (
-                    "./script/database/db_restore.py --database"
-                    f" {bd_name_template}"
-                )
+                if rec.new_project_with_code_generator:
+                    cmd = (
+                        "./script/database/db_restore.py --database"
+                        f" {bd_name_template}"
+                    )
+                else:
+                    cmd = (
+                        "./script/database/db_restore.py --database"
+                        f" {bd_name_template} --restore_image"
+                        " addons_install_code_generator_basic"
+                    )
                 exec_id = rec_ws.with_context(
                     devops_cg_new_project=rec.id
                 ).execute(cmd=cmd, to_instance=True)
@@ -651,10 +675,17 @@ class DevopsCgNewProject(models.Model):
                 bd_name_generator = (
                     f"new_project_code_generator_{uuid.uuid4()}"[:63]
                 )
-                cmd = (
-                    "./script/database/db_restore.py --database"
-                    f" {bd_name_generator}"
-                )
+                if rec.new_project_with_code_generator:
+                    cmd = (
+                        "./script/database/db_restore.py --database"
+                        f" {bd_name_generator}"
+                    )
+                else:
+                    cmd = (
+                        "./script/database/db_restore.py --database"
+                        f" {bd_name_generator} --restore_image"
+                        " addons_install_code_generator_basic"
+                    )
                 _logger.info(cmd)
                 exec_id = rec_ws.with_context(
                     devops_cg_new_project=rec.id
