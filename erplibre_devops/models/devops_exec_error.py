@@ -34,7 +34,7 @@ class DevopsExecError(models.Model):
         selection=[("internal", "Internal"), ("execution", "Execution")]
     )
 
-    line_file_tb_detected = fields.Char(
+    line_file_tb_detected = fields.Text(
         help="Detected line to add breakpoint."
     )
 

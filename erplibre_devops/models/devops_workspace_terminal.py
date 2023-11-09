@@ -26,8 +26,8 @@ class DevopsWorkspaceTerminal(models.Model):
 
     terminal_is_running = fields.Boolean(
         readonly=True,
-        help="When false, it's because not running terminal.",
         default=True,
+        help="When false, it's because not running terminal.",
     )
 
     terminal_initiate_succeed = fields.Boolean(help="Terminal is ready to run")

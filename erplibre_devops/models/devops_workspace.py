@@ -547,6 +547,13 @@ class DevopsWorkspace(models.Model):
                 rec.ide_pycharm.action_cg_setup_pycharm_debug()
 
     @api.multi
+    def action_clear_error_exec(self):
+        for rec_o in self:
+            with rec_o.devops_create_exec_bundle("Clear error exec") as rec:
+                for error in rec.devops_exec_error_ids:
+                    error.active = False
+
+    @api.multi
     def action_open_terminal_path_erplibre_devops(self):
         for rec_o in self:
             with rec_o.devops_create_exec_bundle(
@@ -2066,6 +2073,10 @@ class DevopsWorkspace(models.Model):
             with rec_o.devops_create_exec_bundle(
                 "Re-execute last new project"
             ) as rec:
+                if rec._context.get("default_stage_uc0"):
+                    rec.last_new_project_self.stage_id = self.env.ref(
+                        "erplibre_devops.devops_cg_new_project_stage_generate_uc0"
+                    ).id
                 # TODO create a copy of new project and not modify older version
                 # TODO next sentence is not useful if made a copy
                 rec.last_new_project_self.devops_exec_bundle_id = (

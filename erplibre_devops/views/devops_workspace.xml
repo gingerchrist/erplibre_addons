@@ -64,6 +64,14 @@
                     />
                     <button
                         class="oe_highlight"
+                        name="action_reboot"
+                        string="Hard Reboot"
+                        context="{'default_exec_reboot_process': True}"
+                        type="object"
+                        attrs="{'invisible': ['|', ('is_installed', '=', False), ('is_conflict_mode_exec', '=', True)]}"
+                    />
+                    <button
+                        class="oe_highlight"
                         name="action_update"
                         string="Update"
                         type="object"
@@ -81,6 +89,14 @@
                         class="btn-warning"
                         name="action_execute_last_stage_new_project"
                         string="Re-execute last"
+                        type="object"
+                        attrs="{'invisible': ['|', ('is_conflict_mode_exec', '=', True), ('has_re_execute_new_project', '=', False)]}"
+                    />
+                    <button
+                        class="btn-warning"
+                        name="action_execute_last_stage_new_project"
+                        string="Re-execute uC0"
+                        context="{'default_stage_uc0': True}"
                         type="object"
                         attrs="{'invisible': ['|', ('is_conflict_mode_exec', '=', True), ('has_re_execute_new_project', '=', False)]}"
                     />
@@ -529,6 +545,17 @@
                         <field name="devops_exec_bundle_root_ids" />
                     </page>
                     <page name="exec_error" string="Error exec">
+                        <group>
+                            <group string="Action">
+                                <button
+                                    class="oe_highlight"
+                                    name="action_clear_error_exec"
+                                    string="Clear error exec"
+                                    context="{'default_exec_reboot_process': True}"
+                                    type="object"
+                                />
+                            </group>
+                        </group>
                         <field name="devops_exec_error_ids" />
                     </page>
                 </notebook>

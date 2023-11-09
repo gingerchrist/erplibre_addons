@@ -18,7 +18,6 @@ class DevopsCgNewProjectStage(models.Model):
     description = fields.Char()
 
     sequence = fields.Integer(
-        "Sequence",
         default=10,
         help="Used to order new project stages. Lower is better.",
     )

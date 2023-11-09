@@ -22,7 +22,7 @@ class DevopsIdePycharm(models.Model):
         required=True,
     )
 
-    line_file_tb_detected = fields.Char(
+    line_file_tb_detected = fields.Text(
         help="Detected line to add breakpoint."
     )
 
@@ -138,6 +138,7 @@ class DevopsIdePycharm(models.Model):
                 )
                 if exec_error_id and result.log_all:
                     exec_error_id.diagnostic_idea = result.log_all
+                    exec_error_id.line_file_tb_detected = result.log_all
                     exec_error_id.find_resolution = "diagnostic"
                     return True
         elif exception == "ValueError:":
@@ -159,6 +160,7 @@ class DevopsIdePycharm(models.Model):
                     )
                     if exec_error_id and result.log_all:
                         exec_error_id.diagnostic_idea = result.log_all
+                        exec_error_id.line_file_tb_detected = result.log_all
                         exec_error_id.find_resolution = "diagnostic"
                         return True
 
