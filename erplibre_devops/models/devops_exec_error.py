@@ -34,11 +34,11 @@ class DevopsExecError(models.Model):
         selection=[("internal", "Internal"), ("execution", "Execution")]
     )
 
-    line_file_tb_detected = fields.Char(
+    line_file_tb_detected = fields.Text(
         help="Detected line to add breakpoint."
     )
 
-    devops_exec_ids = fields.Many2one(
+    devops_exec_id = fields.Many2one(
         comodel_name="devops.exec",
         readonly=True,
     )
@@ -52,6 +52,17 @@ class DevopsExecError(models.Model):
         comodel_name="devops.exec.bundle",
         readonly=True,
     )
+
+    find_resolution = fields.Selection(
+        selection=[
+            ("find", "Find"),
+            ("error", "Error"),
+            ("diagnostic", "Diagnostic"),
+        ],
+        help="If resolution to resolv the error was found.",
+    )
+
+    diagnostic_idea = fields.Text(help="Auto correction try to diagnostic.")
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -80,9 +91,7 @@ class DevopsExecError(models.Model):
             )
         return result
 
-    @api.depends(
-        "devops_workspace",
-    )
+    @api.depends("devops_workspace")
     def _compute_name(self):
         for rec in self:
             if not isinstance(rec.id, models.NewId):
@@ -122,7 +131,6 @@ class DevopsExecError(models.Model):
                 "Set breakpoint on error"
             ) as rec:
                 rec.ide_pycharm.action_cg_setup_pycharm_debug(
-                    log=rec_o.escaped_tb.replace(
-                        "&quot;", '"', exec_error_id=rec
-                    )
+                    log=rec_o.escaped_tb.replace("&quot;", '"'),
+                    exec_error_id=rec,
                 )

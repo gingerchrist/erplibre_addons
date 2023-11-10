@@ -2,9 +2,6 @@
 <odoo>
     <data noupdate="1">
         <record model="devops.system" id="devops_system_local">
-            <field name="name">Self local</field>
-        </record>
-        <record model="devops.system" id="devops_system_local">
             <field name="name">Local</field>
         </record>
         <record model="devops.system" id="devops_system_ssh_localhost">

@@ -171,6 +171,7 @@ class DevopsSystem(models.Model):
         add_stdin_log=False,
         add_stderr_log=True,
         engine="bash",
+        delimiter_bash="'",
     ):
         """
         engine can be bash, python or sh
@@ -178,11 +179,13 @@ class DevopsSystem(models.Model):
         if folder:
             cmd = f"cd {folder};{cmd}"
         if engine == "python":
-            cmd = f"python -c '{cmd}'"
+            cmd = f"python -c {delimiter_bash}{cmd}{delimiter_bash}"
         elif engine == "bash":
-            cmd = f"bash -c '{cmd}'"
+            cmd = f"bash -c {delimiter_bash}{cmd}{delimiter_bash}"
         lst_result = []
         cmd = cmd.strip()
+        if self.debug_command:
+            print(cmd)
         for rec in self.filtered(lambda r: r.method == "local"):
             result = rec.execute_process(cmd)
             if len(self) == 1:

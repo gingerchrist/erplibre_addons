@@ -13,7 +13,10 @@ class DevopsExec(models.Model):
     _name = "devops.exec"
     _description = "Execution process"
 
-    name = fields.Char(compute="_compute_name")
+    name = fields.Char(
+        compute="_compute_name",
+        store=True,
+    )
 
     active = fields.Boolean(default=True)
 
@@ -30,6 +33,7 @@ class DevopsExec(models.Model):
     exec_time_duration = fields.Integer(
         string="Execution time duration",
         compute="_compute_exec_time_duration",
+        store=True,
         help="Time in second, duration of execution",
     )
 
@@ -37,14 +41,27 @@ class DevopsExec(models.Model):
 
     folder = fields.Char(readonly=True)
 
-    time_duration_result = fields.Char(compute="_compute_time_duration_result")
+    time_duration_result = fields.Char(
+        compute="_compute_time_duration_result",
+        store=True,
+    )
 
-    execution_finish = fields.Boolean(compute="_compute_execution_finish")
+    execution_finish = fields.Boolean(
+        compute="_compute_execution_finish",
+        store=True,
+    )
 
     module = fields.Char()
 
     devops_workspace = fields.Many2one(
         comodel_name="devops.workspace", readonly=True
+    )
+
+    devops_exec_error_ids = fields.One2many(
+        comodel_name="devops.exec.error",
+        inverse_name="devops_exec_id",
+        string="Executions errors",
+        readonly=True,
     )
 
     devops_exec_bundle_id = fields.Many2one(
@@ -57,7 +74,10 @@ class DevopsExec(models.Model):
 
     log_stderr = fields.Text(readonly=True)
 
-    log_all = fields.Text(compute="_compute_log_all")
+    log_all = fields.Text(
+        compute="_compute_log_all",
+        store=True,
+    )
 
     @api.depends(
         "devops_workspace",
@@ -75,10 +95,7 @@ class DevopsExec(models.Model):
             if rec.module:
                 rec.name += f" - {rec.module}"
 
-    @api.depends(
-        "exec_start_date",
-        "exec_stop_date",
-    )
+    @api.depends("exec_start_date", "exec_stop_date")
     def _compute_exec_time_duration(self):
         for rec in self:
             if rec.exec_start_date and rec.exec_stop_date:
@@ -88,10 +105,7 @@ class DevopsExec(models.Model):
             else:
                 rec.exec_time_duration = False
 
-    @api.depends(
-        "log_stdout",
-        "log_stderr",
-    )
+    @api.depends("log_stdout", "log_stderr")
     def _compute_log_all(self):
         for rec in self:
             rec.log_all = ""
@@ -100,16 +114,12 @@ class DevopsExec(models.Model):
             if rec.log_stderr:
                 rec.log_all += rec.log_stderr
 
-    @api.depends(
-        "exec_stop_date",
-    )
+    @api.depends("exec_stop_date")
     def _compute_execution_finish(self):
         for rec in self:
             rec.execution_finish = bool(rec.exec_stop_date)
 
-    @api.depends(
-        "exec_time_duration",
-    )
+    @api.depends("exec_time_duration")
     def _compute_time_duration_result(self):
         for rec in self:
             rec.time_duration_result = (

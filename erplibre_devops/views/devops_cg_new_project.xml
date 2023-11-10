@@ -6,7 +6,20 @@
         <field name="arch" type="xml">
             <form string="Titre">
                 <header>
-                    <button class="oe_highlight" name="action_new_project" string="New project" type="object" />
+                    <button
+                        class="oe_highlight"
+                        name="action_new_project"
+                        string="New project"
+                        type="object"
+                        attrs="{'invisible': [('execution_finish', '=', True)]}"
+                    />
+                    <button
+                        class="oe_highlight"
+                        name="action_new_project"
+                        string="Re-execute"
+                        type="object"
+                        attrs="{'invisible': [('execution_finish', '=', False)]}"
+                    />
                     <field name="stage_id" widget="statusbar" clickable="False" options="{'fold_field': 'fold'}" />
                 </header>
                 <sheet>
@@ -37,6 +50,7 @@
                             <field name="last_new_project" />
                             <field name="devops_workspace" />
                             <field name="devops_exec_bundle_id" />
+                            <!--                            <field name="devops_exec_error_ids" />-->
                         </group>
                     </group>
 
@@ -48,12 +62,22 @@
                             <field name="directory" />
                             <field name="config" />
                             <field name="odoo_config" />
+                            <field name="new_project_with_code_generator" />
                         </group>
                         <group>
                             <field name="keep_bd_alive" />
                             <field name="stop_execution_if_env_not_clean" />
-                            <field name="coverage" />
+                            <field name="active_coverage" />
                             <field name="force" />
+                            <field name="cg_hooks_py" />
+                            <field name="template_hooks_py" />
+                            <field name="code_generator_demo_hooks_py" />
+                            <field name="code_generator_hooks_path_relative" />
+                            <field name="config_path" />
+                            <field name="module_path" />
+                            <field name="template_path" />
+                            <field name="cg_path" />
+                            <field name="code_generator_demo_path" />
                         </group>
                     </group>
 

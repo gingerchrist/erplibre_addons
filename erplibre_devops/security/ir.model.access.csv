@@ -16,3 +16,4 @@ access_devops_cg_new_project_stage,access_devops_cg_new_project_stage,model_devo
 access_devops_exec,access_devops_exec,model_devops_exec,base.group_user,1,1,1,1
 access_devops_exec_bundle,access_devops_exec_bundle,model_devops_exec_bundle,base.group_user,1,1,1,1
 access_devops_exec_error,access_devops_exec_error,model_devops_exec_error,base.group_user,1,1,1,1
+access_devops_log_makefile_target,access_devops_log_makefile_target,model_devops_log_makefile_target,base.group_user,1,1,1,1

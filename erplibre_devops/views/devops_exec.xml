@@ -32,10 +32,13 @@
                             <field name="write_date" />
                         </group>
                     </group>
-                    <group string="CMD">
-                        <group>
+                    <group>
+                        <group string="CMD">
                             <field name="folder" />
                             <field name="cmd" />
+                        </group>
+                        <group string="Error">
+                            <field name="devops_exec_error_ids" />
                         </group>
                     </group>
 

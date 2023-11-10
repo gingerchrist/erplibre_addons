@@ -18,13 +18,12 @@ class DevopsCgNewProjectStage(models.Model):
     description = fields.Char()
 
     sequence = fields.Integer(
-        "Sequence",
         default=10,
         help="Used to order new project stages. Lower is better.",
     )
 
     fold = fields.Boolean(
-        "Folded in Pipeline",
+        string="Folded in Pipeline",
         help=(
             "This stage is folded in the kanban view when there are no records"
             " in that stage to display."

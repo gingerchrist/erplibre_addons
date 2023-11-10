@@ -4,6 +4,7 @@
 import json
 import logging
 import os
+import re
 import time
 import traceback
 from contextlib import contextmanager
@@ -74,6 +75,12 @@ class DevopsWorkspace(models.Model):
     show_error_chatter = fields.Boolean(help="Show error to chatter")
 
     path_code_generator_to_generate = fields.Char(default="addons/addons")
+
+    log_makefile_target_ids = fields.One2many(
+        comodel_name="devops.log.makefile.target",
+        inverse_name="devops_workspace_id",
+        string="Makefile Targets",
+    )
 
     path_working_erplibre = fields.Char(default="/ERPLibre")
 
@@ -279,6 +286,11 @@ class DevopsWorkspace(models.Model):
         store=True,
     )
 
+    has_re_execute_new_project = fields.Boolean(
+        compute="_compute_has_re_execute_new_project",
+        store=True,
+    )
+
     is_clear_before_cg_demo = fields.Boolean(
         default=True,
         help=(
@@ -408,12 +420,16 @@ class DevopsWorkspace(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
-        r = super().create(vals_list)
-        if not r.ide_pycharm:
-            r.ide_pycharm = self.env["devops.ide.pycharm"].create(
-                {"devops_workspace": r.id}
+        r_ids = super().create(vals_list)
+        for r in r_ids:
+            if not r.ide_pycharm:
+                r.ide_pycharm = self.env["devops.ide.pycharm"].create(
+                    {"devops_workspace": r.id}
+                )
+            r.message_subscribe(
+                partner_ids=[self.env.ref("base.partner_admin").id]
             )
-        return r
+        return r_ids
 
     @api.model
     def _default_folder(self):
@@ -447,6 +463,15 @@ class DevopsWorkspace(models.Model):
         for rec in self:
             rec.is_conflict_mode_exec = (
                 rec.mode_source == "docker" and rec.mode_exec != "docker"
+            )
+
+    @api.multi
+    @api.depends("last_new_project_self", "last_new_project_self.has_error")
+    def _compute_has_re_execute_new_project(self):
+        for rec in self:
+            rec.has_re_execute_new_project = bool(
+                rec.last_new_project_self
+                and rec.last_new_project_self.has_error
             )
 
     @api.multi
@@ -485,17 +510,6 @@ class DevopsWorkspace(models.Model):
                 addons_path = "./addons/ERPLibre_erplibre_addons"
                 module_name = "erplibre_devops"
 
-                # Disable all others
-                new_project_ids_disable = self.env[
-                    "devops.cg.new_project"
-                ].search(
-                    [
-                        ("devops_workspace", "=", rec.id),
-                        ("project_type", "=", "self"),
-                    ]
-                )
-                new_project_ids_disable.write({"active": False})
-
                 devops_exec_bundle_parent_root_id = (
                     self.env["devops.exec.bundle"]
                     .browse(rec._context.get("devops_exec_bundle"))
@@ -531,6 +545,13 @@ class DevopsWorkspace(models.Model):
         for rec_o in self:
             with rec_o.devops_create_exec_bundle("Setup PyCharm debug") as rec:
                 rec.ide_pycharm.action_cg_setup_pycharm_debug()
+
+    @api.multi
+    def action_clear_error_exec(self):
+        for rec_o in self:
+            with rec_o.devops_create_exec_bundle("Clear error exec") as rec:
+                for error in rec.devops_exec_error_ids:
+                    error.active = False
 
     @api.multi
     def action_open_terminal_path_erplibre_devops(self):
@@ -652,28 +673,23 @@ class DevopsWorkspace(models.Model):
                             rec.path_working_erplibre,
                             rec.path_code_generator_to_generate,
                         )
+                        devops_exec_bundle_parent_root_id = (
+                            self.env["devops.exec.bundle"]
+                            .browse(rec._context.get("devops_exec_bundle"))
+                            .get_parent_root()
+                        )
                         dct_new_project = {
                             "module": module_name,
                             "directory": directory,
                             "keep_bd_alive": True,
                             "devops_workspace": rec.id,
                             "project_type": "cg",
+                            "devops_exec_bundle_id": devops_exec_bundle_parent_root_id.id,
                         }
                         # extra_arg = ""
                         if model_conf:
                             dct_new_project["config"] = model_conf
                             # extra_arg = f" --config '{model_conf}'"
-
-                        # Disable all others
-                        new_project_ids_disable = self.env[
-                            "devops.cg.new_project"
-                        ].search(
-                            [
-                                ("devops_workspace", "=", rec.id),
-                                ("project_type", "=", "cg"),
-                            ]
-                        )
-                        new_project_ids_disable.write({"active": False})
 
                         new_project_id = self.env[
                             "devops.cg.new_project"
@@ -1822,6 +1838,7 @@ class DevopsWorkspace(models.Model):
                     else:
                         # TODO try te reuse
                         _logger.info("Git project already exist")
+                    rec.update_makefile_from_git()
 
                     # lst_file = rec.execute(cmd=f"ls {rec.folder}").log_all.strip().split("\n")
                     # if "docker-compose.yml" in lst_file:
@@ -1833,6 +1850,33 @@ class DevopsWorkspace(models.Model):
                     # else:
                 rec.action_network_change_port_random()
                 rec.is_installed = True
+
+    @api.multi
+    def update_makefile_from_git(self):
+        for rec_o in self:
+            with rec_o.devops_create_exec_bundle("Update makefile") as rec:
+                exec_mk_ref_id = rec.execute(
+                    cmd=f"git show v{rec.mode_version_erplibre}:Makefile",
+                    to_instance=True,
+                )
+                ref_makefile_content = exec_mk_ref_id.log_all
+                exec_mk_now_id = rec.execute(
+                    cmd=f"cat Makefile", to_instance=True
+                )
+                now_makefile_content = exec_mk_now_id.log_all
+
+                lst_ref = rec.get_lst_target_makefile(ref_makefile_content)
+                lst_now = rec.get_lst_target_makefile(now_makefile_content)
+
+                diff = set(lst_now).difference(set(lst_ref))
+                lst_diff = list(diff)
+                lst_ignore_target = ("PHONY",)
+                for target in lst_diff:
+                    if target in lst_ignore_target:
+                        continue
+                    self.env["devops.log.makefile.target"].create(
+                        {"name": target, "devops_workspace_id": rec.id}
+                    )
 
     @api.multi
     def execute(
@@ -1849,6 +1893,7 @@ class DevopsWorkspace(models.Model):
         to_instance=False,
         engine="bash",
         docker=False,
+        delimiter_bash="'",
     ):
         # TODO search into context if need to parallel or serial
         lst_result = []
@@ -1906,6 +1951,7 @@ class DevopsWorkspace(models.Model):
                     add_stdin_log=add_stdin_log,
                     add_stderr_log=add_stderr_log,
                     engine=engine,
+                    delimiter_bash=delimiter_bash,
                 )
 
             devops_exec.exec_stop_date = fields.Datetime.now()
@@ -1920,15 +1966,27 @@ class DevopsWorkspace(models.Model):
         return self.env["devops.exec"].browse([a.id for a in lst_result])
 
     @api.model
+    def get_lst_target_makefile(self, content):
+        regex = r"^\.PHONY:.*|([\w]+):\s"
+        targets = re.findall(regex, content, re.MULTILINE)
+        targets = list(set([target for target in targets if target]))
+        return targets
+
+    @api.model
+    def os_path_exists(self, path, to_instance=False):
+        cmd = f'[ -e "{path}" ] && echo "true" || echo "false"'
+        result = self.execute(cmd=cmd, to_instance=to_instance)
+        return result.log_all.strip() == "true"
+
+    @api.model
     def find_exec_error_from_log(
         self, log, devops_exec, devops_exec_bundle_id
     ):
         # nb_error_estimate = log.count("During handling of the above exception, another exception occurred:")
         if not devops_exec_bundle_id:
-            _logger.warning(
+            raise exceptions.Warning(
                 f"Executable command {devops_exec.cmd} missing exec.bundle."
             )
-            return
 
         index_first_traceback = log.find("Traceback (most recent call last):")
         if index_first_traceback == -1:
@@ -1942,6 +2000,9 @@ class DevopsWorkspace(models.Model):
             "NameError:",
             "AttributeError:",
             "ValueError:",
+            "FileNotFoundError:",
+            "raise ValidationError",
+            "odoo.exceptions.CacheMiss:",
         )
         # TODO move lst_exception into model devops.exec.exception
         for exception in lst_exception:
@@ -1982,6 +2043,7 @@ class DevopsWorkspace(models.Model):
                     escaped_tb,
                     self,
                     devops_exec_bundle_id,
+                    devops_exec,
                     parent_root_id,
                     "execution",
                 )
@@ -2004,6 +2066,23 @@ class DevopsWorkspace(models.Model):
                 # TODO make test to validate if remove next line, permission root the project /tmp/project/addons root
                 addons_path = os.path.join(rec.folder, "addons", "addons")
                 rec.execute(f"mkdir -p '{addons_path}'")
+
+    @api.multi
+    def action_execute_last_stage_new_project(self):
+        for rec_o in self:
+            with rec_o.devops_create_exec_bundle(
+                "Re-execute last new project"
+            ) as rec:
+                if rec._context.get("default_stage_uc0"):
+                    rec.last_new_project_self.stage_id = self.env.ref(
+                        "erplibre_devops.devops_cg_new_project_stage_generate_uc0"
+                    ).id
+                # TODO create a copy of new project and not modify older version
+                # TODO next sentence is not useful if made a copy
+                rec.last_new_project_self.devops_exec_bundle_id = (
+                    rec._context.get("devops_exec_bundle")
+                )
+                rec.last_new_project_self.action_new_project()
 
     @api.multi
     @api.model
@@ -2106,6 +2185,7 @@ sock.close()
         escaped_tb,
         devops_workspace_id,
         devops_exec_bundle_id,
+        devops_exec_id,
         parent_root_id,
         type_error,
     ):
@@ -2113,12 +2193,14 @@ sock.close()
         for rec in self:
             error_value = {
                 "description": description,
-                "escaped_tb": escaped_tb.replace("&quot;", '"'),
+                "escaped_tb": escaped_tb,
                 "devops_workspace": devops_workspace_id.id,
                 "devops_exec_bundle_id": devops_exec_bundle_id.id,
                 "parent_root_exec_bundle_id": parent_root_id.id,
                 "type_error": type_error,
             }
+            if devops_exec_id:
+                error_value["devops_exec_id"] = devops_exec_id.id
             # this is not true, cannot associate exec_id to this error
             # exec_id = devops_exec_bundle_id.get_last_exec()
             # if exec_id:
@@ -2163,7 +2245,9 @@ sock.close()
                 f"'{description}' it.exec.bundle id"
                 f" '{devops_exec_bundle_id.id}' failed"
             )
-            escaped_tb = tools.html_escape(traceback.format_exc())
+            escaped_tb = tools.html_escape(traceback.format_exc()).replace(
+                "&quot;", '"'
+            )
             parent_root_id = devops_exec_bundle_id.get_parent_root()
             # detect is different to reduce recursion depth exceeded
             found_same_error_ids = self.env["devops.exec.error"].search(
@@ -2174,11 +2258,15 @@ sock.close()
                 ]
             )
             if not found_same_error_ids:
+                devops_exec = devops_exec_bundle_id.devops_exec_ids.exists()
+                if devops_exec:
+                    devops_exec = devops_exec[0]
                 rec.create_exec_error(
                     description,
                     escaped_tb,
                     rec,
                     devops_exec_bundle_id,
+                    devops_exec,
                     parent_root_id,
                     "internal",
                 )

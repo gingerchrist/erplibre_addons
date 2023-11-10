@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <record id="devops_log_makefile_target_view_form" model="ir.ui.view">
+        <field name="name">devops_log_makefile_target_form</field>
+        <field name="model">devops.log.makefile.target</field>
+        <field name="arch" type="xml">
+            <form string="Titre">
+                <sheet>
+                    <group>
+                        <field name="name" />
+                    </group>
+                    <group>
+                        <field name="devops_workspace_id" />
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="devops_log_makefile_target_view_graph" model="ir.ui.view">
+        <field name="name">devops_log_makefile_target_graph</field>
+        <field name="model">devops.log.makefile.target</field>
+        <field name="arch" type="xml">
+            <graph string="DevOps db image">
+                <field name="name" type="row" />
+            </graph>
+        </field>
+    </record>
+
+    <record id="devops_log_makefile_target_view_kanban" model="ir.ui.view">
+        <field name="name">devops_log_makefile_target_kanban</field>
+        <field name="model">devops.log.makefile.target</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile">
+                <field name="name" />
+                <field name="devops_workspace_id" />
+                <templates>
+                    <t t-name="kanban-box">
+                        <div t-attf-class="oe_kanban_global_click">
+                            <div class="oe_kanban_details">
+                                <ul>
+                                    <li class="mb4">
+                                        <strong>
+                                            <field name="name" />
+                                        </strong>
+                                    </li>
+                                    <li class="mb4">
+                                        <strong>
+                                            <field name="devops_workspace_id" />
+                                        </strong>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="devops_log_makefile_target_view_pivot" model="ir.ui.view">
+        <field name="name">devops_log_makefile_target_pivot</field>
+        <field name="model">devops.log.makefile.target</field>
+        <field name="arch" type="xml">
+            <pivot string="DevOps db image">
+                <field name="name" type="row" />
+            </pivot>
+        </field>
+    </record>
+
+    <record id="devops_log_makefile_target_view_search" model="ir.ui.view">
+        <field name="name">devops_log_makefile_target_search</field>
+        <field name="model">devops.log.makefile.target</field>
+        <field name="arch" type="xml">
+            <search string="DevOps db image">
+                <filter domain="[('name','!=',False)]" name="name" string="Name" />
+            </search>
+        </field>
+    </record>
+
+    <record id="devops_log_makefile_target_view_tree" model="ir.ui.view">
+        <field name="name">devops_log_makefile_target_tree</field>
+        <field name="model">devops.log.makefile.target</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name" />
+                <field name="devops_workspace_id" />
+                <button
+                    name="action_launch_target"
+                    string="Launch target"
+                    tabindex="-1"
+                    type="object"
+                    icon="fa-play-circle text-success"
+                    class="oe_stat_button"
+                />
+            </tree>
+        </field>
+    </record>
+
+    <act_window
+        id="devops_log_makefile_target_action_window"
+        name="Db image"
+        res_model="devops.log.makefile.target"
+        view_mode="kanban,tree,pivot,graph,form"
+    />
+</odoo>

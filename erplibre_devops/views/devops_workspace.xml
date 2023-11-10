@@ -64,6 +64,14 @@
                     />
                     <button
                         class="oe_highlight"
+                        name="action_reboot"
+                        string="Hard Reboot"
+                        context="{'default_exec_reboot_process': True}"
+                        type="object"
+                        attrs="{'invisible': ['|', ('is_installed', '=', False), ('is_conflict_mode_exec', '=', True)]}"
+                    />
+                    <button
+                        class="oe_highlight"
                         name="action_update"
                         string="Update"
                         type="object"
@@ -76,6 +84,21 @@
                         type="object"
                         attrs="{'invisible': [('is_conflict_mode_exec', '=', True)]}"
                         groups="base.group_no_one"
+                    />
+                    <button
+                        class="btn-warning"
+                        name="action_execute_last_stage_new_project"
+                        string="Re-execute last"
+                        type="object"
+                        attrs="{'invisible': ['|', ('is_conflict_mode_exec', '=', True), ('has_re_execute_new_project', '=', False)]}"
+                    />
+                    <button
+                        class="btn-warning"
+                        name="action_execute_last_stage_new_project"
+                        string="Re-execute uC0"
+                        context="{'default_stage_uc0': True}"
+                        type="object"
+                        attrs="{'invisible': ['|', ('is_conflict_mode_exec', '=', True), ('has_re_execute_new_project', '=', False)]}"
                     />
                 </header>
                 <div
@@ -107,6 +130,7 @@
                         <field name="is_installed" invisible="True" />
                         <field name="is_running" invisible="True" />
                         <field name="is_me" invisible="True" />
+                        <field name="has_re_execute_new_project" invisible="True" />
                     </group>
                     <group string="Execution">
                         <field name="is_debug_log" />
@@ -473,6 +497,9 @@
                     <page name="code_generator_info_stat" string="Stat">
                         <field name="devops_code_generator_stat" />
                     </page>
+                    <page name="makefile" string="Makefile">
+                        <field name="log_makefile_target_ids" />
+                    </page>
                     <page name="code_generator_info_tree" string="Tree">
                         <group>
                             <button
@@ -518,6 +545,17 @@
                         <field name="devops_exec_bundle_root_ids" />
                     </page>
                     <page name="exec_error" string="Error exec">
+                        <group>
+                            <group string="Action">
+                                <button
+                                    class="oe_highlight"
+                                    name="action_clear_error_exec"
+                                    string="Clear error exec"
+                                    context="{'default_exec_reboot_process': True}"
+                                    type="object"
+                                />
+                            </group>
+                        </group>
                         <field name="devops_exec_error_ids" />
                     </page>
                 </notebook>

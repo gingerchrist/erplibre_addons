@@ -36,12 +36,13 @@
                     <group string="IT">
                         <field name="devops_workspace" />
                         <field name="devops_exec_bundle_id" />
-                        <field name="devops_exec_ids" />
+                        <field name="devops_exec_id" />
                     </group>
                     <group>
                         <group string="Info">
                             <field name="type_error" />
                             <field name="description" />
+                            <field name="find_resolution" />
                         </group>
                         <group string="Date">
                             <field name="create_date" />
@@ -54,6 +55,9 @@
                     <notebook>
                         <page string="Traceback">
                             <field name="escaped_tb" />
+                        </page>
+                        <page string="Diagnostic">
+                            <field name="diagnostic_idea" />
                         </page>
                     </notebook>
                 </sheet>
@@ -131,7 +135,11 @@
         <field name="name">devops_exec_error_tree</field>
         <field name="model">devops.exec.error</field>
         <field name="arch" type="xml">
-            <tree>
+            <tree
+                decoration-danger="find_resolution=='error'"
+                decoration-success="find_resolution=='find'"
+                decoration-primary="find_resolution=='diagnostic'"
+            >
                 <field name="name" />
                 <field name="type_error" />
                 <field name="description" />
@@ -139,6 +147,7 @@
                 <field name="line_file_tb_detected" />
                 <field name="devops_workspace" />
                 <field name="create_date" />
+                <field name="find_resolution" invisible="False" />
             </tree>
         </field>
     </record>
