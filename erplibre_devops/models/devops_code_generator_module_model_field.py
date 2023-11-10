@@ -53,11 +53,10 @@ class DevopsCodeGeneratorModuleModelField(models.Model):
         ),
     )
 
-    # TODO cg support domain into fields
-    # domain="[('model_id', '=', relation)]",
     field_relation = fields.Many2one(
         comodel_name="devops.code_generator.module.model.field",
         string="Inverse field",
+        domain="[('model_id', '=', relation)]",
         help="inverse_name - Need for one2many to associate with many2one.",
     )
 
