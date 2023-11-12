@@ -123,10 +123,6 @@ class DevopsWorkspace(models.Model):
         help="The port of http odoo.",
     )
 
-    is_self_instance = fields.Boolean(
-        help="Is the instance who run this database"
-    )
-
     port_longpolling = fields.Integer(
         string="port longpolling",
         default=8071,

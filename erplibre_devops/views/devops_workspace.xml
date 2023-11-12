@@ -101,10 +101,7 @@
                         attrs="{'invisible': ['|', ('is_conflict_mode_exec', '=', True), ('has_re_execute_new_project', '=', False)]}"
                     />
                 </header>
-                <div
-                    class="badge-pill badge-success float-right"
-                    attrs="{'invisible': [('is_self_instance', '=', False)]}"
-                >
+                <div class="badge-pill badge-success float-right" attrs="{'invisible': [('is_me', '=', False)]}">
                     Same instance
                 </div>
                 <div class="oe_title">
