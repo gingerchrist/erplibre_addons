@@ -11,11 +11,23 @@
 
     <!--Sub menu-->
 
-    <menuitem id="menu_workspace" name="DevOps" sequence="1" parent="menu_erplibre_devops" />
+    <menuitem id="menu_devops" name="DevOps" sequence="1" parent="menu_erplibre_devops" />
 
-    <menuitem id="menu_code" name="Code" sequence="2" parent="menu_erplibre_devops" />
+    <menuitem id="menu_plan" name="Plan" sequence="3" parent="menu_erplibre_devops" />
 
-    <menuitem id="menu_process" name="Process" sequence="3" parent="menu_erplibre_devops" />
+    <menuitem id="menu_code" name="Code" sequence="4" parent="menu_erplibre_devops" />
+
+    <menuitem id="menu_build" name="Build" sequence="5" parent="menu_erplibre_devops" />
+
+    <menuitem id="menu_test" name="Test" sequence="6" parent="menu_erplibre_devops" />
+
+    <menuitem id="menu_release" name="Release" sequence="7" parent="menu_erplibre_devops" />
+
+    <menuitem id="menu_deploy" name="Deploy" sequence="8" parent="menu_erplibre_devops" />
+
+    <menuitem id="menu_operate" name="Operate" sequence="9" parent="menu_erplibre_devops" />
+
+    <menuitem id="menu_monitor" name="Monitor" sequence="10" parent="menu_erplibre_devops" />
 
     <menuitem id="menu_config" name="Configuration" sequence="100" parent="menu_erplibre_devops" />
 
@@ -26,7 +38,23 @@
         name="Workspace"
         action="action_devops_check_workspace_conf_form"
         sequence="1"
-        parent="menu_workspace"
+        parent="menu_devops"
+    />
+
+    <menuitem
+        id="menu_workspace_docker_item"
+        name="Workspace docker"
+        action="action_devops_check_workspace_docker_conf_form"
+        sequence="2"
+        parent="menu_devops"
+    />
+
+    <menuitem
+        id="menu_workspace_terminal_item"
+        name="Workspace terminal"
+        action="action_devops_check_workspace_terminal_conf_form"
+        sequence="3"
+        parent="menu_devops"
     />
 
     <menuitem
@@ -34,47 +62,17 @@
         name="System"
         action="action_devops_check_system_conf_form"
         sequence="4"
-        parent="menu_workspace"
+        parent="menu_devops"
     />
+
+    <menuitem id="menu_process" name="Process" sequence="5" parent="menu_devops" />
 
     <menuitem
         id="menu_db_image"
         name="Db image"
         action="devops_db_image_db_image_action_window"
-        sequence="5"
-        parent="menu_workspace"
-    />
-
-    <menuitem
-        id="menu_workspace_docker_item"
-        name="Workspace docker"
-        action="action_devops_check_workspace_docker_conf_form"
         sequence="1"
-        parent="menu_process"
-    />
-
-    <menuitem
-        id="menu_workspace_terminal_item"
-        name="Workspace terminal"
-        action="action_devops_check_workspace_terminal_conf_form"
-        sequence="2"
-        parent="menu_process"
-    />
-
-    <menuitem
-        id="menu_code_generator_new_project"
-        name="New project"
-        action="devops_new_project_action_window"
-        sequence="3"
-        parent="menu_process"
-    />
-
-    <menuitem
-        id="menu_code_generator_new_project_stage"
-        name="New project Stage"
-        action="devops_cg_new_project_stage_action"
-        sequence="4"
-        parent="menu_process"
+        parent="menu_build"
     />
 
     <menuitem
@@ -101,35 +99,61 @@
         parent="menu_process"
     />
 
+    <menuitem id="menu_code_cg" name="CG" sequence="1" parent="menu_code" />
+
+    <menuitem
+        id="menu_code_generator_new_project"
+        name="New project"
+        action="devops_new_project_action_window"
+        sequence="1"
+        parent="menu_code_cg"
+    />
+
     <menuitem
         id="menu_code_generator"
         name="Project"
         action="devops_code_generator_code_generator_action_window"
-        sequence="1"
-        parent="menu_code"
+        sequence="2"
+        parent="menu_code_cg"
     />
 
     <menuitem
         id="menu_code_generator_module"
         name="Module"
         action="devops_code_generator_module_code_generator_module_action_window"
-        sequence="2"
-        parent="menu_code"
+        sequence="3"
+        parent="menu_code_cg"
     />
 
     <menuitem
         id="menu_code_generator_module_model"
         name="Model"
         action="devops_code_generator_module_model_code_generator_module_model_action_window"
-        sequence="3"
-        parent="menu_code"
+        sequence="4"
+        parent="menu_code_cg"
     />
 
     <menuitem
         id="menu_code_generator_module_model_field"
         name="Field"
         action="devops_code_generator_module_model_field_code_generator_module_model_field_action_window"
-        sequence="4"
+        sequence="5"
+        parent="menu_code_cg"
+    />
+
+    <menuitem
+        id="menu_code_ide_pycharm"
+        name="IDE Pycharm"
+        action="devops_ide_pycharm_action_window"
+        sequence="2"
+        parent="menu_code"
+    />
+
+    <menuitem
+        id="menu_code_log_makefile_target"
+        name="Makefile target"
+        action="devops_log_makefile_target_action_window"
+        sequence="3"
         parent="menu_code"
     />
 
@@ -137,32 +161,24 @@
         id="menu_code_generator_test"
         name="Test"
         action="action_devops_test_conf_form"
-        sequence="5"
-        parent="menu_code"
-    />
-
-    <menuitem
-        id="menu_devops_ide_pycharm"
-        name="IDE Pycharm"
-        action="devops_ide_pycharm_action_window"
-        sequence="6"
-        parent="menu_code"
-    />
-
-    <menuitem
-        id="menu_devops_log_makefile_target"
-        name="Makefile target"
-        action="devops_log_makefile_target_action_window"
-        sequence="7"
-        parent="menu_code"
+        sequence="1"
+        parent="menu_test"
     />
 
     <menuitem
         id="erplibre_devops_config_settings_menu_action"
         name="Settings"
         parent="menu_config"
-        sequence="0"
+        sequence="1"
         action="erplibre_devops_config_settings_action"
         groups="base.group_system"
+    />
+
+    <menuitem
+        id="menu_config_generator_new_project_stage"
+        name="New project Stage"
+        action="devops_cg_new_project_stage_action"
+        sequence="2"
+        parent="menu_config"
     />
 </odoo>
