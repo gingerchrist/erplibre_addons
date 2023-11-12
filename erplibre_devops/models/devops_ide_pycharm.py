@@ -3,6 +3,7 @@
 import logging
 import os
 import re
+import time
 
 import xmltodict
 
@@ -20,6 +21,8 @@ class DevopsIdePycharm(models.Model):
         store=True,
     )
 
+    is_installed = fields.Boolean(help="Will be true if project contain .idea")
+
     devops_workspace = fields.Many2one(
         comodel_name="devops.workspace",
         required=True,
@@ -28,6 +31,12 @@ class DevopsIdePycharm(models.Model):
     line_file_tb_detected = fields.Text(
         help="Detected line to add breakpoint."
     )
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        result = super().create(vals_list)
+        result.action_pycharm_check()
+        return result
 
     @api.depends(
         "devops_workspace.name",
@@ -53,9 +62,40 @@ class DevopsIdePycharm(models.Model):
         self.ensure_one()
         with self.devops_workspace.devops_create_exec_bundle(
             "Start PyCharm"
-        ) as rec:
-            cmd = "~/.local/share/JetBrains/Toolbox/scripts/pycharm"
-            rec.execute(cmd=cmd, force_open_terminal=True)
+        ) as rec_ws:
+            cmd = (
+                "~/.local/share/JetBrains/Toolbox/scripts/pycharm"
+                f" {rec_ws.folder}"
+            )
+            rec_ws.execute(cmd=cmd, force_open_terminal=True, force_exit=True)
+
+    @api.multi
+    def action_pycharm_conf_init(self, ctx=None):
+        for rec in self:
+            with rec.devops_workspace.devops_create_exec_bundle(
+                "Pycharm configuration init"
+            ) as rec_ws:
+                rec = rec.with_context(rec_ws._context)
+                if not rec.is_installed:
+                    rec.action_start_pycharm()
+                    while not rec.is_installed:
+                        time.sleep(3)
+                        rec.action_pycharm_check()
+                cmd = (
+                    "source"
+                    " ./.venv/bin/activate;./script/ide/pycharm_configuration.py"
+                    " --init"
+                )
+                rec_ws.execute(cmd=cmd, run_into_workspace=True)
+
+    @api.multi
+    def action_pycharm_check(self, ctx=None):
+        for rec in self:
+            with rec.devops_workspace.devops_create_exec_bundle(
+                "Pycharm check"
+            ) as rec_ws:
+                path_idea = os.path.join(rec_ws.folder, ".idea", "misc.xml")
+                rec.is_installed = rec_ws.os_path_exists(path_idea)
 
     @api.multi
     def action_cg_setup_pycharm_debug(
