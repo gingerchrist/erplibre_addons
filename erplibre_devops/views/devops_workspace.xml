@@ -104,6 +104,55 @@
                 <div class="badge-pill badge-success float-right" attrs="{'invisible': [('is_me', '=', False)]}">
                     Same instance
                 </div>
+                <div class="oe_button_box" name="button_box">
+                    <button name="toggle_active" type="object" class="oe_stat_button" icon="fa-archive">
+                        <field
+                            name="active"
+                            widget="boolean_button"
+                            options="{&quot;terminology&quot;: &quot;archive&quot;}"
+                        />
+                    </button>
+                    <button
+                        class="oe_stat_button"
+                        type="action"
+                        name="%(erplibre_devops.devops_exec_action_window)d"
+                        context="{'search_default_devops_workspace': active_id, 'search_default_group_devops_exec_bundle_id': 1}"
+                        attrs="{'invisible': [('devops_exec_count', '==', 0)]}"
+                        icon="fa-running"
+                    >
+                        <field string="Executions" name="devops_exec_count" widget="statinfo" />
+                    </button>
+                    <button
+                        class="oe_stat_button"
+                        type="action"
+                        name="%(erplibre_devops.devops_exec_error_action_window)d"
+                        context="{'search_default_devops_workspace': active_id}"
+                        attrs="{'invisible': [('devops_exec_error_count', '==', 0)]}"
+                        icon="fa-running"
+                    >
+                        <field string="Errors" name="devops_exec_error_count" widget="statinfo" />
+                    </button>
+                    <button
+                        class="oe_stat_button"
+                        type="action"
+                        name="%(erplibre_devops.devops_exec_bundle_action_window)d"
+                        context="{'search_default_devops_workspace': active_id}"
+                        attrs="{'invisible': [('devops_exec_bundle_count', '==', 0)]}"
+                        icon="fa-running"
+                    >
+                        <field string="Bundles" name="devops_exec_bundle_count" widget="statinfo" />
+                    </button>
+                    <button
+                        class="oe_stat_button"
+                        type="action"
+                        name="%(erplibre_devops.devops_exec_bundle_action_window)d"
+                        context="{'search_default_devops_workspace': active_id, 'search_default_root': 1}"
+                        attrs="{'invisible': [('devops_exec_bundle_root_count', '==', 0)]}"
+                        icon="fa-running"
+                    >
+                        <field string="Bundles root" name="devops_exec_bundle_root_count" widget="statinfo" />
+                    </button>
+                </div>
                 <div class="oe_title">
                     <h1>
                         <field name="name" />
@@ -123,7 +172,6 @@
                         <field name="mode_version_erplibre" />
                         <field name="mode_version_base" />
                         <field name="is_conflict_mode_exec" invisible="True" />
-                        <field name="is_self_instance" invisible="True" />
                         <field name="is_installed" invisible="True" />
                         <field name="is_running" invisible="True" />
                         <field name="is_me" invisible="True" />

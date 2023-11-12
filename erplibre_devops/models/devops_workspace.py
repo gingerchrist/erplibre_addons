@@ -32,10 +32,38 @@ class DevopsWorkspace(models.Model):
         help="Summary of this devops_workspace process",
     )
 
+    active = fields.Boolean(default=True)
+
+    sequence = fields.Integer(default=10)
+
     devops_exec_ids = fields.One2many(
         comodel_name="devops.exec",
         inverse_name="devops_workspace",
         string="Executions",
+    )
+
+    devops_exec_count = fields.Integer(
+        compute="_compute_devops_exec_count",
+        string="Executions count",
+        store=True,
+    )
+
+    devops_exec_error_count = fields.Integer(
+        compute="_compute_devops_exec_error_count",
+        string="Executions error count",
+        store=True,
+    )
+
+    devops_exec_bundle_count = fields.Integer(
+        compute="_compute_devops_exec_bundle_count",
+        string="Executions bundle count",
+        store=True,
+    )
+
+    devops_exec_bundle_root_count = fields.Integer(
+        compute="_compute_devops_exec_bundle_count",
+        string="Executions bundle root count",
+        store=True,
     )
 
     devops_exec_bundle_ids = fields.One2many(
@@ -493,6 +521,38 @@ class DevopsWorkspace(models.Model):
         for rec in self:
             # TODO validate installation is done before
             rec.is_installed = False
+
+    @api.multi
+    @api.depends("devops_exec_ids", "devops_exec_ids.active")
+    def _compute_devops_exec_count(self):
+        for rec in self:
+            # TODO is it better use search_count or len(devops_exec_ids)?
+            rec.devops_exec_count = self.env["devops.exec"].search_count(
+                [("devops_workspace", "=", rec.id)]
+            )
+
+    @api.multi
+    @api.depends("devops_exec_error_ids", "devops_exec_error_ids.active")
+    def _compute_devops_exec_error_count(self):
+        for rec in self:
+            # TODO is it better use search_count or len(devops_exec_ids)?
+            rec.devops_exec_error_count = self.env[
+                "devops.exec.error"
+            ].search_count([("devops_workspace", "=", rec.id)])
+
+    @api.multi
+    @api.depends("devops_exec_bundle_ids", "devops_exec_bundle_ids.active")
+    def _compute_devops_exec_bundle_count(self):
+        for rec in self:
+            # TODO is it better use search_count or len(devops_exec_ids)?
+            rec.devops_exec_bundle_count = self.env[
+                "devops.exec.bundle"
+            ].search_count([("devops_workspace", "=", rec.id)])
+            rec.devops_exec_bundle_root_count = self.env[
+                "devops.exec.bundle"
+            ].search_count(
+                [("devops_workspace", "=", rec.id), ("parent_id", "=", False)]
+            )
 
     @api.multi
     def action_cg_erplibre_devops(self):

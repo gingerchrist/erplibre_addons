@@ -101,6 +101,6 @@
         id="devops_log_makefile_target_action_window"
         name="Db image"
         res_model="devops.log.makefile.target"
-        view_mode="kanban,tree,pivot,graph,form"
+        view_mode="tree,kanban,pivot,graph,form"
     />
 </odoo>

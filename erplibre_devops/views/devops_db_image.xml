@@ -96,6 +96,6 @@
         id="devops_db_image_db_image_action_window"
         name="Db image"
         res_model="devops.db.image"
-        view_mode="kanban,tree,pivot,graph,form"
+        view_mode="tree,kanban,pivot,graph,form"
     />
 </odoo>

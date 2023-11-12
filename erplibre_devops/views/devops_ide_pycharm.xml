@@ -97,6 +97,6 @@
         id="devops_ide_pycharm_action_window"
         name="IDe pycharm"
         res_model="devops.ide.pycharm"
-        view_mode="kanban,tree,pivot,graph,form"
+        view_mode="tree,kanban,pivot,graph,form"
     />
 </odoo>

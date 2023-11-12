@@ -167,6 +167,6 @@
         id="devops_new_project_action_window"
         name="Code generator new project"
         res_model="devops.cg.new_project"
-        view_mode="kanban,tree,pivot,graph,form"
+        view_mode="tree,kanban,pivot,graph,form"
     />
 </odoo>

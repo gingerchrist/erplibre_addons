@@ -122,6 +122,7 @@
             <search string="DevOps code generator module model field">
                 <field name="name" string="Name" />
                 <field name="active" />
+                <field name="devops_workspace" string="Workspace" />
                 <filter name="active" string="Active" domain="[('active','=',True)]" help="Show active" />
                 <filter name="inactive" string="Inactive" domain="[('active','=',False)]" help="Show inactive" />
                 <group expand="1" string="Group By">
@@ -156,6 +157,6 @@
         id="devops_exec_error_action_window"
         name="IT executions"
         res_model="devops.exec.error"
-        view_mode="kanban,tree,pivot,graph,form"
+        view_mode="tree,kanban,pivot,graph,form"
     />
 </odoo>
