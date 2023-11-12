@@ -475,6 +475,8 @@ class DevopsWorkspace(models.Model):
                 rec.name = f"{rec.id}: "
             else:
                 rec.name = ""
+            if rec.is_me:
+                rec.name += "ME - "
             rec.name += (
                 f"{rec.mode_source} - {rec.mode_exec} -"
                 f" {rec.mode_environnement} - {rec.mode_version_erplibre} -"

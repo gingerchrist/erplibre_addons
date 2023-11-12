@@ -15,7 +15,10 @@ class DevopsIdePycharm(models.Model):
     _name = "devops.ide.pycharm"
     _description = "Pycharm management for a workspace"
 
-    name = fields.Char()
+    name = fields.Char(
+        compute="_compute_name",
+        store=True,
+    )
 
     devops_workspace = fields.Many2one(
         comodel_name="devops.workspace",
@@ -25,6 +28,13 @@ class DevopsIdePycharm(models.Model):
     line_file_tb_detected = fields.Text(
         help="Detected line to add breakpoint."
     )
+
+    @api.depends(
+        "devops_workspace.name",
+    )
+    def _compute_name(self):
+        for rec in self:
+            rec.name = f"{rec.devops_workspace.name}"
 
     @api.multi
     def action_kill_pycharm(self):
