@@ -381,8 +381,11 @@ class DevopsSystem(models.Model):
     @api.multi
     def action_search_workspace(self):
         for rec in self:
+            # TODO use mdfind on OSX
+            # TODO need to do sometime «sudo updatedb»
             out = rec.execute_process(
-                'locate default.xml|grep -i erplibre|grep -v ".repo"'
+                'locate default.xml|grep -i erplibre|grep -v ".repo"|grep -v'
+                ' "/var/lib/docker"'
             )
             lst_dir = out.strip().split("\n")
             # TODO detect is_me if not exist

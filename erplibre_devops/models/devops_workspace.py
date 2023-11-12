@@ -1895,7 +1895,9 @@ class DevopsWorkspace(models.Model):
                         )
                     else:
                         # TODO try te reuse
-                        _logger.info("Git project already exist")
+                        _logger.info(
+                            f'Git project already exist for "{rec.folder}"'
+                        )
                     rec.update_makefile_from_git()
 
                     # lst_file = rec.execute(cmd=f"ls {rec.folder}").log_all.strip().split("\n")
@@ -1948,6 +1950,7 @@ class DevopsWorkspace(models.Model):
         add_stderr_log=True,
         # get_stderr=False,
         # get_status=False,
+        run_into_workspace=False,
         to_instance=False,
         engine="bash",
         docker=False,
@@ -2003,6 +2006,8 @@ class DevopsWorkspace(models.Model):
             elif rec_force_docker:
                 out = rec.system_id.exec_docker(cmd, force_folder)
             else:
+                if run_into_workspace and not folder:
+                    folder = force_folder
                 out = rec.system_id.execute_with_result(
                     cmd,
                     folder,
