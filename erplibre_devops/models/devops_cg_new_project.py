@@ -516,6 +516,16 @@ class DevopsCgNewProject(models.Model):
                 rec.has_error = bool(exec_id.devops_exec_error_ids.exists())
                 if rec.has_error:
                     continue
+
+                # TODO need pause if ask? and continue if ask
+                # TODO add executable ide pycharm
+                if rec.can_setup_ide:
+                    _logger.info(
+                        "========= Ask stop, setup pycharm and exit ========="
+                    )
+                    rec.action_new_project_setup_IDE()
+                    continue
+
                 _logger.info(
                     "========= GENERATE code_generator_demo ========="
                 )
