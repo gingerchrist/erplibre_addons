@@ -314,3 +314,15 @@ class DevopsIdePycharm(models.Model):
                 #     shell=True,
                 # )
                 _logger.info(f"Write file '{workspace_xml_path}'")
+
+    @api.multi
+    def action_reboot_force_os_workspace(self):
+        self.ensure_one()
+        self.devops_workspace.with_context(
+            default_exec_reboot_process=True
+        ).action_reboot()
+
+    @api.multi
+    def action_kill_workspace(self):
+        self.ensure_one()
+        self.devops_workspace.action_stop()

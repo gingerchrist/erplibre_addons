@@ -93,6 +93,14 @@ class DevopsCgNewProject(models.Model):
 
     keep_bd_alive = fields.Boolean()
 
+    can_setup_ide = fields.Boolean(
+        compute="_compute_can_setup_ide", store=True
+    )
+
+    config_uc0_bp_cg_uc0 = fields.Boolean(
+        help="Breakpoint dans la section génération de code du uC0."
+    )
+
     # internal_error = fields.Char(
     # compute="_compute_internal_error",
     # store=True,
@@ -164,6 +172,13 @@ class DevopsCgNewProject(models.Model):
             elif rec.exec_start_date:
                 rec.name += f" - start {rec.exec_start_date}"
 
+    @api.depends(
+        "config_uc0_bp_cg_uc0",
+    )
+    def _compute_can_setup_ide(self):
+        for rec in self:
+            rec.can_setup_ide = rec.config_uc0_bp_cg_uc0
+
     @api.depends("exec_start_date", "exec_stop_date")
     def _compute_exec_time_duration(self):
         for rec in self:
@@ -173,6 +188,25 @@ class DevopsCgNewProject(models.Model):
                 ).total_seconds()
             else:
                 rec.exec_time_duration = None
+
+    @api.multi
+    def action_new_project_setup_IDE(self):
+        for rec in self:
+            with rec.devops_workspace.devops_create_exec_bundle(
+                "New project setup IDE"
+            ) as rec_ws:
+                if rec.config_uc0_bp_cg_uc0:
+                    # TODO search «cw.emit("new_module_name = MODULE_NAME")» dans
+                    #  addons/TechnoLibre_odoo-code-generator/code_generator_hook/models/code_generator_writer.py
+                    #  716
+                    file_path = os.path.join(
+                        rec_ws.folder,
+                        "addons/TechnoLibre_odoo-code-generator/code_generator_hook/models/code_generator_writer.py",
+                    )
+                    rec_ws.ide_pycharm.add_breakpoint(
+                        file_path,
+                        715,
+                    )
 
     @api.multi
     def action_new_project(self):

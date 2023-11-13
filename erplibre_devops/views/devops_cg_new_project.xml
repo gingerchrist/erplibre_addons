@@ -20,6 +20,13 @@
                         type="object"
                         attrs="{'invisible': [('execution_finish', '=', False)]}"
                     />
+                    <button
+                        class="oe_highlight"
+                        name="action_new_project_setup_IDE"
+                        string="Setup IDE"
+                        type="object"
+                        attrs="{'invisible': [('can_setup_ide', '=', False)]}"
+                    />
                     <field name="stage_id" widget="statusbar" clickable="False" options="{'fold_field': 'fold'}" />
                 </header>
                 <sheet>
@@ -45,12 +52,16 @@
                             <field name="write_date" />
                         </group>
                     </group>
-                    <group string="Project">
-                        <group>
+                    <group>
+                        <group string="Project">
                             <field name="last_new_project" />
                             <field name="devops_workspace" />
                             <field name="devops_exec_bundle_id" />
                             <!--                            <field name="devops_exec_error_ids" />-->
+                        </group>
+                        <group string="Error">
+                            <field name="msg_error" />
+                            <field name="has_error" />
                         </group>
                     </group>
 
@@ -81,11 +92,13 @@
                         </group>
                     </group>
 
-                    <group string="Error">
-                        <group>
-                            <field name="msg_error" />
-                            <field name="has_error" />
+                    <group>
+                        <field name="can_setup_ide" invisible="True" />
+                        <group string="Uc0">
+                            <field name="config_uc0_bp_cg_uc0" />
                         </group>
+                        <group string="UcA" />
+                        <group string="UcB" />
                     </group>
                 </sheet>
             </form>

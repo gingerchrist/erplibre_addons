@@ -234,6 +234,9 @@
                         <button class="oe_highlight" name="action_clear_cache" string="Clear cache" type="object" />
                         <!--                            <button class="oe_highlight" name="action_open_terminal_docker" string="Terminal docker" type="object" />-->
                     </group>
+                    <group string="IDE">
+                        <field name="ide_pycharm" />
+                    </group>
                 </group>
 
                 <!--                <separator colspan="2" string="Help" />-->
