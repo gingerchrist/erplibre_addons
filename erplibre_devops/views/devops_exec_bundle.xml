@@ -18,8 +18,6 @@
                 <group string="IT">
                     <field name="devops_workspace" />
                     <field name="devops_exec_ids" />
-                    <field name="devops_exec_error_ids" />
-                    <field name="devops_exec_parent_error_ids" />
                     <field name="devops_new_project_ids" />
                 </group>
                 <group string="Dependencies">
@@ -40,6 +38,18 @@
                         <field name="description" />
                     </group>
                 </group>
+                <notebook>
+                    <page name="error_all" string="Errors all">
+                        <group>
+                            <field name="devops_exec_parent_error_ids" />
+                        </group>
+                    </page>
+                    <page name="error" string="Errors">
+                        <group>
+                            <field name="devops_exec_error_ids" />
+                        </group>
+                    </page>
+                </notebook>
             </form>
         </field>
     </record>
@@ -97,7 +107,7 @@
                 <field
                     name="name"
                     string="Name"
-                    filter_domain="['|',('devops_workspace','ilike',self'),('name','ilike',self)]"
+                    filter_domain="['|',('devops_workspace','ilike',self),('name','ilike',self)]"
                 />
                 <field name="active" />
                 <field name="description" />

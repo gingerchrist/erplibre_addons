@@ -114,7 +114,7 @@
                 <field
                     name="name"
                     string="Execution"
-                    filter_domain="['|',('devops_workspace','ilike',self'),('name','ilike',self)]"
+                    filter_domain="['|',('devops_workspace','ilike',self),('name','ilike',self)]"
                 />
                 <field name="active" />
                 <field name="cmd" />

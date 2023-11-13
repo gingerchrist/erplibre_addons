@@ -278,7 +278,9 @@ class DevopsCgNewProject(models.Model):
     def action_init(self, ctx=None, rec_ws=None):
         for rec in self:
             ws_param = rec_ws if rec_ws else rec.devops_workspace
-            with ws_param.devops_create_exec_bundle("New project init") as ws:
+            with ws_param.devops_create_exec_bundle(
+                "New project generate 1.init"
+            ) as ws:
                 rec.stage_id = self.env.ref(
                     "erplibre_devops.devops_cg_new_project_stage_init"
                 )
@@ -393,7 +395,7 @@ class DevopsCgNewProject(models.Model):
         for rec in self:
             ws_param = rec_ws if rec_ws else rec.devops_workspace
             with ws_param.devops_create_exec_bundle(
-                "Generate new project with CG"
+                "New project generate 2.config"
             ) as ws:
                 rec.stage_id = self.env.ref(
                     "erplibre_devops.devops_cg_new_project_stage_generate_config"
@@ -487,7 +489,9 @@ class DevopsCgNewProject(models.Model):
     def action_generate_uc0(self, ctx=None, rec_ws=None):
         for rec in self:
             ws_param = rec_ws if rec_ws else rec.devops_workspace
-            with ws_param.devops_create_exec_bundle("New project init") as ws:
+            with ws_param.devops_create_exec_bundle(
+                "New project generate 3.Uc0"
+            ) as ws:
                 rec.stage_id = self.env.ref(
                     "erplibre_devops.devops_cg_new_project_stage_generate_uc0"
                 )
@@ -506,7 +510,7 @@ class DevopsCgNewProject(models.Model):
                         " addons_install_code_generator_basic"
                     )
                 _logger.info(cmd)
-                exec_id = rec_ws.with_context(
+                exec_id = ws.with_context(
                     devops_cg_new_project=rec.id
                 ).execute(cmd=cmd, to_instance=True)
                 rec.has_error = bool(exec_id.devops_exec_error_ids.exists())
@@ -527,7 +531,7 @@ class DevopsCgNewProject(models.Model):
                         f"./script/addons/install_addons_dev.sh {bd_name_demo}"
                         f" code_generator_demo {rec.config_path}"
                     )
-                exec_id = rec_ws.with_context(
+                exec_id = ws.with_context(
                     devops_cg_new_project=rec.id
                 ).execute(cmd=cmd, to_instance=True)
                 rec.has_error = bool(exec_id.devops_exec_error_ids.exists())
@@ -540,7 +544,7 @@ class DevopsCgNewProject(models.Model):
                         f" --database {bd_name_demo}"
                     )
                     _logger.info(cmd)
-                    rec_ws.with_context(devops_cg_new_project=rec.id).execute(
+                    ws.with_context(devops_cg_new_project=rec.id).execute(
                         cmd=cmd, to_instance=True
                     )
 
@@ -568,7 +572,9 @@ class DevopsCgNewProject(models.Model):
     def action_generate_uca(self, ctx=None, rec_ws=None):
         for rec in self:
             ws_param = rec_ws if rec_ws else rec.devops_workspace
-            with ws_param.devops_create_exec_bundle("New project init") as ws:
+            with ws_param.devops_create_exec_bundle(
+                "New project generate 4.UcA"
+            ) as ws:
                 rec.stage_id = self.env.ref(
                     "erplibre_devops.devops_cg_new_project_stage_generate_uca"
                 )
@@ -612,7 +618,7 @@ class DevopsCgNewProject(models.Model):
                         f" {bd_name_template} --restore_image"
                         " addons_install_code_generator_basic"
                     )
-                exec_id = rec_ws.with_context(
+                exec_id = ws.with_context(
                     devops_cg_new_project=rec.id
                 ).execute(cmd=cmd, to_instance=True)
                 rec.has_error = bool(exec_id.devops_exec_error_ids.exists())
@@ -630,7 +636,7 @@ class DevopsCgNewProject(models.Model):
                         f" --quiet -d {rec.module_path} -t {rec.template_path}"
                     )
                     _logger.info(cmd)
-                    exec_id = rec_ws.with_context(
+                    exec_id = ws.with_context(
                         devops_cg_new_project=rec.id
                     ).execute(cmd=cmd, to_instance=True)
                     rec.has_error = bool(
@@ -650,7 +656,7 @@ class DevopsCgNewProject(models.Model):
                             f" {bd_name_template} {rec.module} {rec.config_path}"
                         )
                     _logger.info(cmd)
-                    exec_id = rec_ws.with_context(
+                    exec_id = ws.with_context(
                         devops_cg_new_project=rec.id
                     ).execute(cmd=cmd, to_instance=True)
                     rec.has_error = bool(
@@ -671,7 +677,7 @@ class DevopsCgNewProject(models.Model):
                         f" {rec.template_name} {rec.config_path}"
                     )
                 _logger.info(cmd)
-                exec_id = rec_ws.with_context(
+                exec_id = ws.with_context(
                     devops_cg_new_project=rec.id
                 ).execute(cmd=cmd, to_instance=True)
 
@@ -683,7 +689,7 @@ class DevopsCgNewProject(models.Model):
                         f" --database {bd_name_template}"
                     )
                     _logger.info(cmd)
-                    rec_ws.with_context(devops_cg_new_project=rec.id).execute(
+                    ws.with_context(devops_cg_new_project=rec.id).execute(
                         cmd=cmd, to_instance=True
                     )
 
@@ -702,7 +708,9 @@ class DevopsCgNewProject(models.Model):
     def action_generate_ucb(self, ctx=None, rec_ws=None):
         for rec in self:
             ws_param = rec_ws if rec_ws else rec.devops_workspace
-            with ws_param.devops_create_exec_bundle("New project init") as ws:
+            with ws_param.devops_create_exec_bundle(
+                "New project generate 5.UcB"
+            ) as ws:
                 rec.stage_id = self.env.ref(
                     "erplibre_devops.devops_cg_new_project_stage_generate_ucb"
                 )
@@ -721,7 +729,7 @@ class DevopsCgNewProject(models.Model):
                         " addons_install_code_generator_basic"
                     )
                 _logger.info(cmd)
-                exec_id = rec_ws.with_context(
+                exec_id = ws.with_context(
                     devops_cg_new_project=rec.id
                 ).execute(cmd=cmd, to_instance=True)
                 _logger.info(
@@ -790,7 +798,7 @@ class DevopsCgNewProject(models.Model):
                         f" {bd_name_generator} {rec.code_generator_name} {rec.config_path}"
                     )
                 _logger.info(cmd)
-                exec_id = rec_ws.with_context(
+                exec_id = ws.with_context(
                     devops_cg_new_project=rec.id
                 ).execute(
                     cmd=cmd,
@@ -805,7 +813,7 @@ class DevopsCgNewProject(models.Model):
                         f" --database {bd_name_generator}"
                     )
                     _logger.info(cmd)
-                    rec_ws.with_context(devops_cg_new_project=rec.id).execute(
+                    ws.with_context(devops_cg_new_project=rec.id).execute(
                         cmd=cmd, to_instance=True
                     )
 

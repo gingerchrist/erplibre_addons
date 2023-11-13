@@ -123,6 +123,9 @@
                 <field name="name" string="Name" />
                 <field name="active" />
                 <field name="devops_workspace" string="Workspace" />
+                <field name="escaped_tb" string="Traceback" />
+                <field name="line_file_tb_detected" string="Line detected" />
+                <field name="diagnostic_idea" string="Suggested diagnostic" />
                 <filter name="active" string="Active" domain="[('active','=',True)]" help="Show active" />
                 <filter name="inactive" string="Inactive" domain="[('active','=',False)]" help="Show inactive" />
                 <group expand="1" string="Group By">

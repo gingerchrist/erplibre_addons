@@ -14,7 +14,7 @@ class DevopsExecError(models.Model):
     _description = "Execution error"
     _inherit = ["mail.thread", "mail.activity.mixin"]
 
-    name = fields.Char(compute="_compute_name")
+    name = fields.Char(compute="_compute_name", store=True)
 
     description = fields.Char()
 
