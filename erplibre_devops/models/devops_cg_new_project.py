@@ -190,7 +190,14 @@ class DevopsCgNewProject(models.Model):
                 rec.exec_time_duration = None
 
     @api.multi
-    def action_new_project_setup_IDE(self):
+    def action_new_project_setup_IDE(
+        self,
+        ctx=None,
+        conf_add_mode=None,
+        conf_add_db=None,
+        conf_add_module=None,
+        conf_add_config_path="config.conf",
+    ):
         for rec in self:
             with rec.devops_workspace.devops_create_exec_bundle(
                 "New project setup IDE"
@@ -207,6 +214,13 @@ class DevopsCgNewProject(models.Model):
                         file_path,
                         715,
                     )
+                    rec_ws.ide_pycharm.add_configuration(
+                        conf_add_mode=conf_add_mode,
+                        conf_add_db=conf_add_db,
+                        conf_add_module=conf_add_module,
+                        conf_add_config_path=conf_add_config_path,
+                    )
+                    continue
 
     @api.multi
     def action_new_project(self):
@@ -523,7 +537,13 @@ class DevopsCgNewProject(models.Model):
                     _logger.info(
                         "========= Ask stop, setup pycharm and exit ========="
                     )
-                    rec.action_new_project_setup_IDE()
+                    # rec.config_path is a temporary file, it will not work. Use default config instead
+                    rec.action_new_project_setup_IDE(
+                        conf_add_mode="install",
+                        conf_add_db=bd_name_demo,
+                        conf_add_module="code_generator_demo",
+                        # conf_add_config_path=rec.config_path,
+                    )
                     continue
 
                 _logger.info(

@@ -218,8 +218,8 @@
                         <field name="git_url" />
                     </group>
                     <group string="Info" attrs="{'invisible': [('is_installed', '=', False)]}">
-                        <field name="url_instance" widget="url" />
-                        <field name="url_instance_database_manager" string="URL Instance Database" widget="url" />
+                        <field name="url_instance" widget="url" string="URL" />
+                        <field name="url_instance_database_manager" string="URL Database" widget="url" />
                     </group>
                     <group string="DB" attrs="{'invisible': [('is_installed', '=', False)]}">
                         <button class="oe_highlight" name="action_restore_db_image" string="Restore" type="object" />

@@ -2063,6 +2063,18 @@ class DevopsWorkspace(models.Model):
         return result.log_all.strip() == "true"
 
     @api.model
+    def os_read_file(self, path, to_instance=False):
+        cmd = f'cat "{path}"'
+        result = self.execute(cmd=cmd, to_instance=to_instance)
+        return result.log_all
+
+    @api.model
+    def os_write_file(self, path, content, to_instance=False):
+        cmd = f'echo "{content}" > "{path}"'
+        result = self.execute(cmd=cmd, to_instance=to_instance)
+        return result.log_all
+
+    @api.model
     def find_exec_error_from_log(
         self, log, devops_exec, devops_exec_bundle_id
     ):
