@@ -48,6 +48,12 @@ class DevopsWorkspace(models.Model):
         store=True,
     )
 
+    new_project_count = fields.Integer(
+        compute="_compute_new_project_count",
+        string="New project count",
+        store=True,
+    )
+
     devops_exec_error_count = fields.Integer(
         compute="_compute_devops_exec_error_count",
         string="Executions error count",
@@ -433,6 +439,12 @@ class DevopsWorkspace(models.Model):
         string="Last new project cg",
     )
 
+    new_project_ids = fields.One2many(
+        comodel_name="devops.cg.new_project",
+        inverse_name="devops_workspace",
+        string="All new project associate with this workspace",
+    )
+
     def _default_image_db_selection(self):
         return self.env["devops.db.image"].search(
             [("name", "like", "erplibre_base")], limit=1
@@ -555,6 +567,15 @@ class DevopsWorkspace(models.Model):
             ].search_count(
                 [("devops_workspace", "=", rec.id), ("parent_id", "=", False)]
             )
+
+    @api.multi
+    @api.depends("new_project_ids", "new_project_ids.active")
+    def _compute_new_project_count(self):
+        for rec in self:
+            # TODO is it better use search_count or len(devops_exec_ids)?
+            rec.new_project_count = self.env[
+                "devops.cg.new_project"
+            ].search_count([("devops_workspace", "=", rec.id)])
 
     @api.multi
     def action_cg_erplibre_devops(self):

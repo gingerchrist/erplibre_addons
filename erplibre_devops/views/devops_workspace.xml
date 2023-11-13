@@ -118,7 +118,7 @@
                         name="%(erplibre_devops.devops_exec_action_window)d"
                         context="{'search_default_devops_workspace': active_id, 'search_default_group_devops_exec_bundle_id': 1}"
                         attrs="{'invisible': [('devops_exec_count', '==', 0)]}"
-                        icon="fa-running"
+                        icon="fa-building-o"
                     >
                         <field string="Executions" name="devops_exec_count" widget="statinfo" />
                     </button>
@@ -128,9 +128,19 @@
                         name="%(erplibre_devops.devops_exec_error_action_window)d"
                         context="{'search_default_devops_workspace': active_id}"
                         attrs="{'invisible': [('devops_exec_error_count', '==', 0)]}"
-                        icon="fa-running"
+                        icon="fa-building-o"
                     >
                         <field string="Errors" name="devops_exec_error_count" widget="statinfo" />
+                    </button>
+                    <button
+                        class="oe_stat_button"
+                        type="action"
+                        name="%(erplibre_devops.devops_new_project_action_window)d"
+                        context="{'search_default_devops_workspace': active_id}"
+                        attrs="{'invisible': [('new_project_count', '==', 0)]}"
+                        icon="fa-building-o"
+                    >
+                        <field string="Generations" name="new_project_count" widget="statinfo" />
                     </button>
                     <button
                         class="oe_stat_button"
@@ -138,7 +148,7 @@
                         name="%(erplibre_devops.devops_exec_bundle_action_window)d"
                         context="{'search_default_devops_workspace': active_id}"
                         attrs="{'invisible': [('devops_exec_bundle_count', '==', 0)]}"
-                        icon="fa-running"
+                        icon="fa-building-o"
                     >
                         <field string="Bundles" name="devops_exec_bundle_count" widget="statinfo" />
                     </button>
@@ -148,7 +158,7 @@
                         name="%(erplibre_devops.devops_exec_bundle_action_window)d"
                         context="{'search_default_devops_workspace': active_id, 'search_default_root': 1}"
                         attrs="{'invisible': [('devops_exec_bundle_root_count', '==', 0)]}"
-                        icon="fa-running"
+                        icon="fa-building-o"
                     >
                         <field string="Bundles root" name="devops_exec_bundle_root_count" widget="statinfo" />
                     </button>
