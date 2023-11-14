@@ -2334,6 +2334,7 @@ sock.close()
         ignore_parent=False,
         succeed_msg=False,
         devops_cg_new_project=None,
+        ctx=None,
     ):
         self.ensure_one()
         value_bundle = {
@@ -2350,6 +2351,8 @@ sock.close()
             value_bundle
         )
         rec = self.with_context(devops_exec_bundle=devops_exec_bundle_id.id)
+        if ctx:
+            rec = rec.with_context(**ctx)
         if devops_cg_new_project:
             rec = rec.with_context(devops_cg_new_project=devops_cg_new_project)
         try:

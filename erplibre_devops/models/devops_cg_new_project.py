@@ -284,7 +284,9 @@ class DevopsCgNewProject(models.Model):
     ):
         for rec in self:
             with rec.devops_workspace.devops_create_exec_bundle(
-                "New project clear pause", devops_cg_new_project=rec.id
+                "New project clear pause",
+                devops_cg_new_project=rec.id,
+                ctx=ctx,
             ) as rec_ws:
                 rec.is_pause = False
                 rec.config_debug_uc0 = False
@@ -317,7 +319,7 @@ class DevopsCgNewProject(models.Model):
     ):
         for rec in self:
             with rec.devops_workspace.devops_create_exec_bundle(
-                "New project debug", devops_cg_new_project=rec.id
+                "New project debug", devops_cg_new_project=rec.id, ctx=ctx
             ) as rec_ws:
                 has_debug = False
                 stage_uc0 = self.env.ref(
@@ -356,11 +358,14 @@ class DevopsCgNewProject(models.Model):
     ):
         for rec in self:
             with rec.devops_workspace.devops_create_exec_bundle(
-                "New project setup IDE", devops_cg_new_project=rec.id
+                "New project setup IDE", devops_cg_new_project=rec.id, ctx=ctx
             ) as rec_ws:
                 if not rec.can_setup_ide:
                     continue
-                if rec.breakpoint_all_write_hook_begin:
+                has_bp = rec_ws._context.get(
+                    "new_project_with_breakpoint", True
+                )
+                if has_bp and rec.breakpoint_all_write_hook_begin:
                     # TODO search «if post_init_hook_feature_code_generator:» dans
                     #  addons/TechnoLibre_odoo-code-generator/code_generator_hook/models/code_generator_writer.py
                     #  511
@@ -374,7 +379,7 @@ class DevopsCgNewProject(models.Model):
                         file_path,
                         510,
                     )
-                if rec.breakpoint_all_write_hook_before_model:
+                if has_bp and rec.breakpoint_all_write_hook_before_model:
                     # TODO search «lst_dependency = [a.name for a in model_id.inherit_model_ids]» dans
                     #  addons/TechnoLibre_odoo-code-generator/code_generator_hook/models/code_generator_writer.py
                     #  1221
@@ -388,7 +393,7 @@ class DevopsCgNewProject(models.Model):
                         file_path,
                         1220,
                     )
-                if rec.breakpoint_all_write_hook_model_write_field:
+                if has_bp and rec.breakpoint_all_write_hook_model_write_field:
                     # TODO search «self._write_dict_key(cw, subkey, value)» dans
                     #  addons/TechnoLibre_odoo-code-generator/code_generator_hook/models/code_generator_writer.py
                     #  1314
@@ -414,7 +419,7 @@ class DevopsCgNewProject(models.Model):
                     rec_ws.ide_pycharm.add_breakpoint(
                         file_path, 1313, condition=condition
                     )
-                if rec.breakpoint_uc0_first_line_hook:
+                if has_bp and rec.breakpoint_uc0_first_line_hook:
                     # TODO search «env = api.Environment(cr, SUPERUSER_ID, {})» dans
                     #  addons/TechnoLibre_odoo-code-generator-template/code_generator_demo/hooks.py
                     #  11
@@ -427,7 +432,7 @@ class DevopsCgNewProject(models.Model):
                         file_path,
                         10,
                     )
-                if rec.breakpoint_ucA_first_line_hook:
+                if has_bp and rec.breakpoint_ucA_first_line_hook:
                     # TODO search «env = api.Environment(cr, SUPERUSER_ID, {})» 11
                     file_path = os.path.normpath(
                         os.path.join(rec_ws.folder, rec.template_hooks_py)
@@ -436,7 +441,7 @@ class DevopsCgNewProject(models.Model):
                         file_path,
                         10,
                     )
-                if rec.breakpoint_ucB_first_line_hook:
+                if has_bp and rec.breakpoint_ucB_first_line_hook:
                     # TODO search «env = api.Environment(cr, SUPERUSER_ID, {})» 11
                     file_path = os.path.normpath(
                         os.path.join(rec_ws.folder, rec.cg_hooks_py)
@@ -445,7 +450,7 @@ class DevopsCgNewProject(models.Model):
                         file_path,
                         12,
                     )
-                if rec.breakpoint_uc0_bp_cg_uc0:
+                if has_bp and rec.breakpoint_uc0_bp_cg_uc0:
                     # TODO search «cw.emit("new_module_name = MODULE_NAME")» dans
                     #  addons/TechnoLibre_odoo-code-generator/code_generator_hook/models/code_generator_writer.py
                     #  716
@@ -457,7 +462,7 @@ class DevopsCgNewProject(models.Model):
                         file_path,
                         715,
                     )
-                if (
+                if has_bp and (
                     rec.breakpoint_ucA_bp_cg_ucA
                     or rec.breakpoint_ucB_bp_cg_ucB
                 ):
@@ -481,10 +486,12 @@ class DevopsCgNewProject(models.Model):
                     )
 
     @api.multi
-    def action_new_project(self):
+    def action_new_project(self, ctx=None):
         for rec in self:
             with rec.devops_workspace.devops_create_exec_bundle(
-                "Generate new project with CG", devops_cg_new_project=rec.id
+                "Generate new project with CG",
+                devops_cg_new_project=rec.id,
+                ctx=ctx,
             ) as rec_ws:
                 rec.is_pause = False
                 rec.exec_start_date = fields.Datetime.now(self)

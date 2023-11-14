@@ -74,7 +74,7 @@ class DevopsIdePycharm(models.Model):
     def action_pycharm_conf_init(self, ctx=None):
         for rec in self:
             with rec.devops_workspace.devops_create_exec_bundle(
-                "Pycharm configuration init"
+                "Pycharm configuration init", ctx=ctx
             ) as rec_ws:
                 rec = rec.with_context(rec_ws._context)
                 if not rec.is_installed:
@@ -93,7 +93,7 @@ class DevopsIdePycharm(models.Model):
     def action_pycharm_check(self, ctx=None):
         for rec in self:
             with rec.devops_workspace.devops_create_exec_bundle(
-                "Pycharm check"
+                "Pycharm check", ctx=ctx
             ) as rec_ws:
                 path_idea = os.path.join(rec_ws.folder, ".idea", "misc.xml")
                 rec.is_installed = rec_ws.os_path_exists(path_idea)
@@ -104,7 +104,7 @@ class DevopsIdePycharm(models.Model):
     ):
         for rec in self:
             with rec.devops_workspace.devops_create_exec_bundle(
-                "Setup PyCharm debug"
+                "Setup PyCharm debug", ctx=ctx
             ) as rec_ws:
                 if not log:
                     log = rec_ws.devops_cg_erplibre_devops_log
