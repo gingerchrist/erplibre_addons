@@ -103,6 +103,18 @@ class DevopsCgNewProject(models.Model):
 
     config_debug_ucB = fields.Boolean(help="Debug uCB.")
 
+    config_uc0_first_line_hook = fields.Boolean(
+        help="Breakpoint first line hook file uc0."
+    )
+
+    config_ucA_first_line_hook = fields.Boolean(
+        help="Breakpoint first line hook file ucA."
+    )
+
+    config_ucB_first_line_hook = fields.Boolean(
+        help="Breakpoint first line hook file ucB."
+    )
+
     config_uc0_bp_cg_uc0 = fields.Boolean(
         help="Breakpoint dans la section génération de code du uC0."
     )
@@ -196,6 +208,9 @@ class DevopsCgNewProject(models.Model):
         "config_debug_uc0",
         "config_debug_ucA",
         "config_debug_ucB",
+        "config_uc0_first_line_hook",
+        "config_ucA_first_line_hook",
+        "config_ucB_first_line_hook",
         "config_uc0_bp_cg_uc0",
         "config_ucA_bp_cg_ucA",
         "config_ucB_bp_cg_ucB",
@@ -206,6 +221,9 @@ class DevopsCgNewProject(models.Model):
                 rec.config_debug_uc0
                 + rec.config_debug_ucA
                 + rec.config_debug_ucB
+                + rec.config_uc0_first_line_hook
+                + rec.config_ucA_first_line_hook
+                + rec.config_ucB_first_line_hook
                 + rec.config_uc0_bp_cg_uc0
                 + rec.config_ucA_bp_cg_ucA
                 + rec.config_ucB_bp_cg_ucB
@@ -271,6 +289,37 @@ class DevopsCgNewProject(models.Model):
             ) as rec_ws:
                 if not rec.can_setup_ide:
                     continue
+                if rec.config_uc0_first_line_hook:
+                    # TODO search «env = api.Environment(cr, SUPERUSER_ID, {})» dans
+                    #  addons/TechnoLibre_odoo-code-generator-template/code_generator_demo/hooks.py
+                    #  11
+                    file_path = os.path.normpath(
+                        os.path.join(
+                            rec_ws.folder, rec.code_generator_demo_hooks_py
+                        )
+                    )
+                    rec_ws.ide_pycharm.add_breakpoint(
+                        file_path,
+                        10,
+                    )
+                if rec.config_ucA_first_line_hook:
+                    # TODO search «env = api.Environment(cr, SUPERUSER_ID, {})» 11
+                    file_path = os.path.normpath(
+                        os.path.join(rec_ws.folder, rec.template_hooks_py)
+                    )
+                    rec_ws.ide_pycharm.add_breakpoint(
+                        file_path,
+                        10,
+                    )
+                if rec.config_ucB_first_line_hook:
+                    # TODO search «env = api.Environment(cr, SUPERUSER_ID, {})» 11
+                    file_path = os.path.normpath(
+                        os.path.join(rec_ws.folder, rec.cg_hooks_py)
+                    )
+                    rec_ws.ide_pycharm.add_breakpoint(
+                        file_path,
+                        12,
+                    )
                 if rec.config_uc0_bp_cg_uc0:
                     # TODO search «cw.emit("new_module_name = MODULE_NAME")» dans
                     #  addons/TechnoLibre_odoo-code-generator/code_generator_hook/models/code_generator_writer.py

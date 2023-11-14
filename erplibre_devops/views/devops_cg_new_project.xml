@@ -83,15 +83,6 @@
                             <field name="stop_execution_if_env_not_clean" />
                             <field name="active_coverage" />
                             <field name="force" />
-                            <field name="cg_hooks_py" />
-                            <field name="template_hooks_py" />
-                            <field name="code_generator_demo_hooks_py" />
-                            <field name="code_generator_hooks_path_relative" />
-                            <field name="config_path" />
-                            <field name="module_path" />
-                            <field name="template_path" />
-                            <field name="cg_path" />
-                            <field name="code_generator_demo_path" />
                         </group>
                     </group>
 
@@ -100,18 +91,33 @@
                         <group string="Uc0">
                             <field name="config_debug_uc0" />
                             <field name="config_uc0_bp_cg_uc0" />
+                            <field name="config_uc0_first_line_hook" />
                         </group>
                         <group string="UcA">
                             <field name="config_debug_ucA" />
                             <field name="config_ucA_bp_cg_ucA" />
+                            <field name="config_ucA_first_line_hook" />
                         </group>
                         <group string="UcB">
                             <field name="config_debug_ucB" />
                             <field name="config_ucB_bp_cg_ucB" />
+                            <field name="config_ucB_first_line_hook" />
                         </group>
                         <group string="Pycharm">
                             <field name="ide_pycharm_configuration_ids" widget="many2many_tags" />
                         </group>
+                    </group>
+
+                    <group string="Path" name="group_path">
+                        <field name="module_path" />
+                        <field name="config_path" />
+                        <field name="code_generator_demo_path" />
+                        <field name="code_generator_hooks_path_relative" />
+                        <field name="code_generator_demo_hooks_py" />
+                        <field name="cg_path" />
+                        <field name="cg_hooks_py" />
+                        <field name="template_path" />
+                        <field name="template_hooks_py" />
                     </group>
                 </sheet>
             </form>
