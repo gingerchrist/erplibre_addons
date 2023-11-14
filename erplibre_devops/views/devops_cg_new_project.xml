@@ -92,22 +92,26 @@
                     <group>
                         <group string="Debug all">
                             <field name="can_setup_ide" />
-                            <field name="config_all_write_hook" />
+                            <field name="breakpoint_all_write_hook_begin" />
+                            <field name="breakpoint_all_write_hook_before_model" />
+                            <field name="breakpoint_all_write_hook_model_write_field" />
+                            <field name="breakpoint_all_write_hook_model_write_field_config_field_name" />
+                            <field name="breakpoint_all_write_hook_model_write_field_config_field_name_with_att" />
                         </group>
                         <group string="Debug Uc0">
                             <field name="config_debug_uc0" />
-                            <field name="config_uc0_bp_cg_uc0" />
-                            <field name="config_uc0_first_line_hook" />
+                            <field name="breakpoint_uc0_bp_cg_uc0" />
+                            <field name="breakpoint_uc0_first_line_hook" />
                         </group>
                         <group string="Debug UcA">
                             <field name="config_debug_ucA" />
-                            <field name="config_ucA_bp_cg_ucA" />
-                            <field name="config_ucA_first_line_hook" />
+                            <field name="breakpoint_ucA_bp_cg_ucA" />
+                            <field name="breakpoint_ucA_first_line_hook" />
                         </group>
                         <group string="Debug UcB">
                             <field name="config_debug_ucB" />
-                            <field name="config_ucB_bp_cg_ucB" />
-                            <field name="config_ucB_first_line_hook" />
+                            <field name="breakpoint_ucB_bp_cg_ucB" />
+                            <field name="breakpoint_ucB_first_line_hook" />
                         </group>
                         <group string="Pycharm">
                             <field name="ide_pycharm_configuration_ids" widget="many2many_tags" />

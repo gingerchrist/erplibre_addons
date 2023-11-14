@@ -112,31 +112,61 @@ class DevopsCgNewProject(models.Model):
 
     config_debug_ucB = fields.Boolean(help="Debug uCB.")
 
-    config_uc0_first_line_hook = fields.Boolean(
+    breakpoint_uc0_first_line_hook = fields.Boolean(
         help="Breakpoint first line hook file uc0."
     )
 
-    config_all_write_hook = fields.Boolean(
+    breakpoint_all_write_hook_begin = fields.Boolean(
         help="Breakpoint general when write hook."
     )
 
-    config_ucA_first_line_hook = fields.Boolean(
+    breakpoint_all_write_hook_before_model = fields.Boolean(
+        help=(
+            "Breakpoint general when write hook before write model/fields into"
+            " hook."
+        )
+    )
+
+    breakpoint_all_write_hook_model_write_field = fields.Boolean(
+        help=(
+            "Breakpoint general when write hook while writing model, before"
+            " write field. Can use field"
+            " breakpoint_all_write_hook_model_write_field_config_field_name to"
+            " specify field name."
+        )
+    )
+
+    breakpoint_all_write_hook_model_write_field_config_field_name = fields.Char(
+        help=(
+            "Associate with breakpoint_all_write_hook_model_write_field , can"
+            " set field name to break."
+        )
+    )
+
+    breakpoint_all_write_hook_model_write_field_config_field_name_with_att = fields.Char(
+        help=(
+            "Associate with breakpoint_all_write_hook_model_write_field , can"
+            " set attribute field name to break."
+        )
+    )
+
+    breakpoint_ucA_first_line_hook = fields.Boolean(
         help="Breakpoint first line hook file ucA."
     )
 
-    config_ucB_first_line_hook = fields.Boolean(
+    breakpoint_ucB_first_line_hook = fields.Boolean(
         help="Breakpoint first line hook file ucB."
     )
 
-    config_uc0_bp_cg_uc0 = fields.Boolean(
+    breakpoint_uc0_bp_cg_uc0 = fields.Boolean(
         help="Breakpoint dans la section génération de code du uC0."
     )
 
-    config_ucA_bp_cg_ucA = fields.Boolean(
+    breakpoint_ucA_bp_cg_ucA = fields.Boolean(
         help="Breakpoint dans la section génération de code du uCA."
     )
 
-    config_ucB_bp_cg_ucB = fields.Boolean(
+    breakpoint_ucB_bp_cg_ucB = fields.Boolean(
         help="Breakpoint dans la section génération de code du uCB."
     )
 
@@ -221,13 +251,15 @@ class DevopsCgNewProject(models.Model):
         "config_debug_uc0",
         "config_debug_ucA",
         "config_debug_ucB",
-        "config_all_write_hook",
-        "config_uc0_first_line_hook",
-        "config_ucA_first_line_hook",
-        "config_ucB_first_line_hook",
-        "config_uc0_bp_cg_uc0",
-        "config_ucA_bp_cg_ucA",
-        "config_ucB_bp_cg_ucB",
+        "breakpoint_all_write_hook_begin",
+        "breakpoint_all_write_hook_before_model",
+        "breakpoint_all_write_hook_model_write_field",
+        "breakpoint_uc0_first_line_hook",
+        "breakpoint_ucA_first_line_hook",
+        "breakpoint_ucB_first_line_hook",
+        "breakpoint_uc0_bp_cg_uc0",
+        "breakpoint_ucA_bp_cg_ucA",
+        "breakpoint_ucB_bp_cg_ucB",
     )
     def _compute_can_setup_ide(self):
         for rec in self:
@@ -235,13 +267,15 @@ class DevopsCgNewProject(models.Model):
                 rec.config_debug_uc0
                 + rec.config_debug_ucA
                 + rec.config_debug_ucB
-                + rec.config_all_write_hook
-                + rec.config_uc0_first_line_hook
-                + rec.config_ucA_first_line_hook
-                + rec.config_ucB_first_line_hook
-                + rec.config_uc0_bp_cg_uc0
-                + rec.config_ucA_bp_cg_ucA
-                + rec.config_ucB_bp_cg_ucB
+                + rec.breakpoint_all_write_hook_begin
+                + rec.breakpoint_all_write_hook_before_model
+                + rec.breakpoint_all_write_hook_model_write_field
+                + rec.breakpoint_uc0_first_line_hook
+                + rec.breakpoint_ucA_first_line_hook
+                + rec.breakpoint_ucB_first_line_hook
+                + rec.breakpoint_uc0_bp_cg_uc0
+                + rec.breakpoint_ucA_bp_cg_ucA
+                + rec.breakpoint_ucB_bp_cg_ucB
             )
 
     @api.depends("exec_start_date", "exec_stop_date")
@@ -304,9 +338,9 @@ class DevopsCgNewProject(models.Model):
             ) as rec_ws:
                 if not rec.can_setup_ide:
                     continue
-                if rec.config_all_write_hook:
+                if rec.breakpoint_all_write_hook_begin:
                     # TODO search «if post_init_hook_feature_code_generator:» dans
-                    #  addons/TechnoLibre_odoo-code-generator-template/code_generator_demo/hooks.py
+                    #  addons/TechnoLibre_odoo-code-generator/code_generator_hook/models/code_generator_writer.py
                     #  511
                     file_path = os.path.normpath(
                         os.path.join(
@@ -318,7 +352,47 @@ class DevopsCgNewProject(models.Model):
                         file_path,
                         510,
                     )
-                if rec.config_uc0_first_line_hook:
+                if rec.breakpoint_all_write_hook_before_model:
+                    # TODO search «lst_dependency = [a.name for a in model_id.inherit_model_ids]» dans
+                    #  addons/TechnoLibre_odoo-code-generator/code_generator_hook/models/code_generator_writer.py
+                    #  1221
+                    file_path = os.path.normpath(
+                        os.path.join(
+                            rec_ws.folder,
+                            "addons/TechnoLibre_odoo-code-generator/code_generator_hook/models/code_generator_writer.py",
+                        )
+                    )
+                    rec_ws.ide_pycharm.add_breakpoint(
+                        file_path,
+                        1220,
+                    )
+                if rec.breakpoint_all_write_hook_model_write_field:
+                    # TODO search «self._write_dict_key(cw, subkey, value)» dans
+                    #  addons/TechnoLibre_odoo-code-generator/code_generator_hook/models/code_generator_writer.py
+                    #  1314
+                    file_path = os.path.normpath(
+                        os.path.join(
+                            rec_ws.folder,
+                            "addons/TechnoLibre_odoo-code-generator/code_generator_hook/models/code_generator_writer.py",
+                        )
+                    )
+                    if (
+                        rec.breakpoint_all_write_hook_model_write_field_config_field_name
+                    ):
+                        condition = f'key=="{rec.breakpoint_all_write_hook_model_write_field_config_field_name}"'
+                        if (
+                            rec.breakpoint_all_write_hook_model_write_field_config_field_name_with_att
+                        ):
+                            condition += (
+                                " and"
+                                f' subkey=="{rec.breakpoint_all_write_hook_model_write_field_config_field_name_with_att}"'
+                            )
+                    else:
+                        condition = None
+                    rec_ws.ide_pycharm.add_breakpoint(
+                        file_path, 1313, condition=condition
+                    )
+                if rec.breakpoint_uc0_first_line_hook:
                     # TODO search «env = api.Environment(cr, SUPERUSER_ID, {})» dans
                     #  addons/TechnoLibre_odoo-code-generator-template/code_generator_demo/hooks.py
                     #  11
@@ -331,7 +405,7 @@ class DevopsCgNewProject(models.Model):
                         file_path,
                         10,
                     )
-                if rec.config_ucA_first_line_hook:
+                if rec.breakpoint_ucA_first_line_hook:
                     # TODO search «env = api.Environment(cr, SUPERUSER_ID, {})» 11
                     file_path = os.path.normpath(
                         os.path.join(rec_ws.folder, rec.template_hooks_py)
@@ -340,7 +414,7 @@ class DevopsCgNewProject(models.Model):
                         file_path,
                         10,
                     )
-                if rec.config_ucB_first_line_hook:
+                if rec.breakpoint_ucB_first_line_hook:
                     # TODO search «env = api.Environment(cr, SUPERUSER_ID, {})» 11
                     file_path = os.path.normpath(
                         os.path.join(rec_ws.folder, rec.cg_hooks_py)
@@ -349,7 +423,7 @@ class DevopsCgNewProject(models.Model):
                         file_path,
                         12,
                     )
-                if rec.config_uc0_bp_cg_uc0:
+                if rec.breakpoint_uc0_bp_cg_uc0:
                     # TODO search «cw.emit("new_module_name = MODULE_NAME")» dans
                     #  addons/TechnoLibre_odoo-code-generator/code_generator_hook/models/code_generator_writer.py
                     #  716
@@ -361,7 +435,10 @@ class DevopsCgNewProject(models.Model):
                         file_path,
                         715,
                     )
-                if rec.config_ucA_bp_cg_ucA or rec.config_ucB_bp_cg_ucB:
+                if (
+                    rec.breakpoint_ucA_bp_cg_ucA
+                    or rec.breakpoint_ucB_bp_cg_ucB
+                ):
                     # TODO search «if module.template_model_name or module.template_inherit_model_name:» dans
                     #  addons/TechnoLibre_odoo-code-generator/code_generator/models/code_generator_writer.py
                     #  3430

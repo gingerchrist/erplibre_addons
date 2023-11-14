@@ -283,7 +283,7 @@ class DevopsIdePycharm(models.Model):
                     )
 
     @api.model
-    def add_breakpoint(self, file_path, line):
+    def add_breakpoint(self, file_path, line, condition=None):
         # TODO change tactic, fill variable into erplibre with breakpoint to support
         # TODO support validate already exist to not duplicate
         with self.devops_workspace.devops_create_exec_bundle(
@@ -298,6 +298,11 @@ class DevopsIdePycharm(models.Model):
                 "line": line,
                 "option": {"@name": "timeStamp", "@value": "104"},
             }
+            if condition:
+                dct_config_breakpoint["condition"] = {
+                    "@expression": condition,
+                    "@language": "Python",
+                }
             workspace_xml_path = os.path.join(
                 rec_ws.folder, ".idea", "workspace.xml"
             )
