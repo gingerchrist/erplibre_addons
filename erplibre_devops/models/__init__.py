@@ -12,6 +12,7 @@ from . import (
     devops_exec_bundle,
     devops_exec_error,
     devops_ide_pycharm,
+    devops_ide_pycharm_configuration,
     devops_log_makefile_target,
     devops_system,
     devops_test,

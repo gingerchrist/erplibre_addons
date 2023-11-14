@@ -103,6 +103,9 @@
                         <group string="UcB">
                             <field name="config_ucB_bp_cg_ucB" />
                         </group>
+                        <group string="Pycharm">
+                            <field name="ide_pycharm_configuration_ids" widget="many2many_tags" />
+                        </group>
                     </group>
                 </sheet>
             </form>

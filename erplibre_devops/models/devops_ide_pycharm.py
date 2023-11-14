@@ -236,12 +236,34 @@ class DevopsIdePycharm(models.Model):
                         "conf/pycharm_default_configuration.csv"
                     )
                     conf_add_conf_name = f"debug_devops_{uuid.uuid4().hex[:8]}"
-                    line_to_add = (
-                        f"\n{conf_add_conf_name},./odoo/odoo-bin,--limit-time-real"
-                        " 999999 --no-http -c"
-                        f" {conf_add_config_path} --stop-after-init --dev cg"
-                        f" -d {conf_add_db} -i {conf_add_module},devops,True"
+                    group = "devops"
+                    default = True
+                    cmd = (
+                        "./odoo/odoo-bin,--limit-time-real 999999 --no-http"
+                        f" -c {conf_add_config_path} --stop-after-init --dev"
+                        f" cg -d {conf_add_db} -i {conf_add_module}"
                     )
+                    line_to_add = (
+                        f"\n{conf_add_conf_name},{cmd},{group},{default}"
+                    )
+
+                    v = {
+                        "name": conf_add_conf_name,
+                        "command": cmd,
+                        "group": group,
+                        "is_default": default,
+                        "devops_workspace_id": rec_ws.id,
+                        "devops_ide_pycharm": rec.id,
+                    }
+                    id_devops_cg_new_project = self._context.get(
+                        "devops_cg_new_project"
+                    )
+                    if id_devops_cg_new_project:
+                        v[
+                            "devops_cg_new_project_id"
+                        ] = id_devops_cg_new_project
+                    self.env["devops.ide.pycharm.configuration"].create(v)
+
                     if line_to_add not in file_content_before:
                         new_content = file_content_before + line_to_add
                     else:

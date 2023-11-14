@@ -148,6 +148,12 @@ class DevopsCgNewProject(models.Model):
 
     devops_workspace = fields.Many2one(comodel_name="devops.workspace")
 
+    ide_pycharm_configuration_ids = fields.One2many(
+        comodel_name="devops.ide.pycharm.configuration",
+        inverse_name="devops_cg_new_project_id",
+        string="Pycharm configurations",
+    )
+
     new_project_with_code_generator = fields.Boolean(
         default=True,
         help=(
@@ -218,6 +224,7 @@ class DevopsCgNewProject(models.Model):
             ) as rec_ws:
                 if not rec.can_setup_ide:
                     continue
+                rec_ws = rec_ws.with_context(devops_cg_new_project=rec.id)
                 if rec.config_uc0_bp_cg_uc0:
                     # TODO search «cw.emit("new_module_name = MODULE_NAME")» dans
                     #  addons/TechnoLibre_odoo-code-generator/code_generator_hook/models/code_generator_writer.py
