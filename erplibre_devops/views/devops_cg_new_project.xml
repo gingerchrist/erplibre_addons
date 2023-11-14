@@ -97,8 +97,12 @@
                         <group string="Uc0">
                             <field name="config_uc0_bp_cg_uc0" />
                         </group>
-                        <group string="UcA" />
-                        <group string="UcB" />
+                        <group string="UcA">
+                            <field name="config_ucA_bp_cg_ucA" />
+                        </group>
+                        <group string="UcB">
+                            <field name="config_ucB_bp_cg_ucB" />
+                        </group>
                     </group>
                 </sheet>
             </form>

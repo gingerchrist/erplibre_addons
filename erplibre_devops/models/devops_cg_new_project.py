@@ -101,6 +101,14 @@ class DevopsCgNewProject(models.Model):
         help="Breakpoint dans la section génération de code du uC0."
     )
 
+    config_ucA_bp_cg_ucA = fields.Boolean(
+        help="Breakpoint dans la section génération de code du uCA."
+    )
+
+    config_ucB_bp_cg_ucB = fields.Boolean(
+        help="Breakpoint dans la section génération de code du uCB."
+    )
+
     # internal_error = fields.Char(
     # compute="_compute_internal_error",
     # store=True,
@@ -174,10 +182,16 @@ class DevopsCgNewProject(models.Model):
 
     @api.depends(
         "config_uc0_bp_cg_uc0",
+        "config_ucA_bp_cg_ucA",
+        "config_ucB_bp_cg_ucB",
     )
     def _compute_can_setup_ide(self):
         for rec in self:
-            rec.can_setup_ide = rec.config_uc0_bp_cg_uc0
+            rec.can_setup_ide = (
+                rec.config_uc0_bp_cg_uc0
+                + rec.config_ucA_bp_cg_ucA
+                + rec.config_ucB_bp_cg_ucB
+            )
 
     @api.depends("exec_start_date", "exec_stop_date")
     def _compute_exec_time_duration(self):
@@ -202,6 +216,8 @@ class DevopsCgNewProject(models.Model):
             with rec.devops_workspace.devops_create_exec_bundle(
                 "New project setup IDE"
             ) as rec_ws:
+                if not rec.can_setup_ide:
+                    continue
                 if rec.config_uc0_bp_cg_uc0:
                     # TODO search «cw.emit("new_module_name = MODULE_NAME")» dans
                     #  addons/TechnoLibre_odoo-code-generator/code_generator_hook/models/code_generator_writer.py
@@ -214,13 +230,24 @@ class DevopsCgNewProject(models.Model):
                         file_path,
                         715,
                     )
-                    rec_ws.ide_pycharm.add_configuration(
-                        conf_add_mode=conf_add_mode,
-                        conf_add_db=conf_add_db,
-                        conf_add_module=conf_add_module,
-                        conf_add_config_path=conf_add_config_path,
+                if rec.config_ucA_bp_cg_ucA or rec.config_ucB_bp_cg_ucB:
+                    # TODO search «if module.template_model_name or module.template_inherit_model_name:» dans
+                    #  addons/TechnoLibre_odoo-code-generator/code_generator/models/code_generator_writer.py
+                    #  3430
+                    file_path = os.path.join(
+                        rec_ws.folder,
+                        "addons/TechnoLibre_odoo-code-generator/code_generator/models/code_generator_writer.py",
                     )
-                    continue
+                    rec_ws.ide_pycharm.add_breakpoint(
+                        file_path,
+                        3429,
+                    )
+                rec_ws.ide_pycharm.add_configuration(
+                    conf_add_mode=conf_add_mode,
+                    conf_add_db=conf_add_db,
+                    conf_add_module=conf_add_module,
+                    conf_add_config_path=conf_add_config_path,
+                )
 
     @api.multi
     def action_new_project(self):
@@ -532,7 +559,6 @@ class DevopsCgNewProject(models.Model):
                     continue
 
                 # TODO need pause if ask? and continue if ask
-                # TODO add executable ide pycharm
                 if rec.can_setup_ide:
                     _logger.info(
                         "========= Ask stop, setup pycharm and exit ========="
@@ -675,6 +701,8 @@ class DevopsCgNewProject(models.Model):
                     if rec.has_error:
                         continue
 
+                    # TODO do we need to diagnostic installing module?
+
                     if rec.active_coverage:
                         cmd = (
                             "./script/addons/coverage_install_addons_dev.sh"
@@ -694,6 +722,20 @@ class DevopsCgNewProject(models.Model):
                     )
                     if rec.has_error:
                         continue
+
+                # TODO need pause if ask? and continue if ask
+                if rec.can_setup_ide:
+                    _logger.info(
+                        "========= Ask stop, setup pycharm and exit ========="
+                    )
+                    # rec.config_path is a temporary file, it will not work. Use default config instead
+                    rec.action_new_project_setup_IDE(
+                        conf_add_mode="install",
+                        conf_add_db=bd_name_template,
+                        conf_add_module=rec.template_name,
+                        # conf_add_config_path=rec.config_path,
+                    )
+                    continue
 
                 if rec.active_coverage:
                     cmd = (
@@ -816,6 +858,20 @@ class DevopsCgNewProject(models.Model):
                         rec.cg_hooks_py,
                         lst_update_cg,
                     )
+
+                # TODO need pause if ask? and continue if ask
+                if rec.can_setup_ide:
+                    _logger.info(
+                        "========= Ask stop, setup pycharm and exit ========="
+                    )
+                    # rec.config_path is a temporary file, it will not work. Use default config instead
+                    rec.action_new_project_setup_IDE(
+                        conf_add_mode="install",
+                        conf_add_db=bd_name_generator,
+                        conf_add_module=rec.code_generator_name,
+                        # conf_add_config_path=rec.config_path,
+                    )
+                    continue
 
                 if rec.active_coverage:
                     cmd = (
