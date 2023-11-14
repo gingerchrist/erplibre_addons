@@ -249,12 +249,13 @@ class DevopsCgNewProject(models.Model):
                         file_path,
                         3429,
                     )
-                rec_ws.ide_pycharm.add_configuration(
-                    conf_add_mode=conf_add_mode,
-                    conf_add_db=conf_add_db,
-                    conf_add_module=conf_add_module,
-                    conf_add_config_path=conf_add_config_path,
-                )
+                if conf_add_mode:
+                    rec_ws.ide_pycharm.add_configuration(
+                        conf_add_mode=conf_add_mode,
+                        conf_add_db=conf_add_db,
+                        conf_add_module=conf_add_module,
+                        conf_add_config_path=conf_add_config_path,
+                    )
 
     @api.multi
     def action_new_project(self):
@@ -982,3 +983,13 @@ class DevopsCgNewProject(models.Model):
         with open(filepath, "w") as file:
             file.write(txt)
         return True
+
+    @api.multi
+    def action_kill_pycharm(self):
+        self.ensure_one()
+        self.devops_workspace.ide_pycharm.action_kill_pycharm()
+
+    @api.multi
+    def action_start_pycharm(self):
+        self.ensure_one()
+        self.devops_workspace.ide_pycharm.action_start_pycharm()

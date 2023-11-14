@@ -27,6 +27,8 @@
                         type="object"
                         attrs="{'invisible': [('can_setup_ide', '=', False)]}"
                     />
+                    <button class="oe_highlight" name="action_start_pycharm" string="Start PyCharm" type="object" />
+                    <button class="oe_highlight" name="action_kill_pycharm" string="Kill PyCharm" type="object" />
                     <field name="stage_id" widget="statusbar" clickable="False" options="{'fold_field': 'fold'}" />
                 </header>
                 <sheet>

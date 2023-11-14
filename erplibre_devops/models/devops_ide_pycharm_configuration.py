@@ -10,6 +10,7 @@ _logger = logging.getLogger(__name__)
 class DevopsIdePycharmConfiguration(models.Model):
     _name = "devops.ide.pycharm.configuration"
     _description = "Pycharm management configuration for a workspace"
+    _order = "id desc"
 
     name = fields.Char()
 
