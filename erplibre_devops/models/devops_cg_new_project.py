@@ -65,6 +65,14 @@ class DevopsCgNewProject(models.Model):
 
     execution_finish = fields.Boolean()
 
+    is_pause = fields.Boolean(
+        help=(
+            "Is pause is True when debug is execute and set at pause to run"
+            " outside."
+        ),
+        readonly=True,
+    )
+
     module = fields.Char(required=True)
 
     directory = fields.Char(required=True)
@@ -94,7 +102,8 @@ class DevopsCgNewProject(models.Model):
     keep_bd_alive = fields.Boolean()
 
     can_setup_ide = fields.Boolean(
-        compute="_compute_can_setup_ide", store=True
+        compute="_compute_can_setup_ide",
+        store=True,
     )
 
     config_debug_uc0 = fields.Boolean(help="Debug uC0.")
@@ -105,6 +114,10 @@ class DevopsCgNewProject(models.Model):
 
     config_uc0_first_line_hook = fields.Boolean(
         help="Breakpoint first line hook file uc0."
+    )
+
+    config_all_write_hook = fields.Boolean(
+        help="Breakpoint general when write hook."
     )
 
     config_ucA_first_line_hook = fields.Boolean(
@@ -208,6 +221,7 @@ class DevopsCgNewProject(models.Model):
         "config_debug_uc0",
         "config_debug_ucA",
         "config_debug_ucB",
+        "config_all_write_hook",
         "config_uc0_first_line_hook",
         "config_ucA_first_line_hook",
         "config_ucB_first_line_hook",
@@ -221,6 +235,7 @@ class DevopsCgNewProject(models.Model):
                 rec.config_debug_uc0
                 + rec.config_debug_ucA
                 + rec.config_debug_ucB
+                + rec.config_all_write_hook
                 + rec.config_uc0_first_line_hook
                 + rec.config_ucA_first_line_hook
                 + rec.config_ucB_first_line_hook
@@ -289,6 +304,20 @@ class DevopsCgNewProject(models.Model):
             ) as rec_ws:
                 if not rec.can_setup_ide:
                     continue
+                if rec.config_all_write_hook:
+                    # TODO search «if post_init_hook_feature_code_generator:» dans
+                    #  addons/TechnoLibre_odoo-code-generator-template/code_generator_demo/hooks.py
+                    #  511
+                    file_path = os.path.normpath(
+                        os.path.join(
+                            rec_ws.folder,
+                            "addons/TechnoLibre_odoo-code-generator/code_generator_hook/models/code_generator_writer.py",
+                        )
+                    )
+                    rec_ws.ide_pycharm.add_breakpoint(
+                        file_path,
+                        510,
+                    )
                 if rec.config_uc0_first_line_hook:
                     # TODO search «env = api.Environment(cr, SUPERUSER_ID, {})» dans
                     #  addons/TechnoLibre_odoo-code-generator-template/code_generator_demo/hooks.py
@@ -358,6 +387,7 @@ class DevopsCgNewProject(models.Model):
             with rec.devops_workspace.devops_create_exec_bundle(
                 "Generate new project with CG", devops_cg_new_project=rec.id
             ) as rec_ws:
+                rec.is_pause = False
                 rec.exec_start_date = fields.Datetime.now(self)
                 rec.has_error = False
                 id_exec_bundle = self.env.context.get("devops_exec_bundle")
@@ -664,6 +694,7 @@ class DevopsCgNewProject(models.Model):
                     _logger.info(
                         "========= Ask stop, setup pycharm and exit ========="
                     )
+                    rec.is_pause = True
                     # rec.config_path is a temporary file, it will not work. Use default config instead
                     rec.action_new_project_setup_IDE(
                         conf_add_mode="install",
@@ -827,6 +858,7 @@ class DevopsCgNewProject(models.Model):
                     _logger.info(
                         "========= Ask stop, setup pycharm and exit ========="
                     )
+                    rec.is_pause = True
                     # rec.config_path is a temporary file, it will not work. Use default config instead
                     rec.action_new_project_setup_IDE(
                         conf_add_mode="install",
@@ -961,6 +993,7 @@ class DevopsCgNewProject(models.Model):
                     _logger.info(
                         "========= Ask stop, setup pycharm and exit ========="
                     )
+                    rec.is_pause = True
                     # rec.config_path is a temporary file, it will not work. Use default config instead
                     rec.action_new_project_setup_IDE(
                         conf_add_mode="install",
