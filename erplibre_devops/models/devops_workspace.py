@@ -2315,7 +2315,11 @@ sock.close()
     @api.multi
     @contextmanager
     def devops_create_exec_bundle(
-        self, description, ignore_parent=False, succeed_msg=False
+        self,
+        description,
+        ignore_parent=False,
+        succeed_msg=False,
+        devops_cg_new_project=None,
     ):
         self.ensure_one()
         value_bundle = {
@@ -2332,6 +2336,8 @@ sock.close()
             value_bundle
         )
         rec = self.with_context(devops_exec_bundle=devops_exec_bundle_id.id)
+        if devops_cg_new_project:
+            rec = rec.with_context(devops_cg_new_project=devops_cg_new_project)
         try:
             yield rec
         except exceptions.Warning as e:

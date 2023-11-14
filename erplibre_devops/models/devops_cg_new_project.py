@@ -228,7 +228,7 @@ class DevopsCgNewProject(models.Model):
     ):
         for rec in self:
             with rec.devops_workspace.devops_create_exec_bundle(
-                "New project debug"
+                "New project debug", devops_cg_new_project=rec.id
             ) as rec_ws:
                 has_debug = False
                 stage_uc0 = self.env.ref(
@@ -267,11 +267,10 @@ class DevopsCgNewProject(models.Model):
     ):
         for rec in self:
             with rec.devops_workspace.devops_create_exec_bundle(
-                "New project setup IDE"
+                "New project setup IDE", devops_cg_new_project=rec.id
             ) as rec_ws:
                 if not rec.can_setup_ide:
                     continue
-                rec_ws = rec_ws.with_context(devops_cg_new_project=rec.id)
                 if rec.config_uc0_bp_cg_uc0:
                     # TODO search «cw.emit("new_module_name = MODULE_NAME")» dans
                     #  addons/TechnoLibre_odoo-code-generator/code_generator_hook/models/code_generator_writer.py
@@ -308,7 +307,7 @@ class DevopsCgNewProject(models.Model):
     def action_new_project(self):
         for rec in self:
             with rec.devops_workspace.devops_create_exec_bundle(
-                "Generate new project with CG"
+                "Generate new project with CG", devops_cg_new_project=rec.id
             ) as rec_ws:
                 rec.exec_start_date = fields.Datetime.now(self)
                 rec.has_error = False
@@ -375,7 +374,7 @@ class DevopsCgNewProject(models.Model):
         for rec in self:
             ws_param = rec_ws if rec_ws else rec.devops_workspace
             with ws_param.devops_create_exec_bundle(
-                "New project generate 1.init"
+                "New project generate 1.init", devops_cg_new_project=rec.id
             ) as ws:
                 rec.stage_id = self.env.ref(
                     "erplibre_devops.devops_cg_new_project_stage_init"
@@ -491,7 +490,7 @@ class DevopsCgNewProject(models.Model):
         for rec in self:
             ws_param = rec_ws if rec_ws else rec.devops_workspace
             with ws_param.devops_create_exec_bundle(
-                "New project generate 2.config"
+                "New project generate 2.config", devops_cg_new_project=rec.id
             ) as ws:
                 rec.stage_id = self.env.ref(
                     "erplibre_devops.devops_cg_new_project_stage_generate_config"
@@ -586,7 +585,7 @@ class DevopsCgNewProject(models.Model):
         for rec in self:
             ws_param = rec_ws if rec_ws else rec.devops_workspace
             with ws_param.devops_create_exec_bundle(
-                "New project generate 3.Uc0"
+                "New project generate 3.Uc0", devops_cg_new_project=rec.id
             ) as ws:
                 rec.stage_id = self.env.ref(
                     "erplibre_devops.devops_cg_new_project_stage_generate_uc0"
@@ -606,9 +605,7 @@ class DevopsCgNewProject(models.Model):
                         " addons_install_code_generator_basic"
                     )
                 _logger.info(cmd)
-                exec_id = ws.with_context(
-                    devops_cg_new_project=rec.id
-                ).execute(cmd=cmd, to_instance=True)
+                exec_id = ws.execute(cmd=cmd, to_instance=True)
                 rec.has_error = bool(exec_id.devops_exec_error_ids.exists())
                 if rec.has_error:
                     continue
@@ -655,9 +652,7 @@ class DevopsCgNewProject(models.Model):
                         f" --database {bd_name_demo}"
                     )
                     _logger.info(cmd)
-                    ws.with_context(devops_cg_new_project=rec.id).execute(
-                        cmd=cmd, to_instance=True
-                    )
+                    ws.execute(cmd=cmd, to_instance=True)
 
                 # Revert code_generator_demo
                 self.restore_git_code_generator_demo(
@@ -684,7 +679,7 @@ class DevopsCgNewProject(models.Model):
         for rec in self:
             ws_param = rec_ws if rec_ws else rec.devops_workspace
             with ws_param.devops_create_exec_bundle(
-                "New project generate 4.UcA"
+                "New project generate 4.UcA", devops_cg_new_project=rec.id
             ) as ws:
                 rec.stage_id = self.env.ref(
                     "erplibre_devops.devops_cg_new_project_stage_generate_uca"
@@ -816,9 +811,7 @@ class DevopsCgNewProject(models.Model):
                         f" --database {bd_name_template}"
                     )
                     _logger.info(cmd)
-                    ws.with_context(devops_cg_new_project=rec.id).execute(
-                        cmd=cmd, to_instance=True
-                    )
+                    ws.execute(cmd=cmd, to_instance=True)
 
                 # Validate
                 if not ws.os_path_exists(rec.cg_path, to_instance=True):
@@ -836,7 +829,7 @@ class DevopsCgNewProject(models.Model):
         for rec in self:
             ws_param = rec_ws if rec_ws else rec.devops_workspace
             with ws_param.devops_create_exec_bundle(
-                "New project generate 5.UcB"
+                "New project generate 5.UcB", devops_cg_new_project=rec.id
             ) as ws:
                 rec.stage_id = self.env.ref(
                     "erplibre_devops.devops_cg_new_project_stage_generate_ucb"
@@ -954,9 +947,7 @@ class DevopsCgNewProject(models.Model):
                         f" --database {bd_name_generator}"
                     )
                     _logger.info(cmd)
-                    ws.with_context(devops_cg_new_project=rec.id).execute(
-                        cmd=cmd, to_instance=True
-                    )
+                    ws.execute(cmd=cmd, to_instance=True)
 
                 # Validate
                 if not ws.os_path_exists(rec.module_path, to_instance=True):
