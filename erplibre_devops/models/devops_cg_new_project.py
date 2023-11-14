@@ -97,6 +97,12 @@ class DevopsCgNewProject(models.Model):
         compute="_compute_can_setup_ide", store=True
     )
 
+    config_debug_uc0 = fields.Boolean(help="Debug uC0.")
+
+    config_debug_ucA = fields.Boolean(help="Debug uCA.")
+
+    config_debug_ucB = fields.Boolean(help="Debug uCB.")
+
     config_uc0_bp_cg_uc0 = fields.Boolean(
         help="Breakpoint dans la section génération de code du uC0."
     )
@@ -187,6 +193,9 @@ class DevopsCgNewProject(models.Model):
                 rec.name += f" - start {rec.exec_start_date}"
 
     @api.depends(
+        "config_debug_uc0",
+        "config_debug_ucA",
+        "config_debug_ucB",
         "config_uc0_bp_cg_uc0",
         "config_ucA_bp_cg_ucA",
         "config_ucB_bp_cg_ucB",
@@ -194,7 +203,10 @@ class DevopsCgNewProject(models.Model):
     def _compute_can_setup_ide(self):
         for rec in self:
             rec.can_setup_ide = (
-                rec.config_uc0_bp_cg_uc0
+                rec.config_debug_uc0
+                + rec.config_debug_ucA
+                + rec.config_debug_ucB
+                + rec.config_uc0_bp_cg_uc0
                 + rec.config_ucA_bp_cg_ucA
                 + rec.config_ucB_bp_cg_ucB
             )
@@ -208,6 +220,41 @@ class DevopsCgNewProject(models.Model):
                 ).total_seconds()
             else:
                 rec.exec_time_duration = None
+
+    @api.multi
+    def action_new_project_debug(
+        self,
+        ctx=None,
+    ):
+        for rec in self:
+            with rec.devops_workspace.devops_create_exec_bundle(
+                "New project debug"
+            ) as rec_ws:
+                has_debug = False
+                stage_uc0 = self.env.ref(
+                    "erplibre_devops.devops_cg_new_project_stage_generate_uc0"
+                )
+                if rec.stage_id == stage_uc0:
+                    rec.config_debug_uc0 = True
+                    has_debug = True
+                stage_uca = self.env.ref(
+                    "erplibre_devops.devops_cg_new_project_stage_generate_uca"
+                )
+                if rec.stage_id == stage_uca:
+                    rec.config_debug_ucA = True
+                    has_debug = True
+                stage_ucb = self.env.ref(
+                    "erplibre_devops.devops_cg_new_project_stage_generate_ucb"
+                )
+                if rec.stage_id == stage_ucb:
+                    rec.config_debug_ucB = True
+                    has_debug = True
+                if has_debug:
+                    rec.with_context(rec_ws._context).action_new_project()
+                else:
+                    raise exceptions.Warning(
+                        "Cannot support debug for this stage"
+                    )
 
     @api.multi
     def action_new_project_setup_IDE(
