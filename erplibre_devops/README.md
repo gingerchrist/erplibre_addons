@@ -88,3 +88,30 @@ TODO Suivi des états de l'historique d'exécution des instances.
 ## Configuration
 
 Les pages de configurations sur l'ensemble de l'application.
+
+# Technopoïèse
+
+Work in progress
+
+auto :
+
+-   exec DONE
+-   dévermineur/debug DONE
+-   logging WIP
+-   error DONE
+-   modification/update DONE
+-   constructeur/build WIP
+-   codeur/code DONE
+-   libre/freedom WIP
+-   correcteur/fix WIP
+-   refactor MISSING
+-   publish MISSING
+-   reverse MISSING
+-   data MISSING
+-   plan MISSING
+-   operate MISSING
+-   monitor MISSING
+-   distribué/deploy MISSING
+-   release MISSING
+-   test MISSING
+-   doc MISSING
