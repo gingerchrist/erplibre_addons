@@ -4,7 +4,9 @@
 import json
 import logging
 import os
+import platform
 import re
+import subprocess
 import time
 import traceback
 from contextlib import contextmanager
@@ -1217,6 +1219,18 @@ class DevopsWorkspace(models.Model):
         for rec_o in self:
             with rec_o.devops_create_exec_bundle("Open Terminal") as rec:
                 rec.execute(force_open_terminal=True)
+
+    @api.multi
+    def action_open_directory(self):
+        for rec_o in self:
+            with rec_o.devops_create_exec_bundle("Open directory") as rec:
+                # TODO this need to use system
+                if platform.system() == "Windows":
+                    os.startfile(rec.folder)
+                elif platform.system() == "Darwin":
+                    subprocess.Popen(["open", rec.folder])
+                else:
+                    subprocess.Popen(["xdg-open", rec.folder])
 
     @api.multi
     def action_clear_cache(self):
