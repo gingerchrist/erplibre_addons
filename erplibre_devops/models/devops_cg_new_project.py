@@ -143,7 +143,7 @@ class DevopsCgNewProject(models.Model):
         )
     )
 
-    breakpoint_all_write_hook_model_write_field_config_field_name_with_att = fields.Char(
+    breakpoint_all_write_hook_model_write_field_config_field_att = fields.Char(
         help=(
             "Associate with breakpoint_all_write_hook_model_write_field , can"
             " set attribute field name to break."
@@ -278,6 +278,28 @@ class DevopsCgNewProject(models.Model):
                 + rec.breakpoint_ucB_bp_cg_ucB
             )
 
+    def action_new_project_clear_pause(
+        self,
+        ctx=None,
+    ):
+        for rec in self:
+            with rec.devops_workspace.devops_create_exec_bundle(
+                "New project clear pause", devops_cg_new_project=rec.id
+            ) as rec_ws:
+                rec.is_pause = False
+                rec.config_debug_uc0 = False
+                rec.config_debug_ucA = False
+                rec.config_debug_ucB = False
+                rec.breakpoint_all_write_hook_begin = False
+                rec.breakpoint_all_write_hook_before_model = False
+                rec.breakpoint_all_write_hook_model_write_field = False
+                rec.breakpoint_uc0_first_line_hook = False
+                rec.breakpoint_ucA_first_line_hook = False
+                rec.breakpoint_ucB_first_line_hook = False
+                rec.breakpoint_uc0_bp_cg_uc0 = False
+                rec.breakpoint_ucA_bp_cg_ucA = False
+                rec.breakpoint_ucB_bp_cg_ucB = False
+
     @api.depends("exec_start_date", "exec_stop_date")
     def _compute_exec_time_duration(self):
         for rec in self:
@@ -381,11 +403,11 @@ class DevopsCgNewProject(models.Model):
                     ):
                         condition = f'key=="{rec.breakpoint_all_write_hook_model_write_field_config_field_name}"'
                         if (
-                            rec.breakpoint_all_write_hook_model_write_field_config_field_name_with_att
+                            rec.breakpoint_all_write_hook_model_write_field_config_field_att
                         ):
                             condition += (
                                 " and"
-                                f' subkey=="{rec.breakpoint_all_write_hook_model_write_field_config_field_name_with_att}"'
+                                f' subkey=="{rec.breakpoint_all_write_hook_model_write_field_config_field_att}"'
                             )
                     else:
                         condition = None

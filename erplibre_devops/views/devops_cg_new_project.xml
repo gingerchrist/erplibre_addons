@@ -27,6 +27,13 @@
                         type="object"
                         attrs="{'invisible': [('can_setup_ide', '=', False)]}"
                     />
+                    <button
+                        class="oe_highlight"
+                        name="action_new_project_clear_pause"
+                        string="Clear pause"
+                        type="object"
+                        attrs="{'invisible': [('is_pause', '=', False)]}"
+                    />
                     <button class="oe_highlight" name="action_new_project_debug" string="Debug" type="object" />
                     <button class="oe_highlight" name="action_start_pycharm" string="Start PyCharm" type="object" />
                     <button class="oe_highlight" name="action_kill_pycharm" string="Kill PyCharm" type="object" />
@@ -96,7 +103,7 @@
                             <field name="breakpoint_all_write_hook_before_model" />
                             <field name="breakpoint_all_write_hook_model_write_field" />
                             <field name="breakpoint_all_write_hook_model_write_field_config_field_name" />
-                            <field name="breakpoint_all_write_hook_model_write_field_config_field_name_with_att" />
+                            <field name="breakpoint_all_write_hook_model_write_field_config_field_att" />
                         </group>
                         <group string="Debug Uc0">
                             <field name="config_debug_uc0" />
