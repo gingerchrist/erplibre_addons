@@ -126,6 +126,9 @@
                             <field name="config_debug_ucB" />
                             <field name="breakpoint_ucB_bp_cg_ucB" />
                             <field name="breakpoint_ucB_first_line_hook" />
+                            <field name="breakpoint_ucB_write_code_model_field" />
+                            <field name="breakpoint_ucB_write_code_model_field_config_model_name" />
+                            <field name="breakpoint_ucB_write_code_model_field_config_field_name" />
                         </group>
                         <group string="Pycharm">
                             <field name="ide_pycharm_configuration_ids" widget="many2many_tags" />

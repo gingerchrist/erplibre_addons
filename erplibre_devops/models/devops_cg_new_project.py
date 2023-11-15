@@ -170,6 +170,30 @@ class DevopsCgNewProject(models.Model):
         help="Breakpoint dans la section génération de code du uCB."
     )
 
+    breakpoint_ucB_write_code_model_field = fields.Boolean(
+        help=(
+            "Breakpoint dans la section génération de code du uCB - write"
+            " model field module."
+            " Can use field"
+            " breakpoint_ucB_write_code_model_field_config_field_name to"
+            " specify field name."
+        )
+    )
+
+    breakpoint_ucB_write_code_model_field_config_model_name = fields.Char(
+        help=(
+            "Associate with breakpoint_ucB_write_code_model_field , can"
+            " set model name to break."
+        )
+    )
+
+    breakpoint_ucB_write_code_model_field_config_field_name = fields.Char(
+        help=(
+            "Associate with breakpoint_ucB_write_code_model_field , can"
+            " set field name to break."
+        )
+    )
+
     # internal_error = fields.Char(
     # compute="_compute_internal_error",
     # store=True,
@@ -260,6 +284,7 @@ class DevopsCgNewProject(models.Model):
         "breakpoint_uc0_bp_cg_uc0",
         "breakpoint_ucA_bp_cg_ucA",
         "breakpoint_ucB_bp_cg_ucB",
+        "breakpoint_ucB_write_code_model_field",
     )
     def _compute_can_setup_ide(self):
         for rec in self:
@@ -276,12 +301,10 @@ class DevopsCgNewProject(models.Model):
                 + rec.breakpoint_uc0_bp_cg_uc0
                 + rec.breakpoint_ucA_bp_cg_ucA
                 + rec.breakpoint_ucB_bp_cg_ucB
+                + rec.breakpoint_ucB_write_code_model_field
             )
 
-    def action_new_project_clear_pause(
-        self,
-        ctx=None,
-    ):
+    def action_new_project_clear_pause(self, ctx=None):
         for rec in self:
             with rec.devops_workspace.devops_create_exec_bundle(
                 "New project clear pause",
@@ -301,6 +324,7 @@ class DevopsCgNewProject(models.Model):
                 rec.breakpoint_uc0_bp_cg_uc0 = False
                 rec.breakpoint_ucA_bp_cg_ucA = False
                 rec.breakpoint_ucB_bp_cg_ucB = False
+                rec.breakpoint_ucB_write_code_model_field = False
 
     @api.depends("exec_start_date", "exec_stop_date")
     def _compute_exec_time_duration(self):
@@ -313,10 +337,7 @@ class DevopsCgNewProject(models.Model):
                 rec.exec_time_duration = None
 
     @api.multi
-    def action_new_project_debug(
-        self,
-        ctx=None,
-    ):
+    def action_new_project_debug(self, ctx=None):
         for rec in self:
             with rec.devops_workspace.devops_create_exec_bundle(
                 "New project debug", devops_cg_new_project=rec.id, ctx=ctx
@@ -476,6 +497,34 @@ class DevopsCgNewProject(models.Model):
                     rec_ws.ide_pycharm.add_breakpoint(
                         file_path,
                         3429,
+                    )
+                if has_bp and (rec.breakpoint_ucB_write_code_model_field):
+                    # TODO search «dct_field_attr_diff = defaultdict(list)» dans
+                    #  addons/TechnoLibre_odoo-code-generator/code_generator/models/code_generator_writer.py
+                    #  3266
+                    lst_condition = []
+                    if (
+                        rec.breakpoint_ucB_write_code_model_field_config_model_name
+                    ):
+                        lst_condition.append(
+                            f'model.model=="{rec.breakpoint_ucB_write_code_model_field_config_model_name}"'
+                        )
+                    if (
+                        rec.breakpoint_ucB_write_code_model_field_config_field_name
+                    ):
+                        lst_condition.append(
+                            f'f2export.name=="{rec.breakpoint_ucB_write_code_model_field_config_field_name}"'
+                        )
+                    if lst_condition:
+                        condition = " and ".join(lst_condition)
+                    else:
+                        condition = None
+                    file_path = os.path.join(
+                        rec_ws.folder,
+                        "addons/TechnoLibre_odoo-code-generator/code_generator/models/code_generator_writer.py",
+                    )
+                    rec_ws.ide_pycharm.add_breakpoint(
+                        file_path, 3265, condition=condition
                     )
                 if conf_add_mode:
                     rec_ws.ide_pycharm.add_configuration(
