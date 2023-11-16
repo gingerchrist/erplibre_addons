@@ -55,6 +55,12 @@
                         <page string="Log stdin" name="page_log_stdin">
                             <field name="log_stdin" />
                         </page>
+                        <page string="Log error" name="page_log_error">
+                            <group>
+                                <field name="log_error" />
+                                <field name="log_warning" />
+                            </group>
+                        </page>
                     </notebook>
                 </sheet>
             </form>

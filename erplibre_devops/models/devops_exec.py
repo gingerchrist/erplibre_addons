@@ -81,6 +81,10 @@ class DevopsExec(models.Model):
         store=True,
     )
 
+    log_error = fields.Text()
+
+    log_warning = fields.Text()
+
     @api.depends(
         "devops_workspace",
         "module",
@@ -115,6 +119,40 @@ class DevopsExec(models.Model):
                 rec.log_all += rec.log_stdout
             if rec.log_stderr:
                 rec.log_all += rec.log_stderr
+            # extract error/warning
+            lst_error = []
+            lst_warning = []
+            lst_item_ignore_error = [
+                "fetchmail_notify_error_to_sender",
+                "odoo.sql_db: bad query: ALTER TABLE \"db_backup\" DROP CONSTRAINT \"db_backup_db_backup_name_unique\"",
+                "ERROR: constraint \"db_backup_db_backup_name_unique\" of relation \"db_backup\" does not exist",
+                "odoo.sql_db: bad query: ALTER TABLE \"db_backup\" DROP CONSTRAINT \"db_backup_db_backup_days_to_keep_positive\"",
+                "ERROR: constraint \"db_backup_db_backup_days_to_keep_positive\" of relation \"db_backup\" does not exist",
+                "odoo.addons.code_generator.extractor_module_file: Ignore next error about ALTER TABLE DROP CONSTRAINT.",
+                "Storing computed values of devops.code_generator.module.model.field.has_error",
+                "Storing computed values of devops.exec.error.name",
+                "Storing computed values of devops.workspace.devops_exec_error_count",
+                "loading erplibre_devops/views/devops_exec_error.xml",
+            ]
+            lst_item_ignore_warning = [
+                "have the same label:",
+                "odoo.addons.code_generator.extractor_module_file: Ignore next error about ALTER TABLE DROP CONSTRAINT."
+            ]
+            for line in rec.log_all.split("\n"):
+                if "error" in line or "ERROR" in line:
+                    for ignore_item in lst_item_ignore_error:
+                        if ignore_item in line:
+                            break
+                    else:
+                        lst_error.append(line)
+                if "warning" in line or "WARNING" in line:
+                    for ignore_item in lst_item_ignore_warning:
+                        if ignore_item in line:
+                            break
+                    else:
+                        lst_warning.append(line)
+            rec.log_error = "\n".join(lst_error)
+            rec.log_warning = "\n".join(lst_warning)
 
     @api.depends("exec_stop_date")
     def _compute_execution_finish(self):
