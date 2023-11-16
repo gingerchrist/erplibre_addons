@@ -34,9 +34,15 @@ class DevopsCgNewProject(models.Model):
 
     active = fields.Boolean(default=True)
 
-    msg_error = fields.Char()
+    has_error = fields.Boolean(
+        help="Will be True if got error into execution of new project.",
+        readonly=True,
+    )
 
-    has_error = fields.Boolean()
+    has_warning = fields.Boolean(
+        help="Will be True if got warning into execution of new project.",
+        readonly=True,
+    )
 
     stage_id = fields.Many2one(
         comodel_name="devops.cg.new_project.stage",
@@ -63,7 +69,9 @@ class DevopsCgNewProject(models.Model):
         store=True,
     )
 
-    execution_finish = fields.Boolean()
+    execution_finish = fields.Boolean(
+        readonly=True, help="Will be True when execution finish correctly."
+    )
 
     is_pause = fields.Boolean(
         help=(

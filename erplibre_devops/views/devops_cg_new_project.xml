@@ -50,6 +50,15 @@
                     <div class="badge-pill badge-info float-right" attrs="{'invisible': [('is_pause', '=', False)]}">
                         Pause
                     </div>
+                    <div class="badge-pill badge-danger float-right" attrs="{'invisible': [('has_error', '=', False)]}">
+                        Error
+                    </div>
+                    <div
+                        class="badge-pill badge-warning float-right"
+                        attrs="{'invisible': [('has_warning', '=', False)]}"
+                    >
+                        Warning
+                    </div>
                     <div class="oe_button_box" name="button_box">
                         <button class="oe_stat_button" name="toggle_active" type="object" icon="fa-archive">
                             <field name="active" widget="boolean_button" options='{"terminology": "archive"}' />
@@ -60,28 +69,28 @@
                             <field name="name" />
                         </h1>
                     </div>
-                    <group string="Date">
-                        <group>
+                    <group>
+                        <group string="Execution">
                             <field name="exec_start_date" />
                             <field name="exec_stop_date" />
                             <field name="exec_time_duration" />
-                            <field name="execution_finish" />
                         </group>
-                        <group>
+                        <group string="State">
                             <field name="create_date" />
                             <field name="write_date" />
+                            <field name="is_pause" />
+                            <field name="has_error" />
+                            <field name="has_warning" />
+                            <field name="execution_finish" />
                         </group>
-                    </group>
-                    <group>
                         <group string="Project">
                             <field name="last_new_project" />
                             <field name="devops_workspace" />
                             <field name="devops_exec_bundle_id" />
                             <!--                            <field name="devops_exec_error_ids" />-->
                         </group>
-                        <group string="Error">
-                            <field name="msg_error" />
-                            <field name="has_error" />
+                        <group string="Pycharm">
+                            <field name="ide_pycharm_configuration_ids" widget="many2many_tags" />
                         </group>
                     </group>
 
@@ -103,39 +112,6 @@
                         </group>
                     </group>
 
-                    <group>
-                        <group string="Debug all">
-                            <field name="can_setup_ide" />
-                            <field name="breakpoint_all_write_hook_begin" />
-                            <field name="breakpoint_all_write_hook_before_model" />
-                            <field name="breakpoint_all_write_hook_model_write_field" />
-                            <field name="breakpoint_all_write_hook_model_write_field_config_field_name" />
-                            <field name="breakpoint_all_write_hook_model_write_field_config_field_att" />
-                        </group>
-                        <group string="Debug Uc0">
-                            <field name="config_debug_uc0" />
-                            <field name="breakpoint_uc0_bp_cg_uc0" />
-                            <field name="breakpoint_uc0_first_line_hook" />
-                        </group>
-                        <group string="Debug UcA">
-                            <field name="config_debug_ucA" />
-                            <field name="breakpoint_ucA_bp_cg_ucA" />
-                            <field name="breakpoint_ucA_first_line_hook" />
-                        </group>
-                        <group string="Debug UcB">
-                            <field name="config_debug_ucB" />
-                            <field name="breakpoint_ucB_bp_cg_ucB" />
-                            <field name="breakpoint_ucB_first_line_hook" />
-                            <field name="breakpoint_ucB_write_code_model_field" />
-                            <field name="breakpoint_ucB_write_code_model_field_config_model_name" />
-                            <field name="breakpoint_ucB_write_code_model_field_config_field_name" />
-                        </group>
-                        <group string="Pycharm">
-                            <field name="ide_pycharm_configuration_ids" widget="many2many_tags" />
-                            <field name="is_pause" />
-                        </group>
-                    </group>
-
                     <group string="Path" name="group_path">
                         <field name="module_path" />
                         <field name="config_path" />
@@ -147,6 +123,62 @@
                         <field name="template_path" />
                         <field name="template_hooks_py" />
                     </group>
+                    <notebook>
+                        <page string="Debug all">
+                            <group>
+                                <group string="General">
+                                    <field name="can_setup_ide" />
+                                </group>
+                                <group string="Breakpoint">
+                                    <field name="breakpoint_all_write_hook_begin" />
+                                    <field name="breakpoint_all_write_hook_before_model" />
+                                </group>
+                                <group string="Write hook write field">
+                                    <field name="breakpoint_all_write_hook_model_write_field" />
+                                    <field name="breakpoint_all_write_hook_model_write_field_config_field_name" />
+                                    <field name="breakpoint_all_write_hook_model_write_field_config_field_att" />
+                                </group>
+                            </group>
+                        </page>
+                        <page string="Debug Uc0">
+                            <group>
+                                <group string="General">
+                                    <field name="config_debug_uc0" />
+                                </group>
+                                <group string="Breakpoint">
+                                    <field name="breakpoint_uc0_bp_cg_uc0" />
+                                    <field name="breakpoint_uc0_first_line_hook" />
+                                </group>
+                            </group>
+                        </page>
+                        <page string="Debug UcA">
+                            <group>
+                                <group string="General">
+                                    <field name="config_debug_ucA" />
+                                </group>
+                                <group string="Breakpoint">
+                                    <field name="breakpoint_ucA_bp_cg_ucA" />
+                                    <field name="breakpoint_ucA_first_line_hook" />
+                                </group>
+                            </group>
+                        </page>
+                        <page string="Debug UcB">
+                            <group>
+                                <group string="General">
+                                    <field name="config_debug_ucB" />
+                                </group>
+                                <group string="Breakpoint">
+                                    <field name="breakpoint_ucB_bp_cg_ucB" />
+                                    <field name="breakpoint_ucB_first_line_hook" />
+                                </group>
+                                <group string="Write code model field">
+                                    <field name="breakpoint_ucB_write_code_model_field" />
+                                    <field name="breakpoint_ucB_write_code_model_field_config_model_name" />
+                                    <field name="breakpoint_ucB_write_code_model_field_config_field_name" />
+                                </group>
+                            </group>
+                        </page>
+                    </notebook>
                 </sheet>
             </form>
         </field>
