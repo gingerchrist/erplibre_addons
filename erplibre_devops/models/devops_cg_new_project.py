@@ -247,6 +247,12 @@ class DevopsCgNewProject(models.Model):
         string="Pycharm configurations",
     )
 
+    devops_exec_ids = fields.One2many(
+        comodel_name="devops.exec",
+        inverse_name="new_project_id",
+        string="Executions",
+    )
+
     new_project_with_code_generator = fields.Boolean(
         default=True,
         help=(

@@ -178,6 +178,11 @@
                                 </group>
                             </group>
                         </page>
+                        <page string="Execution">
+                            <group>
+                                <field name="devops_exec_ids" />
+                            </group>
+                        </page>
                     </notebook>
                 </sheet>
             </form>

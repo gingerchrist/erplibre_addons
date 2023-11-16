@@ -2029,6 +2029,12 @@ class DevopsWorkspace(models.Model):
                     .exists()
                 )
                 devops_exec_value["devops_exec_bundle_id"] = devops_exec_bundle
+            id_devops_cg_new_project = self.env.context.get(
+                "devops_cg_new_project"
+            )
+            if id_devops_cg_new_project:
+                devops_exec_value["new_project_id"] = id_devops_cg_new_project
+
             devops_exec = self.env["devops.exec"].create(devops_exec_value)
             lst_result.append(devops_exec)
             if force_open_terminal:

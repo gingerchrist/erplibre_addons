@@ -53,6 +53,8 @@ class DevopsExec(models.Model):
 
     module = fields.Char()
 
+    new_project_id = fields.Many2one(comodel_name="devops.cg.new_project")
+
     devops_workspace = fields.Many2one(
         comodel_name="devops.workspace", readonly=True
     )
