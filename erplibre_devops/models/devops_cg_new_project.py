@@ -1207,9 +1207,10 @@ class DevopsCgNewProject(models.Model):
                         lst_update_cg.append((old_str, new_str))
 
                     # Force add menu and access
-                    lst_update_cg.append(
-                        ('"disable_generate_menu": True,', "")
-                    )
+                    if rec.mode_view in ["wizard_view", "wizard_new_view"]:
+                        lst_update_cg.append(
+                            ('"disable_generate_menu": True,', "")
+                        )
                     lst_update_cg.append(
                         ('"disable_generate_access": True,', "")
                     )
