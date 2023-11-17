@@ -429,44 +429,21 @@ class DevopsCgNewProject(models.Model):
                 has_bp = rec_ws._context.get(
                     "new_project_with_breakpoint", True
                 )
+
                 if has_bp and rec.breakpoint_all_write_hook_begin:
-                    # TODO search «if post_init_hook_feature_code_generator:» dans
-                    #  addons/TechnoLibre_odoo-code-generator/code_generator_hook/models/code_generator_writer.py
-                    #  511
-                    file_path = os.path.normpath(
-                        os.path.join(
-                            rec_ws.folder,
-                            "addons/TechnoLibre_odoo-code-generator/code_generator_hook/models/code_generator_writer.py",
-                        )
-                    )
-                    rec_ws.ide_pycharm.add_breakpoint(
-                        file_path,
-                        510,
+                    rec.add_breakpoint(
+                        file="addons/TechnoLibre_odoo-code-generator/code_generator_hook/models/code_generator_writer.py",
+                        key="if post_init_hook_feature_code_generator:",
                     )
                 if has_bp and rec.breakpoint_all_write_hook_before_model:
-                    # TODO search «lst_dependency = [a.name for a in model_id.inherit_model_ids]» dans
-                    #  addons/TechnoLibre_odoo-code-generator/code_generator_hook/models/code_generator_writer.py
-                    #  1221
-                    file_path = os.path.normpath(
-                        os.path.join(
-                            rec_ws.folder,
-                            "addons/TechnoLibre_odoo-code-generator/code_generator_hook/models/code_generator_writer.py",
-                        )
-                    )
-                    rec_ws.ide_pycharm.add_breakpoint(
-                        file_path,
-                        1220,
+                    rec.add_breakpoint(
+                        file="addons/TechnoLibre_odoo-code-generator/code_generator_hook/models/code_generator_writer.py",
+                        key=(
+                            "lst_dependency = [a.name for a in"
+                            " model_id.inherit_model_ids]"
+                        ),
                     )
                 if has_bp and rec.breakpoint_all_write_hook_model_write_field:
-                    # TODO search «self._write_dict_key(cw, subkey, value)» dans
-                    #  addons/TechnoLibre_odoo-code-generator/code_generator_hook/models/code_generator_writer.py
-                    #  1314
-                    file_path = os.path.normpath(
-                        os.path.join(
-                            rec_ws.folder,
-                            "addons/TechnoLibre_odoo-code-generator/code_generator_hook/models/code_generator_writer.py",
-                        )
-                    )
                     if (
                         rec.breakpoint_all_write_hook_model_write_field_config_field_name
                     ):
@@ -480,71 +457,44 @@ class DevopsCgNewProject(models.Model):
                             )
                     else:
                         condition = None
-                    rec_ws.ide_pycharm.add_breakpoint(
-                        file_path, 1313, condition=condition
+                    rec.add_breakpoint(
+                        file="addons/TechnoLibre_odoo-code-generator/code_generator_hook/models/code_generator_writer.py",
+                        key="self._write_dict_key(cw, subkey, value)",
+                        condition=condition,
                     )
                 if has_bp and rec.breakpoint_uc0_first_line_hook:
-                    # TODO search «env = api.Environment(cr, SUPERUSER_ID, {})» dans
-                    #  addons/TechnoLibre_odoo-code-generator-template/code_generator_demo/hooks.py
-                    #  11
-                    file_path = os.path.normpath(
-                        os.path.join(
-                            rec_ws.folder, rec.code_generator_demo_hooks_py
-                        )
-                    )
-                    rec_ws.ide_pycharm.add_breakpoint(
-                        file_path,
-                        10,
+                    rec.add_breakpoint(
+                        file=rec.code_generator_demo_hooks_py,
+                        key="env = api.Environment(cr, SUPERUSER_ID, {})",
                     )
                 if has_bp and rec.breakpoint_ucA_first_line_hook:
-                    # TODO search «env = api.Environment(cr, SUPERUSER_ID, {})» 11
-                    file_path = os.path.normpath(
-                        os.path.join(rec_ws.folder, rec.template_hooks_py)
-                    )
-                    rec_ws.ide_pycharm.add_breakpoint(
-                        file_path,
-                        10,
+                    rec.add_breakpoint(
+                        file=rec.template_hooks_py,
+                        key="env = api.Environment(cr, SUPERUSER_ID, {})",
                     )
                 if has_bp and rec.breakpoint_ucB_first_line_hook:
-                    # TODO search «env = api.Environment(cr, SUPERUSER_ID, {})» 11
-                    file_path = os.path.normpath(
-                        os.path.join(rec_ws.folder, rec.cg_hooks_py)
-                    )
-                    rec_ws.ide_pycharm.add_breakpoint(
-                        file_path,
-                        12,
+                    rec.add_breakpoint(
+                        file=rec.cg_hooks_py,
+                        key="env = api.Environment(cr, SUPERUSER_ID, {})",
                     )
                 if has_bp and rec.breakpoint_uc0_bp_cg_uc0:
-                    # TODO search «cw.emit("new_module_name = MODULE_NAME")» dans
-                    #  addons/TechnoLibre_odoo-code-generator/code_generator_hook/models/code_generator_writer.py
-                    #  716
-                    file_path = os.path.join(
-                        rec_ws.folder,
-                        "addons/TechnoLibre_odoo-code-generator/code_generator_hook/models/code_generator_writer.py",
-                    )
-                    rec_ws.ide_pycharm.add_breakpoint(
-                        file_path,
-                        715,
+                    # TODO test me
+                    rec.add_breakpoint(
+                        file="addons/TechnoLibre_odoo-code-generator/code_generator_hook/models/code_generator_writer.py",
+                        key='cw.emit("new_module_name = MODULE_NAME")',
                     )
                 if has_bp and (
                     rec.breakpoint_ucA_bp_cg_ucA
                     or rec.breakpoint_ucB_bp_cg_ucB
                 ):
-                    # TODO search «if module.template_model_name or module.template_inherit_model_name:» dans
-                    #  addons/TechnoLibre_odoo-code-generator/code_generator/models/code_generator_writer.py
-                    #  3430
-                    file_path = os.path.join(
-                        rec_ws.folder,
-                        "addons/TechnoLibre_odoo-code-generator/code_generator/models/code_generator_writer.py",
+                    rec.add_breakpoint(
+                        file="addons/TechnoLibre_odoo-code-generator/code_generator/models/code_generator_writer.py",
+                        key=(
+                            "if module.template_model_name or"
+                            " module.template_inherit_model_name:"
+                        ),
                     )
-                    rec_ws.ide_pycharm.add_breakpoint(
-                        file_path,
-                        3429,
-                    )
-                if has_bp and (rec.breakpoint_ucB_write_code_model_field):
-                    # TODO search «dct_field_attr_diff = defaultdict(list)» dans
-                    #  addons/TechnoLibre_odoo-code-generator/code_generator/models/code_generator_writer.py
-                    #  3266
+                if has_bp and rec.breakpoint_ucB_write_code_model_field:
                     lst_condition = []
                     if (
                         rec.breakpoint_ucB_write_code_model_field_config_model_name
@@ -562,12 +512,10 @@ class DevopsCgNewProject(models.Model):
                         condition = " and ".join(lst_condition)
                     else:
                         condition = None
-                    file_path = os.path.join(
-                        rec_ws.folder,
-                        "addons/TechnoLibre_odoo-code-generator/code_generator/models/code_generator_writer.py",
-                    )
-                    rec_ws.ide_pycharm.add_breakpoint(
-                        file_path, 3265, condition=condition
+                    rec.add_breakpoint(
+                        file="addons/TechnoLibre_odoo-code-generator/code_generator/models/code_generator_writer.py",
+                        key="dct_field_attr_diff = defaultdict(list)",
+                        condition=condition,
                     )
                 if conf_add_mode:
                     rec_ws.ide_pycharm.add_configuration(
@@ -1318,6 +1266,51 @@ class DevopsCgNewProject(models.Model):
             )
 
         git_repo.git.restore(relative_path)
+
+    @api.model
+    def add_breakpoint(
+        self, file=None, key=None, no_line=None, condition=None
+    ):
+        for rec in self:
+            with rec.devops_workspace.devops_create_exec_bundle(
+                "New project add breakpoint", devops_cg_new_project=rec.id
+            ) as rec_ws:
+                file_path = os.path.normpath(
+                    os.path.join(
+                        rec_ws.folder,
+                        file,
+                    )
+                )
+                lst_no_line = []
+                if key:
+                    key = key.replace('"', '\\"')
+                    cmd = f'grep -n "{key}" {file}'
+                    cmd += " | awk -F: '{print $1}'"
+                    result = rec_ws.execute(
+                        to_instance=True, cmd=cmd, engine="sh"
+                    )
+                    try:
+                        lst_no_line = [
+                            int(a) for a in result.log_all.strip().split("\n")
+                        ]
+                    except:
+                        raise Exception(
+                            "Wrong output command :"
+                            f" {cmd}\n{result.log_all.strip()}"
+                        )
+                elif no_line:
+                    lst_no_line = [int(no_line)]
+
+                if lst_no_line:
+                    for i_no_line in lst_no_line:
+                        rec_ws.ide_pycharm.add_breakpoint(
+                            file_path, i_no_line - 1, condition=condition
+                        )
+                else:
+                    _logger.warning(
+                        "Missing no_line to method add_breakpoint. Or specify"
+                        " a key to research from file."
+                    )
 
     @staticmethod
     def search_and_replace_file(filepath, lst_search_and_replace):
