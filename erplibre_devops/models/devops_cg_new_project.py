@@ -582,6 +582,7 @@ class DevopsCgNewProject(models.Model):
                 rec.is_pause = False
                 rec.exec_start_date = fields.Datetime.now(self)
                 rec.has_error = False
+                rec.has_warning = False
                 id_exec_bundle = self.env.context.get("devops_exec_bundle")
                 exec_bundle_parent_id = self.env["devops.exec.bundle"].browse(
                     id_exec_bundle
@@ -883,6 +884,7 @@ class DevopsCgNewProject(models.Model):
                 exec_id = ws.execute(cmd=cmd, to_instance=True)
                 rec.has_error = bool(exec_id.devops_exec_error_ids.exists())
                 if rec.has_error:
+                    _logger.info("Exit new project")
                     continue
 
                 # TODO need pause if ask? and continue if ask
@@ -920,6 +922,7 @@ class DevopsCgNewProject(models.Model):
                 ).execute(cmd=cmd, to_instance=True)
                 rec.has_error = bool(exec_id.devops_exec_error_ids.exists())
                 if rec.has_error:
+                    _logger.info("Exit new project")
                     continue
 
                 if not self.keep_bd_alive:
@@ -960,22 +963,23 @@ class DevopsCgNewProject(models.Model):
                 rec.stage_id = self.env.ref(
                     "erplibre_devops.devops_cg_new_project_stage_generate_uca"
                 )
+                lst_template_hooks_py_replace = []
                 if rec.mode_view in ["wizard_view", "wizard_new_view"]:
-                    lst_template_hooks_py_replace = [
+                    lst_template_hooks_py_replace.append(
                         (
                             'value["enable_template_wizard_view"] = False',
                             'value["enable_template_wizard_view"] = True',
-                        ),
-                    ]
+                        )
+                    )
                     if rec.mode_view == "wizard_new_view":
-                        lst_template_hooks_py_replace = [
+                        lst_template_hooks_py_replace.append(
                             (
                                 'value["force_generic_template_wizard_view"] ='
                                 " False",
                                 'value["force_generic_template_wizard_view"] ='
                                 " True",
-                            ),
-                        ]
+                            )
+                        )
 
                 # Add model from config
                 if self.config:
@@ -990,6 +994,7 @@ class DevopsCgNewProject(models.Model):
                     )
                     lst_template_hooks_py_replace.append((old_str, new_str))
 
+                if lst_template_hooks_py_replace:
                     self.search_and_replace_file(
                         rec.template_hooks_py,
                         lst_template_hooks_py_replace,
@@ -1015,6 +1020,7 @@ class DevopsCgNewProject(models.Model):
                 ).execute(cmd=cmd, to_instance=True)
                 rec.has_error = bool(exec_id.devops_exec_error_ids.exists())
                 if rec.has_error:
+                    _logger.info("Exit new project")
                     continue
                 _logger.info(cmd)
                 _logger.info(
@@ -1035,6 +1041,7 @@ class DevopsCgNewProject(models.Model):
                         exec_id.devops_exec_error_ids.exists()
                     )
                     if rec.has_error:
+                        _logger.info("Exit new project")
                         continue
 
                     # TODO do we need to diagnostic installing module?
@@ -1057,6 +1064,7 @@ class DevopsCgNewProject(models.Model):
                         exec_id.devops_exec_error_ids.exists()
                     )
                     if rec.has_error:
+                        _logger.info("Exit new project")
                         continue
 
                 # TODO need pause if ask? and continue if ask
@@ -1145,6 +1153,7 @@ class DevopsCgNewProject(models.Model):
 
                 rec.has_error = bool(exec_id.devops_exec_error_ids.exists())
                 if rec.has_error:
+                    _logger.info("Exit new project")
                     continue
 
                 # Add field from config
