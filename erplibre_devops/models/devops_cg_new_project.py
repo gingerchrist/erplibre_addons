@@ -664,7 +664,7 @@ class DevopsCgNewProject(models.Model):
 
                 # TODO copy directory in temp workspace file before update it
                 rec.module_path = os.path.join(rec.directory, rec.module)
-                is_over = self.validate_path_ready_to_be_override(
+                is_over = rec.validate_path_ready_to_be_override(
                     rec.module, rec.directory, ws, path=rec.module_path
                 )
                 if not rec.force and not is_over:
@@ -679,7 +679,7 @@ class DevopsCgNewProject(models.Model):
                 rec.cg_hooks_py = os.path.join(rec.cg_path, "hooks.py")
                 if (
                     not rec.force
-                    and not self.validate_path_ready_to_be_override(
+                    and not rec.validate_path_ready_to_be_override(
                         rec.code_generator_name,
                         rec.directory_cg,
                         ws,
@@ -697,7 +697,7 @@ class DevopsCgNewProject(models.Model):
                 )
                 if (
                     not rec.force
-                    and not self.validate_path_ready_to_be_override(
+                    and not rec.validate_path_ready_to_be_override(
                         rec.template_name,
                         rec.directory_template,
                         ws,
@@ -745,7 +745,7 @@ class DevopsCgNewProject(models.Model):
                 )
 
                 if not (
-                    self.validate_path_ready_to_be_override(
+                    rec.validate_path_ready_to_be_override(
                         CODE_GENERATOR_DEMO_NAME, CODE_GENERATOR_DIRECTORY, ws
                     )
                     and self.search_and_replace_file(
@@ -1211,6 +1211,7 @@ class DevopsCgNewProject(models.Model):
                         "erplibre_devops.devops_cg_new_project_stage_generate_terminate"
                     )
 
+    @api.model
     def validate_path_ready_to_be_override(self, name, directory, ws, path=""):
         if not path:
             path = os.path.join(directory, name)
@@ -1218,7 +1219,6 @@ class DevopsCgNewProject(models.Model):
             return True
         # Check if in git
         # TODO complete me, need to check into instance
-        return True
         try:
             git_repo = Repo(directory)
         except NoSuchPathError:
@@ -1229,7 +1229,7 @@ class DevopsCgNewProject(models.Model):
                 " ignore it."
             )
 
-        if self.rec.stop_execution_if_env_not_clean:
+        if self.stop_execution_if_env_not_clean:
             status = git_repo.git.status(name, porcelain=True)
             if status:
                 msg = (
