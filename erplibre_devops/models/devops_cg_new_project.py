@@ -54,6 +54,15 @@ class DevopsCgNewProject(models.Model):
         selection=[("self", "Self generate"), ("cg", "Code generator")]
     )
 
+    mode_view = fields.Selection(
+        selection=[
+            ("normal", "Normal"),
+            ("wizard_view", "Wizard"),
+            ("wizard_new_view", "New"),
+        ],
+        default="normal",
+    )
+
     last_new_project = fields.Many2one(
         comodel_name="devops.cg.new_project",
         string="Last new project",
@@ -951,12 +960,22 @@ class DevopsCgNewProject(models.Model):
                 rec.stage_id = self.env.ref(
                     "erplibre_devops.devops_cg_new_project_stage_generate_uca"
                 )
-                lst_template_hooks_py_replace = [
-                    (
-                        'value["enable_template_wizard_view"] = False',
-                        'value["enable_template_wizard_view"] = True',
-                    ),
-                ]
+                if rec.mode_view in ["wizard_view", "wizard_new_view"]:
+                    lst_template_hooks_py_replace = [
+                        (
+                            'value["enable_template_wizard_view"] = False',
+                            'value["enable_template_wizard_view"] = True',
+                        ),
+                    ]
+                    if rec.mode_view == "wizard_new_view":
+                        lst_template_hooks_py_replace = [
+                            (
+                                'value["force_generic_template_wizard_view"] ='
+                                " False",
+                                'value["force_generic_template_wizard_view"] ='
+                                " True",
+                            ),
+                        ]
 
                 # Add model from config
                 if self.config:

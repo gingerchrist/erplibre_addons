@@ -288,6 +288,16 @@ class DevopsWorkspace(models.Model):
         default="docker",
     )
 
+    mode_view = fields.Selection(
+        selection=[
+            ("normal", "Normal"),
+            ("wizard_view", "Wizard"),
+            ("wizard_new_view", "New"),
+        ],
+        default="normal",
+        help="For code generator",
+    )
+
     mode_exec = fields.Selection(
         selection=[
             ("docker", "Docker"),
@@ -605,6 +615,7 @@ class DevopsWorkspace(models.Model):
                         "project_type": "self",
                         "stop_execution_if_env_not_clean": rec.stop_execution_if_env_not_clean,
                         "devops_exec_bundle_id": devops_exec_bundle_parent_root_id.id,
+                        "mode_view": rec.mode_view,
                     }
                 )
                 if rec.last_new_project_self:
