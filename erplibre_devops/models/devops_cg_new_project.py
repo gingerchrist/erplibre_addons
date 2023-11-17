@@ -223,6 +223,12 @@ class DevopsCgNewProject(models.Model):
 
     template_hooks_py = fields.Char(help="Path of template hooks python file.")
 
+    bd_name_demo = fields.Char(help="BD name for uc0")
+
+    bd_name_template = fields.Char(help="BD name for ucA")
+
+    bd_name_generator = fields.Char(help="BD name for ucB")
+
     code_generator_demo_hooks_py = fields.Char(
         help="Path of code_generator hooks python file."
     )
@@ -866,18 +872,20 @@ class DevopsCgNewProject(models.Model):
                 rec.stage_id = self.env.ref(
                     "erplibre_devops.devops_cg_new_project_stage_generate_uc0"
                 )
-                bd_name_demo = (
-                    f"new_project_code_generator_demo_{uuid.uuid4()}"[:63]
-                )
+                if not rec.bd_name_demo:
+                    rec.bd_name_demo = (
+                        f"new_project_code_generator_demo_{uuid.uuid4()}"[:63]
+                    )
+
                 if rec.new_project_with_code_generator:
                     cmd = (
                         "./script/database/db_restore.py --database"
-                        f" {bd_name_demo}"
+                        f" {rec.bd_name_demo}"
                     )
                 else:
                     cmd = (
                         "./script/database/db_restore.py --database"
-                        f" {bd_name_demo} --restore_image"
+                        f" {rec.bd_name_demo} --restore_image"
                         " addons_install_code_generator_basic"
                     )
                 _logger.info(cmd)
@@ -896,7 +904,7 @@ class DevopsCgNewProject(models.Model):
                     # rec.config_path is a temporary file, it will not work. Use default config instead
                     rec.action_new_project_setup_IDE(
                         conf_add_mode="install",
-                        conf_add_db=bd_name_demo,
+                        conf_add_db=rec.bd_name_demo,
                         conf_add_module="code_generator_demo",
                         # conf_add_config_path=rec.config_path,
                     )
@@ -909,13 +917,14 @@ class DevopsCgNewProject(models.Model):
                 if rec.active_coverage:
                     cmd = (
                         "./script/addons/coverage_install_addons_dev.sh"
-                        f" {bd_name_demo} code_generator_demo"
+                        f" {rec.bd_name_demo} code_generator_demo"
                         f" {rec.config_path}"
                     )
                 else:
                     cmd = (
-                        f"./script/addons/install_addons_dev.sh {bd_name_demo}"
-                        f" code_generator_demo {rec.config_path}"
+                        "./script/addons/install_addons_dev.sh"
+                        f" {rec.bd_name_demo} code_generator_demo"
+                        f" {rec.config_path}"
                     )
                 exec_id = ws.with_context(
                     devops_cg_new_project=rec.id
@@ -928,7 +937,7 @@ class DevopsCgNewProject(models.Model):
                 if not self.keep_bd_alive:
                     cmd = (
                         "./.venv/bin/python3 ./odoo/odoo-bin db --drop"
-                        f" --database {bd_name_demo}"
+                        f" --database {rec.bd_name_demo}"
                     )
                     _logger.info(cmd)
                     ws.execute(cmd=cmd, to_instance=True)
@@ -1001,18 +1010,22 @@ class DevopsCgNewProject(models.Model):
                     )
 
                 # Execute all
-                bd_name_template = (
-                    f"new_project_code_generator_template_{uuid.uuid4()}"[:63]
-                )
+                if not rec.bd_name_template:
+                    rec.bd_name_template = (
+                        f"new_project_code_generator_template_{uuid.uuid4()}"[
+                            :63
+                        ]
+                    )
+
                 if rec.new_project_with_code_generator:
                     cmd = (
                         "./script/database/db_restore.py --database"
-                        f" {bd_name_template}"
+                        f" {rec.bd_name_template}"
                     )
                 else:
                     cmd = (
                         "./script/database/db_restore.py --database"
-                        f" {bd_name_template} --restore_image"
+                        f" {rec.bd_name_template} --restore_image"
                         " addons_install_code_generator_basic"
                     )
                 exec_id = ws.with_context(
@@ -1049,12 +1062,12 @@ class DevopsCgNewProject(models.Model):
                     if rec.active_coverage:
                         cmd = (
                             "./script/addons/coverage_install_addons_dev.sh"
-                            f" {bd_name_template} {rec.module} {rec.config_path}"
+                            f" {rec.bd_name_template} {rec.module} {rec.config_path}"
                         )
                     else:
                         cmd = (
                             "./script/addons/install_addons_dev.sh"
-                            f" {bd_name_template} {rec.module} {rec.config_path}"
+                            f" {rec.bd_name_template} {rec.module} {rec.config_path}"
                         )
                     _logger.info(cmd)
                     exec_id = ws.with_context(
@@ -1076,7 +1089,7 @@ class DevopsCgNewProject(models.Model):
                     # rec.config_path is a temporary file, it will not work. Use default config instead
                     rec.action_new_project_setup_IDE(
                         conf_add_mode="install",
-                        conf_add_db=bd_name_template,
+                        conf_add_db=rec.bd_name_template,
                         conf_add_module=rec.template_name,
                         # conf_add_config_path=rec.config_path,
                     )
@@ -1085,12 +1098,12 @@ class DevopsCgNewProject(models.Model):
                 if rec.active_coverage:
                     cmd = (
                         "./script/addons/coverage_install_addons_dev.sh"
-                        f" {bd_name_template} {rec.template_name} {rec.config_path}"
+                        f" {rec.bd_name_template} {rec.template_name} {rec.config_path}"
                     )
                 else:
                     cmd = (
                         "./script/addons/install_addons_dev.sh"
-                        f" {bd_name_template}"
+                        f" {rec.bd_name_template}"
                         f" {rec.template_name} {rec.config_path}"
                     )
                 _logger.info(cmd)
@@ -1103,7 +1116,7 @@ class DevopsCgNewProject(models.Model):
                 if not self.keep_bd_alive:
                     cmd = (
                         "./.venv/bin/python3 ./odoo/odoo-bin db --drop"
-                        f" --database {bd_name_template}"
+                        f" --database {rec.bd_name_template}"
                     )
                     _logger.info(cmd)
                     ws.execute(cmd=cmd, to_instance=True)
@@ -1129,18 +1142,20 @@ class DevopsCgNewProject(models.Model):
                 rec.stage_id = self.env.ref(
                     "erplibre_devops.devops_cg_new_project_stage_generate_ucb"
                 )
-                bd_name_generator = (
-                    f"new_project_code_generator_{uuid.uuid4()}"[:63]
-                )
+                if not rec.bd_name_generator:
+                    rec.bd_name_generator = (
+                        f"new_project_code_generator_{uuid.uuid4()}"[:63]
+                    )
+
                 if rec.new_project_with_code_generator:
                     cmd = (
                         "./script/database/db_restore.py --database"
-                        f" {bd_name_generator}"
+                        f" {rec.bd_name_generator}"
                     )
                 else:
                     cmd = (
                         "./script/database/db_restore.py --database"
-                        f" {bd_name_generator} --restore_image"
+                        f" {rec.bd_name_generator} --restore_image"
                         " addons_install_code_generator_basic"
                     )
                 _logger.info(cmd)
@@ -1212,7 +1227,7 @@ class DevopsCgNewProject(models.Model):
                     # rec.config_path is a temporary file, it will not work. Use default config instead
                     rec.action_new_project_setup_IDE(
                         conf_add_mode="install",
-                        conf_add_db=bd_name_generator,
+                        conf_add_db=rec.bd_name_generator,
                         conf_add_module=rec.code_generator_name,
                         # conf_add_config_path=rec.config_path,
                     )
@@ -1221,12 +1236,12 @@ class DevopsCgNewProject(models.Model):
                 if rec.active_coverage:
                     cmd = (
                         "./script/addons/coverage_install_addons_dev.sh"
-                        f" {bd_name_generator} {rec.code_generator_name} {rec.config_path}"
+                        f" {rec.bd_name_generator} {rec.code_generator_name} {rec.config_path}"
                     )
                 else:
                     cmd = (
                         "./script/addons/install_addons_dev.sh"
-                        f" {bd_name_generator} {rec.code_generator_name} {rec.config_path}"
+                        f" {rec.bd_name_generator} {rec.code_generator_name} {rec.config_path}"
                     )
                 _logger.info(cmd)
                 exec_id = ws.with_context(
@@ -1241,7 +1256,7 @@ class DevopsCgNewProject(models.Model):
                 if not self.keep_bd_alive:
                     cmd = (
                         "./.venv/bin/python3 ./odoo/odoo-bin db --drop"
-                        f" --database {bd_name_generator}"
+                        f" --database {rec.bd_name_generator}"
                     )
                     _logger.info(cmd)
                     ws.execute(cmd=cmd, to_instance=True)
