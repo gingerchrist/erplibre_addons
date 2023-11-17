@@ -112,6 +112,7 @@ class DevopsIdePycharm(models.Model):
                     "odoo.exceptions.ValidationError:",
                     "Exception:",
                     "NameError:",
+                    "TypeError:",
                     "AttributeError:",
                     "ValueError:",
                     "FileNotFoundError:",
