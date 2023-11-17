@@ -60,7 +60,7 @@ class DevopsCgNewProject(models.Model):
             ("wizard_view", "Wizard"),
             ("wizard_new_view", "New"),
         ],
-        default="normal",
+        default="wizard_new_view",
     )
 
     last_new_project = fields.Many2one(
