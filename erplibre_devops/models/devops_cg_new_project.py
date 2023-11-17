@@ -253,6 +253,20 @@ class DevopsCgNewProject(models.Model):
         string="Executions",
     )
 
+    log_error_ids = fields.One2many(
+        comodel_name="devops.log.error",
+        inverse_name="new_project_id",
+        string="Log errors",
+        readonly=True,
+    )
+
+    log_warning_ids = fields.One2many(
+        comodel_name="devops.log.warning",
+        inverse_name="new_project_id",
+        string="Log warnings",
+        readonly=True,
+    )
+
     new_project_with_code_generator = fields.Boolean(
         default=True,
         help=(
@@ -616,6 +630,10 @@ class DevopsCgNewProject(models.Model):
 
                 rec.exec_stop_date = fields.Datetime.now(self)
                 rec.execution_finish = True
+                if rec.log_error_ids:
+                    rec.has_error = True
+                if rec.log_warning_ids:
+                    rec.has_warning = True
 
     @api.multi
     def action_init(self, ctx=None, rec_ws=None):

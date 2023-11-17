@@ -183,6 +183,12 @@
                                 <field name="devops_exec_ids" />
                             </group>
                         </page>
+                        <page string="Log">
+                            <group>
+                                <field name="log_error_ids" />
+                                <field name="log_warning_ids" />
+                            </group>
+                        </page>
                     </notebook>
                 </sheet>
             </form>

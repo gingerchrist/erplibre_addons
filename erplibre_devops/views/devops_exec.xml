@@ -18,6 +18,7 @@
                     </div>
                     <group>
                         <field name="devops_workspace" />
+                        <field name="new_project_id" />
                     </group>
                     <group string="Date">
                         <group>
@@ -57,8 +58,8 @@
                         </page>
                         <page string="Log error" name="page_log_error">
                             <group>
-                                <field name="log_error" />
-                                <field name="log_warning" />
+                                <field name="log_error_ids" />
+                                <field name="log_warning_ids" />
                             </group>
                         </page>
                     </notebook>

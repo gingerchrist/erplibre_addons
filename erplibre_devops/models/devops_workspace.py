@@ -2064,6 +2064,7 @@ class DevopsWorkspace(models.Model):
                 rec.find_exec_error_from_log(
                     out, devops_exec, devops_exec_bundle_id
                 )
+                devops_exec.compute_error()
 
         if len(self) == 1:
             return lst_result[0]
