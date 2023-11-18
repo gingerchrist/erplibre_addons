@@ -36,6 +36,12 @@ def post_init_hook(cr, e):
                 " ./script/selenium/web_login_open_me_devops_auto.py",
                 shell=True,
             )
+        elif os.environ.get("IS_ME_AUTO_FORCE", False):
+            subprocess.Popen(
+                f"cd {os.getcwd()};./.venv/bin/python"
+                " ./script/selenium/web_login_open_me_devops_auto_force.py",
+                shell=True,
+            )
         else:
             subprocess.Popen(
                 f"cd {os.getcwd()};./.venv/bin/python"
