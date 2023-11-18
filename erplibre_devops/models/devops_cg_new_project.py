@@ -183,6 +183,10 @@ class DevopsCgNewProject(models.Model):
         help="Breakpoint dans la section génération de code du uCA."
     )
 
+    breakpoint_ucA_bp_extract_view_warning = fields.Boolean(
+        help="Breakpoint uCA to diagnostic warning when extract view."
+    )
+
     breakpoint_ucB_bp_cg_ucB = fields.Boolean(
         help="Breakpoint dans la section génération de code du uCB."
     )
@@ -327,6 +331,7 @@ class DevopsCgNewProject(models.Model):
         "breakpoint_uc0_bp_cg_uc0",
         "breakpoint_ucA_bp_cg_ucA",
         "breakpoint_ucB_bp_cg_ucB",
+        "breakpoint_ucA_bp_extract_view_warning",
         "breakpoint_ucB_write_code_model_field",
     )
     def _compute_can_setup_ide(self):
@@ -344,6 +349,7 @@ class DevopsCgNewProject(models.Model):
                 + rec.breakpoint_uc0_bp_cg_uc0
                 + rec.breakpoint_ucA_bp_cg_ucA
                 + rec.breakpoint_ucB_bp_cg_ucB
+                + rec.breakpoint_ucA_bp_extract_view_warning
                 + rec.breakpoint_ucB_write_code_model_field
             )
 
@@ -367,6 +373,7 @@ class DevopsCgNewProject(models.Model):
                 rec.breakpoint_uc0_bp_cg_uc0 = False
                 rec.breakpoint_ucA_bp_cg_ucA = False
                 rec.breakpoint_ucB_bp_cg_ucB = False
+                rec.breakpoint_ucA_bp_extract_view_warning = False
                 rec.breakpoint_ucB_write_code_model_field = False
 
     @api.depends("exec_start_date", "exec_stop_date")
@@ -516,6 +523,15 @@ class DevopsCgNewProject(models.Model):
                         "if module.template_model_name or"
                         " module.template_inherit_model_name:"
                     )
+                    if is_test:
+                        lst_test.append((file, key))
+                    else:
+                        rec.add_breakpoint(file=file, key=key)
+                if is_test or (
+                    has_bp and (rec.breakpoint_ucA_bp_extract_view_warning)
+                ):
+                    file = "addons/TechnoLibre_odoo-code-generator/code_generator/extractor_view.py"
+                    key = "_logger.warning("
                     if is_test:
                         lst_test.append((file, key))
                     else:

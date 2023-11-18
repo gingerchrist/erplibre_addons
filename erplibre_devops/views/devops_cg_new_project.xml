@@ -164,6 +164,7 @@
                                 <group string="Breakpoint">
                                     <field name="breakpoint_ucA_bp_cg_ucA" />
                                     <field name="breakpoint_ucA_first_line_hook" />
+                                    <field name="breakpoint_ucA_bp_extract_view_warning" />
                                 </group>
                             </group>
                         </page>
