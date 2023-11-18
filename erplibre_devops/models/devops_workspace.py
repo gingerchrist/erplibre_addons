@@ -294,7 +294,7 @@ class DevopsWorkspace(models.Model):
             ("wizard_view", "Wizard"),
             ("wizard_new_view", "New"),
         ],
-        default="normal",
+        default="wizard_view",
         help="For code generator",
     )
 
