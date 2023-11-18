@@ -2330,6 +2330,10 @@ sock.close()
             }
             if devops_exec_id:
                 error_value["devops_exec_id"] = devops_exec_id.id
+            if parent_root_id.devops_new_project_ids.exists():
+                error_value[
+                    "stage_new_project_id"
+                ] = parent_root_id.devops_new_project_ids[0].stage_id.id
             # this is not true, cannot associate exec_id to this error
             # exec_id = devops_exec_bundle_id.get_last_exec()
             # if exec_id:

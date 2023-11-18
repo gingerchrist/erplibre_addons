@@ -48,6 +48,11 @@ class DevopsExecError(models.Model):
         readonly=True,
     )
 
+    stage_new_project_id = fields.Many2one(
+        comodel_name="devops.cg.new_project.stage",
+        string="Stage",
+    )
+
     parent_root_exec_bundle_id = fields.Many2one(
         comodel_name="devops.exec.bundle",
         readonly=True,
@@ -113,6 +118,18 @@ class DevopsExecError(models.Model):
     def action_kill_workspace(self):
         self.ensure_one()
         self.devops_workspace.action_stop()
+
+    @api.multi
+    def action_debug_new_project(self, ctx=None):
+        for rec in self:
+            np_ids = (
+                rec.parent_root_exec_bundle_id.devops_new_project_ids.exists()
+            )
+            if np_ids:
+                np_id = np_ids[0]
+            for np_id in np_ids:
+                np_id.stage_id = rec.stage_new_project_id.id
+                np_id.action_new_project_debug(ctx=None)
 
     @api.multi
     def action_kill_pycharm(self):

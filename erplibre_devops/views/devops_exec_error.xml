@@ -21,6 +21,7 @@
                         type="object"
                     />
                     <button class="oe_highlight" name="action_kill_workspace" string="Stop outside" type="object" />
+                    <button class="btn-warning" name="action_debug_new_project" string="Debug" type="object" />
                 </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
@@ -37,6 +38,8 @@
                         <field name="devops_workspace" />
                         <field name="devops_exec_bundle_id" />
                         <field name="devops_exec_id" />
+                        <field name="parent_root_exec_bundle_id" />
+                        <field name="stage_new_project_id" />
                     </group>
                     <group>
                         <group string="Info">
