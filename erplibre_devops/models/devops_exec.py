@@ -23,12 +23,9 @@ class DevopsExec(models.Model):
     exec_start_date = fields.Datetime(
         string="Execution start date",
         default=fields.Datetime.now,
-        readonly=True,
     )
 
-    exec_stop_date = fields.Datetime(
-        string="Execution stop date", readonly=True
-    )
+    exec_stop_date = fields.Datetime(string="Execution stop date")
 
     exec_time_duration = fields.Integer(
         string="Execution time duration",
@@ -37,9 +34,9 @@ class DevopsExec(models.Model):
         help="Time in second, duration of execution",
     )
 
-    cmd = fields.Char(readonly=True)
+    cmd = fields.Char()
 
-    folder = fields.Char(readonly=True)
+    folder = fields.Char()
 
     time_duration_result = fields.Char(
         compute="_compute_time_duration_result",
@@ -53,26 +50,41 @@ class DevopsExec(models.Model):
 
     module = fields.Char()
 
-    devops_workspace = fields.Many2one(
-        comodel_name="devops.workspace", readonly=True
+    new_project_id = fields.Many2one(
+        comodel_name="devops.cg.new_project",
+        string="New Project",
     )
+
+    devops_workspace = fields.Many2one(comodel_name="devops.workspace")
 
     devops_exec_error_ids = fields.One2many(
         comodel_name="devops.exec.error",
         inverse_name="devops_exec_id",
         string="Executions errors",
-        readonly=True,
+    )
+
+    log_error_ids = fields.One2many(
+        comodel_name="devops.log.error",
+        inverse_name="exec_id",
+        string="Log errors",
+    )
+
+    log_warning_ids = fields.One2many(
+        comodel_name="devops.log.warning",
+        inverse_name="exec_id",
+        string="Log warnings",
     )
 
     devops_exec_bundle_id = fields.Many2one(
-        comodel_name="devops.exec.bundle", readonly=True
+        comodel_name="devops.exec.bundle",
+        string="Devops Exec Bundle",
     )
 
-    log_stdin = fields.Text(readonly=True)
+    log_stdin = fields.Text()
 
-    log_stdout = fields.Text(readonly=True)
+    log_stdout = fields.Text()
 
-    log_stderr = fields.Text(readonly=True)
+    log_stderr = fields.Text()
 
     log_all = fields.Text(
         compute="_compute_log_all",
@@ -113,6 +125,74 @@ class DevopsExec(models.Model):
                 rec.log_all += rec.log_stdout
             if rec.log_stderr:
                 rec.log_all += rec.log_stderr
+
+    def compute_error(self):
+        for rec in self:
+            # extract error/warning
+            # TODO maybe need to fix «has no access rules, consider adding one.»
+            lst_item_ignore_error = [
+                "fetchmail_notify_error_to_sender",
+                'odoo.sql_db: bad query: ALTER TABLE "db_backup" DROP'
+                ' CONSTRAINT "db_backup_db_backup_name_unique"',
+                'ERROR: constraint "db_backup_db_backup_name_unique" of'
+                ' relation "db_backup" does not exist',
+                'odoo.sql_db: bad query: ALTER TABLE "db_backup" DROP'
+                ' CONSTRAINT "db_backup_db_backup_days_to_keep_positive"',
+                'ERROR: constraint "db_backup_db_backup_days_to_keep_positive"'
+                ' of relation "db_backup" does not exist',
+                "odoo.addons.code_generator.extractor_module_file: Ignore next"
+                " error about ALTER TABLE DROP CONSTRAINT.",
+                "has no access rules, consider adding one.",
+            ]
+            keyword_error_to_remove = [
+                "devops.code_generator.module.model.field.has_error",
+                "devops.exec.error.name",
+                "devops.workspace.devops_exec_error_count",
+                "erplibre_devops/views/devops_exec_error.xml",
+                "devops_exec_error.py",
+                "devops_log_error.py",
+            ]
+            lst_item_ignore_warning = [
+                "have the same label:",
+                "odoo.addons.code_generator.extractor_module_file: Ignore next"
+                " error about ALTER TABLE DROP CONSTRAINT.",
+                "has no access rules, consider adding one.",
+            ]
+            keyword_warning_to_remove = [
+                "devops_log_warning.py",
+                "devops_log_warning.py",
+            ]
+            for line in rec.log_all.split("\n"):
+                line_fix = line.lower()
+                for key_to_remove in keyword_error_to_remove:
+                    line_fix = line_fix.replace(key_to_remove, "")
+                for key_to_remove in keyword_warning_to_remove:
+                    line_fix = line_fix.replace(key_to_remove, "")
+
+                if "error" in line_fix:
+                    for ignore_item in lst_item_ignore_error:
+                        if ignore_item in line:
+                            break
+                    else:
+                        v = {
+                            "name": line.strip(),
+                            "exec_id": rec.id,
+                        }
+                        if rec.new_project_id:
+                            v["new_project_id"] = rec.new_project_id.id
+                        self.env["devops.log.error"].create(v)
+                if "warning" in line_fix:
+                    for ignore_item in lst_item_ignore_warning:
+                        if ignore_item in line:
+                            break
+                    else:
+                        v = {
+                            "name": line.strip(),
+                            "exec_id": rec.id,
+                        }
+                        if rec.new_project_id:
+                            v["new_project_id"] = rec.new_project_id.id
+                        self.env["devops.log.warning"].create(v)
 
     @api.depends("exec_stop_date")
     def _compute_execution_finish(self):

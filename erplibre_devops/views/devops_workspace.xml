@@ -101,11 +101,67 @@
                         attrs="{'invisible': ['|', ('is_conflict_mode_exec', '=', True), ('has_re_execute_new_project', '=', False)]}"
                     />
                 </header>
-                <div
-                    class="badge-pill badge-success float-right"
-                    attrs="{'invisible': [('is_self_instance', '=', False)]}"
-                >
+                <div class="badge-pill badge-success float-right" attrs="{'invisible': [('is_me', '=', False)]}">
                     Same instance
+                </div>
+                <div class="oe_button_box" name="button_box">
+                    <button name="toggle_active" type="object" class="oe_stat_button" icon="fa-archive">
+                        <field
+                            name="active"
+                            widget="boolean_button"
+                            options="{&quot;terminology&quot;: &quot;archive&quot;}"
+                        />
+                    </button>
+                    <button
+                        class="oe_stat_button"
+                        type="action"
+                        name="%(erplibre_devops.devops_exec_action_window)d"
+                        context="{'search_default_devops_workspace': active_id, 'search_default_group_devops_exec_bundle_id': 1}"
+                        attrs="{'invisible': [('devops_exec_count', '==', 0)]}"
+                        icon="fa-building-o"
+                    >
+                        <field string="Executions" name="devops_exec_count" widget="statinfo" />
+                    </button>
+                    <button
+                        class="oe_stat_button"
+                        type="action"
+                        name="%(erplibre_devops.devops_exec_error_action_window)d"
+                        context="{'search_default_devops_workspace': active_id}"
+                        attrs="{'invisible': [('devops_exec_error_count', '==', 0)]}"
+                        icon="fa-building-o"
+                    >
+                        <field string="Errors" name="devops_exec_error_count" widget="statinfo" />
+                    </button>
+                    <button
+                        class="oe_stat_button"
+                        type="action"
+                        name="%(erplibre_devops.devops_new_project_action_window)d"
+                        context="{'search_default_devops_workspace': active_id}"
+                        attrs="{'invisible': [('new_project_count', '==', 0)]}"
+                        icon="fa-building-o"
+                    >
+                        <field string="Generations" name="new_project_count" widget="statinfo" />
+                    </button>
+                    <button
+                        class="oe_stat_button"
+                        type="action"
+                        name="%(erplibre_devops.devops_exec_bundle_action_window)d"
+                        context="{'search_default_devops_workspace': active_id}"
+                        attrs="{'invisible': [('devops_exec_bundle_count', '==', 0)]}"
+                        icon="fa-building-o"
+                    >
+                        <field string="Bundles" name="devops_exec_bundle_count" widget="statinfo" />
+                    </button>
+                    <button
+                        class="oe_stat_button"
+                        type="action"
+                        name="%(erplibre_devops.devops_exec_bundle_action_window)d"
+                        context="{'search_default_devops_workspace': active_id, 'search_default_root': 1}"
+                        attrs="{'invisible': [('devops_exec_bundle_root_count', '==', 0)]}"
+                        icon="fa-building-o"
+                    >
+                        <field string="Bundles root" name="devops_exec_bundle_root_count" widget="statinfo" />
+                    </button>
                 </div>
                 <div class="oe_title">
                     <h1>
@@ -126,7 +182,6 @@
                         <field name="mode_version_erplibre" />
                         <field name="mode_version_base" />
                         <field name="is_conflict_mode_exec" invisible="True" />
-                        <field name="is_self_instance" invisible="True" />
                         <field name="is_installed" invisible="True" />
                         <field name="is_running" invisible="True" />
                         <field name="is_me" invisible="True" />
@@ -163,8 +218,8 @@
                         <field name="git_url" />
                     </group>
                     <group string="Info" attrs="{'invisible': [('is_installed', '=', False)]}">
-                        <field name="url_instance" widget="url" />
-                        <field name="url_instance_database_manager" string="URL Instance Database" widget="url" />
+                        <field name="url_instance" widget="url" string="URL" />
+                        <field name="url_instance_database_manager" string="URL Database" widget="url" />
                     </group>
                     <group string="DB" attrs="{'invisible': [('is_installed', '=', False)]}">
                         <button class="oe_highlight" name="action_restore_db_image" string="Restore" type="object" />
@@ -177,7 +232,16 @@
                     <group string="Action">
                         <button class="oe_highlight" name="action_open_terminal" string="Terminal" type="object" />
                         <button class="oe_highlight" name="action_clear_cache" string="Clear cache" type="object" />
+                        <button
+                            class="oe_highlight"
+                            name="action_open_directory"
+                            string="Open directory"
+                            type="object"
+                        />
                         <!--                            <button class="oe_highlight" name="action_open_terminal_docker" string="Terminal docker" type="object" />-->
+                    </group>
+                    <group string="IDE">
+                        <field name="ide_pycharm" />
                     </group>
                 </group>
 
@@ -472,6 +536,7 @@
                                     string="Git commit"
                                     type="object"
                                 />
+                                <field name="mode_view" />
                             </group>
                             <group>
                                 <field name="stop_execution_if_env_not_clean" />

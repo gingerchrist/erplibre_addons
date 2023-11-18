@@ -107,6 +107,6 @@
         id="devops_code_generator_code_generator_action_window"
         name="Code generator"
         res_model="devops.code_generator"
-        view_mode="kanban,tree,pivot,graph,form"
+        view_mode="tree,kanban,pivot,graph,form"
     />
 </odoo>

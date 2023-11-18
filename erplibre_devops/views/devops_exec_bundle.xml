@@ -18,8 +18,6 @@
                 <group string="IT">
                     <field name="devops_workspace" />
                     <field name="devops_exec_ids" />
-                    <field name="devops_exec_error_ids" />
-                    <field name="devops_exec_parent_error_ids" />
                     <field name="devops_new_project_ids" />
                 </group>
                 <group string="Dependencies">
@@ -40,6 +38,18 @@
                         <field name="description" />
                     </group>
                 </group>
+                <notebook>
+                    <page name="error_all" string="Errors all">
+                        <group>
+                            <field name="devops_exec_parent_error_ids" />
+                        </group>
+                    </page>
+                    <page name="error" string="Errors">
+                        <group>
+                            <field name="devops_exec_error_ids" />
+                        </group>
+                    </page>
+                </notebook>
             </form>
         </field>
     </record>
@@ -94,12 +104,29 @@
         <field name="model">devops.exec.bundle</field>
         <field name="arch" type="xml">
             <search string="DevOps code generator module model field">
-                <field name="name" string="Name" />
+                <field
+                    name="name"
+                    string="Name"
+                    filter_domain="['|',('devops_workspace','ilike',self),('name','ilike',self)]"
+                />
                 <field name="active" />
+                <field name="description" />
+                <field name="devops_workspace" string="Workspace" />
+                <filter name="root" string="Is root" domain="[('parent_id','=',False)]" help="Show roots" />
+                <filter name="child" string="Is child" domain="[('parent_id','=',True)]" help="Show childs" />
                 <filter name="active" string="Active" domain="[('active','=',True)]" help="Show active" />
                 <filter name="inactive" string="Inactive" domain="[('active','=',False)]" help="Show inactive" />
+                <filter name="is_finish" string="Finish" domain="[('execution_finish','=',True)]" help="Show finish" />
+                <filter
+                    name="is_running"
+                    string="Running"
+                    domain="[('execution_finish','=',False)]"
+                    help="Show not finish"
+                />
+                <filter name="more_1_sec" string="More 1 sec" domain="[('exec_time_duration', '>', 1)]" />
                 <group expand="1" string="Group By">
                     <filter string="Workspace" name="workspace" context="{'group_by':'devops_workspace'}" />
+                    <filter string="Parent" name="parent" context="{'group_by':'parent_id'}" />
                 </group>
             </search>
         </field>
@@ -127,6 +154,6 @@
         id="devops_exec_bundle_action_window"
         name="IT executions bundle"
         res_model="devops.exec.bundle"
-        view_mode="kanban,tree,pivot,graph,form"
+        view_mode="tree,kanban,pivot,graph,form"
     />
 </odoo>

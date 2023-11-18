@@ -4,7 +4,9 @@
 import json
 import logging
 import os
+import platform
 import re
+import subprocess
 import time
 import traceback
 from contextlib import contextmanager
@@ -32,10 +34,44 @@ class DevopsWorkspace(models.Model):
         help="Summary of this devops_workspace process",
     )
 
+    active = fields.Boolean(default=True)
+
+    sequence = fields.Integer(default=10)
+
     devops_exec_ids = fields.One2many(
         comodel_name="devops.exec",
         inverse_name="devops_workspace",
         string="Executions",
+    )
+
+    devops_exec_count = fields.Integer(
+        compute="_compute_devops_exec_count",
+        string="Executions count",
+        store=True,
+    )
+
+    new_project_count = fields.Integer(
+        compute="_compute_new_project_count",
+        string="New project count",
+        store=True,
+    )
+
+    devops_exec_error_count = fields.Integer(
+        compute="_compute_devops_exec_error_count",
+        string="Executions error count",
+        store=True,
+    )
+
+    devops_exec_bundle_count = fields.Integer(
+        compute="_compute_devops_exec_bundle_count",
+        string="Executions bundle count",
+        store=True,
+    )
+
+    devops_exec_bundle_root_count = fields.Integer(
+        compute="_compute_devops_exec_bundle_count",
+        string="Executions bundle root count",
+        store=True,
     )
 
     devops_exec_bundle_ids = fields.One2many(
@@ -121,10 +157,6 @@ class DevopsWorkspace(models.Model):
         string="port http",
         default=8069,
         help="The port of http odoo.",
-    )
-
-    is_self_instance = fields.Boolean(
-        help="Is the instance who run this database"
     )
 
     port_longpolling = fields.Integer(
@@ -254,6 +286,16 @@ class DevopsWorkspace(models.Model):
         selection=[("docker", "Docker"), ("git", "Git")],
         required=True,
         default="docker",
+    )
+
+    mode_view = fields.Selection(
+        selection=[
+            ("normal", "Normal"),
+            ("wizard_view", "Wizard"),
+            ("wizard_new_view", "New"),
+        ],
+        default="normal",
+        help="For code generator",
     )
 
     mode_exec = fields.Selection(
@@ -409,6 +451,12 @@ class DevopsWorkspace(models.Model):
         string="Last new project cg",
     )
 
+    new_project_ids = fields.One2many(
+        comodel_name="devops.cg.new_project",
+        inverse_name="devops_workspace",
+        string="All new project associate with this workspace",
+    )
+
     def _default_image_db_selection(self):
         return self.env["devops.db.image"].search(
             [("name", "like", "erplibre_base")], limit=1
@@ -451,6 +499,8 @@ class DevopsWorkspace(models.Model):
                 rec.name = f"{rec.id}: "
             else:
                 rec.name = ""
+            if rec.is_me:
+                rec.name += "ME - "
             rec.name += (
                 f"{rec.mode_source} - {rec.mode_exec} -"
                 f" {rec.mode_environnement} - {rec.mode_version_erplibre} -"
@@ -499,6 +549,47 @@ class DevopsWorkspace(models.Model):
             rec.is_installed = False
 
     @api.multi
+    @api.depends("devops_exec_ids", "devops_exec_ids.active")
+    def _compute_devops_exec_count(self):
+        for rec in self:
+            # TODO is it better use search_count or len(devops_exec_ids)?
+            rec.devops_exec_count = self.env["devops.exec"].search_count(
+                [("devops_workspace", "=", rec.id)]
+            )
+
+    @api.multi
+    @api.depends("devops_exec_error_ids", "devops_exec_error_ids.active")
+    def _compute_devops_exec_error_count(self):
+        for rec in self:
+            # TODO is it better use search_count or len(devops_exec_ids)?
+            rec.devops_exec_error_count = self.env[
+                "devops.exec.error"
+            ].search_count([("devops_workspace", "=", rec.id)])
+
+    @api.multi
+    @api.depends("devops_exec_bundle_ids", "devops_exec_bundle_ids.active")
+    def _compute_devops_exec_bundle_count(self):
+        for rec in self:
+            # TODO is it better use search_count or len(devops_exec_ids)?
+            rec.devops_exec_bundle_count = self.env[
+                "devops.exec.bundle"
+            ].search_count([("devops_workspace", "=", rec.id)])
+            rec.devops_exec_bundle_root_count = self.env[
+                "devops.exec.bundle"
+            ].search_count(
+                [("devops_workspace", "=", rec.id), ("parent_id", "=", False)]
+            )
+
+    @api.multi
+    @api.depends("new_project_ids", "new_project_ids.active")
+    def _compute_new_project_count(self):
+        for rec in self:
+            # TODO is it better use search_count or len(devops_exec_ids)?
+            rec.new_project_count = self.env[
+                "devops.cg.new_project"
+            ].search_count([("devops_workspace", "=", rec.id)])
+
+    @api.multi
     def action_cg_erplibre_devops(self):
         for rec_o in self:
             with rec_o.devops_create_exec_bundle(
@@ -524,6 +615,7 @@ class DevopsWorkspace(models.Model):
                         "project_type": "self",
                         "stop_execution_if_env_not_clean": rec.stop_execution_if_env_not_clean,
                         "devops_exec_bundle_id": devops_exec_bundle_parent_root_id.id,
+                        "mode_view": rec.mode_view,
                     }
                 )
                 if rec.last_new_project_self:
@@ -1138,6 +1230,18 @@ class DevopsWorkspace(models.Model):
         for rec_o in self:
             with rec_o.devops_create_exec_bundle("Open Terminal") as rec:
                 rec.execute(force_open_terminal=True)
+
+    @api.multi
+    def action_open_directory(self):
+        for rec_o in self:
+            with rec_o.devops_create_exec_bundle("Open directory") as rec:
+                # TODO this need to use system
+                if platform.system() == "Windows":
+                    os.startfile(rec.folder)
+                elif platform.system() == "Darwin":
+                    subprocess.Popen(["open", rec.folder])
+                else:
+                    subprocess.Popen(["xdg-open", rec.folder])
 
     @api.multi
     def action_clear_cache(self):
@@ -1837,7 +1941,9 @@ class DevopsWorkspace(models.Model):
                         )
                     else:
                         # TODO try te reuse
-                        _logger.info("Git project already exist")
+                        _logger.info(
+                            f'Git project already exist for "{rec.folder}"'
+                        )
                     rec.update_makefile_from_git()
 
                     # lst_file = rec.execute(cmd=f"ls {rec.folder}").log_all.strip().split("\n")
@@ -1890,6 +1996,7 @@ class DevopsWorkspace(models.Model):
         add_stderr_log=True,
         # get_stderr=False,
         # get_status=False,
+        run_into_workspace=False,
         to_instance=False,
         engine="bash",
         docker=False,
@@ -1933,6 +2040,12 @@ class DevopsWorkspace(models.Model):
                     .exists()
                 )
                 devops_exec_value["devops_exec_bundle_id"] = devops_exec_bundle
+            id_devops_cg_new_project = self.env.context.get(
+                "devops_cg_new_project"
+            )
+            if id_devops_cg_new_project:
+                devops_exec_value["new_project_id"] = id_devops_cg_new_project
+
             devops_exec = self.env["devops.exec"].create(devops_exec_value)
             lst_result.append(devops_exec)
             if force_open_terminal:
@@ -1945,6 +2058,8 @@ class DevopsWorkspace(models.Model):
             elif rec_force_docker:
                 out = rec.system_id.exec_docker(cmd, force_folder)
             else:
+                if run_into_workspace and not folder:
+                    folder = force_folder
                 out = rec.system_id.execute_with_result(
                     cmd,
                     folder,
@@ -1960,6 +2075,7 @@ class DevopsWorkspace(models.Model):
                 rec.find_exec_error_from_log(
                     out, devops_exec, devops_exec_bundle_id
                 )
+                devops_exec.compute_error()
 
         if len(self) == 1:
             return lst_result[0]
@@ -1977,6 +2093,18 @@ class DevopsWorkspace(models.Model):
         cmd = f'[ -e "{path}" ] && echo "true" || echo "false"'
         result = self.execute(cmd=cmd, to_instance=to_instance)
         return result.log_all.strip() == "true"
+
+    @api.model
+    def os_read_file(self, path, to_instance=False):
+        cmd = f'cat "{path}"'
+        result = self.execute(cmd=cmd, to_instance=to_instance)
+        return result.log_all
+
+    @api.model
+    def os_write_file(self, path, content, to_instance=False):
+        cmd = f'echo "{content}" > "{path}"'
+        result = self.execute(cmd=cmd, to_instance=to_instance)
+        return result.log_all
 
     @api.model
     def find_exec_error_from_log(
@@ -1998,6 +2126,7 @@ class DevopsWorkspace(models.Model):
             "odoo.exceptions.ValidationError:",
             "Exception:",
             "NameError:",
+            "TypeError:",
             "AttributeError:",
             "ValueError:",
             "FileNotFoundError:",
@@ -2219,7 +2348,12 @@ sock.close()
     @api.multi
     @contextmanager
     def devops_create_exec_bundle(
-        self, description, ignore_parent=False, succeed_msg=False
+        self,
+        description,
+        ignore_parent=False,
+        succeed_msg=False,
+        devops_cg_new_project=None,
+        ctx=None,
     ):
         self.ensure_one()
         value_bundle = {
@@ -2236,6 +2370,10 @@ sock.close()
             value_bundle
         )
         rec = self.with_context(devops_exec_bundle=devops_exec_bundle_id.id)
+        if ctx:
+            rec = rec.with_context(**ctx)
+        if devops_cg_new_project:
+            rec = rec.with_context(devops_cg_new_project=devops_cg_new_project)
         try:
             yield rec
         except exceptions.Warning as e:

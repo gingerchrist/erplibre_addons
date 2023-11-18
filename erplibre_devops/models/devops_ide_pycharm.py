@@ -3,6 +3,8 @@
 import logging
 import os
 import re
+import time
+import uuid
 
 import xmltodict
 
@@ -15,7 +17,12 @@ class DevopsIdePycharm(models.Model):
     _name = "devops.ide.pycharm"
     _description = "Pycharm management for a workspace"
 
-    name = fields.Char()
+    name = fields.Char(
+        compute="_compute_name",
+        store=True,
+    )
+
+    is_installed = fields.Boolean(help="Will be true if project contain .idea")
 
     devops_workspace = fields.Many2one(
         comodel_name="devops.workspace",
@@ -25,6 +32,19 @@ class DevopsIdePycharm(models.Model):
     line_file_tb_detected = fields.Text(
         help="Detected line to add breakpoint."
     )
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        result = super().create(vals_list)
+        result.action_pycharm_check()
+        return result
+
+    @api.depends(
+        "devops_workspace.name",
+    )
+    def _compute_name(self):
+        for rec in self:
+            rec.name = f"{rec.devops_workspace.name}"
 
     @api.multi
     def action_kill_pycharm(self):
@@ -43,9 +63,40 @@ class DevopsIdePycharm(models.Model):
         self.ensure_one()
         with self.devops_workspace.devops_create_exec_bundle(
             "Start PyCharm"
-        ) as rec:
-            cmd = "~/.local/share/JetBrains/Toolbox/scripts/pycharm"
-            rec.execute(cmd=cmd, force_open_terminal=True)
+        ) as rec_ws:
+            cmd = (
+                "~/.local/share/JetBrains/Toolbox/scripts/pycharm"
+                f" {rec_ws.folder}"
+            )
+            rec_ws.execute(cmd=cmd, force_open_terminal=True, force_exit=True)
+
+    @api.multi
+    def action_pycharm_conf_init(self, ctx=None):
+        for rec in self:
+            with rec.devops_workspace.devops_create_exec_bundle(
+                "Pycharm configuration init", ctx=ctx
+            ) as rec_ws:
+                rec = rec.with_context(rec_ws._context)
+                if not rec.is_installed:
+                    rec.action_start_pycharm()
+                    while not rec.is_installed:
+                        time.sleep(3)
+                        rec.action_pycharm_check()
+                cmd = (
+                    "source"
+                    " ./.venv/bin/activate;./script/ide/pycharm_configuration.py"
+                    " --init --overwrite"
+                )
+                rec_ws.execute(cmd=cmd, run_into_workspace=True)
+
+    @api.multi
+    def action_pycharm_check(self, ctx=None):
+        for rec in self:
+            with rec.devops_workspace.devops_create_exec_bundle(
+                "Pycharm check", ctx=ctx
+            ) as rec_ws:
+                path_idea = os.path.join(rec_ws.folder, ".idea", "misc.xml")
+                rec.is_installed = rec_ws.os_path_exists(path_idea)
 
     @api.multi
     def action_cg_setup_pycharm_debug(
@@ -53,7 +104,7 @@ class DevopsIdePycharm(models.Model):
     ):
         for rec in self:
             with rec.devops_workspace.devops_create_exec_bundle(
-                "Setup PyCharm debug"
+                "Setup PyCharm debug", ctx=ctx
             ) as rec_ws:
                 if not log:
                     log = rec_ws.devops_cg_erplibre_devops_log
@@ -61,6 +112,7 @@ class DevopsIdePycharm(models.Model):
                     "odoo.exceptions.ValidationError:",
                     "Exception:",
                     "NameError:",
+                    "TypeError:",
                     "AttributeError:",
                     "ValueError:",
                     "FileNotFoundError:",
@@ -167,19 +219,91 @@ class DevopsIdePycharm(models.Model):
         return False
 
     @api.model
-    def add_breakpoint(self, file_path, line):
+    def add_configuration(
+        self,
+        ctx=None,
+        conf_add_mode=None,
+        conf_add_db=None,
+        conf_add_module=None,
+        conf_add_config_path="config.conf",
+    ):
+        for rec in self:
+            with self.devops_workspace.devops_create_exec_bundle(
+                "PyCharm add configuration"
+            ) as rec_ws:
+                rec = rec.with_context(rec_ws._context)
+                if conf_add_mode == "install":
+                    file_content_before = rec_ws.os_read_file(
+                        "conf/pycharm_default_configuration.csv"
+                    )
+                    conf_add_conf_name = f"debug_devops_{uuid.uuid4().hex[:8]}"
+                    group = "devops"
+                    default = True
+                    cmd = (
+                        "./odoo/odoo-bin,--limit-time-real 999999 --no-http"
+                        f" -c {conf_add_config_path} --stop-after-init --dev"
+                        f" cg -d {conf_add_db} -i {conf_add_module}"
+                    )
+                    line_to_add = (
+                        f"\n{conf_add_conf_name},{cmd},{group},{default}"
+                    )
+
+                    v = {
+                        "name": conf_add_conf_name,
+                        "command": cmd,
+                        "group": group,
+                        "is_default": default,
+                        "devops_workspace_id": rec_ws.id,
+                        "devops_ide_pycharm": rec.id,
+                    }
+                    id_devops_cg_new_project = self._context.get(
+                        "devops_cg_new_project"
+                    )
+                    if id_devops_cg_new_project:
+                        v[
+                            "devops_cg_new_project_id"
+                        ] = id_devops_cg_new_project
+                    self.env["devops.ide.pycharm.configuration"].create(v)
+
+                    if line_to_add not in file_content_before:
+                        new_content = file_content_before + line_to_add
+                    else:
+                        new_content = file_content_before
+
+                    rec_ws.os_write_file(
+                        "conf/pycharm_default_configuration.csv", new_content
+                    )
+                    rec.action_pycharm_conf_init()
+                    # rec_ws.os_write_file(
+                    #     "conf/pycharm_default_configuration.csv",
+                    #     file_content_before,
+                    # )
+                else:
+                    _logger.warning(
+                        f"Unknown add_configuration mode {conf_add_mode}"
+                    )
+
+    @api.model
+    def add_breakpoint(self, file_path, line, condition=None):
+        # TODO change tactic, fill variable into erplibre with breakpoint to support
+        # TODO support validate already exist to not duplicate
         with self.devops_workspace.devops_create_exec_bundle(
             "PyCharm add breakpoint"
         ) as rec_ws:
-            url = file_path.replace(rec_ws.folder, "file://$PROJECT_DIR$/")
+            url = file_path.replace(rec_ws.folder, "file://$PROJECT_DIR$")
             dct_config_breakpoint = {
                 "@enabled": "true",
                 "@suspend": "THREAD",
                 "@type": "python-line",
                 "url": url,
                 "line": line,
-                # "option": {"@name": "timeStamp", "@value": "104"},
+                "option": {"@name": "timeStamp", "@value": "104"},
             }
+            if condition:
+                dct_config_breakpoint["condition"] = {
+                    "@expression": condition,
+                    "@language": "Python",
+                }
             workspace_xml_path = os.path.join(
                 rec_ws.folder, ".idea", "workspace.xml"
             )
@@ -202,9 +326,8 @@ class DevopsIdePycharm(models.Model):
                 if x_debug_manager.get("@name") == "XDebuggerManager":
                     break
             else:
-                raise Exception(
-                    f"Cannot find <XDebuggerManager> into {workspace_xml_path}"
-                )
+                x_debug_manager = {"@name": "XDebuggerManager"}
+                project["component"].append(x_debug_manager)
 
             has_update = False
             breakpoints = None
@@ -252,15 +375,22 @@ class DevopsIdePycharm(models.Model):
 
             # Write modification
             if has_update:
+                # Do not format, breakpoint break when got \n
                 xml_format = xmltodict.unparse(
-                    dct_project_xml, pretty=True, indent="  "
+                    dct_project_xml, pretty=False, indent="  "
                 )
                 with open(workspace_xml_path, mode="w") as xml:
                     xml.write(xml_format)
-                # TODO format with prettier
-                # subprocess.call(
-                #     "prettier --tab-width 2 --print-width 999999 --write"
-                #     f" '{xml_format}'",
-                #     shell=True,
-                # )
                 _logger.info(f"Write file '{workspace_xml_path}'")
+
+    @api.multi
+    def action_reboot_force_os_workspace(self):
+        self.ensure_one()
+        self.devops_workspace.with_context(
+            default_exec_reboot_process=True
+        ).action_reboot()
+
+    @api.multi
+    def action_kill_workspace(self):
+        self.ensure_one()
+        self.devops_workspace.action_stop()

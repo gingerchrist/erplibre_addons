@@ -140,6 +140,6 @@
         id="devops_code_generator_module_model_field_code_generator_module_model_field_action_window"
         name="Code generator module model field"
         res_model="devops.code_generator.module.model.field"
-        view_mode="kanban,tree,pivot,graph,form"
+        view_mode="tree,kanban,pivot,graph,form"
     />
 </odoo>

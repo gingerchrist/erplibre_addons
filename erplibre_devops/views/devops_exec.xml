@@ -18,6 +18,7 @@
                     </div>
                     <group>
                         <field name="devops_workspace" />
+                        <field name="new_project_id" />
                     </group>
                     <group string="Date">
                         <group>
@@ -54,6 +55,12 @@
                         </page>
                         <page string="Log stdin" name="page_log_stdin">
                             <field name="log_stdin" />
+                        </page>
+                        <page string="Log error" name="page_log_error">
+                            <group>
+                                <field name="log_error_ids" />
+                                <field name="log_warning_ids" />
+                            </group>
                         </page>
                     </notebook>
                 </sheet>
@@ -111,12 +118,26 @@
         <field name="model">devops.exec</field>
         <field name="arch" type="xml">
             <search string="DevOps code generator module model field">
-                <field name="name" string="Name" />
+                <field
+                    name="name"
+                    string="Execution"
+                    filter_domain="['|',('devops_workspace','ilike',self),('name','ilike',self)]"
+                />
                 <field name="active" />
+                <field name="cmd" />
+                <field name="log_all" />
+                <field name="folder" />
+                <field name="devops_workspace" string="Workspace" />
                 <filter name="active" string="Active" domain="[('active','=',True)]" help="Show active" />
                 <filter name="inactive" string="Inactive" domain="[('active','=',False)]" help="Show inactive" />
+                <filter name="more_1_sec" string="More 1 sec" domain="[('exec_time_duration', '>', 1)]" />
                 <group expand="1" string="Group By">
                     <filter string="Workspace" name="workspace" context="{'group_by':'devops_workspace'}" />
+                    <filter
+                        string="Bundle"
+                        name="group_devops_exec_bundle_id"
+                        context="{'group_by':'devops_exec_bundle_id'}"
+                    />
                 </group>
             </search>
         </field>
@@ -130,7 +151,8 @@
                 <field name="name" />
                 <field name="time_duration_result" />
                 <field name="exec_start_date" />
-                <field name="exec_stop_date" />
+                <!--                <field name="exec_stop_date" />-->
+                <field name="devops_exec_bundle_id" />
                 <field name="folder" />
                 <field name="cmd" />
                 <field name="devops_workspace" />
@@ -142,6 +164,6 @@
         id="devops_exec_action_window"
         name="IT executions"
         res_model="devops.exec"
-        view_mode="kanban,tree,pivot,graph,form"
+        view_mode="tree,kanban,pivot,graph,form"
     />
 </odoo>

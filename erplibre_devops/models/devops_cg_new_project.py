@@ -34,9 +34,15 @@ class DevopsCgNewProject(models.Model):
 
     active = fields.Boolean(default=True)
 
-    msg_error = fields.Char()
+    has_error = fields.Boolean(
+        help="Will be True if got error into execution of new project.",
+        readonly=True,
+    )
 
-    has_error = fields.Boolean()
+    has_warning = fields.Boolean(
+        help="Will be True if got warning into execution of new project.",
+        readonly=True,
+    )
 
     stage_id = fields.Many2one(
         comodel_name="devops.cg.new_project.stage",
@@ -46,6 +52,15 @@ class DevopsCgNewProject(models.Model):
 
     project_type = fields.Selection(
         selection=[("self", "Self generate"), ("cg", "Code generator")]
+    )
+
+    mode_view = fields.Selection(
+        selection=[
+            ("normal", "Normal"),
+            ("wizard_view", "Wizard"),
+            ("wizard_new_view", "New"),
+        ],
+        default="wizard_new_view",
     )
 
     last_new_project = fields.Many2one(
@@ -63,7 +78,17 @@ class DevopsCgNewProject(models.Model):
         store=True,
     )
 
-    execution_finish = fields.Boolean()
+    execution_finish = fields.Boolean(
+        readonly=True, help="Will be True when execution finish correctly."
+    )
+
+    is_pause = fields.Boolean(
+        help=(
+            "Is pause is True when debug is execute and set at pause to run"
+            " outside."
+        ),
+        readonly=True,
+    )
 
     module = fields.Char(required=True)
 
@@ -93,6 +118,99 @@ class DevopsCgNewProject(models.Model):
 
     keep_bd_alive = fields.Boolean()
 
+    can_setup_ide = fields.Boolean(
+        compute="_compute_can_setup_ide",
+        store=True,
+    )
+
+    config_debug_uc0 = fields.Boolean(help="Debug uC0.")
+
+    config_debug_ucA = fields.Boolean(help="Debug uCA.")
+
+    config_debug_ucB = fields.Boolean(help="Debug uCB.")
+
+    breakpoint_uc0_first_line_hook = fields.Boolean(
+        help="Breakpoint first line hook file uc0."
+    )
+
+    breakpoint_all_write_hook_begin = fields.Boolean(
+        help="Breakpoint general when write hook."
+    )
+
+    breakpoint_all_write_hook_before_model = fields.Boolean(
+        help=(
+            "Breakpoint general when write hook before write model/fields into"
+            " hook."
+        )
+    )
+
+    breakpoint_all_write_hook_model_write_field = fields.Boolean(
+        help=(
+            "Breakpoint general when write hook while writing model, before"
+            " write field. Can use field"
+            " breakpoint_all_write_hook_model_write_field_config_field_name to"
+            " specify field name."
+        )
+    )
+
+    breakpoint_all_write_hook_model_write_field_config_field_name = fields.Char(
+        help=(
+            "Associate with breakpoint_all_write_hook_model_write_field , can"
+            " set field name to break."
+        )
+    )
+
+    breakpoint_all_write_hook_model_write_field_config_field_att = fields.Char(
+        help=(
+            "Associate with breakpoint_all_write_hook_model_write_field , can"
+            " set attribute field name to break."
+        )
+    )
+
+    breakpoint_ucA_first_line_hook = fields.Boolean(
+        help="Breakpoint first line hook file ucA."
+    )
+
+    breakpoint_ucB_first_line_hook = fields.Boolean(
+        help="Breakpoint first line hook file ucB."
+    )
+
+    breakpoint_uc0_bp_cg_uc0 = fields.Boolean(
+        help="Breakpoint dans la section génération de code du uC0."
+    )
+
+    breakpoint_ucA_bp_cg_ucA = fields.Boolean(
+        help="Breakpoint dans la section génération de code du uCA."
+    )
+
+    breakpoint_ucB_bp_cg_ucB = fields.Boolean(
+        help="Breakpoint dans la section génération de code du uCB."
+    )
+
+    breakpoint_ucB_write_code_model_field = fields.Boolean(
+        help=(
+            "Breakpoint dans la section génération de code du uCB - write"
+            " model field module."
+            " Can use field"
+            " breakpoint_ucB_write_code_model_field_config_field_name to"
+            " specify field name."
+        )
+    )
+
+    breakpoint_ucB_write_code_model_field_config_model_name = fields.Char(
+        help=(
+            "Associate with breakpoint_ucB_write_code_model_field , can"
+            " set model name to break."
+        )
+    )
+
+    breakpoint_ucB_write_code_model_field_config_field_name = fields.Char(
+        help=(
+            "Associate with breakpoint_ucB_write_code_model_field , can"
+            " set field name to break."
+        )
+    )
+
     # internal_error = fields.Char(
     # compute="_compute_internal_error",
     # store=True,
@@ -104,6 +222,12 @@ class DevopsCgNewProject(models.Model):
     cg_hooks_py = fields.Char(help="Path of hooks python file.")
 
     template_hooks_py = fields.Char(help="Path of template hooks python file.")
+
+    bd_name_demo = fields.Char(help="BD name for uc0")
+
+    bd_name_template = fields.Char(help="BD name for ucA")
+
+    bd_name_generator = fields.Char(help="BD name for ucB")
 
     code_generator_demo_hooks_py = fields.Char(
         help="Path of code_generator hooks python file."
@@ -131,6 +255,32 @@ class DevopsCgNewProject(models.Model):
     )
 
     devops_workspace = fields.Many2one(comodel_name="devops.workspace")
+
+    ide_pycharm_configuration_ids = fields.One2many(
+        comodel_name="devops.ide.pycharm.configuration",
+        inverse_name="devops_cg_new_project_id",
+        string="Pycharm configurations",
+    )
+
+    devops_exec_ids = fields.One2many(
+        comodel_name="devops.exec",
+        inverse_name="new_project_id",
+        string="Executions",
+    )
+
+    log_error_ids = fields.One2many(
+        comodel_name="devops.log.error",
+        inverse_name="new_project_id",
+        string="Log errors",
+        readonly=True,
+    )
+
+    log_warning_ids = fields.One2many(
+        comodel_name="devops.log.warning",
+        inverse_name="new_project_id",
+        string="Log warnings",
+        readonly=True,
+    )
 
     new_project_with_code_generator = fields.Boolean(
         default=True,
@@ -164,6 +314,61 @@ class DevopsCgNewProject(models.Model):
             elif rec.exec_start_date:
                 rec.name += f" - start {rec.exec_start_date}"
 
+    @api.depends(
+        "config_debug_uc0",
+        "config_debug_ucA",
+        "config_debug_ucB",
+        "breakpoint_all_write_hook_begin",
+        "breakpoint_all_write_hook_before_model",
+        "breakpoint_all_write_hook_model_write_field",
+        "breakpoint_uc0_first_line_hook",
+        "breakpoint_ucA_first_line_hook",
+        "breakpoint_ucB_first_line_hook",
+        "breakpoint_uc0_bp_cg_uc0",
+        "breakpoint_ucA_bp_cg_ucA",
+        "breakpoint_ucB_bp_cg_ucB",
+        "breakpoint_ucB_write_code_model_field",
+    )
+    def _compute_can_setup_ide(self):
+        for rec in self:
+            rec.can_setup_ide = (
+                rec.config_debug_uc0
+                + rec.config_debug_ucA
+                + rec.config_debug_ucB
+                + rec.breakpoint_all_write_hook_begin
+                + rec.breakpoint_all_write_hook_before_model
+                + rec.breakpoint_all_write_hook_model_write_field
+                + rec.breakpoint_uc0_first_line_hook
+                + rec.breakpoint_ucA_first_line_hook
+                + rec.breakpoint_ucB_first_line_hook
+                + rec.breakpoint_uc0_bp_cg_uc0
+                + rec.breakpoint_ucA_bp_cg_ucA
+                + rec.breakpoint_ucB_bp_cg_ucB
+                + rec.breakpoint_ucB_write_code_model_field
+            )
+
+    def action_new_project_clear_pause(self, ctx=None):
+        for rec in self:
+            with rec.devops_workspace.devops_create_exec_bundle(
+                "New project clear pause",
+                devops_cg_new_project=rec.id,
+                ctx=ctx,
+            ) as rec_ws:
+                rec.is_pause = False
+                rec.config_debug_uc0 = False
+                rec.config_debug_ucA = False
+                rec.config_debug_ucB = False
+                rec.breakpoint_all_write_hook_begin = False
+                rec.breakpoint_all_write_hook_before_model = False
+                rec.breakpoint_all_write_hook_model_write_field = False
+                rec.breakpoint_uc0_first_line_hook = False
+                rec.breakpoint_ucA_first_line_hook = False
+                rec.breakpoint_ucB_first_line_hook = False
+                rec.breakpoint_uc0_bp_cg_uc0 = False
+                rec.breakpoint_ucA_bp_cg_ucA = False
+                rec.breakpoint_ucB_bp_cg_ucB = False
+                rec.breakpoint_ucB_write_code_model_field = False
+
     @api.depends("exec_start_date", "exec_stop_date")
     def _compute_exec_time_duration(self):
         for rec in self:
@@ -175,13 +380,229 @@ class DevopsCgNewProject(models.Model):
                 rec.exec_time_duration = None
 
     @api.multi
-    def action_new_project(self):
+    def action_new_project_debug(self, ctx=None):
         for rec in self:
             with rec.devops_workspace.devops_create_exec_bundle(
-                "Generate new project with CG"
+                "New project debug", devops_cg_new_project=rec.id, ctx=ctx
             ) as rec_ws:
+                has_debug = False
+                stage_uc0 = self.env.ref(
+                    "erplibre_devops.devops_cg_new_project_stage_generate_uc0"
+                )
+                if rec.stage_id == stage_uc0:
+                    rec.config_debug_uc0 = True
+                    has_debug = True
+                stage_uca = self.env.ref(
+                    "erplibre_devops.devops_cg_new_project_stage_generate_uca"
+                )
+                if rec.stage_id == stage_uca:
+                    rec.config_debug_ucA = True
+                    has_debug = True
+                stage_ucb = self.env.ref(
+                    "erplibre_devops.devops_cg_new_project_stage_generate_ucb"
+                )
+                if rec.stage_id == stage_ucb:
+                    rec.config_debug_ucB = True
+                    has_debug = True
+                if has_debug:
+                    rec.with_context(rec_ws._context).action_new_project()
+                else:
+                    raise exceptions.Warning(
+                        "Cannot support debug for this stage"
+                    )
+
+    @api.multi
+    def action_new_project_setup_IDE(
+        self,
+        ctx=None,
+        conf_add_mode=None,
+        conf_add_db=None,
+        conf_add_module=None,
+        conf_add_config_path="config.conf",
+        is_test=False,
+    ):
+        lst_test = []
+        for rec in self:
+            with rec.devops_workspace.devops_create_exec_bundle(
+                "New project setup IDE", devops_cg_new_project=rec.id, ctx=ctx
+            ) as rec_ws:
+                if not rec.can_setup_ide and not is_test:
+                    continue
+                has_bp = rec_ws._context.get(
+                    "new_project_with_breakpoint", True
+                )
+
+                if is_test or (has_bp and rec.breakpoint_all_write_hook_begin):
+                    file = "addons/TechnoLibre_odoo-code-generator/code_generator_hook/models/code_generator_writer.py"
+                    key = "if post_init_hook_feature_code_generator:"
+                    if is_test:
+                        lst_test.append((file, key))
+                    else:
+                        rec.add_breakpoint(file=file, key=key)
+                if is_test or (
+                    has_bp and rec.breakpoint_all_write_hook_before_model
+                ):
+                    file = "addons/TechnoLibre_odoo-code-generator/code_generator_hook/models/code_generator_writer.py"
+                    key = (
+                        "lst_dependency = \[a.name for a in"
+                        " model_id.inherit_model_ids\]"
+                    )
+                    if is_test:
+                        lst_test.append((file, key))
+                    else:
+                        rec.add_breakpoint(file=file, key=key)
+                if is_test or (
+                    has_bp and rec.breakpoint_all_write_hook_model_write_field
+                ):
+                    if (
+                        rec.breakpoint_all_write_hook_model_write_field_config_field_name
+                    ):
+                        condition = f'key=="{rec.breakpoint_all_write_hook_model_write_field_config_field_name}"'
+                        if (
+                            rec.breakpoint_all_write_hook_model_write_field_config_field_att
+                        ):
+                            condition += (
+                                " and"
+                                f' subkey=="{rec.breakpoint_all_write_hook_model_write_field_config_field_att}"'
+                            )
+                    else:
+                        condition = None
+
+                    file = "addons/TechnoLibre_odoo-code-generator/code_generator_hook/models/code_generator_writer.py"
+                    key = "self._write_dict_key(cw, subkey, value)"
+                    if is_test:
+                        lst_test.append((file, key))
+                    else:
+                        rec.add_breakpoint(
+                            file=file, key=key, condition=condition
+                        )
+                if is_test or (has_bp and rec.breakpoint_uc0_first_line_hook):
+                    file = rec.code_generator_demo_hooks_py
+                    key = "env = api.Environment(cr, SUPERUSER_ID, {})"
+                    if is_test:
+                        lst_test.append((file, key))
+                    else:
+                        rec.add_breakpoint(file=file, key=key)
+                if is_test or (has_bp and rec.breakpoint_ucA_first_line_hook):
+                    file = rec.template_hooks_py
+                    key = "env = api.Environment(cr, SUPERUSER_ID, {})"
+                    if is_test:
+                        lst_test.append((file, key))
+                    else:
+                        rec.add_breakpoint(file=file, key=key)
+                if is_test or (has_bp and rec.breakpoint_ucB_first_line_hook):
+                    file = rec.cg_hooks_py
+                    key = "env = api.Environment(cr, SUPERUSER_ID, {})"
+                    if is_test:
+                        lst_test.append((file, key))
+                    else:
+                        rec.add_breakpoint(file=file, key=key)
+                if is_test or (has_bp and rec.breakpoint_uc0_bp_cg_uc0):
+                    file = "addons/TechnoLibre_odoo-code-generator/code_generator_hook/models/code_generator_writer.py"
+                    key = 'cw.emit("new_module_name = MODULE_NAME")'
+                    if is_test:
+                        lst_test.append((file, key))
+                    else:
+                        rec.add_breakpoint(file=file, key=key)
+                if is_test or (
+                    has_bp
+                    and (
+                        rec.breakpoint_ucA_bp_cg_ucA
+                        or rec.breakpoint_ucB_bp_cg_ucB
+                    )
+                ):
+                    file = "addons/TechnoLibre_odoo-code-generator/code_generator/models/code_generator_writer.py"
+                    key = (
+                        "if module.template_model_name or"
+                        " module.template_inherit_model_name:"
+                    )
+                    if is_test:
+                        lst_test.append((file, key))
+                    else:
+                        rec.add_breakpoint(file=file, key=key)
+                if is_test or (
+                    has_bp and rec.breakpoint_ucB_write_code_model_field
+                ):
+                    lst_condition = []
+                    if (
+                        rec.breakpoint_ucB_write_code_model_field_config_model_name
+                    ):
+                        lst_condition.append(
+                            f'model.model=="{rec.breakpoint_ucB_write_code_model_field_config_model_name}"'
+                        )
+                    if (
+                        rec.breakpoint_ucB_write_code_model_field_config_field_name
+                    ):
+                        lst_condition.append(
+                            f'f2export.name=="{rec.breakpoint_ucB_write_code_model_field_config_field_name}"'
+                        )
+                    if lst_condition:
+                        condition = " and ".join(lst_condition)
+                    else:
+                        condition = None
+                    file = "addons/TechnoLibre_odoo-code-generator/code_generator/models/code_generator_writer.py"
+                    key = "dct_field_attr_diff = defaultdict(list)"
+                    if is_test:
+                        lst_test.append((file, key))
+                    else:
+                        rec.add_breakpoint(
+                            file=file, key=key, condition=condition
+                        )
+                if conf_add_mode and not is_test:
+                    rec_ws.ide_pycharm.add_configuration(
+                        conf_add_mode=conf_add_mode,
+                        conf_add_db=conf_add_db,
+                        conf_add_module=conf_add_module,
+                        conf_add_config_path=conf_add_config_path,
+                    )
+                if is_test:
+                    return lst_test
+
+    @api.multi
+    def action_run_test(self, ctx=None):
+        for rec in self:
+            with rec.devops_workspace.devops_create_exec_bundle(
+                "New project run test",
+                devops_cg_new_project=rec.id,
+                ctx=ctx,
+            ) as rec_ws:
+                rec = rec.with_context(rec_ws._context)
+                lst_test = rec.action_new_project_setup_IDE(is_test=True)
+                if not lst_test:
+                    msg = f"List of breakpoint is empty."
+                    _logger.error(msg)
+                    raise exceptions.Warning(msg)
+                for file, key in lst_test:
+                    if not file:
+                        # Ignore this breakpoint, the file doesn't exist, missing variable
+                        continue
+                    try:
+                        lst_line = rec.get_no_line_breakpoint(
+                            key, file, rec_ws
+                        )
+                    except Exception as e:
+                        raise exceptions.Warning(e)
+                    if not lst_line:
+                        msg = (
+                            f"Cannot find breakpoint for file {file}, key :"
+                            f" {key}"
+                        )
+                        _logger.error(msg)
+                        raise exceptions.Warning(msg)
+                _logger.info("Test pass")
+
+    @api.multi
+    def action_new_project(self, ctx=None):
+        for rec in self:
+            with rec.devops_workspace.devops_create_exec_bundle(
+                "Generate new project with CG",
+                devops_cg_new_project=rec.id,
+                ctx=ctx,
+            ) as rec_ws:
+                rec.is_pause = False
                 rec.exec_start_date = fields.Datetime.now(self)
                 rec.has_error = False
+                rec.has_warning = False
                 id_exec_bundle = self.env.context.get("devops_exec_bundle")
                 exec_bundle_parent_id = self.env["devops.exec.bundle"].browse(
                     id_exec_bundle
@@ -239,12 +660,18 @@ class DevopsCgNewProject(models.Model):
 
                 rec.exec_stop_date = fields.Datetime.now(self)
                 rec.execution_finish = True
+                if rec.log_error_ids:
+                    rec.has_error = True
+                if rec.log_warning_ids:
+                    rec.has_warning = True
 
     @api.multi
     def action_init(self, ctx=None, rec_ws=None):
         for rec in self:
             ws_param = rec_ws if rec_ws else rec.devops_workspace
-            with ws_param.devops_create_exec_bundle("New project init") as ws:
+            with ws_param.devops_create_exec_bundle(
+                "New project generate 1.init", devops_cg_new_project=rec.id
+            ) as ws:
                 rec.stage_id = self.env.ref(
                     "erplibre_devops.devops_cg_new_project_stage_init"
                 )
@@ -285,7 +712,7 @@ class DevopsCgNewProject(models.Model):
 
                 # TODO copy directory in temp workspace file before update it
                 rec.module_path = os.path.join(rec.directory, rec.module)
-                is_over = self.validate_path_ready_to_be_override(
+                is_over = rec.validate_path_ready_to_be_override(
                     rec.module, rec.directory, ws, path=rec.module_path
                 )
                 if not rec.force and not is_over:
@@ -300,7 +727,7 @@ class DevopsCgNewProject(models.Model):
                 rec.cg_hooks_py = os.path.join(rec.cg_path, "hooks.py")
                 if (
                     not rec.force
-                    and not self.validate_path_ready_to_be_override(
+                    and not rec.validate_path_ready_to_be_override(
                         rec.code_generator_name,
                         rec.directory_cg,
                         ws,
@@ -318,7 +745,7 @@ class DevopsCgNewProject(models.Model):
                 )
                 if (
                     not rec.force
-                    and not self.validate_path_ready_to_be_override(
+                    and not rec.validate_path_ready_to_be_override(
                         rec.template_name,
                         rec.directory_template,
                         ws,
@@ -359,14 +786,14 @@ class DevopsCgNewProject(models.Model):
         for rec in self:
             ws_param = rec_ws if rec_ws else rec.devops_workspace
             with ws_param.devops_create_exec_bundle(
-                "Generate new project with CG"
+                "New project generate 2.config", devops_cg_new_project=rec.id
             ) as ws:
                 rec.stage_id = self.env.ref(
                     "erplibre_devops.devops_cg_new_project_stage_generate_config"
                 )
 
                 if not (
-                    self.validate_path_ready_to_be_override(
+                    rec.validate_path_ready_to_be_override(
                         CODE_GENERATOR_DEMO_NAME, CODE_GENERATOR_DIRECTORY, ws
                     )
                     and self.search_and_replace_file(
@@ -453,31 +880,50 @@ class DevopsCgNewProject(models.Model):
     def action_generate_uc0(self, ctx=None, rec_ws=None):
         for rec in self:
             ws_param = rec_ws if rec_ws else rec.devops_workspace
-            with ws_param.devops_create_exec_bundle("New project init") as ws:
+            with ws_param.devops_create_exec_bundle(
+                "New project generate 3.Uc0", devops_cg_new_project=rec.id
+            ) as ws:
                 rec.stage_id = self.env.ref(
                     "erplibre_devops.devops_cg_new_project_stage_generate_uc0"
                 )
-                bd_name_demo = (
-                    f"new_project_code_generator_demo_{uuid.uuid4()}"[:63]
-                )
+                if not rec.bd_name_demo:
+                    rec.bd_name_demo = (
+                        f"new_project_code_generator_demo_{uuid.uuid4()}"[:63]
+                    )
+
                 if rec.new_project_with_code_generator:
                     cmd = (
                         "./script/database/db_restore.py --database"
-                        f" {bd_name_demo}"
+                        f" {rec.bd_name_demo}"
                     )
                 else:
                     cmd = (
                         "./script/database/db_restore.py --database"
-                        f" {bd_name_demo} --restore_image"
+                        f" {rec.bd_name_demo} --restore_image"
                         " addons_install_code_generator_basic"
                     )
                 _logger.info(cmd)
-                exec_id = rec_ws.with_context(
-                    devops_cg_new_project=rec.id
-                ).execute(cmd=cmd, to_instance=True)
+                exec_id = ws.execute(cmd=cmd, to_instance=True)
                 rec.has_error = bool(exec_id.devops_exec_error_ids.exists())
                 if rec.has_error:
+                    _logger.info("Exit new project")
                     continue
+
+                # TODO need pause if ask? and continue if ask
+                if rec.can_setup_ide:
+                    _logger.info(
+                        "========= Ask stop, setup pycharm and exit ========="
+                    )
+                    rec.is_pause = True
+                    # rec.config_path is a temporary file, it will not work. Use default config instead
+                    rec.action_new_project_setup_IDE(
+                        conf_add_mode="install",
+                        conf_add_db=rec.bd_name_demo,
+                        conf_add_module="code_generator_demo",
+                        # conf_add_config_path=rec.config_path,
+                    )
+                    continue
+
                 _logger.info(
                     "========= GENERATE code_generator_demo ========="
                 )
@@ -485,30 +931,30 @@ class DevopsCgNewProject(models.Model):
                 if rec.active_coverage:
                     cmd = (
                         "./script/addons/coverage_install_addons_dev.sh"
-                        f" {bd_name_demo} code_generator_demo"
+                        f" {rec.bd_name_demo} code_generator_demo"
                         f" {rec.config_path}"
                     )
                 else:
                     cmd = (
-                        f"./script/addons/install_addons_dev.sh {bd_name_demo}"
-                        f" code_generator_demo {rec.config_path}"
+                        "./script/addons/install_addons_dev.sh"
+                        f" {rec.bd_name_demo} code_generator_demo"
+                        f" {rec.config_path}"
                     )
-                exec_id = rec_ws.with_context(
+                exec_id = ws.with_context(
                     devops_cg_new_project=rec.id
                 ).execute(cmd=cmd, to_instance=True)
                 rec.has_error = bool(exec_id.devops_exec_error_ids.exists())
                 if rec.has_error:
+                    _logger.info("Exit new project")
                     continue
 
                 if not self.keep_bd_alive:
                     cmd = (
                         "./.venv/bin/python3 ./odoo/odoo-bin db --drop"
-                        f" --database {bd_name_demo}"
+                        f" --database {rec.bd_name_demo}"
                     )
                     _logger.info(cmd)
-                    rec_ws.with_context(devops_cg_new_project=rec.id).execute(
-                        cmd=cmd, to_instance=True
-                    )
+                    ws.execute(cmd=cmd, to_instance=True)
 
                 # Revert code_generator_demo
                 self.restore_git_code_generator_demo(
@@ -534,16 +980,29 @@ class DevopsCgNewProject(models.Model):
     def action_generate_uca(self, ctx=None, rec_ws=None):
         for rec in self:
             ws_param = rec_ws if rec_ws else rec.devops_workspace
-            with ws_param.devops_create_exec_bundle("New project init") as ws:
+            with ws_param.devops_create_exec_bundle(
+                "New project generate 4.UcA", devops_cg_new_project=rec.id
+            ) as ws:
                 rec.stage_id = self.env.ref(
                     "erplibre_devops.devops_cg_new_project_stage_generate_uca"
                 )
-                lst_template_hooks_py_replace = [
-                    (
-                        'value["enable_template_wizard_view"] = False',
-                        'value["enable_template_wizard_view"] = True',
-                    ),
-                ]
+                lst_template_hooks_py_replace = []
+                if rec.mode_view in ["wizard_view", "wizard_new_view"]:
+                    lst_template_hooks_py_replace.append(
+                        (
+                            'value["enable_template_wizard_view"] = False',
+                            'value["enable_template_wizard_view"] = True',
+                        )
+                    )
+                    if rec.mode_view == "wizard_new_view":
+                        lst_template_hooks_py_replace.append(
+                            (
+                                'value["force_generic_template_wizard_view"] ='
+                                " False",
+                                'value["force_generic_template_wizard_view"] ='
+                                " True",
+                            )
+                        )
 
                 # Add model from config
                 if self.config:
@@ -558,31 +1017,37 @@ class DevopsCgNewProject(models.Model):
                     )
                     lst_template_hooks_py_replace.append((old_str, new_str))
 
+                if lst_template_hooks_py_replace:
                     self.search_and_replace_file(
                         rec.template_hooks_py,
                         lst_template_hooks_py_replace,
                     )
 
                 # Execute all
-                bd_name_template = (
-                    f"new_project_code_generator_template_{uuid.uuid4()}"[:63]
-                )
+                if not rec.bd_name_template:
+                    rec.bd_name_template = (
+                        f"new_project_code_generator_template_{uuid.uuid4()}"[
+                            :63
+                        ]
+                    )
+
                 if rec.new_project_with_code_generator:
                     cmd = (
                         "./script/database/db_restore.py --database"
-                        f" {bd_name_template}"
+                        f" {rec.bd_name_template}"
                     )
                 else:
                     cmd = (
                         "./script/database/db_restore.py --database"
-                        f" {bd_name_template} --restore_image"
+                        f" {rec.bd_name_template} --restore_image"
                         " addons_install_code_generator_basic"
                     )
-                exec_id = rec_ws.with_context(
+                exec_id = ws.with_context(
                     devops_cg_new_project=rec.id
                 ).execute(cmd=cmd, to_instance=True)
                 rec.has_error = bool(exec_id.devops_exec_error_ids.exists())
                 if rec.has_error:
+                    _logger.info("Exit new project")
                     continue
                 _logger.info(cmd)
                 _logger.info(
@@ -596,48 +1061,67 @@ class DevopsCgNewProject(models.Model):
                         f" --quiet -d {rec.module_path} -t {rec.template_path}"
                     )
                     _logger.info(cmd)
-                    exec_id = rec_ws.with_context(
+                    exec_id = ws.with_context(
                         devops_cg_new_project=rec.id
                     ).execute(cmd=cmd, to_instance=True)
                     rec.has_error = bool(
                         exec_id.devops_exec_error_ids.exists()
                     )
                     if rec.has_error:
+                        _logger.info("Exit new project")
                         continue
+
+                    # TODO do we need to diagnostic installing module?
 
                     if rec.active_coverage:
                         cmd = (
                             "./script/addons/coverage_install_addons_dev.sh"
-                            f" {bd_name_template} {rec.module} {rec.config_path}"
+                            f" {rec.bd_name_template} {rec.module} {rec.config_path}"
                         )
                     else:
                         cmd = (
                             "./script/addons/install_addons_dev.sh"
-                            f" {bd_name_template} {rec.module} {rec.config_path}"
+                            f" {rec.bd_name_template} {rec.module} {rec.config_path}"
                         )
                     _logger.info(cmd)
-                    exec_id = rec_ws.with_context(
+                    exec_id = ws.with_context(
                         devops_cg_new_project=rec.id
                     ).execute(cmd=cmd, to_instance=True)
                     rec.has_error = bool(
                         exec_id.devops_exec_error_ids.exists()
                     )
                     if rec.has_error:
+                        _logger.info("Exit new project")
                         continue
+
+                # TODO need pause if ask? and continue if ask
+                if rec.can_setup_ide:
+                    _logger.info(
+                        "========= Ask stop, setup pycharm and exit ========="
+                    )
+                    rec.is_pause = True
+                    # rec.config_path is a temporary file, it will not work. Use default config instead
+                    rec.action_new_project_setup_IDE(
+                        conf_add_mode="install",
+                        conf_add_db=rec.bd_name_template,
+                        conf_add_module=rec.template_name,
+                        # conf_add_config_path=rec.config_path,
+                    )
+                    continue
 
                 if rec.active_coverage:
                     cmd = (
                         "./script/addons/coverage_install_addons_dev.sh"
-                        f" {bd_name_template} {rec.template_name} {rec.config_path}"
+                        f" {rec.bd_name_template} {rec.template_name} {rec.config_path}"
                     )
                 else:
                     cmd = (
                         "./script/addons/install_addons_dev.sh"
-                        f" {bd_name_template}"
+                        f" {rec.bd_name_template}"
                         f" {rec.template_name} {rec.config_path}"
                     )
                 _logger.info(cmd)
-                exec_id = rec_ws.with_context(
+                exec_id = ws.with_context(
                     devops_cg_new_project=rec.id
                 ).execute(cmd=cmd, to_instance=True)
 
@@ -646,12 +1130,10 @@ class DevopsCgNewProject(models.Model):
                 if not self.keep_bd_alive:
                     cmd = (
                         "./.venv/bin/python3 ./odoo/odoo-bin db --drop"
-                        f" --database {bd_name_template}"
+                        f" --database {rec.bd_name_template}"
                     )
                     _logger.info(cmd)
-                    rec_ws.with_context(devops_cg_new_project=rec.id).execute(
-                        cmd=cmd, to_instance=True
-                    )
+                    ws.execute(cmd=cmd, to_instance=True)
 
                 # Validate
                 if not ws.os_path_exists(rec.cg_path, to_instance=True):
@@ -668,26 +1150,30 @@ class DevopsCgNewProject(models.Model):
     def action_generate_ucb(self, ctx=None, rec_ws=None):
         for rec in self:
             ws_param = rec_ws if rec_ws else rec.devops_workspace
-            with ws_param.devops_create_exec_bundle("New project init") as ws:
+            with ws_param.devops_create_exec_bundle(
+                "New project generate 5.UcB", devops_cg_new_project=rec.id
+            ) as ws:
                 rec.stage_id = self.env.ref(
                     "erplibre_devops.devops_cg_new_project_stage_generate_ucb"
                 )
-                bd_name_generator = (
-                    f"new_project_code_generator_{uuid.uuid4()}"[:63]
-                )
+                if not rec.bd_name_generator:
+                    rec.bd_name_generator = (
+                        f"new_project_code_generator_{uuid.uuid4()}"[:63]
+                    )
+
                 if rec.new_project_with_code_generator:
                     cmd = (
                         "./script/database/db_restore.py --database"
-                        f" {bd_name_generator}"
+                        f" {rec.bd_name_generator}"
                     )
                 else:
                     cmd = (
                         "./script/database/db_restore.py --database"
-                        f" {bd_name_generator} --restore_image"
+                        f" {rec.bd_name_generator} --restore_image"
                         " addons_install_code_generator_basic"
                     )
                 _logger.info(cmd)
-                exec_id = rec_ws.with_context(
+                exec_id = ws.with_context(
                     devops_cg_new_project=rec.id
                 ).execute(cmd=cmd, to_instance=True)
                 _logger.info(
@@ -696,6 +1182,7 @@ class DevopsCgNewProject(models.Model):
 
                 rec.has_error = bool(exec_id.devops_exec_error_ids.exists())
                 if rec.has_error:
+                    _logger.info("Exit new project")
                     continue
 
                 # Add field from config
@@ -734,29 +1221,45 @@ class DevopsCgNewProject(models.Model):
                         lst_update_cg.append((old_str, new_str))
 
                     # Force add menu and access
-                    lst_update_cg.append(
-                        ('"disable_generate_menu": True,', "")
-                    )
-                    lst_update_cg.append(
-                        ('"disable_generate_access": True,', "")
-                    )
+                    # if rec.mode_view in ["wizard_view", "wizard_new_view"]:
+                    #     lst_update_cg.append(
+                    #         ('"disable_generate_menu": True,', "")
+                    #     )
+                    # lst_update_cg.append(
+                    #     ('"disable_generate_access": True,', "")
+                    # )
                     self.search_and_replace_file(
                         rec.cg_hooks_py,
                         lst_update_cg,
                     )
 
+                # TODO need pause if ask? and continue if ask
+                if rec.can_setup_ide:
+                    _logger.info(
+                        "========= Ask stop, setup pycharm and exit ========="
+                    )
+                    rec.is_pause = True
+                    # rec.config_path is a temporary file, it will not work. Use default config instead
+                    rec.action_new_project_setup_IDE(
+                        conf_add_mode="install",
+                        conf_add_db=rec.bd_name_generator,
+                        conf_add_module=rec.code_generator_name,
+                        # conf_add_config_path=rec.config_path,
+                    )
+                    continue
+
                 if rec.active_coverage:
                     cmd = (
                         "./script/addons/coverage_install_addons_dev.sh"
-                        f" {bd_name_generator} {rec.code_generator_name} {rec.config_path}"
+                        f" {rec.bd_name_generator} {rec.code_generator_name} {rec.config_path}"
                     )
                 else:
                     cmd = (
                         "./script/addons/install_addons_dev.sh"
-                        f" {bd_name_generator} {rec.code_generator_name} {rec.config_path}"
+                        f" {rec.bd_name_generator} {rec.code_generator_name} {rec.config_path}"
                     )
                 _logger.info(cmd)
-                exec_id = rec_ws.with_context(
+                exec_id = ws.with_context(
                     devops_cg_new_project=rec.id
                 ).execute(
                     cmd=cmd,
@@ -768,12 +1271,10 @@ class DevopsCgNewProject(models.Model):
                 if not self.keep_bd_alive:
                     cmd = (
                         "./.venv/bin/python3 ./odoo/odoo-bin db --drop"
-                        f" --database {bd_name_generator}"
+                        f" --database {rec.bd_name_generator}"
                     )
                     _logger.info(cmd)
-                    rec_ws.with_context(devops_cg_new_project=rec.id).execute(
-                        cmd=cmd, to_instance=True
-                    )
+                    ws.execute(cmd=cmd, to_instance=True)
 
                 # Validate
                 if not ws.os_path_exists(rec.module_path, to_instance=True):
@@ -786,6 +1287,7 @@ class DevopsCgNewProject(models.Model):
                         "erplibre_devops.devops_cg_new_project_stage_generate_terminate"
                     )
 
+    @api.model
     def validate_path_ready_to_be_override(self, name, directory, ws, path=""):
         if not path:
             path = os.path.join(directory, name)
@@ -793,7 +1295,6 @@ class DevopsCgNewProject(models.Model):
             return True
         # Check if in git
         # TODO complete me, need to check into instance
-        return True
         try:
             git_repo = Repo(directory)
         except NoSuchPathError:
@@ -804,7 +1305,7 @@ class DevopsCgNewProject(models.Model):
                 " ignore it."
             )
 
-        if self.rec.stop_execution_if_env_not_clean:
+        if self.stop_execution_if_env_not_clean:
             status = git_repo.git.status(name, porcelain=True)
             if status:
                 msg = (
@@ -832,6 +1333,51 @@ class DevopsCgNewProject(models.Model):
 
         git_repo.git.restore(relative_path)
 
+    @api.model
+    def get_no_line_breakpoint(self, key, file, ws):
+        key = key.replace('"', '\\"')
+        cmd = f'grep -n "{key}" {file}'
+        cmd += " | awk -F: '{print $1}'"
+        result = ws.execute(to_instance=True, cmd=cmd, engine="sh")
+        try:
+            lst_no_line = [int(a) for a in result.log_all.strip().split("\n")]
+        except:
+            raise Exception(
+                f"Wrong output command : {cmd}\n{result.log_all.strip()}"
+            )
+        return lst_no_line
+
+    @api.model
+    def add_breakpoint(
+        self, file=None, key=None, no_line=None, condition=None
+    ):
+        for rec in self:
+            with rec.devops_workspace.devops_create_exec_bundle(
+                "New project add breakpoint", devops_cg_new_project=rec.id
+            ) as rec_ws:
+                file_path = os.path.normpath(
+                    os.path.join(
+                        rec_ws.folder,
+                        file,
+                    )
+                )
+                lst_no_line = []
+                if key:
+                    lst_no_line = rec.get_no_line_breakpoint(key, file, rec_ws)
+                elif no_line:
+                    lst_no_line = [int(no_line)]
+
+                if lst_no_line:
+                    for i_no_line in lst_no_line:
+                        rec_ws.ide_pycharm.add_breakpoint(
+                            file_path, i_no_line - 1, condition=condition
+                        )
+                else:
+                    _logger.warning(
+                        "Missing no_line to method add_breakpoint. Or specify"
+                        " a key to research from file."
+                    )
+
     @staticmethod
     def search_and_replace_file(filepath, lst_search_and_replace):
         """
@@ -847,3 +1393,13 @@ class DevopsCgNewProject(models.Model):
         with open(filepath, "w") as file:
             file.write(txt)
         return True
+
+    @api.multi
+    def action_kill_pycharm(self):
+        self.ensure_one()
+        self.devops_workspace.ide_pycharm.action_kill_pycharm()
+
+    @api.multi
+    def action_start_pycharm(self):
+        self.ensure_one()
+        self.devops_workspace.ide_pycharm.action_start_pycharm()
