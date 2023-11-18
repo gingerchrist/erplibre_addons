@@ -176,6 +176,7 @@
                                 <group string="Breakpoint">
                                     <field name="breakpoint_ucB_bp_cg_ucB" />
                                     <field name="breakpoint_ucB_first_line_hook" />
+                                    <field name="breakpoint_ucB_bp_generate_view_warning" />
                                 </group>
                                 <group string="Write code model field">
                                     <field name="breakpoint_ucB_write_code_model_field" />
