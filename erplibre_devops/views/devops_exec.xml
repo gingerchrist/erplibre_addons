@@ -42,21 +42,20 @@
                             <field name="devops_exec_error_ids" />
                         </group>
                     </group>
-
                     <notebook>
-                        <page string="Log All" name="page_log_all">
+                        <page name="page_log_all" string="Log All">
                             <field name="log_all" />
                         </page>
-                        <page string="Log stdout" name="page_log_stdout">
+                        <page name="page_log_stdout" string="Log stdout">
                             <field name="log_stdout" />
                         </page>
-                        <page string="Log stderr" name="page_log_stderr">
+                        <page name="page_log_stderr" string="Log stderr">
                             <field name="log_stderr" />
                         </page>
-                        <page string="Log stdin" name="page_log_stdin">
+                        <page name="page_log_stdin" string="Log stdin">
                             <field name="log_stdin" />
                         </page>
-                        <page string="Log error" name="page_log_error">
+                        <page name="page_log_error" string="Log error">
                             <group>
                                 <field name="log_error_ids" />
                                 <field name="log_warning_ids" />

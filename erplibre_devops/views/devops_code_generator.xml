@@ -85,7 +85,7 @@
         <field name="arch" type="xml">
             <search string="DevOps code generator">
                 <filter domain="[('name','!=',False)]" name="name" string="Name" />
-                <filter domain="[('module_ids','!=',False)]" name="module_ids" string="" />
+                <filter domain="[('module_ids','!=',False)]" name="module_ids" string="No module" />
             </search>
         </field>
     </record>

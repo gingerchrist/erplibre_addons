@@ -11,10 +11,13 @@ _logger = logging.getLogger(__name__)
 
 class DevopsExecError(models.Model):
     _name = "devops.exec.error"
+    _inherit = ["mail.activity.mixin", "mail.thread"]
     _description = "Execution error"
-    _inherit = ["mail.thread", "mail.activity.mixin"]
 
-    name = fields.Char(compute="_compute_name", store=True)
+    name = fields.Char(
+        compute="_compute_name",
+        store=True,
+    )
 
     description = fields.Char()
 
@@ -26,9 +29,15 @@ class DevopsExecError(models.Model):
         comodel_name="devops.workspace", readonly=True
     )
 
-    partner_ids = fields.Many2many(comodel_name="res.partner")
+    partner_ids = fields.Many2many(
+        comodel_name="res.partner",
+        string="Partner",
+    )
 
-    channel_ids = fields.Many2many(comodel_name="mail.channel")
+    channel_ids = fields.Many2many(
+        comodel_name="mail.channel",
+        string="Channel",
+    )
 
     type_error = fields.Selection(
         selection=[("internal", "Internal"), ("execution", "Execution")]
@@ -41,11 +50,13 @@ class DevopsExecError(models.Model):
     devops_exec_id = fields.Many2one(
         comodel_name="devops.exec",
         readonly=True,
+        string="Devops Exec",
     )
 
     devops_exec_bundle_id = fields.Many2one(
         comodel_name="devops.exec.bundle",
         readonly=True,
+        string="Devops Exec Bundle",
     )
 
     stage_new_project_id = fields.Many2one(
@@ -56,6 +67,7 @@ class DevopsExecError(models.Model):
     parent_root_exec_bundle_id = fields.Many2one(
         comodel_name="devops.exec.bundle",
         readonly=True,
+        string="Parent Root Exec Bundle",
     )
 
     find_resolution = fields.Selection(

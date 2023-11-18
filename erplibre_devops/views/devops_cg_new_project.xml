@@ -51,17 +51,17 @@
                     <div class="badge-pill badge-info float-right" attrs="{'invisible': [('is_pause', '=', False)]}">
                         Pause
                     </div>
-                    <div class="badge-pill badge-danger float-right" attrs="{'invisible': [('has_error', '=', False)]}">
+                    <div attrs="{'invisible': [('has_error', '=', False)]}" class="badge-pill badge-danger float-right">
                         Error
                     </div>
                     <div
-                        class="badge-pill badge-warning float-right"
                         attrs="{'invisible': [('has_warning', '=', False)]}"
+                        class="badge-pill badge-warning float-right"
                     >
                         Warning
                     </div>
                     <div class="oe_button_box" name="button_box">
-                        <button class="oe_stat_button" name="toggle_active" type="object" icon="fa-archive">
+                        <button class="oe_stat_button" icon="fa-archive" name="toggle_active" type="object">
                             <field name="active" widget="boolean_button" options='{"terminology": "archive"}' />
                         </button>
                     </div>
@@ -116,8 +116,7 @@
                             <field name="force" />
                         </group>
                     </group>
-
-                    <group string="Path" name="group_path">
+                    <group name="group_path" string="Path">
                         <field name="module_path" />
                         <field name="config_path" />
                         <field name="code_generator_demo_path" />

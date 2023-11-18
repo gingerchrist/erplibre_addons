@@ -22,13 +22,13 @@ class DevopsIdePycharmConfiguration(models.Model):
 
     devops_workspace_id = fields.Many2one(
         comodel_name="devops.workspace",
+        string="Devops Workspace",
         required=True,
     )
 
     devops_cg_new_project_id = fields.Many2one(
         comodel_name="devops.cg.new_project",
+        string="Devops Cg New Project",
     )
 
-    devops_ide_pycharm = fields.Many2one(
-        comodel_name="devops.ide.pycharm",
-    )
+    devops_ide_pycharm = fields.Many2one(comodel_name="devops.ide.pycharm")

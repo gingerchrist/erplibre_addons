@@ -16,4 +16,7 @@ class DevopsLogError(models.Model):
 
     exec_id = fields.Many2one(comodel_name="devops.exec", readonly=True)
 
-    new_project_id = fields.Many2one(comodel_name="devops.cg.new_project")
+    new_project_id = fields.Many2one(
+        comodel_name="devops.cg.new_project",
+        string="New Project",
+    )

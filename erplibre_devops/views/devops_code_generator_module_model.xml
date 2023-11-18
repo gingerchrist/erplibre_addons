@@ -101,7 +101,7 @@
                 <filter domain="[('name','!=',False)]" name="name" string="Name" />
                 <filter domain="[('description','!=',False)]" name="description" string="Description" />
                 <filter domain="[('module_id','!=',False)]" name="module_id" string="Module" />
-                <filter domain="[('field_ids','!=',False)]" name="field_ids" string="" />
+                <filter domain="[('field_ids','!=',False)]" name="field_ids" string="No field" />
             </search>
         </field>
     </record>

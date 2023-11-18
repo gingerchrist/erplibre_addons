@@ -198,8 +198,7 @@ class DevopsCgNewProject(models.Model):
     breakpoint_ucB_write_code_model_field = fields.Boolean(
         help=(
             "Breakpoint dans la section génération de code du uCB - write"
-            " model field module."
-            " Can use field"
+            " model field module. Can use field"
             " breakpoint_ucB_write_code_model_field_config_field_name to"
             " specify field name."
         )
@@ -207,15 +206,15 @@ class DevopsCgNewProject(models.Model):
 
     breakpoint_ucB_write_code_model_field_config_model_name = fields.Char(
         help=(
-            "Associate with breakpoint_ucB_write_code_model_field , can"
-            " set model name to break."
+            "Associate with breakpoint_ucB_write_code_model_field , can set"
+            " model name to break."
         )
     )
 
     breakpoint_ucB_write_code_model_field_config_field_name = fields.Char(
         help=(
-            "Associate with breakpoint_ucB_write_code_model_field , can"
-            " set field name to break."
+            "Associate with breakpoint_ucB_write_code_model_field , can set"
+            " field name to break."
         )
     )
 

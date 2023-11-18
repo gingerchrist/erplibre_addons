@@ -148,7 +148,7 @@ class DevopsExec(models.Model):
                 "devops.code_generator.module.model.field.has_error",
                 "devops.exec.error.name",
                 "devops.workspace.devops_exec_error_count",
-                "erplibre_devops/views/devops_exec_error.xml",
+                "views/devops_exec_error.xml",
                 "devops_exec_error.py",
                 "devops_log_error.py",
             ]

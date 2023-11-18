@@ -39,9 +39,7 @@ class DevopsIdePycharm(models.Model):
         result.action_pycharm_check()
         return result
 
-    @api.depends(
-        "devops_workspace.name",
-    )
+    @api.depends("devops_workspace.name")
     def _compute_name(self):
         for rec in self:
             rec.name = f"{rec.devops_workspace.name}"

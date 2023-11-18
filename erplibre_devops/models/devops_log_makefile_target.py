@@ -9,6 +9,7 @@ class DevopsLogMakefileTarget(models.Model):
 
     devops_workspace_id = fields.Many2one(
         comodel_name="devops.workspace",
+        string="Devops Workspace",
     )
 
     @api.multi
