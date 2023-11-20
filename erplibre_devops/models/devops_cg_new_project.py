@@ -240,6 +240,10 @@ class DevopsCgNewProject(models.Model):
 
     template_hooks_py = fields.Char(help="Path of template hooks python file.")
 
+    template_manifest_py = fields.Char(
+        help="Path of template manifest python file."
+    )
+
     bd_name_demo = fields.Char(help="BD name for uc0")
 
     bd_name_template = fields.Char(help="BD name for ucA")
@@ -784,6 +788,9 @@ class DevopsCgNewProject(models.Model):
                 rec.template_hooks_py = os.path.join(
                     rec.template_path, "hooks.py"
                 )
+                rec.template_manifest_py = os.path.join(
+                    rec.template_path, "__manifest__.py"
+                )
                 if (
                     not rec.force
                     and not rec.validate_path_ready_to_be_override(
@@ -1028,6 +1035,7 @@ class DevopsCgNewProject(models.Model):
                     "erplibre_devops.devops_cg_new_project_stage_generate_uca"
                 )
                 lst_template_hooks_py_replace = []
+                lst_template_manifest_py_replace = []
                 if rec.mode_view in ["wizard_view", "wizard_new_view"]:
                     lst_template_hooks_py_replace.append(
                         (
@@ -1061,6 +1069,13 @@ class DevopsCgNewProject(models.Model):
                             " code_generator_id.add_module_dependency(lst_depend_module)",
                         )
                     )
+                    lst_template_manifest_py_replace.append(
+                        (
+                            '"depends": [',
+                            '"depends": [\n       '
+                            ' "code_generator_website_snippet",',
+                        )
+                    )
 
                 # Add model from config
                 if self.config:
@@ -1079,6 +1094,11 @@ class DevopsCgNewProject(models.Model):
                     self.search_and_replace_file(
                         rec.template_hooks_py,
                         lst_template_hooks_py_replace,
+                    )
+                if lst_template_manifest_py_replace:
+                    self.search_and_replace_file(
+                        rec.template_manifest_py,
+                        lst_template_manifest_py_replace,
                     )
 
                 # Execute all

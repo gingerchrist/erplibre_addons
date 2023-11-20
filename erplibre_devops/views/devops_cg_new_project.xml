@@ -127,6 +127,7 @@
                         <field name="cg_hooks_py" />
                         <field name="template_path" />
                         <field name="template_hooks_py" />
+                        <field name="template_manifest_py" />
                     </group>
                     <notebook>
                         <page string="Debug all">
