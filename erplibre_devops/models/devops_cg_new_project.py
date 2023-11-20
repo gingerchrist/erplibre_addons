@@ -73,6 +73,50 @@ class DevopsCgNewProject(models.Model):
         help="Will active feature to generate snippet",
     )
 
+    mode_view_snippet_enable_template_website_snippet_view = fields.Boolean(
+        default=True,
+        help="Feature for mode_view_snippet",
+    )
+
+    mode_view_snippet_template_generate_website_snippet_generic_mdl = (
+        fields.Char(
+            default="devops.workspace",
+            help="Feature for mode_view_snippet",
+        )
+    )
+
+    mode_view_snippet_template_generate_website_snippet_ctrl_featur = (
+        fields.Selection(
+            selection=[
+                ("helloworld", "helloworld"),
+                ("model_show_item_individual", "Model show item individual"),
+                ("model_show_item_list", "Model show item list"),
+            ],
+            default="model_show_item_individual",
+            help="Feature for mode_view_snippet",
+        )
+    )
+
+    mode_view_snippet_template_generate_website_enable_javascript = (
+        fields.Boolean(
+            default=True,
+            help="Feature for mode_view_snippet",
+        )
+    )
+
+    mode_view_snippet_template_generate_website_snippet_type = (
+        fields.Selection(
+            selection=[
+                ("content", "Content"),
+                ("effect", "Effect"),
+                ("feature", "Feature"),
+                ("structure", "Structure"),
+            ],
+            default="effect",
+            help="Feature for mode_view_snippet",
+        )
+    )
+
     last_new_project = fields.Many2one(
         comodel_name="devops.cg.new_project",
         string="Last new project",
@@ -1058,9 +1102,22 @@ class DevopsCgNewProject(models.Model):
                             'value["enable_template_website_snippet_view"] ='
                             " False",
                             'value["enable_template_website_snippet_view"] ='
-                            " True",
+                            f" {rec.mode_view_snippet_enable_template_website_snippet_view}\n"
+                            "       "
+                            ' value["template_generate_website_snippet_generic_model"]'
+                            f' = "{rec.mode_view_snippet_template_generate_website_snippet_generic_mdl}"\n'
+                            "       "
+                            ' value["template_generate_website_snippet_controller_feature"]'
+                            f' = "{rec.mode_view_snippet_template_generate_website_snippet_ctrl_featur}"\n'
+                            "       "
+                            ' value["template_generate_website_enable_javascript"]'
+                            f" = {rec.mode_view_snippet_template_generate_website_enable_javascript}\n"
+                            "       "
+                            ' value["template_generate_website_snippet_type"]'
+                            f' = "{rec.mode_view_snippet_template_generate_website_snippet_type}"',
                         )
                     )
+
                     lst_template_hooks_py_replace.append(
                         (
                             "code_generator_id.add_module_dependency(lst_depend_module)",

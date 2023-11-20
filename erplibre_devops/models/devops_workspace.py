@@ -307,6 +307,50 @@ class DevopsWorkspace(models.Model):
         help="Will active feature to generate snippet",
     )
 
+    mode_view_snippet_enable_template_website_snippet_view = fields.Boolean(
+        default=True,
+        help="Feature for mode_view_snippet",
+    )
+
+    mode_view_snippet_template_generate_website_snippet_generic_mdl = (
+        fields.Char(
+            default="devops.workspace",
+            help="Feature for mode_view_snippet",
+        )
+    )
+
+    mode_view_snippet_template_generate_website_snippet_ctrl_featur = (
+        fields.Selection(
+            selection=[
+                ("helloworld", "helloworld"),
+                ("model_show_item_individual", "Model show item individual"),
+                ("model_show_item_list", "Model show item list"),
+            ],
+            default="model_show_item_individual",
+            help="Feature for mode_view_snippet",
+        )
+    )
+
+    mode_view_snippet_template_generate_website_enable_javascript = (
+        fields.Boolean(
+            default=True,
+            help="Feature for mode_view_snippet",
+        )
+    )
+
+    mode_view_snippet_template_generate_website_snippet_type = (
+        fields.Selection(
+            selection=[
+                ("content", "Content"),
+                ("effect", "Effect"),
+                ("feature", "Feature"),
+                ("structure", "Structure"),
+            ],
+            default="effect",
+            help="Feature for mode_view_snippet",
+        )
+    )
+
     mode_exec = fields.Selection(
         selection=[
             ("docker", "Docker"),
@@ -626,6 +670,11 @@ class DevopsWorkspace(models.Model):
                         "devops_exec_bundle_id": devops_exec_bundle_parent_root_id.id,
                         "mode_view": rec.mode_view,
                         "mode_view_snippet": rec.mode_view_snippet,
+                        "mode_view_snippet_enable_template_website_snippet_view": rec.mode_view_snippet_enable_template_website_snippet_view,
+                        "mode_view_snippet_template_generate_website_snippet_generic_mdl": rec.mode_view_snippet_template_generate_website_snippet_generic_mdl,
+                        "mode_view_snippet_template_generate_website_snippet_ctrl_featur": rec.mode_view_snippet_template_generate_website_snippet_ctrl_featur,
+                        "mode_view_snippet_template_generate_website_enable_javascript": rec.mode_view_snippet_template_generate_website_enable_javascript,
+                        "mode_view_snippet_template_generate_website_snippet_type": rec.mode_view_snippet_template_generate_website_snippet_type,
                     }
                 )
                 if rec.last_new_project_self:

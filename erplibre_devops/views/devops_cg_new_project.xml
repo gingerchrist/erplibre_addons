@@ -104,8 +104,6 @@
                             <field name="config" />
                             <field name="odoo_config" />
                             <field name="new_project_with_code_generator" />
-                            <field name="mode_view" />
-                            <field name="mode_view_snippet" />
                         </group>
                         <group>
                             <field name="keep_bd_alive" />
@@ -116,6 +114,15 @@
                             <field name="active_coverage" />
                             <field name="force" />
                         </group>
+                    </group>
+                    <group name="group_cg_config" string="CG config view">
+                        <field name="mode_view" />
+                        <field name="mode_view_snippet" />
+                        <field name="mode_view_snippet_enable_template_website_snippet_view" />
+                        <field name="mode_view_snippet_template_generate_website_snippet_generic_mdl" />
+                        <field name="mode_view_snippet_template_generate_website_snippet_ctrl_featur" />
+                        <field name="mode_view_snippet_template_generate_website_enable_javascript" />
+                        <field name="mode_view_snippet_template_generate_website_snippet_type" />
                     </group>
                     <group name="group_path" string="Path">
                         <field name="module_path" />
