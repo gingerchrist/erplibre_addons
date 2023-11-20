@@ -537,6 +537,7 @@
                                     type="object"
                                 />
                                 <field name="mode_view" />
+                                <field name="mode_view_snippet" />
                             </group>
                             <group>
                                 <field name="stop_execution_if_env_not_clean" />

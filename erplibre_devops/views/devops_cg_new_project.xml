@@ -105,6 +105,7 @@
                             <field name="odoo_config" />
                             <field name="new_project_with_code_generator" />
                             <field name="mode_view" />
+                            <field name="mode_view_snippet" />
                         </group>
                         <group>
                             <field name="keep_bd_alive" />

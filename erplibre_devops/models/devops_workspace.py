@@ -290,12 +290,21 @@ class DevopsWorkspace(models.Model):
 
     mode_view = fields.Selection(
         selection=[
-            ("normal", "Normal"),
+            ("no_view", "No view"),
             ("wizard_view", "Wizard"),
             ("wizard_new_view", "New"),
         ],
         default="wizard_view",
-        help="For code generator",
+        help="Mode view, enable rebuild same view or create new view.",
+    )
+
+    mode_view_snippet = fields.Selection(
+        selection=[
+            ("no_snippet", "No snippet"),
+            ("enable_snippet", "Enable snippet"),
+        ],
+        default="no_snippet",
+        help="Will active feature to generate snippet",
     )
 
     mode_exec = fields.Selection(
@@ -616,6 +625,7 @@ class DevopsWorkspace(models.Model):
                         "stop_execution_if_env_not_clean": rec.stop_execution_if_env_not_clean,
                         "devops_exec_bundle_id": devops_exec_bundle_parent_root_id.id,
                         "mode_view": rec.mode_view,
+                        "mode_view_snippet": rec.mode_view_snippet,
                     }
                 )
                 if rec.last_new_project_self:

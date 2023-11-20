@@ -56,11 +56,21 @@ class DevopsCgNewProject(models.Model):
 
     mode_view = fields.Selection(
         selection=[
-            ("normal", "Normal"),
+            ("no_view", "No view"),
             ("wizard_view", "Wizard"),
             ("wizard_new_view", "New"),
         ],
         default="wizard_view",
+        help="Mode view, enable rebuild same view or create new view.",
+    )
+
+    mode_view_snippet = fields.Selection(
+        selection=[
+            ("no_snippet", "No snippet"),
+            ("enable_snippet", "Enable snippet"),
+        ],
+        default="no_snippet",
+        help="Will active feature to generate snippet",
     )
 
     last_new_project = fields.Many2one(
@@ -1034,6 +1044,23 @@ class DevopsCgNewProject(models.Model):
                                 " True",
                             )
                         )
+                if rec.mode_view_snippet in ["enable_snippet"]:
+                    lst_template_hooks_py_replace.append(
+                        (
+                            'value["enable_template_website_snippet_view"] ='
+                            " False",
+                            'value["enable_template_website_snippet_view"] ='
+                            " True",
+                        )
+                    )
+                    lst_template_hooks_py_replace.append(
+                        (
+                            "code_generator_id.add_module_dependency(lst_depend_module)",
+                            'lst_depend_module.extend(["code_generator_website_snippet"])\n'
+                            "       "
+                            " code_generator_id.add_module_dependency(lst_depend_module)",
+                        )
+                    )
 
                 # Add model from config
                 if self.config:
