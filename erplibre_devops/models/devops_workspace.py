@@ -2283,6 +2283,7 @@ class DevopsWorkspace(models.Model):
             "TypeError:",
             "AttributeError:",
             "ValueError:",
+            "UnboundLocalError:",
             "FileNotFoundError:",
             "raise ValidationError",
             "odoo.exceptions.CacheMiss:",

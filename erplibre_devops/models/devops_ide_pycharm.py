@@ -113,6 +113,7 @@ class DevopsIdePycharm(models.Model):
                     "TypeError:",
                     "AttributeError:",
                     "ValueError:",
+                    "UnboundLocalError:",
                     "FileNotFoundError:",
                     "raise ValidationError",
                     "odoo.exceptions.CacheMiss:",
