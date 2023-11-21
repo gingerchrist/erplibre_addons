@@ -482,6 +482,10 @@ class DevopsWorkspace(models.Model):
 
     stop_execution_if_env_not_clean = fields.Boolean(default=True)
 
+    cg_self_add_config_cg = fields.Boolean(
+        help="Will use both feature of cg for self generate."
+    )
+
     test_ids = fields.Many2many(
         comodel_name="devops.test",
         string="Tests",
@@ -660,22 +664,34 @@ class DevopsWorkspace(models.Model):
                     .get_parent_root()
                 )
 
+                dct_new_project = {
+                    "module": module_name,
+                    "directory": addons_path,
+                    "devops_workspace": rec.id,
+                    "project_type": "self",
+                    "stop_execution_if_env_not_clean": rec.stop_execution_if_env_not_clean,
+                    "devops_exec_bundle_id": devops_exec_bundle_parent_root_id.id,
+                    "mode_view": rec.mode_view,
+                    "mode_view_snippet": rec.mode_view_snippet,
+                    "mode_view_snippet_enable_template_website_snippet_view": rec.mode_view_snippet_enable_template_website_snippet_view,
+                    "mode_view_snippet_template_generate_website_snippet_generic_mdl": rec.mode_view_snippet_template_generate_website_snippet_generic_mdl,
+                    "mode_view_snippet_template_generate_website_snippet_ctrl_featur": rec.mode_view_snippet_template_generate_website_snippet_ctrl_featur,
+                    "mode_view_snippet_template_generate_website_enable_javascript": rec.mode_view_snippet_template_generate_website_enable_javascript,
+                    "mode_view_snippet_template_generate_website_snippet_type": rec.mode_view_snippet_template_generate_website_snippet_type,
+                }
+
+                if rec.cg_self_add_config_cg:
+                    model_conf = None
+                    if rec.devops_code_generator_ids:
+                        cg_gen_id = rec.devops_code_generator_ids[0]
+                        if cg_gen_id.module_ids:
+                            module_id = cg_gen_id.module_ids[0]
+                            model_conf = rec.get_cg_model_config(module_id)
+                if model_conf:
+                    dct_new_project["config"] = model_conf
+
                 new_project_id = self.env["devops.cg.new_project"].create(
-                    {
-                        "module": module_name,
-                        "directory": addons_path,
-                        "devops_workspace": rec.id,
-                        "project_type": "self",
-                        "stop_execution_if_env_not_clean": rec.stop_execution_if_env_not_clean,
-                        "devops_exec_bundle_id": devops_exec_bundle_parent_root_id.id,
-                        "mode_view": rec.mode_view,
-                        "mode_view_snippet": rec.mode_view_snippet,
-                        "mode_view_snippet_enable_template_website_snippet_view": rec.mode_view_snippet_enable_template_website_snippet_view,
-                        "mode_view_snippet_template_generate_website_snippet_generic_mdl": rec.mode_view_snippet_template_generate_website_snippet_generic_mdl,
-                        "mode_view_snippet_template_generate_website_snippet_ctrl_featur": rec.mode_view_snippet_template_generate_website_snippet_ctrl_featur,
-                        "mode_view_snippet_template_generate_website_enable_javascript": rec.mode_view_snippet_template_generate_website_enable_javascript,
-                        "mode_view_snippet_template_generate_website_snippet_type": rec.mode_view_snippet_template_generate_website_snippet_type,
-                    }
+                    dct_new_project
                 )
                 if rec.last_new_project_self:
                     new_project_id.last_new_project = (
@@ -743,6 +759,64 @@ class DevopsWorkspace(models.Model):
                     )
                 )
 
+    @api.model
+    def get_cg_model_config(self, module_id):
+        # Support only 1, but can run in parallel multiple if no dependencies between
+        lst_model = []
+        dct_model_conf = {"model": lst_model}
+        for model_id in module_id.model_ids:
+            lst_field = []
+            lst_model.append({"name": model_id.name, "fields": lst_field})
+            for field_id in model_id.field_ids:
+                dct_value_field = {
+                    "name": field_id.name,
+                    "help": field_id.help,
+                    "type": field_id.type,
+                }
+                if field_id.type in [
+                    "many2one",
+                    "many2many",
+                    "one2many",
+                ]:
+                    dct_value_field["relation"] = (
+                        field_id.relation.name
+                        if field_id.relation
+                        else field_id.relation_manual
+                    )
+                    if not dct_value_field["relation"]:
+                        msg_err = (
+                            f"Model '{model_id.name}', field"
+                            f" '{field_id.name}' need a"
+                            " relation because type is"
+                            f" '{field_id.type}'"
+                        )
+                        raise exceptions.Warning(msg_err)
+                if field_id.type in [
+                    "one2many",
+                ]:
+                    dct_value_field["relation_field"] = (
+                        field_id.field_relation.name
+                        if field_id.field_relation
+                        else field_id.field_relation_manual
+                    )
+                    if not dct_value_field["relation_field"]:
+                        msg_err = (
+                            f"Model '{model_id.name}', field"
+                            f" '{field_id.name}' need a"
+                            " relation field because type is"
+                            f" '{field_id.type}'"
+                        )
+                        raise exceptions.Warning(msg_err)
+                if field_id.widget:
+                    dct_value_field = field_id.widget
+                lst_field.append(dct_value_field)
+        model_conf = (
+            json.dumps(dct_model_conf)
+            # .replace('"', '\\"')
+            # .replace("'", "")
+        )
+        return model_conf
+
     @api.multi
     def action_code_generator_generate_all(self):
         for rec_o in self:
@@ -761,65 +835,9 @@ class DevopsWorkspace(models.Model):
                     rec.workspace_docker_id.docker_config_gen_cg = False
                 for rec_cg in rec.devops_code_generator_ids:
                     for module_id in rec_cg.module_ids:
-                        # Support only 1, but can run in parallel multiple if no dependencies between
-                        module_name = module_id.name
-                        lst_model = []
-                        dct_model_conf = {"model": lst_model}
-                        for model_id in module_id.model_ids:
-                            lst_field = []
-                            lst_model.append(
-                                {"name": model_id.name, "fields": lst_field}
-                            )
-                            for field_id in model_id.field_ids:
-                                dct_value_field = {
-                                    "name": field_id.name,
-                                    "help": field_id.help,
-                                    "type": field_id.type,
-                                }
-                                if field_id.type in [
-                                    "many2one",
-                                    "many2many",
-                                    "one2many",
-                                ]:
-                                    dct_value_field["relation"] = (
-                                        field_id.relation.name
-                                        if field_id.relation
-                                        else field_id.relation_manual
-                                    )
-                                    if not dct_value_field["relation"]:
-                                        msg_err = (
-                                            f"Model '{model_id.name}', field"
-                                            f" '{field_id.name}' need a"
-                                            " relation because type is"
-                                            f" '{field_id.type}'"
-                                        )
-                                        raise exceptions.Warning(msg_err)
-                                if field_id.type in [
-                                    "one2many",
-                                ]:
-                                    dct_value_field["relation_field"] = (
-                                        field_id.field_relation.name
-                                        if field_id.field_relation
-                                        else field_id.field_relation_manual
-                                    )
-                                    if not dct_value_field["relation_field"]:
-                                        msg_err = (
-                                            f"Model '{model_id.name}', field"
-                                            f" '{field_id.name}' need a"
-                                            " relation field because type is"
-                                            f" '{field_id.type}'"
-                                        )
-                                        raise exceptions.Warning(msg_err)
-                                if field_id.widget:
-                                    dct_value_field = field_id.widget
-                                lst_field.append(dct_value_field)
+                        model_conf = rec.get_cg_model_config(module_id)
                         if rec_cg.force_clean_before_generate:
                             rec.workspace_code_remove_module(module_id)
-                        model_conf = (
-                            json.dumps(dct_model_conf)
-                            # .replace('"', '\\"')
-                            # .replace("'", "")
-                        )
                         directory = os.path.join(
                             rec.path_working_erplibre,
                             rec.path_code_generator_to_generate,
@@ -830,7 +848,7 @@ class DevopsWorkspace(models.Model):
                             .get_parent_root()
                         )
                         dct_new_project = {
-                            "module": module_name,
+                            "module": module_id.name,
                             "directory": directory,
                             "keep_bd_alive": True,
                             "devops_workspace": rec.id,
