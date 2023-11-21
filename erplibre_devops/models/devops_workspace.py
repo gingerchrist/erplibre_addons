@@ -398,6 +398,7 @@ class DevopsWorkspace(models.Model):
         selection=[
             ("simple", "Simple"),
             ("ore", "ORE"),
+            ("devops_example", "devops example"),
         ],
         required=True,
         default="simple",
@@ -1440,6 +1441,82 @@ class DevopsWorkspace(models.Model):
                         ]
                         rec.devops_code_generator_field_ids = [
                             (4, cg_field_voiture_couleur_id.id),
+                        ]
+                elif rec.cg_demo_type_data == "devops_example":
+                    # Project
+                    cg_id = self.env["devops.code_generator"].create(
+                        {
+                            "name": "Projet exemple",
+                            "devops_workspace_ids": [(6, 0, rec.ids)],
+                            "force_clean_before_generate": False,
+                        }
+                    )
+                    # Module
+                    cg_module_id = self.env[
+                        "devops.code_generator.module"
+                    ].create(
+                        {
+                            "name": "erplibre_devops",
+                            "code_generator": cg_id.id,
+                            "devops_workspace_ids": [(6, 0, rec.ids)],
+                        }
+                    )
+                    # Model
+                    cg_model_example_id = self.env[
+                        "devops.code_generator.module.model"
+                    ].create(
+                        {
+                            "name": "devops.example",
+                            "description": "Example feature to add to devops",
+                            "module_id": cg_module_id.id,
+                            "devops_workspace_ids": [(6, 0, rec.ids)],
+                        }
+                    )
+                    # Field
+                    cg_field_size_id = self.env[
+                        "devops.code_generator.module.model.field"
+                    ].create(
+                        {
+                            "name": "size",
+                            "help": "Size of this example.",
+                            "type": "integer",
+                            "model_id": cg_model_example_id.id,
+                            "devops_workspace_ids": [(6, 0, rec.ids)],
+                        }
+                    )
+                    if rec.is_clear_before_cg_demo:
+                        rec.devops_code_generator_ids = [(6, 0, cg_id.ids)]
+                        rec.devops_code_generator_module_ids = [
+                            (6, 0, cg_module_id.ids)
+                        ]
+                        rec.devops_code_generator_model_ids = [
+                            (
+                                6,
+                                0,
+                                [
+                                    cg_model_example_id.id,
+                                ],
+                            )
+                        ]
+                        rec.devops_code_generator_field_ids = [
+                            (
+                                6,
+                                0,
+                                [
+                                    cg_field_size_id.id,
+                                ],
+                            )
+                        ]
+                    else:
+                        rec.devops_code_generator_ids = [(4, cg_id.id)]
+                        rec.devops_code_generator_module_ids = [
+                            (4, cg_module_id.id)
+                        ]
+                        rec.devops_code_generator_model_ids = [
+                            (4, cg_model_example_id.id),
+                        ]
+                        rec.devops_code_generator_field_ids = [
+                            (4, cg_field_size_id.id),
                         ]
                 elif rec.cg_demo_type_data == "ore":
                     # Project
