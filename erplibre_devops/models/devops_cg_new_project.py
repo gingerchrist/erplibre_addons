@@ -1078,6 +1078,54 @@ class DevopsCgNewProject(models.Model):
                 rec.stage_id = self.env.ref(
                     "erplibre_devops.devops_cg_new_project_stage_generate_uca"
                 )
+                # Execute all
+                if not rec.bd_name_template:
+                    rec.bd_name_template = (
+                        f"new_project_code_generator_template_{uuid.uuid4()}"[
+                            :63
+                        ]
+                    )
+
+                if rec.new_project_with_code_generator:
+                    cmd = (
+                        "./script/database/db_restore.py --database"
+                        f" {rec.bd_name_template}"
+                    )
+                else:
+                    cmd = (
+                        "./script/database/db_restore.py --database"
+                        f" {rec.bd_name_template} --restore_image"
+                        " addons_install_code_generator_basic"
+                    )
+                exec_id = ws.with_context(
+                    devops_cg_new_project=rec.id
+                ).execute(cmd=cmd, to_instance=True)
+                rec.has_error = bool(exec_id.devops_exec_error_ids.exists())
+                if rec.has_error:
+                    _logger.info("Exit new project")
+                    continue
+                _logger.info(cmd)
+                _logger.info(
+                    f"========= GENERATE {rec.template_name} ========="
+                )
+                # TODO maybe the module exist somewhere else
+                if ws.os_path_exists(rec.module_path, to_instance=True):
+                    # Install module before running code generator
+                    cmd = (
+                        "./script/code_generator/search_class_model.py"
+                        f" --quiet -d {rec.module_path} -t {rec.template_path}"
+                    )
+                    _logger.info(cmd)
+                    exec_id = ws.with_context(
+                        devops_cg_new_project=rec.id
+                    ).execute(cmd=cmd, to_instance=True)
+                    rec.has_error = bool(
+                        exec_id.devops_exec_error_ids.exists()
+                    )
+                    if rec.has_error:
+                        _logger.info("Exit new project")
+                        continue
+
                 lst_template_hooks_py_replace = []
                 lst_template_manifest_py_replace = []
                 if rec.mode_view in ["wizard_view", "wizard_new_view"]:
@@ -1188,54 +1236,8 @@ class DevopsCgNewProject(models.Model):
                         lst_template_manifest_py_replace,
                     )
 
-                # Execute all
-                if not rec.bd_name_template:
-                    rec.bd_name_template = (
-                        f"new_project_code_generator_template_{uuid.uuid4()}"[
-                            :63
-                        ]
-                    )
-
-                if rec.new_project_with_code_generator:
-                    cmd = (
-                        "./script/database/db_restore.py --database"
-                        f" {rec.bd_name_template}"
-                    )
-                else:
-                    cmd = (
-                        "./script/database/db_restore.py --database"
-                        f" {rec.bd_name_template} --restore_image"
-                        " addons_install_code_generator_basic"
-                    )
-                exec_id = ws.with_context(
-                    devops_cg_new_project=rec.id
-                ).execute(cmd=cmd, to_instance=True)
-                rec.has_error = bool(exec_id.devops_exec_error_ids.exists())
-                if rec.has_error:
-                    _logger.info("Exit new project")
-                    continue
-                _logger.info(cmd)
-                _logger.info(
-                    f"========= GENERATE {rec.template_name} ========="
-                )
                 # TODO maybe the module exist somewhere else
                 if ws.os_path_exists(rec.module_path, to_instance=True):
-                    # Install module before running code generator
-                    cmd = (
-                        "./script/code_generator/search_class_model.py"
-                        f" --quiet -d {rec.module_path} -t {rec.template_path}"
-                    )
-                    _logger.info(cmd)
-                    exec_id = ws.with_context(
-                        devops_cg_new_project=rec.id
-                    ).execute(cmd=cmd, to_instance=True)
-                    rec.has_error = bool(
-                        exec_id.devops_exec_error_ids.exists()
-                    )
-                    if rec.has_error:
-                        _logger.info("Exit new project")
-                        continue
-
                     # TODO do we need to diagnostic installing module?
 
                     if rec.active_coverage:

@@ -681,8 +681,8 @@ class DevopsWorkspace(models.Model):
                     "mode_view_snippet_template_generate_website_snippet_type": rec.mode_view_snippet_template_generate_website_snippet_type,
                 }
 
+                model_conf = None
                 if rec.cg_self_add_config_cg:
-                    model_conf = None
                     if rec.devops_code_generator_ids:
                         cg_gen_id = rec.devops_code_generator_ids[0]
                         if cg_gen_id.module_ids:
