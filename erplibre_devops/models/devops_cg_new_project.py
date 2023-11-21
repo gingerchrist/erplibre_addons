@@ -1141,11 +1141,41 @@ class DevopsCgNewProject(models.Model):
                     str_lst_model = "; ".join(
                         [a.get("name") for a in config_lst_model]
                     )
-                    old_str = 'value["template_model_name"] = ""'
-                    new_str = (
-                        f'value["template_model_name"] = "{str_lst_model}"'
-                    )
-                    lst_template_hooks_py_replace.append((old_str, new_str))
+
+                    has_error = False
+                    try:
+                        rec.get_no_line_breakpoint(
+                            'value\["template_model_name"\] = ""',
+                            rec.template_hooks_py,
+                            ws,
+                        )
+                        old_str = 'value["template_model_name"] = ""'
+                        new_str = (
+                            f'value["template_model_name"] = "{str_lst_model}"'
+                        )
+                    except Exception:
+                        try:
+                            rec.get_no_line_breakpoint(
+                                'value\["template_model_name"\] = (',
+                                rec.template_hooks_py,
+                                ws,
+                            )
+                            old_str = 'value["template_model_name"] = ('
+                            new_str = (
+                                'value["template_model_name"] ='
+                                f' ("{str_lst_model}; "'
+                            )
+                        except Exception:
+                            _logger.warning(
+                                "Cannot find template_model_name"
+                                f" configuration into {rec.template_hooks_py}"
+                            )
+                            has_error = True
+
+                    if not has_error:
+                        lst_template_hooks_py_replace.append(
+                            (old_str, new_str)
+                        )
 
                 if lst_template_hooks_py_replace:
                     self.search_and_replace_file(
