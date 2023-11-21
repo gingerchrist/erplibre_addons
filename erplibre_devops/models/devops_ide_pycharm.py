@@ -44,7 +44,7 @@ class DevopsIdePycharm(models.Model):
         for rec in self:
             rec.name = f"{rec.devops_workspace.name}"
 
-    @api.multi
+    @api.model
     def action_kill_pycharm(self):
         self.ensure_one()
         with self.devops_workspace.devops_create_exec_bundle(
@@ -57,15 +57,33 @@ class DevopsIdePycharm(models.Model):
             rec.execute(cmd=cmd, engine="")
 
     @api.multi
-    def action_start_pycharm(self):
+    def action_start_pycharm(self, ctx=None, filename=None, no_line=None):
         self.ensure_one()
         with self.devops_workspace.devops_create_exec_bundle(
-            "Start PyCharm"
+            "Start PyCharm", ctx=ctx
         ) as rec_ws:
-            cmd = (
-                "~/.local/share/JetBrains/Toolbox/scripts/pycharm"
-                f" {rec_ws.folder}"
-            )
+            # TODO support diff "pycharm diff <path1> <path2> <path3>
+            # TODO support merge "pycharm merge <path1> <path2> <path3>
+            # TODO support format "pycharm format <path1> <path2> <path3>
+            # TODO support inspect "pycharm inspect <path1> <path2> <path3>
+            # TODO support inspect "pycharm inspect <path1> <path2> <path3>
+            if not filename:
+                filename = rec_ws._context.get("filename")
+                filename = os.path.join(rec_ws.folder, filename)
+            if not no_line:
+                no_line = rec_ws._context.get("no_line")
+            if filename:
+                add_line = f" --line {no_line}" if no_line else ""
+                cmd = (
+                    f"~/.local/share/JetBrains/Toolbox/scripts/pycharm{add_line}"
+                    f" {filename}"
+                )
+            else:
+                cmd = (
+                    "~/.local/share/JetBrains/Toolbox/scripts/pycharm"
+                    f" {rec_ws.folder}"
+                )
+
             rec_ws.execute(cmd=cmd, force_open_terminal=True, force_exit=True)
 
     @api.multi

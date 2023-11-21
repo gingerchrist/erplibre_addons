@@ -179,6 +179,13 @@
                                 </group>
                                 <group string="Breakpoint extract view">
                                     <field name="breakpoint_ucA_bp_extract_view_first_line" />
+                                    <button
+                                        class="oe_highlight"
+                                        name="action_start_pycharm"
+                                        string="Open UCA extract view first line"
+                                        context="{'filename': 'addons/TechnoLibre_odoo-code-generator/code_generator/extractor_view.py', 'no_line': 15}"
+                                        type="object"
+                                    />
                                     <field name="breakpoint_ucA_bp_extract_view_warning" />
                                 </group>
                             </group>

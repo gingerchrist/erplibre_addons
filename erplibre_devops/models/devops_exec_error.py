@@ -149,9 +149,11 @@ class DevopsExecError(models.Model):
         self.devops_workspace.ide_pycharm.action_kill_pycharm()
 
     @api.multi
-    def action_start_pycharm(self):
+    def action_start_pycharm(self, ctx=None, filename=None, no_line=None):
         self.ensure_one()
-        self.devops_workspace.ide_pycharm.action_start_pycharm()
+        self.devops_workspace.ide_pycharm.action_start_pycharm(
+            ctx=ctx, filename=filename, no_line=no_line
+        )
 
     @api.multi
     def action_set_breakpoint_pycharm(self):
