@@ -158,8 +158,10 @@
                                 <group string="General">
                                     <field name="config_debug_uc0" />
                                 </group>
-                                <group string="Breakpoint">
+                                <group string="Breakpoint general">
                                     <field name="breakpoint_uc0_bp_cg_uc0" />
+                                </group>
+                                <group string="Breakpoint hook">
                                     <field name="breakpoint_uc0_first_line_hook" />
                                 </group>
                             </group>
@@ -169,9 +171,14 @@
                                 <group string="General">
                                     <field name="config_debug_ucA" />
                                 </group>
-                                <group string="Breakpoint">
+                                <group string="Breakpoint general">
                                     <field name="breakpoint_ucA_bp_cg_ucA" />
+                                </group>
+                                <group string="Breakpoint hook">
                                     <field name="breakpoint_ucA_first_line_hook" />
+                                </group>
+                                <group string="Breakpoint extract view">
+                                    <field name="breakpoint_ucA_bp_extract_view_first_line" />
                                     <field name="breakpoint_ucA_bp_extract_view_warning" />
                                 </group>
                             </group>
@@ -181,12 +188,16 @@
                                 <group string="General">
                                     <field name="config_debug_ucB" />
                                 </group>
-                                <group string="Breakpoint">
+                                <group string="Breakpoint general">
                                     <field name="breakpoint_ucB_bp_cg_ucB" />
+                                </group>
+                                <group string="Breakpoint hook">
                                     <field name="breakpoint_ucB_first_line_hook" />
+                                </group>
+                                <group string="Breakpoint generate view">
                                     <field name="breakpoint_ucB_bp_generate_view_warning" />
                                 </group>
-                                <group string="Write code model field">
+                                <group string="Breakpoint write code model field">
                                     <field name="breakpoint_ucB_write_code_model_field" />
                                     <field name="breakpoint_ucB_write_code_model_field_config_model_name" />
                                     <field name="breakpoint_ucB_write_code_model_field_config_field_name" />

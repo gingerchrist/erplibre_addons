@@ -241,6 +241,10 @@ class DevopsCgNewProject(models.Model):
         help="Breakpoint uCA to diagnostic warning when extract view."
     )
 
+    breakpoint_ucA_bp_extract_view_first_line = fields.Boolean(
+        help="Breakpoint uCA to diagnostic when extract view."
+    )
+
     breakpoint_ucB_bp_generate_view_warning = fields.Boolean(
         help="Breakpoint uCB to diagnostic warning when generate view."
     )
@@ -393,6 +397,7 @@ class DevopsCgNewProject(models.Model):
         "breakpoint_ucA_bp_cg_ucA",
         "breakpoint_ucB_bp_cg_ucB",
         "breakpoint_ucA_bp_extract_view_warning",
+        "breakpoint_ucA_bp_extract_view_first_line",
         "breakpoint_ucB_bp_generate_view_warning",
         "breakpoint_ucB_write_code_model_field",
     )
@@ -412,6 +417,7 @@ class DevopsCgNewProject(models.Model):
                 + rec.breakpoint_ucA_bp_cg_ucA
                 + rec.breakpoint_ucB_bp_cg_ucB
                 + rec.breakpoint_ucA_bp_extract_view_warning
+                + rec.breakpoint_ucA_bp_extract_view_first_line
                 + rec.breakpoint_ucB_bp_generate_view_warning
                 + rec.breakpoint_ucB_write_code_model_field
             )
@@ -437,6 +443,7 @@ class DevopsCgNewProject(models.Model):
                 rec.breakpoint_ucA_bp_cg_ucA = False
                 rec.breakpoint_ucB_bp_cg_ucB = False
                 rec.breakpoint_ucA_bp_extract_view_warning = False
+                rec.breakpoint_ucA_bp_extract_view_first_line = False
                 rec.breakpoint_ucB_bp_generate_view_warning = False
                 rec.breakpoint_ucB_write_code_model_field = False
 
@@ -596,6 +603,15 @@ class DevopsCgNewProject(models.Model):
                 ):
                     file = "addons/TechnoLibre_odoo-code-generator/code_generator/extractor_view.py"
                     key = "_logger.warning("
+                    if is_test:
+                        lst_test.append((file, key))
+                    else:
+                        rec.add_breakpoint(file=file, key=key)
+                if is_test or (
+                    has_bp and rec.breakpoint_ucA_bp_extract_view_first_line
+                ):
+                    file = "addons/TechnoLibre_odoo-code-generator/code_generator/extractor_view.py"
+                    key = "self._module = module"
                     if is_test:
                         lst_test.append((file, key))
                     else:
