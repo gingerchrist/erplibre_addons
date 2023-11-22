@@ -166,6 +166,8 @@ class DevopsIdePycharm(models.Model):
                 else:
                     _logger.info("Not exception found from log.")
                     continue
+                if exec_error_id:
+                    exec_error_id.exception_name = exception
                 # TODO search multiple path
                 search_path = (
                     "File"
@@ -203,22 +205,23 @@ class DevopsIdePycharm(models.Model):
 
     def try_find_why(self, log, exception, ws, exec_error_id):
         id_devops_cg_new_project = self._context.get("devops_cg_new_project")
-        if not id_devops_cg_new_project:
-            return False
-        devops_cg_new_project_id = (
-            self.env["devops.cg.new_project"]
-            .browse(id_devops_cg_new_project)
-            .exists()
-        )
-        if not devops_cg_new_project_id:
-            return False
-        work_dir = os.path.normpath(
-            os.path.join(
-                ws.folder,
-                devops_cg_new_project_id.directory,
-                devops_cg_new_project_id.module,
+        if id_devops_cg_new_project:
+            devops_cg_new_project_id = (
+                self.env["devops.cg.new_project"]
+                .browse(id_devops_cg_new_project)
+                .exists()
             )
-        )
+            if not devops_cg_new_project_id:
+                return False
+            work_dir = os.path.normpath(
+                os.path.join(
+                    ws.folder,
+                    devops_cg_new_project_id.directory,
+                    devops_cg_new_project_id.module,
+                )
+            )
+        else:
+            work_dir = ws.folder
         if exception == "NameError:":
             # Check 1, is not defined
             result = re.search(r"NameError: name '(\w+)' is not defined", log)

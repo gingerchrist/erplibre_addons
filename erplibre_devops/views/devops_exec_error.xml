@@ -52,6 +52,7 @@
                             <field name="type_error" />
                             <field name="description" />
                             <field name="find_resolution" />
+                            <field name="exception_name" />
                         </group>
                         <group string="Date">
                             <field name="create_date" />

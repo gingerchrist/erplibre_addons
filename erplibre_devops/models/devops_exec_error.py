@@ -59,6 +59,8 @@ class DevopsExecError(models.Model):
         string="Devops Exec Bundle",
     )
 
+    exception_name = fields.Char(string="Name of exception")
+
     stage_new_project_id = fields.Many2one(
         comodel_name="devops.cg.new_project.stage",
         string="Stage",
