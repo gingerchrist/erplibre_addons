@@ -9,6 +9,7 @@ devops_db_image_access_user_types_/_internal_user,devops_db_image Access User ty
 devops_exec_access_user_types_/_internal_user,devops_exec Access User types / Internal User,model_devops_exec,base.group_user,1,1,1,1
 devops_exec_bundle_access_user_types_/_internal_user,devops_exec_bundle Access User types / Internal User,model_devops_exec_bundle,base.group_user,1,1,1,1
 devops_exec_error_access_user_types_/_internal_user,devops_exec_error Access User types / Internal User,model_devops_exec_error,base.group_user,1,1,1,1
+devops_ide_breakpoint_access_user_types_/_internal_user,devops_ide_breakpoint Access User types / Internal User,model_devops_ide_breakpoint,base.group_user,1,1,1,1
 devops_ide_pycharm_access_user_types_/_internal_user,devops_ide_pycharm Access User types / Internal User,model_devops_ide_pycharm,base.group_user,1,1,1,1
 devops_ide_pycharm_configuration_access_user_types_/_internal_user,devops_ide_pycharm_configuration Access User types / Internal User,model_devops_ide_pycharm_configuration,base.group_user,1,1,1,1
 devops_log_error_access_user_types_/_internal_user,devops_log_error Access User types / Internal User,model_devops_log_error,base.group_user,1,1,1,1

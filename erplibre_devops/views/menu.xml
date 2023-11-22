@@ -23,6 +23,8 @@
 
     <menuitem id="menu_code_cg" name="CG" sequence="1" parent="menu_code" />
 
+    <menuitem id="menu_code_ide" name="IDE" sequence="2" parent="menu_code" />
+
     <menuitem id="menu_process" name="Process" sequence="5" parent="menu_devops" />
 
     <!--Child menu-->
@@ -84,11 +86,19 @@
     />
 
     <menuitem
+        id="menu_code_ide_breakpoint"
+        name="IDE breakpoint"
+        action="devops_ide_breakpoint_action_window"
+        sequence="2"
+        parent="menu_code_ide"
+    />
+
+    <menuitem
         id="menu_code_ide_pycharm"
         name="IDE Pycharm"
         action="devops_ide_pycharm_action_window"
-        sequence="2"
-        parent="menu_code"
+        sequence="1"
+        parent="menu_code_ide"
     />
 
     <menuitem

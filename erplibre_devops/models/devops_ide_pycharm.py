@@ -57,7 +57,7 @@ class DevopsIdePycharm(models.Model):
             rec.execute(cmd=cmd, engine="")
 
     @api.multi
-    def action_start_pycharm(self, ctx=None, filename=None, no_line=None):
+    def action_start_pycharm(self, ctx=None, new_project_id=None):
         self.ensure_one()
         with self.devops_workspace.devops_create_exec_bundle(
             "Start PyCharm", ctx=ctx
@@ -67,13 +67,35 @@ class DevopsIdePycharm(models.Model):
             # TODO support format "pycharm format <path1> <path2> <path3>
             # TODO support inspect "pycharm inspect <path1> <path2> <path3>
             # TODO support inspect "pycharm inspect <path1> <path2> <path3>
-            if not filename:
-                filename = rec_ws._context.get("filename")
-                filename = os.path.join(rec_ws.folder, filename)
-            if not no_line:
-                no_line = rec_ws._context.get("no_line")
-            if filename:
-                add_line = f" --line {no_line}" if no_line else ""
+            lst_line = []
+            bp_id = None
+            breakpoint_name = rec_ws._context.get("breakpoint_name")
+            id_breakpoint = rec_ws._context.get("breakpoint_id")
+            if id_breakpoint:
+                bp_id = (
+                    self.env["devops.ide.breakpoint"]
+                    .browse(id_breakpoint)
+                    .exists()
+                )
+            elif breakpoint_name:
+                bp_id = (
+                    self.env["devops.ide.breakpoint"]
+                    .search([("name", "=", breakpoint_name)], limit=1)
+                    .exists()
+                )
+            if bp_id:
+                try:
+                    lst_line = bp_id.get_breakpoint_info(
+                        rec_ws, new_project_id=new_project_id
+                    )
+                except Exception as e:
+                    raise exceptions.Warning(
+                        f"Breakpoint '{bp_id.name}' : {e}"
+                    )
+            if lst_line:
+                filename = lst_line[0][0]
+                no_line = lst_line[0][1][0]
+                add_line = f" --line {no_line}" if no_line > 0 else ""
                 cmd = (
                     f"~/.local/share/JetBrains/Toolbox/scripts/pycharm{add_line}"
                     f" {filename}"

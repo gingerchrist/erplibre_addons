@@ -144,10 +144,31 @@
                                 </group>
                                 <group string="Breakpoint">
                                     <field name="breakpoint_all_write_hook_begin" />
+                                    <button
+                                        class="oe_highlight"
+                                        name="action_start_pycharm"
+                                        string="Open"
+                                        context="{'breakpoint_name': 'breakpoint_all_write_hook_begin'}"
+                                        type="object"
+                                    />
                                     <field name="breakpoint_all_write_hook_before_model" />
+                                    <button
+                                        class="oe_highlight"
+                                        name="action_start_pycharm"
+                                        string="Open"
+                                        context="{'breakpoint_name': 'breakpoint_all_write_hook_before_model'}"
+                                        type="object"
+                                    />
                                 </group>
                                 <group string="Write hook write field">
                                     <field name="breakpoint_all_write_hook_model_write_field" />
+                                    <button
+                                        class="oe_highlight"
+                                        name="action_start_pycharm"
+                                        string="Open"
+                                        context="{'breakpoint_name': 'breakpoint_all_write_hook_model_write_field'}"
+                                        type="object"
+                                    />
                                     <field name="breakpoint_all_write_hook_model_write_field_config_field_name" />
                                     <field name="breakpoint_all_write_hook_model_write_field_config_field_att" />
                                 </group>
@@ -160,9 +181,23 @@
                                 </group>
                                 <group string="Breakpoint general">
                                     <field name="breakpoint_uc0_bp_cg_uc0" />
+                                    <button
+                                        class="oe_highlight"
+                                        name="action_start_pycharm"
+                                        string="Open"
+                                        context="{'breakpoint_name': 'breakpoint_uc0_bp_cg_uc0'}"
+                                        type="object"
+                                    />
                                 </group>
                                 <group string="Breakpoint hook">
                                     <field name="breakpoint_uc0_first_line_hook" />
+                                    <button
+                                        class="oe_highlight"
+                                        name="action_start_pycharm"
+                                        string="Open"
+                                        context="{'breakpoint_name': 'breakpoint_uc0_first_line_hook'}"
+                                        type="object"
+                                    />
                                 </group>
                             </group>
                         </page>
@@ -172,21 +207,42 @@
                                     <field name="config_debug_ucA" />
                                 </group>
                                 <group string="Breakpoint general">
-                                    <field name="breakpoint_ucA_bp_cg_ucA" />
+                                    <field name="breakpoint_all_begin_generate_file" />
+                                    <button
+                                        class="oe_highlight"
+                                        name="action_start_pycharm"
+                                        string="Open"
+                                        context="{'breakpoint_name': 'breakpoint_all_begin_generate_file'}"
+                                        type="object"
+                                    />
                                 </group>
                                 <group string="Breakpoint hook">
                                     <field name="breakpoint_ucA_first_line_hook" />
+                                    <button
+                                        class="oe_highlight"
+                                        name="action_start_pycharm"
+                                        string="Open"
+                                        context="{'breakpoint_name': 'breakpoint_ucA_first_line_hook'}"
+                                        type="object"
+                                    />
                                 </group>
                                 <group string="Breakpoint extract view">
                                     <field name="breakpoint_ucA_bp_extract_view_first_line" />
                                     <button
                                         class="oe_highlight"
                                         name="action_start_pycharm"
-                                        string="Open UCA extract view first line"
-                                        context="{'filename': 'addons/TechnoLibre_odoo-code-generator/code_generator/extractor_view.py', 'no_line': 15}"
+                                        string="Open"
+                                        context="{'breakpoint_name': 'breakpoint_ucA_bp_extract_view_first_line'}"
                                         type="object"
                                     />
                                     <field name="breakpoint_ucA_bp_extract_view_warning" />
+                                    <button
+                                        class="oe_highlight"
+                                        name="action_start_pycharm"
+                                        string="Open"
+                                        context="{'breakpoint_name': 'breakpoint_ucA_bp_extract_view_warning'}"
+                                        type="object"
+                                    />
                                 </group>
                             </group>
                         </page>
@@ -196,16 +252,44 @@
                                     <field name="config_debug_ucB" />
                                 </group>
                                 <group string="Breakpoint general">
-                                    <field name="breakpoint_ucB_bp_cg_ucB" />
+                                    <field name="breakpoint_all_begin_generate_file" />
+                                    <button
+                                        class="oe_highlight"
+                                        name="action_start_pycharm"
+                                        string="Open"
+                                        context="{'breakpoint_name': 'breakpoint_all_begin_generate_file'}"
+                                        type="object"
+                                    />
                                 </group>
                                 <group string="Breakpoint hook">
                                     <field name="breakpoint_ucB_first_line_hook" />
+                                    <button
+                                        class="oe_highlight"
+                                        name="action_start_pycharm"
+                                        string="Open"
+                                        context="{'breakpoint_name': 'breakpoint_ucB_first_line_hook'}"
+                                        type="object"
+                                    />
                                 </group>
                                 <group string="Breakpoint generate view">
                                     <field name="breakpoint_ucB_bp_generate_view_warning" />
+                                    <button
+                                        class="oe_highlight"
+                                        name="action_start_pycharm"
+                                        string="Open"
+                                        context="{'breakpoint_name': 'breakpoint_ucB_bp_generate_view_warning'}"
+                                        type="object"
+                                    />
                                 </group>
                                 <group string="Breakpoint write code model field">
                                     <field name="breakpoint_ucB_write_code_model_field" />
+                                    <button
+                                        class="oe_highlight"
+                                        name="action_start_pycharm"
+                                        string="Open"
+                                        context="{'breakpoint_name': 'breakpoint_ucB_write_code_model_field'}"
+                                        type="object"
+                                    />
                                     <field name="breakpoint_ucB_write_code_model_field_config_model_name" />
                                     <field name="breakpoint_ucB_write_code_model_field_config_field_name" />
                                 </group>

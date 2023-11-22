@@ -233,8 +233,8 @@ class DevopsCgNewProject(models.Model):
         help="Breakpoint dans la section génération de code du uC0."
     )
 
-    breakpoint_ucA_bp_cg_ucA = fields.Boolean(
-        help="Breakpoint dans la section génération de code du uCA."
+    breakpoint_all_begin_generate_file = fields.Boolean(
+        help="Breakpoint dans la section génération de code."
     )
 
     breakpoint_ucA_bp_extract_view_warning = fields.Boolean(
@@ -394,8 +394,7 @@ class DevopsCgNewProject(models.Model):
         "breakpoint_ucA_first_line_hook",
         "breakpoint_ucB_first_line_hook",
         "breakpoint_uc0_bp_cg_uc0",
-        "breakpoint_ucA_bp_cg_ucA",
-        "breakpoint_ucB_bp_cg_ucB",
+        "breakpoint_all_begin_generate_file",
         "breakpoint_ucA_bp_extract_view_warning",
         "breakpoint_ucA_bp_extract_view_first_line",
         "breakpoint_ucB_bp_generate_view_warning",
@@ -414,8 +413,7 @@ class DevopsCgNewProject(models.Model):
                 + rec.breakpoint_ucA_first_line_hook
                 + rec.breakpoint_ucB_first_line_hook
                 + rec.breakpoint_uc0_bp_cg_uc0
-                + rec.breakpoint_ucA_bp_cg_ucA
-                + rec.breakpoint_ucB_bp_cg_ucB
+                + rec.breakpoint_all_begin_generate_file
                 + rec.breakpoint_ucA_bp_extract_view_warning
                 + rec.breakpoint_ucA_bp_extract_view_first_line
                 + rec.breakpoint_ucB_bp_generate_view_warning
@@ -440,8 +438,7 @@ class DevopsCgNewProject(models.Model):
                 rec.breakpoint_ucA_first_line_hook = False
                 rec.breakpoint_ucB_first_line_hook = False
                 rec.breakpoint_uc0_bp_cg_uc0 = False
-                rec.breakpoint_ucA_bp_cg_ucA = False
-                rec.breakpoint_ucB_bp_cg_ucB = False
+                rec.breakpoint_all_begin_generate_file = False
                 rec.breakpoint_ucA_bp_extract_view_warning = False
                 rec.breakpoint_ucA_bp_extract_view_first_line = False
                 rec.breakpoint_ucB_bp_generate_view_warning = False
@@ -497,171 +494,113 @@ class DevopsCgNewProject(models.Model):
         conf_add_db=None,
         conf_add_module=None,
         conf_add_config_path="config.conf",
-        is_test=False,
     ):
-        lst_test = []
         for rec in self:
             with rec.devops_workspace.devops_create_exec_bundle(
                 "New project setup IDE", devops_cg_new_project=rec.id, ctx=ctx
             ) as rec_ws:
-                if not rec.can_setup_ide and not is_test:
+                if not rec.can_setup_ide:
                     continue
                 has_bp = rec_ws._context.get(
                     "new_project_with_breakpoint", True
                 )
-
-                if is_test or (has_bp and rec.breakpoint_all_write_hook_begin):
-                    file = "addons/TechnoLibre_odoo-code-generator/code_generator_hook/models/code_generator_writer.py"
-                    key = "if post_init_hook_feature_code_generator:"
-                    if is_test:
-                        lst_test.append((file, key))
-                    else:
-                        rec.add_breakpoint(file=file, key=key)
-                if is_test or (
-                    has_bp and rec.breakpoint_all_write_hook_before_model
-                ):
-                    file = "addons/TechnoLibre_odoo-code-generator/code_generator_hook/models/code_generator_writer.py"
-                    key = (
-                        "lst_dependency = \[a.name for a in"
-                        " model_id.inherit_model_ids\]"
-                    )
-                    if is_test:
-                        lst_test.append((file, key))
-                    else:
-                        rec.add_breakpoint(file=file, key=key)
-                if is_test or (
-                    has_bp and rec.breakpoint_all_write_hook_model_write_field
-                ):
-                    if (
-                        rec.breakpoint_all_write_hook_model_write_field_config_field_name
-                    ):
-                        condition = f'key=="{rec.breakpoint_all_write_hook_model_write_field_config_field_name}"'
+                if has_bp:
+                    lst_name = []
+                    dct_condition = {}
+                    # Create breakpoint data
+                    if rec.breakpoint_all_write_hook_begin:
+                        lst_name.append("breakpoint_all_write_hook_begin")
+                    if rec.breakpoint_all_write_hook_before_model:
+                        lst_name.append(
+                            "breakpoint_all_write_hook_before_model"
+                        )
+                    if rec.breakpoint_all_write_hook_model_write_field:
+                        lst_condition = []
+                        if (
+                            rec.breakpoint_all_write_hook_model_write_field_config_field_name
+                        ):
+                            lst_condition.append(
+                                f'key=="{rec.breakpoint_all_write_hook_model_write_field_config_field_name}"'
+                            )
                         if (
                             rec.breakpoint_all_write_hook_model_write_field_config_field_att
                         ):
-                            condition += (
-                                " and"
-                                f' subkey=="{rec.breakpoint_all_write_hook_model_write_field_config_field_att}"'
+                            lst_condition.append(
+                                f'subkey=="{rec.breakpoint_all_write_hook_model_write_field_config_field_att}"'
                             )
-                    else:
-                        condition = None
+                            dct_condition[
+                                "breakpoint_all_write_hook_model_write_field"
+                            ] = " and ".join(lst_condition)
+                        lst_name.append(
+                            "breakpoint_all_write_hook_model_write_field"
+                        )
+                    if rec.breakpoint_uc0_first_line_hook:
+                        lst_name.append("breakpoint_uc0_first_line_hook")
+                    if rec.breakpoint_ucA_first_line_hook:
+                        lst_name.append("breakpoint_ucA_first_line_hook")
+                    if rec.breakpoint_ucB_first_line_hook:
+                        lst_name.append("breakpoint_ucB_first_line_hook")
+                    if rec.breakpoint_uc0_bp_cg_uc0:
+                        lst_name.append("breakpoint_uc0_bp_cg_uc0")
+                    if rec.breakpoint_all_begin_generate_file:
+                        lst_name.append("breakpoint_all_begin_generate_file")
+                    if rec.breakpoint_ucA_bp_extract_view_warning:
+                        lst_name.append(
+                            "breakpoint_ucA_bp_extract_view_warning"
+                        )
+                    if rec.breakpoint_ucA_bp_extract_view_first_line:
+                        lst_name.append(
+                            "breakpoint_ucA_bp_extract_view_first_line"
+                        )
+                    if rec.breakpoint_ucB_bp_generate_view_warning:
+                        lst_name.append(
+                            "breakpoint_ucB_bp_generate_view_warning"
+                        )
+                    if rec.breakpoint_ucB_write_code_model_field:
+                        lst_name.append(
+                            "breakpoint_ucB_write_code_model_field"
+                        )
+                        lst_condition = []
+                        if (
+                            rec.breakpoint_ucB_write_code_model_field_config_model_name
+                        ):
+                            lst_condition.append(
+                                f'model.model=="{rec.breakpoint_ucB_write_code_model_field_config_model_name}"'
+                            )
+                        if (
+                            rec.breakpoint_ucB_write_code_model_field_config_field_name
+                        ):
+                            lst_condition.append(
+                                f'f2export.name=="{rec.breakpoint_ucB_write_code_model_field_config_field_name}"'
+                            )
+                        if lst_condition:
+                            dct_condition[
+                                "breakpoint_ucB_write_code_model_field"
+                            ] = " and ".join(lst_condition)
 
-                    file = "addons/TechnoLibre_odoo-code-generator/code_generator_hook/models/code_generator_writer.py"
-                    key = "self._write_dict_key(cw, subkey, value)"
-                    if is_test:
-                        lst_test.append((file, key))
-                    else:
+                    # Generate breakpoint
+                    for name in lst_name:
+                        bp_id = (
+                            self.env["devops.ide.breakpoint"]
+                            .search([("name", "=", name)], limit=1)
+                            .exists()
+                        )
+                        if not bp_id:
+                            raise ValueError(
+                                f"Missing devops.ide.breakpoint name '{name}'"
+                            )
+                        condition = dct_condition.get(name, None)
                         rec.add_breakpoint(
-                            file=file, key=key, condition=condition
+                            bp_id=bp_id,
+                            condition=condition,
                         )
-                if is_test or (has_bp and rec.breakpoint_uc0_first_line_hook):
-                    file = rec.code_generator_demo_hooks_py
-                    key = "env = api.Environment(cr, SUPERUSER_ID, {})"
-                    if is_test:
-                        lst_test.append((file, key))
-                    else:
-                        rec.add_breakpoint(file=file, key=key)
-                if is_test or (has_bp and rec.breakpoint_ucA_first_line_hook):
-                    file = rec.template_hooks_py
-                    key = "env = api.Environment(cr, SUPERUSER_ID, {})"
-                    if is_test:
-                        lst_test.append((file, key))
-                    else:
-                        rec.add_breakpoint(file=file, key=key)
-                if is_test or (has_bp and rec.breakpoint_ucB_first_line_hook):
-                    file = rec.cg_hooks_py
-                    key = "env = api.Environment(cr, SUPERUSER_ID, {})"
-                    if is_test:
-                        lst_test.append((file, key))
-                    else:
-                        rec.add_breakpoint(file=file, key=key)
-                if is_test or (has_bp and rec.breakpoint_uc0_bp_cg_uc0):
-                    file = "addons/TechnoLibre_odoo-code-generator/code_generator_hook/models/code_generator_writer.py"
-                    key = 'cw.emit("new_module_name = MODULE_NAME")'
-                    if is_test:
-                        lst_test.append((file, key))
-                    else:
-                        rec.add_breakpoint(file=file, key=key)
-                if is_test or (
-                    has_bp
-                    and (
-                        rec.breakpoint_ucA_bp_cg_ucA
-                        or rec.breakpoint_ucB_bp_cg_ucB
-                    )
-                ):
-                    file = "addons/TechnoLibre_odoo-code-generator/code_generator/models/code_generator_writer.py"
-                    key = (
-                        "if module.template_model_name or"
-                        " module.template_inherit_model_name:"
-                    )
-                    if is_test:
-                        lst_test.append((file, key))
-                    else:
-                        rec.add_breakpoint(file=file, key=key)
-                if is_test or (
-                    has_bp and rec.breakpoint_ucA_bp_extract_view_warning
-                ):
-                    file = "addons/TechnoLibre_odoo-code-generator/code_generator/extractor_view.py"
-                    key = "_logger.warning("
-                    if is_test:
-                        lst_test.append((file, key))
-                    else:
-                        rec.add_breakpoint(file=file, key=key)
-                if is_test or (
-                    has_bp and rec.breakpoint_ucA_bp_extract_view_first_line
-                ):
-                    file = "addons/TechnoLibre_odoo-code-generator/code_generator/extractor_view.py"
-                    key = "self._module = module"
-                    if is_test:
-                        lst_test.append((file, key))
-                    else:
-                        rec.add_breakpoint(file=file, key=key)
-                if is_test or (
-                    has_bp and rec.breakpoint_ucB_bp_generate_view_warning
-                ):
-                    file = "addons/TechnoLibre_odoo-code-generator/code_generator/wizards/code_generator_generate_views_wizard.py"
-                    key = "_logger.warning("
-                    if is_test:
-                        lst_test.append((file, key))
-                    else:
-                        rec.add_breakpoint(file=file, key=key)
-                if is_test or (
-                    has_bp and rec.breakpoint_ucB_write_code_model_field
-                ):
-                    lst_condition = []
-                    if (
-                        rec.breakpoint_ucB_write_code_model_field_config_model_name
-                    ):
-                        lst_condition.append(
-                            f'model.model=="{rec.breakpoint_ucB_write_code_model_field_config_model_name}"'
-                        )
-                    if (
-                        rec.breakpoint_ucB_write_code_model_field_config_field_name
-                    ):
-                        lst_condition.append(
-                            f'f2export.name=="{rec.breakpoint_ucB_write_code_model_field_config_field_name}"'
-                        )
-                    if lst_condition:
-                        condition = " and ".join(lst_condition)
-                    else:
-                        condition = None
-                    file = "addons/TechnoLibre_odoo-code-generator/code_generator/models/code_generator_writer.py"
-                    key = "dct_field_attr_diff = defaultdict(list)"
-                    if is_test:
-                        lst_test.append((file, key))
-                    else:
-                        rec.add_breakpoint(
-                            file=file, key=key, condition=condition
-                        )
-                if conf_add_mode and not is_test:
+                if conf_add_mode:
                     rec_ws.ide_pycharm.add_configuration(
                         conf_add_mode=conf_add_mode,
                         conf_add_db=conf_add_db,
                         conf_add_module=conf_add_module,
                         conf_add_config_path=conf_add_config_path,
                     )
-                if is_test:
-                    return lst_test
 
     @api.multi
     def action_run_test(self, ctx=None):
@@ -672,25 +611,27 @@ class DevopsCgNewProject(models.Model):
                 ctx=ctx,
             ) as rec_ws:
                 rec = rec.with_context(rec_ws._context)
-                lst_test = rec.action_new_project_setup_IDE(is_test=True)
-                if not lst_test:
+                bp_ids = self.env["devops.ide.breakpoint"].search([])
+                if not bp_ids:
                     msg = f"List of breakpoint is empty."
                     _logger.error(msg)
                     raise exceptions.Warning(msg)
-                for file, key in lst_test:
-                    if not file:
-                        # Ignore this breakpoint, the file doesn't exist, missing variable
+                for bp_id in bp_ids:
+                    if bp_id.ignore_test:
                         continue
+
                     try:
-                        lst_line = rec.get_no_line_breakpoint(
-                            key, file, rec_ws
+                        lst_line = bp_id.get_breakpoint_info(
+                            rec_ws, new_project_id=rec
                         )
                     except Exception as e:
-                        raise exceptions.Warning(e)
+                        raise exceptions.Warning(
+                            f"Breakpoint '{bp_id.name}' : {e}"
+                        )
                     if not lst_line:
                         msg = (
-                            f"Cannot find breakpoint for file {file}, key :"
-                            f" {key}"
+                            f"Cannot find breakpoint {bp_id.name} for file"
+                            f" {bp_id.filename}, key : {bp_id.keyword}"
                         )
                         _logger.error(msg)
                         raise exceptions.Warning(msg)
@@ -1208,7 +1149,9 @@ class DevopsCgNewProject(models.Model):
 
                     has_error = False
                     try:
-                        rec.get_no_line_breakpoint(
+                        self.env[
+                            "devops.ide.breakpoint"
+                        ].get_no_line_breakpoint(
                             'value\["template_model_name"\] = ""',
                             rec.template_hooks_py,
                             ws,
@@ -1219,7 +1162,9 @@ class DevopsCgNewProject(models.Model):
                         )
                     except Exception:
                         try:
-                            rec.get_no_line_breakpoint(
+                            self.env[
+                                "devops.ide.breakpoint"
+                            ].get_no_line_breakpoint(
                                 'value\["template_model_name"\] = (',
                                 rec.template_hooks_py,
                                 ws,
@@ -1516,45 +1461,42 @@ class DevopsCgNewProject(models.Model):
 
         git_repo.git.restore(relative_path)
 
-    @api.model
-    def get_no_line_breakpoint(self, key, file, ws):
-        key = key.replace('"', '\\"')
-        cmd = f'grep -n "{key}" {file}'
-        cmd += " | awk -F: '{print $1}'"
-        result = ws.execute(to_instance=True, cmd=cmd, engine="sh")
-        try:
-            lst_no_line = [int(a) for a in result.log_all.strip().split("\n")]
-        except:
-            raise Exception(
-                f"Wrong output command : {cmd}\n{result.log_all.strip()}"
-            )
-        return lst_no_line
-
-    @api.model
+    @api.multi
     def add_breakpoint(
-        self, file=None, key=None, no_line=None, condition=None
+        self, bp_id=None, file=None, key=None, no_line=None, condition=None
     ):
         for rec in self:
             with rec.devops_workspace.devops_create_exec_bundle(
                 "New project add breakpoint", devops_cg_new_project=rec.id
             ) as rec_ws:
-                file_path = os.path.normpath(
-                    os.path.join(
-                        rec_ws.folder,
-                        file,
-                    )
-                )
                 lst_no_line = []
-                if key:
-                    lst_no_line = rec.get_no_line_breakpoint(key, file, rec_ws)
-                elif no_line:
-                    lst_no_line = [int(no_line)]
+                if bp_id:
+                    lst_no_line = bp_id.get_breakpoint_info(
+                        rec_ws, new_project_id=rec
+                    )
+                elif file:
+                    file_path = os.path.normpath(
+                        os.path.join(
+                            rec_ws.folder,
+                            file,
+                        )
+                    )
+                    if key:
+                        lst_no_line = (
+                            file_path,
+                            self.env[
+                                "devops.ide.breakpoint"
+                            ].get_no_line_breakpoint(key, file_path, rec_ws),
+                        )
+                    elif no_line:
+                        lst_no_line = [(file_path, int(no_line))]
 
                 if lst_no_line:
-                    for i_no_line in lst_no_line:
-                        rec_ws.ide_pycharm.add_breakpoint(
-                            file_path, i_no_line - 1, condition=condition
-                        )
+                    for filename, lst_line in lst_no_line:
+                        for i_no_line in lst_line:
+                            rec_ws.ide_pycharm.add_breakpoint(
+                                filename, i_no_line - 1, condition=condition
+                            )
                 else:
                     _logger.warning(
                         "Missing no_line to method add_breakpoint. Or specify"
@@ -1583,8 +1525,8 @@ class DevopsCgNewProject(models.Model):
         self.devops_workspace.ide_pycharm.action_kill_pycharm()
 
     @api.multi
-    def action_start_pycharm(self, ctx=None, filename=None, no_line=None):
+    def action_start_pycharm(self, ctx=None):
         self.ensure_one()
         self.devops_workspace.ide_pycharm.action_start_pycharm(
-            ctx=ctx, filename=filename, no_line=no_line
+            ctx=ctx, new_project_id=self
         )
