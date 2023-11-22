@@ -60,6 +60,14 @@
                             <field name="escaped_tb" />
                         </page>
                         <page string="Diagnostic">
+                            <button
+                                class="btn-secondary"
+                                name="action_start_pycharm"
+                                string="Open"
+                                context="{'breakpoint_name': 'breakpoint_devops_diagnostic'}"
+                                type="object"
+                                groups="base.group_no_one"
+                            />
                             <field name="diagnostic_idea" />
                         </page>
                     </notebook>

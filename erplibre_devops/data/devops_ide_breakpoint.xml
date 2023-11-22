@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <odoo>
-    <data noupdate="1">
+    <data>
         <record model="devops.ide.breakpoint" id="breakpoint_all_write_hook_begin">
             <field name="name">breakpoint_all_write_hook_begin</field>
             <field name="filename">addons/TechnoLibre_odoo-code-generator/code_generator_hook/models/code_generator_writer.py</field>
@@ -18,6 +18,12 @@
             <field name="filename">addons/TechnoLibre_odoo-code-generator/code_generator_hook/models/code_generator_writer.py</field>
             <field name="keyword">self._write_dict_key(cw, subkey, value)</field>
             <field name="description">Generic gc breakpoint in code writing about hooks file before write field into model.</field>
+        </record>
+        <record model="devops.ide.breakpoint" id="breakpoint_devops_diagnostic">
+            <field name="name">breakpoint_devops_diagnostic</field>
+            <field name="filename">addons/ERPLibre_erplibre_addons/erplibre_devops/models/devops_ide_pycharm.py</field>
+            <field name="keyword">id_devops_cg_new_project = self._context.get("devops_cg_new_project")</field>
+            <field name="description">DEVOPS diagnostic add feature.</field>
         </record>
         <record model="devops.ide.breakpoint" id="breakpoint_uc0_first_line_hook">
             <field name="name">breakpoint_uc0_first_line_hook</field>
