@@ -57,10 +57,10 @@ class DevopsCgNewProject(models.Model):
     mode_view = fields.Selection(
         selection=[
             ("no_view", "No view"),
-            ("wizard_view", "Wizard"),
-            ("wizard_new_view", "New"),
+            ("same_view", "Autopoiesis"),
+            ("new_view", "New"),
         ],
-        default="wizard_view",
+        default="same_view",
         help="Mode view, enable rebuild same view or create new view.",
     )
 
@@ -1085,14 +1085,14 @@ class DevopsCgNewProject(models.Model):
 
                 lst_template_hooks_py_replace = []
                 lst_template_manifest_py_replace = []
-                if rec.mode_view in ["wizard_view", "wizard_new_view"]:
+                if rec.mode_view in ["same_view", "new_view"]:
                     lst_template_hooks_py_replace.append(
                         (
                             'value["enable_template_wizard_view"] = False',
                             'value["enable_template_wizard_view"] = True',
                         )
                     )
-                    if rec.mode_view == "wizard_new_view":
+                    if rec.mode_view == "new_view":
                         lst_template_hooks_py_replace.append(
                             (
                                 'value["force_generic_template_wizard_view"] ='
@@ -1349,7 +1349,7 @@ class DevopsCgNewProject(models.Model):
                         lst_update_cg.append((old_str, new_str))
 
                     # Force add menu and access
-                    # if rec.mode_view in ["wizard_view", "wizard_new_view"]:
+                    # if rec.mode_view in ["same_view", "new_view"]:
                     #     lst_update_cg.append(
                     #         ('"disable_generate_menu": True,', "")
                     #     )

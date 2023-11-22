@@ -291,10 +291,10 @@ class DevopsWorkspace(models.Model):
     mode_view = fields.Selection(
         selection=[
             ("no_view", "No view"),
-            ("wizard_view", "Wizard"),
-            ("wizard_new_view", "New"),
+            ("same_view", "Autopoiesis"),
+            ("new_view", "New"),
         ],
-        default="wizard_view",
+        default="same_view",
         help="Mode view, enable rebuild same view or create new view.",
     )
 
