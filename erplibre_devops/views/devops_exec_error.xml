@@ -24,6 +24,12 @@
                     <button class="btn-warning" name="action_debug_new_project" string="Debug" type="object" />
                 </header>
                 <sheet>
+                    <div
+                        class="badge-pill badge-info float-right"
+                        attrs="{'invisible': [('diagnostic_idea', '=', False)]}"
+                    >
+                        Diagnostic
+                    </div>
                     <div class="oe_button_box" name="button_box">
                         <button class="oe_stat_button" name="toggle_active" type="object" icon="fa-archive">
                             <field name="active" widget="boolean_button" options='{"terminology": "archive"}' />
@@ -63,7 +69,7 @@
                             <button
                                 class="btn-secondary"
                                 name="action_start_pycharm"
-                                string="Open"
+                                string="Code it"
                                 context="{'breakpoint_name': 'breakpoint_devops_diagnostic'}"
                                 type="object"
                                 groups="base.group_no_one"

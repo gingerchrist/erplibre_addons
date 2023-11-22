@@ -191,6 +191,8 @@ class DevopsIdePycharm(models.Model):
                     exec_error_id.find_resolution = "error"
                     rec.try_find_why(log, exception, rec_ws, exec_error_id)
                     raise Exception("Cannot find breakpoint information")
+                else:
+                    rec.try_find_why(log, exception, rec_ws, exec_error_id)
                 # -1 to line because start 0, but show 1
                 line = str(line_breakpoint - 1)
                 rec.line_file_tb_detected = error_line
@@ -229,9 +231,31 @@ class DevopsIdePycharm(models.Model):
                 )
                 if exec_error_id and result.log_all:
                     exec_error_id.diagnostic_idea = result.log_all
-                    exec_error_id.line_file_tb_detected = result.log_all
+                    if not exec_error_id.line_file_tb_detected:
+                        exec_error_id.line_file_tb_detected = result.log_all
+                    else:
+                        exec_error_id.line_file_tb_detected += result.log_all
                     exec_error_id.find_resolution = "diagnostic"
                     return True
+        elif exception == "FileNotFoundError:":
+            if (
+                "FileNotFoundError: [Errno 2] No such file or directory:"
+                " './addons/ERPLibre_erplibre_addons/code_generator_template_erplibre_devops/hooks.py'"
+                in log
+            ):
+                exec_error_id.diagnostic_idea = (
+                    "UcA doesn't exist, rerun new project to create it."
+                )
+                return True
+            elif (
+                "FileNotFoundError: [Errno 2] No such file or directory:"
+                " './addons/ERPLibre_erplibre_addons/code_generator_erplibre_devops/hooks.py'"
+                in log
+            ):
+                exec_error_id.diagnostic_idea = (
+                    "UcB doesn't exist, rerun new project to create it."
+                )
+                return True
         elif exception == "ValueError:":
             # Check 1, while evaluating
             if 'while evaluating\n"' in log:
@@ -251,7 +275,14 @@ class DevopsIdePycharm(models.Model):
                     )
                     if exec_error_id and result.log_all:
                         exec_error_id.diagnostic_idea = result.log_all
-                        exec_error_id.line_file_tb_detected = result.log_all
+                        if not exec_error_id.line_file_tb_detected:
+                            exec_error_id.line_file_tb_detected = (
+                                result.log_all
+                            )
+                        else:
+                            exec_error_id.line_file_tb_detected += (
+                                result.log_all
+                            )
                         exec_error_id.find_resolution = "diagnostic"
                         return True
 
