@@ -649,7 +649,10 @@ class DevopsCgNewProject(models.Model):
                 rec.exec_start_date = fields.Datetime.now(self)
                 rec.has_error = False
                 rec.has_warning = False
-                id_exec_bundle = self.env.context.get("devops_exec_bundle")
+                stop_exec = False
+                count_stage_execute = 0
+                id_exec_bundle = rec_ws._context.get("devops_exec_bundle")
+                one_stage_only = rec_ws._context.get("one_stage_only", False)
                 exec_bundle_parent_id = self.env["devops.exec.bundle"].browse(
                     id_exec_bundle
                 )
@@ -672,37 +675,54 @@ class DevopsCgNewProject(models.Model):
                 #     "erplibre_devops.devops_cg_new_project_stage_generate_terminate"
                 # )
 
+                # Stage INIT
                 if rec.stage_id == stage_init_id:
                     rec.action_init(rec_ws=rec_ws)
+                    count_stage_execute += 1
 
-                if (
-                    not exec_bundle_parent_id.devops_exec_parent_error_ids
-                    and rec.stage_id == stage_gen_conf_id
-                ):
+                if one_stage_only and count_stage_execute > 0:
+                    stop_exec = True
+                elif exec_bundle_parent_id.devops_exec_parent_error_ids:
+                    rec.has_error = True
+                    stop_exec = True
+
+                # Stage CONFIG
+                if not stop_exec and rec.stage_id == stage_gen_conf_id:
                     rec.action_generate_config(rec_ws=rec_ws)
-                else:
+                    count_stage_execute += 1
+
+                if one_stage_only and count_stage_execute > 0:
+                    stop_exec = True
+                elif exec_bundle_parent_id.devops_exec_parent_error_ids:
                     rec.has_error = True
-                if (
-                    not exec_bundle_parent_id.devops_exec_parent_error_ids
-                    and rec.stage_id == stage_uc0_id
-                ):
+                    stop_exec = True
+
+                # Stage Uc0
+                if not stop_exec and rec.stage_id == stage_uc0_id:
                     rec.action_generate_uc0(rec_ws=rec_ws)
-                else:
+                    count_stage_execute += 1
+
+                if one_stage_only and count_stage_execute > 0:
+                    stop_exec = True
+                elif exec_bundle_parent_id.devops_exec_parent_error_ids:
                     rec.has_error = True
-                if (
-                    not exec_bundle_parent_id.devops_exec_parent_error_ids
-                    and rec.stage_id == stage_uca_id
-                ):
+                    stop_exec = True
+
+                # Stage UcA
+                if not stop_exec and rec.stage_id == stage_uca_id:
                     rec.action_generate_uca(rec_ws=rec_ws)
-                else:
+                    count_stage_execute += 1
+
+                if one_stage_only and count_stage_execute > 0:
+                    stop_exec = True
+                elif exec_bundle_parent_id.devops_exec_parent_error_ids:
                     rec.has_error = True
-                if (
-                    not exec_bundle_parent_id.devops_exec_parent_error_ids
-                    and rec.stage_id == stage_ucb_id
-                ):
+                    stop_exec = True
+
+                # Stage UcB
+                if not stop_exec and rec.stage_id == stage_ucb_id:
                     rec.action_generate_ucb(rec_ws=rec_ws)
-                else:
-                    rec.has_error = True
+                    count_stage_execute += 1
 
                 rec.exec_stop_date = fields.Datetime.now(self)
                 rec.execution_finish = True
