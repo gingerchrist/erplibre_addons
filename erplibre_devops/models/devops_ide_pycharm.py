@@ -207,6 +207,7 @@ class DevopsIdePycharm(models.Model):
                     exec_error_id.line_file_tb_detected = error_line
                     exec_error_id.find_resolution = "find"
 
+                update_line = int(line) + 1
                 # Create breakpoint
                 bp_value = {
                     "name": "breakpoint_exec",
@@ -214,14 +215,14 @@ class DevopsIdePycharm(models.Model):
                         "Breakpoint generate when create an execution."
                     ),
                     "filename": filepath_breakpoint,
-                    "no_line": line,
+                    "no_line": update_line,
                     # "keyword": keyword,
                     "ignore_test": True,
                     "generated_by_execution": True,
                 }
                 bp_id = self.env["devops.ide.breakpoint"].create(bp_value)
                 exec_error_id.exec_filename = filepath_breakpoint
-                exec_error_id.exec_line_number = line
+                exec_error_id.exec_line_number = update_line
                 exec_error_id.ide_breakpoint = bp_id.id
 
                 rec.add_breakpoint(filepath_breakpoint, line)
