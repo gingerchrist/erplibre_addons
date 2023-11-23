@@ -4,6 +4,7 @@
 import json
 import logging
 import os
+import pathlib
 import platform
 import re
 import subprocess
@@ -2199,6 +2200,43 @@ class DevopsWorkspace(models.Model):
             )
             if id_devops_cg_new_project:
                 devops_exec_value["new_project_id"] = id_devops_cg_new_project
+
+            # ### Find who call us ###
+            actual_file = str(pathlib.Path(__file__).resolve())
+            is_found = False
+            str_tb = None
+            # When found it, the result is next one, extract filename and line
+            for str_tb in traceback.format_stack()[::-1]:
+                if is_found:
+                    break
+                if actual_file in str_tb:
+                    is_found = True
+            if is_found:
+                # index 0, filename like «file "/home..."»
+                # index 1, line number like «line 1234»
+                # index 2, keyword
+                lst_tb = [a.strip() for a in str_tb.split(",")]
+                # Remove absolute path
+                filename = lst_tb[0][6:-1][len(rec.folder) + 1 :]
+                line_number = int(lst_tb[1][5:])
+                keyword = lst_tb[2]
+                bp_value = {
+                    "name": "breakpoint_exec",
+                    "description": (
+                        "Breakpoint generate when create an execution."
+                    ),
+                    "filename": filename,
+                    "no_line": line_number,
+                    "keyword": keyword,
+                    "ignore_test": True,
+                    "generated_by_execution": True,
+                }
+                bp_id = self.env["devops.ide.breakpoint"].create(bp_value)
+                devops_exec_value["ide_breakpoint"] = bp_id.id
+                devops_exec_value["exec_filename"] = filename
+                devops_exec_value["exec_line_number"] = line_number
+                devops_exec_value["exec_keyword"] = keyword
+            # ### END Find who call us ###
 
             devops_exec = self.env["devops.exec"].create(devops_exec_value)
             lst_result.append(devops_exec)

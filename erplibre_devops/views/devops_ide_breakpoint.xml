@@ -32,6 +32,10 @@
                             <field name="filename_is_template_hooks_py" />
                             <field name="filename_is_cg_hooks_py" />
                         </group>
+                        <group string="Other">
+                            <field name="ignore_test" />
+                            <field name="generated_by_execution" />
+                        </group>
                     </group>
                 </sheet>
             </form>
@@ -127,6 +131,7 @@
                 <field name="filename_is_template_hooks_py" />
                 <field name="filename_is_cg_hooks_py" />
                 <field name="description" />
+                <field name="generated_by_execution" />
                 <button
                     name="open_file_ide"
                     string="Open file"

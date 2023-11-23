@@ -5,6 +5,15 @@
         <field name="model">devops.exec</field>
         <field name="arch" type="xml">
             <form string="Titre">
+                <header>
+                    <button
+                        class="oe_highlight"
+                        name="open_file_ide"
+                        string="Open into PyCharm"
+                        type="object"
+                        attrs="{'invisible': [('ide_breakpoint', '=', False)]}"
+                    />
+                </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
                         <button class="oe_stat_button" name="toggle_active" type="object" icon="fa-archive">
@@ -40,6 +49,12 @@
                         </group>
                         <group string="Error">
                             <field name="devops_exec_error_ids" />
+                        </group>
+                        <group string="Code">
+                            <field name="ide_breakpoint" />
+                            <field name="exec_filename" />
+                            <field name="exec_keyword" />
+                            <field name="exec_line_number" />
                         </group>
                     </group>
                     <notebook>
@@ -155,6 +170,16 @@
                 <field name="folder" />
                 <field name="cmd" />
                 <field name="devops_workspace" />
+                <field name="ide_breakpoint" invisible="True" />
+                <button
+                    name="open_file_ide"
+                    string="Open file"
+                    tabindex="-1"
+                    type="object"
+                    icon="fa-play-circle text-success"
+                    class="oe_stat_button"
+                    attrs="{'invisible': [('ide_breakpoint', '=', False)]}"
+                />
             </tree>
         </field>
     </record>

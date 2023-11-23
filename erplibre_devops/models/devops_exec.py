@@ -20,6 +20,8 @@ class DevopsExec(models.Model):
 
     active = fields.Boolean(default=True)
 
+    cmd = fields.Char()
+
     exec_start_date = fields.Datetime(
         string="Execution start date",
         default=fields.Datetime.now,
@@ -34,9 +36,27 @@ class DevopsExec(models.Model):
         help="Time in second, duration of execution",
     )
 
-    cmd = fields.Char()
+    exec_filename = fields.Char(
+        string="Execution filename",
+        help="Execution information, where it's called.",
+    )
+
+    exec_keyword = fields.Char(
+        string="Execution keyword",
+        help="Execution information, where it's called.",
+    )
+
+    exec_line_number = fields.Integer(
+        string="Execution line number",
+        help="Execution information, where it's called.",
+    )
 
     folder = fields.Char()
+
+    ide_breakpoint = fields.Many2one(
+        comodel_name="devops.ide.breakpoint",
+        help="Associate a breakpoint to this execution.",
+    )
 
     time_duration_result = fields.Char(
         compute="_compute_time_duration_result",
@@ -160,7 +180,6 @@ class DevopsExec(models.Model):
             ]
             keyword_warning_to_remove = [
                 "devops_log_warning.py",
-                "devops_log_warning.py",
             ]
             for line in rec.log_all.split("\n"):
                 line_fix = line.lower()
@@ -205,3 +224,16 @@ class DevopsExec(models.Model):
             rec.time_duration_result = (
                 f" {'{:0>8}'.format(str(timedelta(seconds=rec.exec_time_duration)))}"
             )
+
+    @api.multi
+    def open_file_ide(self):
+        ws_id = self.env["devops.workspace"].search(
+            [("is_me", "=", True)], limit=1
+        )
+        if not ws_id:
+            return
+        for o_rec in self:
+            with ws_id.devops_create_exec_bundle("Open file IDE") as rec_ws:
+                rec_ws.with_context(
+                    breakpoint_id=o_rec.ide_breakpoint.id
+                ).ide_pycharm.action_start_pycharm()

@@ -84,14 +84,17 @@ class DevopsIdePycharm(models.Model):
                     .exists()
                 )
             if bp_id:
-                try:
-                    lst_line = bp_id.get_breakpoint_info(
-                        rec_ws, new_project_id=new_project_id
-                    )
-                except Exception as e:
-                    raise exceptions.Warning(
-                        f"Breakpoint '{bp_id.name}' : {e}"
-                    )
+                if bp_id.filename and bp_id.no_line >= 0:
+                    lst_line = [(bp_id.filename, [bp_id.no_line])]
+                else:
+                    try:
+                        lst_line = bp_id.get_breakpoint_info(
+                            rec_ws, new_project_id=new_project_id
+                        )
+                    except Exception as e:
+                        raise exceptions.Warning(
+                            f"Breakpoint '{bp_id.name}' : {e}"
+                        )
             if lst_line:
                 filename = lst_line[0][0]
                 no_line = lst_line[0][1][0]
