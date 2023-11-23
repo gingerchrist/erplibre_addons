@@ -29,6 +29,26 @@ class DevopsExecError(models.Model):
         comodel_name="devops.workspace", readonly=True
     )
 
+    ide_breakpoint = fields.Many2one(
+        comodel_name="devops.ide.breakpoint",
+        help="Associate a breakpoint to this execution.",
+    )
+
+    exec_filename = fields.Char(
+        string="Execution filename",
+        help="Execution information, where it's called.",
+    )
+
+    exec_keyword = fields.Char(
+        string="Execution keyword",
+        help="Execution information, where it's called.",
+    )
+
+    exec_line_number = fields.Integer(
+        string="Execution line number",
+        help="Execution information, where it's called.",
+    )
+
     partner_ids = fields.Many2many(
         comodel_name="res.partner",
         string="Partner",
@@ -165,3 +185,16 @@ class DevopsExecError(models.Model):
                     log=rec_o.escaped_tb.replace("&quot;", '"'),
                     exec_error_id=rec,
                 )
+
+    @api.multi
+    def open_file_ide(self):
+        ws_id = self.env["devops.workspace"].search(
+            [("is_me", "=", True)], limit=1
+        )
+        if not ws_id:
+            return
+        for o_rec in self:
+            with ws_id.devops_create_exec_bundle("Open file IDE") as rec_ws:
+                rec_ws.with_context(
+                    breakpoint_id=o_rec.ide_breakpoint.id
+                ).ide_pycharm.action_start_pycharm()

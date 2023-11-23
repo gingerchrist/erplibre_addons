@@ -181,6 +181,8 @@ class DevopsIdePycharm(models.Model):
                 error_line = log[no_last_file_error:no_end_line_error]
                 rec.line_file_tb_detected = error_line
                 # Detect no line
+                # TODO this code is duplicated by a non-regex method, search into workspace
+                #  for str_tb in traceback.format_stack()[::-1]:
                 regex = r"line (\d+),"
                 result_regex = re.search(regex, error_line)
                 line_breakpoint = None
@@ -204,6 +206,24 @@ class DevopsIdePycharm(models.Model):
                 if exec_error_id:
                     exec_error_id.line_file_tb_detected = error_line
                     exec_error_id.find_resolution = "find"
+
+                # Create breakpoint
+                bp_value = {
+                    "name": "breakpoint_exec",
+                    "description": (
+                        "Breakpoint generate when create an execution."
+                    ),
+                    "filename": filepath_breakpoint,
+                    "no_line": line,
+                    # "keyword": keyword,
+                    "ignore_test": True,
+                    "generated_by_execution": True,
+                }
+                bp_id = self.env["devops.ide.breakpoint"].create(bp_value)
+                exec_error_id.exec_filename = filepath_breakpoint
+                exec_error_id.exec_line_number = line
+                exec_error_id.ide_breakpoint = bp_id.id
+
                 rec.add_breakpoint(filepath_breakpoint, line)
 
     def try_find_why(self, log, exception, ws, exec_error_id):
