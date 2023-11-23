@@ -100,6 +100,13 @@
                         type="object"
                         attrs="{'invisible': ['|', ('is_conflict_mode_exec', '=', True), ('has_re_execute_new_project', '=', False)]}"
                     />
+                    <button
+                        class="btn-danger"
+                        name="action_clear_error_exec"
+                        string="Clear error exec"
+                        type="object"
+                        attrs="{'invisible': ['|', ('devops_exec_error_count', '==', 0), ('is_installed', '=', False)]}"
+                    />
                 </header>
                 <div class="badge-pill badge-success float-right" attrs="{'invisible': [('is_me', '=', False)]}">
                     Same instance
@@ -619,17 +626,6 @@
                         <field name="devops_exec_bundle_root_ids" />
                     </page>
                     <page name="exec_error" string="Error exec">
-                        <group>
-                            <group string="Action">
-                                <button
-                                    class="oe_highlight"
-                                    name="action_clear_error_exec"
-                                    string="Clear error exec"
-                                    context="{'default_exec_reboot_process': True}"
-                                    type="object"
-                                />
-                            </group>
-                        </group>
                         <field name="devops_exec_error_ids" />
                     </page>
                 </notebook>
