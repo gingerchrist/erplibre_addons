@@ -175,6 +175,16 @@
                                     <field name="breakpoint_all_write_hook_model_write_field_config_model_name" />
                                     <field name="breakpoint_all_write_hook_model_write_field_config_field_name" />
                                     <field name="breakpoint_all_write_hook_model_write_field_config_field_att" />
+                                    <field name="breakpoint_all_bp_prepare_data_before_write" />
+                                    <button
+                                        class="oe_highlight"
+                                        name="action_start_pycharm"
+                                        string="Open"
+                                        context="{'breakpoint_name': 'breakpoint_all_bp_prepare_data_before_write'}"
+                                        type="object"
+                                    />
+                                    <field name="breakpoint_all_bp_prepare_data_before_write_cond_model" />
+                                    <field name="breakpoint_all_bp_prepare_data_before_write_cond_field" />
                                 </group>
                             </group>
                         </page>

@@ -19,6 +19,12 @@
             <field name="keyword">self._write_dict_key(cw, subkey, value)</field>
             <field name="description">Generic gc breakpoint in code writing about hooks file before write field into model.</field>
         </record>
+        <record model="devops.ide.breakpoint" id="breakpoint_all_bp_prepare_data_before_write">
+            <field name="name">breakpoint_all_bp_prepare_data_before_write</field>
+            <field name="filename">addons/TechnoLibre_odoo-code-generator/code_generator_hook/models/code_generator_writer.py</field>
+            <field name="keyword">if model_id.has_same_model_in_inherit_model():</field>
+            <field name="description">Generic gc breakpoint in code writing, prepare a set of data before write.</field>
+        </record>
         <record model="devops.ide.breakpoint" id="breakpoint_devops_diagnostic">
             <field name="name">breakpoint_devops_diagnostic</field>
             <field name="filename">addons/ERPLibre_erplibre_addons/erplibre_devops/models/devops_ide_pycharm.py</field>

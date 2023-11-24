@@ -275,6 +275,24 @@ class DevopsCgNewProject(models.Model):
         )
     )
 
+    breakpoint_all_bp_prepare_data_before_write = fields.Boolean(
+        help="Breakpoint all prepare set of data before write code."
+    )
+
+    breakpoint_all_bp_prepare_data_before_write_cond_model = fields.Char(
+        help=(
+            "Associate with breakpoint_all_bp_prepare_data_before_write ,"
+            " can set model name to break."
+        )
+    )
+
+    breakpoint_all_bp_prepare_data_before_write_cond_field = fields.Char(
+        help=(
+            "Associate with breakpoint_all_bp_prepare_data_before_write ,"
+            " can set field name to break."
+        )
+    )
+
     breakpoint_ucA_bp_extract_view_warning = fields.Boolean(
         help="Breakpoint uCA to diagnostic warning when extract view."
     )
@@ -450,6 +468,7 @@ class DevopsCgNewProject(models.Model):
         "breakpoint_all_write_hook_begin",
         "breakpoint_all_write_hook_before_model",
         "breakpoint_all_write_hook_model_write_field",
+        "breakpoint_all_bp_prepare_data_before_write",
         "breakpoint_uc0_first_line_hook",
         "breakpoint_ucA_first_line_hook",
         "breakpoint_ucB_first_line_hook",
@@ -474,6 +493,7 @@ class DevopsCgNewProject(models.Model):
                 + rec.breakpoint_all_write_hook_begin
                 + rec.breakpoint_all_write_hook_before_model
                 + rec.breakpoint_all_write_hook_model_write_field
+                + rec.breakpoint_all_bp_prepare_data_before_write
                 + rec.breakpoint_uc0_first_line_hook
                 + rec.breakpoint_ucA_first_line_hook
                 + rec.breakpoint_ucB_first_line_hook
@@ -504,6 +524,7 @@ class DevopsCgNewProject(models.Model):
                 rec.breakpoint_all_write_hook_begin = False
                 rec.breakpoint_all_write_hook_before_model = False
                 rec.breakpoint_all_write_hook_model_write_field = False
+                rec.breakpoint_all_bp_prepare_data_before_write = False
                 rec.breakpoint_uc0_first_line_hook = False
                 rec.breakpoint_ucA_first_line_hook = False
                 rec.breakpoint_ucB_first_line_hook = False
@@ -617,6 +638,27 @@ class DevopsCgNewProject(models.Model):
                         if lst_condition:
                             dct_condition[
                                 "breakpoint_all_write_hook_model_write_field"
+                            ] = " and ".join(lst_condition)
+                    if rec.breakpoint_all_bp_prepare_data_before_write:
+                        lst_name.append(
+                            "breakpoint_all_bp_prepare_data_before_write"
+                        )
+                        lst_condition = []
+                        if (
+                            rec.breakpoint_all_bp_prepare_data_before_write_cond_model
+                        ):
+                            lst_condition.append(
+                                f'model_id.model=="{rec.breakpoint_all_bp_prepare_data_before_write_cond_model}"'
+                            )
+                        if (
+                            rec.breakpoint_all_bp_prepare_data_before_write_cond_field
+                        ):
+                            lst_condition.append(
+                                f'field_id.name=="{rec.breakpoint_all_bp_prepare_data_before_write_cond_field}"'
+                            )
+                        if lst_condition:
+                            dct_condition[
+                                "breakpoint_all_bp_prepare_data_before_write"
                             ] = " and ".join(lst_condition)
                     if rec.breakpoint_uc0_first_line_hook:
                         lst_name.append("breakpoint_uc0_first_line_hook")
