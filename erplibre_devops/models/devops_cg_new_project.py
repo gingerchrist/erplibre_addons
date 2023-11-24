@@ -31,13 +31,13 @@ class DevopsCgNewProject(models.Model):
     active = fields.Boolean(default=True)
 
     has_error = fields.Boolean(
-        help="Will be True if got error into execution of new project.",
         readonly=True,
+        help="Will be True if got error into execution of new project.",
     )
 
     has_warning = fields.Boolean(
-        help="Will be True if got warning into execution of new project.",
         readonly=True,
+        help="Will be True if got warning into execution of new project.",
     )
 
     stage_id = fields.Many2one(
@@ -75,9 +75,7 @@ class DevopsCgNewProject(models.Model):
     )
 
     mode_view_snippet_template_generate_website_snippet_generic_mdl = (
-        fields.Char(
-            help="Feature for mode_view_snippet",
-        )
+        fields.Char(help="Feature for mode_view_snippet")
     )
 
     mode_view_snippet_template_generate_website_snippet_ctrl_featur = (
@@ -128,15 +126,16 @@ class DevopsCgNewProject(models.Model):
     )
 
     execution_finish = fields.Boolean(
-        readonly=True, help="Will be True when execution finish correctly."
+        readonly=True,
+        help="Will be True when execution finish correctly.",
     )
 
     is_pause = fields.Boolean(
+        readonly=True,
         help=(
             "Is pause is True when debug is execute and set at pause to run"
             " outside."
         ),
-        readonly=True,
     )
 
     module = fields.Char(required=True)

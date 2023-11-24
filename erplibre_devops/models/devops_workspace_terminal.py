@@ -17,7 +17,10 @@ class DevopsWorkspaceTerminal(models.Model):
     _name = "devops.workspace.terminal"
     _description = "ERPLibre DevOps Workspace Terminal"
 
-    name = fields.Char(readonly=True, compute="_compute_name", store=True)
+    name = fields.Char(
+        compute="_compute_name",
+        store=True,
+    )
 
     workspace_id = fields.Many2one(
         comodel_name="devops.workspace",

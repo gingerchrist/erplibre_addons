@@ -39,12 +39,13 @@ class DevopsExecBundle(models.Model):
 
     exec_start_date = fields.Datetime(
         string="Execution start date",
-        default=fields.Datetime.now,
         readonly=True,
+        default=fields.Datetime.now,
     )
 
     exec_stop_date = fields.Datetime(
-        string="Execution stop date", readonly=True
+        string="Execution stop date",
+        readonly=True,
     )
 
     exec_time_duration = fields.Integer(
@@ -65,7 +66,8 @@ class DevopsExecBundle(models.Model):
     )
 
     devops_workspace = fields.Many2one(
-        comodel_name="devops.workspace", readonly=True
+        comodel_name="devops.workspace",
+        readonly=True,
     )
 
     devops_exec_ids = fields.One2many(

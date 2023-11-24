@@ -26,7 +26,8 @@ class DevopsExecError(models.Model):
     active = fields.Boolean(default=True)
 
     devops_workspace = fields.Many2one(
-        comodel_name="devops.workspace", readonly=True
+        comodel_name="devops.workspace",
+        readonly=True,
     )
 
     ide_breakpoint = fields.Many2one(
@@ -69,14 +70,14 @@ class DevopsExecError(models.Model):
 
     devops_exec_id = fields.Many2one(
         comodel_name="devops.exec",
-        readonly=True,
         string="Devops Exec",
+        readonly=True,
     )
 
     devops_exec_bundle_id = fields.Many2one(
         comodel_name="devops.exec.bundle",
-        readonly=True,
         string="Devops Exec Bundle",
+        readonly=True,
     )
 
     exception_name = fields.Char(string="Name of exception")
@@ -88,8 +89,8 @@ class DevopsExecError(models.Model):
 
     parent_root_exec_bundle_id = fields.Many2one(
         comodel_name="devops.exec.bundle",
-        readonly=True,
         string="Parent Root Exec Bundle",
+        readonly=True,
     )
 
     find_resolution = fields.Selection(

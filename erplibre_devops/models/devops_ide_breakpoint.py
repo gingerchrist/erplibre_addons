@@ -22,7 +22,10 @@ class DevopsIdeBreakpoint(models.Model):
 
     filename_is_cg_hooks_py = fields.Boolean()
 
-    no_line = fields.Integer(default=-1, help="Will be compute")
+    no_line = fields.Integer(
+        default=-1,
+        help="Will be compute",
+    )
 
     keyword = fields.Char()
 
