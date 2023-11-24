@@ -247,7 +247,31 @@
                                         type="object"
                                     />
                                 </group>
-                                <group string="Breakpoint extract python module">
+                                <group string="Breakpoint extract Python">
+                                    <field name="breakpoint_ucA_bp_extract_python_controller_warning" />
+                                    <button
+                                        class="oe_highlight"
+                                        name="action_start_pycharm"
+                                        string="Open"
+                                        context="{'breakpoint_name': 'breakpoint_ucA_bp_extract_python_controller_warning'}"
+                                        type="object"
+                                    />
+                                    <field name="breakpoint_ucA_bp_extract_python_module_warning" />
+                                    <button
+                                        class="oe_highlight"
+                                        name="action_start_pycharm"
+                                        string="Open"
+                                        context="{'breakpoint_name': 'breakpoint_ucA_bp_extract_python_module_warning'}"
+                                        type="object"
+                                    />
+                                    <field name="breakpoint_ucA_bp_extract_python_module_file_warning" />
+                                    <button
+                                        class="oe_highlight"
+                                        name="action_start_pycharm"
+                                        string="Open"
+                                        context="{'breakpoint_name': 'breakpoint_ucA_bp_extract_python_module_file_warning'}"
+                                        type="object"
+                                    />
                                     <field name="breakpoint_ucA_extract_module_get_min_max_crop" />
                                     <button
                                         class="oe_highlight"

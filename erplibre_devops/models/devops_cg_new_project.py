@@ -232,6 +232,24 @@ class DevopsCgNewProject(models.Model):
         help="Breakpoint dans la section génération de code."
     )
 
+    breakpoint_ucA_bp_extract_python_controller_warning = fields.Boolean(
+        help=(
+            "Breakpoint uCA to diagnostic warning when extract python"
+            " controller."
+        )
+    )
+
+    breakpoint_ucA_bp_extract_python_module_warning = fields.Boolean(
+        help="Breakpoint uCA to diagnostic warning when extract python module."
+    )
+
+    breakpoint_ucA_bp_extract_python_module_file_warning = fields.Boolean(
+        help=(
+            "Breakpoint uCA to diagnostic warning when extract python module"
+            " file."
+        )
+    )
+
     breakpoint_ucA_bp_extract_view_warning = fields.Boolean(
         help="Breakpoint uCA to diagnostic warning when extract view."
     )
@@ -413,6 +431,9 @@ class DevopsCgNewProject(models.Model):
         "breakpoint_uc0_bp_cg_uc0",
         "breakpoint_all_begin_generate_file",
         "breakpoint_ucA_bp_extract_view_warning",
+        "breakpoint_ucA_bp_extract_python_controller_warning",
+        "breakpoint_ucA_bp_extract_python_module_warning",
+        "breakpoint_ucA_bp_extract_python_module_file_warning",
         "breakpoint_ucA_extract_module_get_min_max_crop",
         "breakpoint_ucA_bp_extract_view_first_line",
         "breakpoint_ucB_bp_generate_view_warning",
@@ -433,6 +454,9 @@ class DevopsCgNewProject(models.Model):
                 + rec.breakpoint_uc0_bp_cg_uc0
                 + rec.breakpoint_all_begin_generate_file
                 + rec.breakpoint_ucA_bp_extract_view_warning
+                + rec.breakpoint_ucA_bp_extract_python_controller_warning
+                + rec.breakpoint_ucA_bp_extract_python_module_warning
+                + rec.breakpoint_ucA_bp_extract_python_module_file_warning
                 + rec.breakpoint_ucA_extract_module_get_min_max_crop
                 + rec.breakpoint_ucA_bp_extract_view_first_line
                 + rec.breakpoint_ucB_bp_generate_view_warning
@@ -458,6 +482,11 @@ class DevopsCgNewProject(models.Model):
                 rec.breakpoint_ucB_first_line_hook = False
                 rec.breakpoint_uc0_bp_cg_uc0 = False
                 rec.breakpoint_all_begin_generate_file = False
+                rec.breakpoint_ucA_bp_extract_python_controller_warning = False
+                rec.breakpoint_ucA_bp_extract_python_module_warning = False
+                rec.breakpoint_ucA_bp_extract_python_module_file_warning = (
+                    False
+                )
                 rec.breakpoint_ucA_bp_extract_view_warning = False
                 rec.breakpoint_ucA_extract_module_get_min_max_crop = False
                 rec.breakpoint_ucA_bp_extract_view_first_line = False
@@ -567,6 +596,20 @@ class DevopsCgNewProject(models.Model):
                     if rec.breakpoint_ucA_bp_extract_view_warning:
                         lst_name.append(
                             "breakpoint_ucA_bp_extract_view_warning"
+                        )
+                    if rec.breakpoint_ucA_bp_extract_python_controller_warning:
+                        lst_name.append(
+                            "breakpoint_ucA_bp_extract_python_controller_warning"
+                        )
+                    if rec.breakpoint_ucA_bp_extract_python_module_warning:
+                        lst_name.append(
+                            "breakpoint_ucA_bp_extract_python_module_warning"
+                        )
+                    if (
+                        rec.breakpoint_ucA_bp_extract_python_module_file_warning
+                    ):
+                        lst_name.append(
+                            "breakpoint_ucA_bp_extract_python_module_file_warning"
                         )
                     if rec.breakpoint_ucA_bp_extract_view_first_line:
                         lst_name.append(

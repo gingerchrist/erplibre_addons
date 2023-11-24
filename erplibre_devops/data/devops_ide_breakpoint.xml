@@ -64,6 +64,24 @@
             <field name="keyword">_logger.warning(</field>
             <field name="description">UcA gc breakpoint diagnostic warning into extract view.</field>
         </record>
+        <record model="devops.ide.breakpoint" id="breakpoint_ucA_bp_extract_python_controller_warning">
+            <field name="name">breakpoint_ucA_bp_extract_python_controller_warning</field>
+            <field name="filename">addons/TechnoLibre_odoo-code-generator/code_generator/extractor_controller.py</field>
+            <field name="keyword">_logger.warning(</field>
+            <field name="description">UcA gc breakpoint diagnostic warning into extract python controller.</field>
+        </record>
+        <record model="devops.ide.breakpoint" id="breakpoint_ucA_bp_extract_python_module_warning">
+            <field name="name">breakpoint_ucA_bp_extract_python_module_warning</field>
+            <field name="filename">addons/TechnoLibre_odoo-code-generator/code_generator/extractor_module.py</field>
+            <field name="keyword">_logger.warning(</field>
+            <field name="description">UcA gc breakpoint diagnostic warning into extract python module.</field>
+        </record>
+        <record model="devops.ide.breakpoint" id="breakpoint_ucA_bp_extract_python_module_file_warning">
+            <field name="name">breakpoint_ucA_bp_extract_python_module_file_warning</field>
+            <field name="filename">addons/TechnoLibre_odoo-code-generator/code_generator/extractor_module_file.py</field>
+            <field name="keyword">_logger.warning(</field>
+            <field name="description">UcA gc breakpoint diagnostic warning into extract python module file.</field>
+        </record>
         <record model="devops.ide.breakpoint" id="breakpoint_ucA_bp_extract_view_first_line">
             <field name="name">breakpoint_ucA_bp_extract_view_first_line</field>
             <field name="filename">addons/TechnoLibre_odoo-code-generator/code_generator/extractor_view.py</field>
