@@ -282,6 +282,16 @@
                                     />
                                     <field name="breakpoint_ucA_extract_module_get_min_max_crop_model_name" />
                                     <field name="breakpoint_ucA_extract_module_get_min_max_crop_method_name" />
+                                    <field name="breakpoint_ucA_bp_extract_python_detect_field" />
+                                    <button
+                                        class="oe_highlight"
+                                        name="action_start_pycharm"
+                                        string="Open"
+                                        context="{'breakpoint_name': 'breakpoint_ucA_bp_extract_python_detect_field'}"
+                                        type="object"
+                                    />
+                                    <field name="breakpoint_ucA_bp_extract_python_detect_field_cond_model" />
+                                    <field name="breakpoint_ucA_bp_extract_python_detect_field_cond_field" />
                                 </group>
                             </group>
                         </page>

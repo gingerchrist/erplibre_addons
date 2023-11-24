@@ -10,7 +10,7 @@
         <record model="devops.ide.breakpoint" id="breakpoint_all_write_hook_before_model">
             <field name="name">breakpoint_all_write_hook_before_model</field>
             <field name="filename">addons/TechnoLibre_odoo-code-generator/code_generator_hook/models/code_generator_writer.py</field>
-            <field name="keyword">lst_dependency = \[a.name for a in model_id.inherit_model_ids\]</field>
+            <field name="keyword">lst_dependency = [a.name for a in model_id.inherit_model_ids]</field>
             <field name="description">Generic gc breakpoint in code writing about hooks file before create model.</field>
         </record>
         <record model="devops.ide.breakpoint" id="breakpoint_all_write_hook_model_write_field">
@@ -81,6 +81,12 @@
             <field name="filename">addons/TechnoLibre_odoo-code-generator/code_generator/extractor_module_file.py</field>
             <field name="keyword">_logger.warning(</field>
             <field name="description">UcA gc breakpoint diagnostic warning into extract python module file.</field>
+        </record>
+        <record model="devops.ide.breakpoint" id="breakpoint_ucA_bp_extract_python_detect_field">
+            <field name="name">breakpoint_ucA_bp_extract_python_detect_field</field>
+            <field name="filename">addons/TechnoLibre_odoo-code-generator/code_generator/extractor_module_file.py</field>
+            <field name="keyword">var_name = node.targets[0].id</field>
+            <field name="description">UcA gc breakpoint when extract Python field of model.</field>
         </record>
         <record model="devops.ide.breakpoint" id="breakpoint_ucA_bp_extract_view_first_line">
             <field name="name">breakpoint_ucA_bp_extract_view_first_line</field>

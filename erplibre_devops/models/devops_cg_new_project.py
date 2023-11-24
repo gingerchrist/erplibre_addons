@@ -250,6 +250,24 @@ class DevopsCgNewProject(models.Model):
         )
     )
 
+    breakpoint_ucA_bp_extract_python_detect_field = fields.Boolean(
+        help="Breakpoint uCA when extract Python field of model."
+    )
+
+    breakpoint_ucA_bp_extract_python_detect_field_cond_model = fields.Char(
+        help=(
+            "Associate with breakpoint_ucA_bp_extract_python_detect_field ,"
+            " can set model name to break."
+        )
+    )
+
+    breakpoint_ucA_bp_extract_python_detect_field_cond_field = fields.Char(
+        help=(
+            "Associate with breakpoint_ucA_bp_extract_python_detect_field ,"
+            " can set field name to break."
+        )
+    )
+
     breakpoint_ucA_bp_extract_view_warning = fields.Boolean(
         help="Breakpoint uCA to diagnostic warning when extract view."
     )
@@ -434,6 +452,7 @@ class DevopsCgNewProject(models.Model):
         "breakpoint_ucA_bp_extract_python_controller_warning",
         "breakpoint_ucA_bp_extract_python_module_warning",
         "breakpoint_ucA_bp_extract_python_module_file_warning",
+        "breakpoint_ucA_bp_extract_python_detect_field",
         "breakpoint_ucA_extract_module_get_min_max_crop",
         "breakpoint_ucA_bp_extract_view_first_line",
         "breakpoint_ucB_bp_generate_view_warning",
@@ -457,6 +476,7 @@ class DevopsCgNewProject(models.Model):
                 + rec.breakpoint_ucA_bp_extract_python_controller_warning
                 + rec.breakpoint_ucA_bp_extract_python_module_warning
                 + rec.breakpoint_ucA_bp_extract_python_module_file_warning
+                + rec.breakpoint_ucA_bp_extract_python_detect_field
                 + rec.breakpoint_ucA_extract_module_get_min_max_crop
                 + rec.breakpoint_ucA_bp_extract_view_first_line
                 + rec.breakpoint_ucB_bp_generate_view_warning
@@ -487,6 +507,7 @@ class DevopsCgNewProject(models.Model):
                 rec.breakpoint_ucA_bp_extract_python_module_file_warning = (
                     False
                 )
+                rec.breakpoint_ucA_bp_extract_python_detect_field = False
                 rec.breakpoint_ucA_bp_extract_view_warning = False
                 rec.breakpoint_ucA_extract_module_get_min_max_crop = False
                 rec.breakpoint_ucA_bp_extract_view_first_line = False
@@ -611,6 +632,27 @@ class DevopsCgNewProject(models.Model):
                         lst_name.append(
                             "breakpoint_ucA_bp_extract_python_module_file_warning"
                         )
+                    if rec.breakpoint_ucA_bp_extract_python_detect_field:
+                        lst_name.append(
+                            "breakpoint_ucA_bp_extract_python_detect_field"
+                        )
+                        lst_condition = []
+                        if (
+                            rec.breakpoint_ucA_bp_extract_python_detect_field_cond_model
+                        ):
+                            lst_condition.append(
+                                f'self.model=="{rec.breakpoint_ucA_bp_extract_python_detect_field_cond_model}"'
+                            )
+                        if (
+                            rec.breakpoint_ucA_bp_extract_python_detect_field_cond_field
+                        ):
+                            lst_condition.append(
+                                f'node.targets[0].id=="{rec.breakpoint_ucA_bp_extract_python_detect_field_cond_field}"'
+                            )
+                        if lst_condition:
+                            dct_condition[
+                                "breakpoint_ucA_bp_extract_python_detect_field"
+                            ] = " and ".join(lst_condition)
                     if rec.breakpoint_ucA_bp_extract_view_first_line:
                         lst_name.append(
                             "breakpoint_ucA_bp_extract_view_first_line"
