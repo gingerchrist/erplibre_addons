@@ -202,6 +202,13 @@ class DevopsCgNewProject(models.Model):
         )
     )
 
+    breakpoint_all_write_hook_model_write_field_config_model_name = fields.Char(
+        help=(
+            "Associate with breakpoint_all_write_hook_model_write_field , can"
+            " set model name to break."
+        )
+    )
+
     breakpoint_all_write_hook_model_write_field_config_field_name = fields.Char(
         help=(
             "Associate with breakpoint_all_write_hook_model_write_field , can"
@@ -585,7 +592,16 @@ class DevopsCgNewProject(models.Model):
                             "breakpoint_all_write_hook_before_model"
                         )
                     if rec.breakpoint_all_write_hook_model_write_field:
+                        lst_name.append(
+                            "breakpoint_all_write_hook_model_write_field"
+                        )
                         lst_condition = []
+                        if (
+                            rec.breakpoint_all_write_hook_model_write_field_config_model_name
+                        ):
+                            lst_condition.append(
+                                f'model_id.model=="{rec.breakpoint_all_write_hook_model_write_field_config_model_name}"'
+                            )
                         if (
                             rec.breakpoint_all_write_hook_model_write_field_config_field_name
                         ):
@@ -598,12 +614,10 @@ class DevopsCgNewProject(models.Model):
                             lst_condition.append(
                                 f'subkey=="{rec.breakpoint_all_write_hook_model_write_field_config_field_att}"'
                             )
+                        if lst_condition:
                             dct_condition[
                                 "breakpoint_all_write_hook_model_write_field"
                             ] = " and ".join(lst_condition)
-                        lst_name.append(
-                            "breakpoint_all_write_hook_model_write_field"
-                        )
                     if rec.breakpoint_uc0_first_line_hook:
                         lst_name.append("breakpoint_uc0_first_line_hook")
                     if rec.breakpoint_ucA_first_line_hook:

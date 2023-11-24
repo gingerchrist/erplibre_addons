@@ -172,6 +172,7 @@
                                         context="{'breakpoint_name': 'breakpoint_all_write_hook_model_write_field'}"
                                         type="object"
                                     />
+                                    <field name="breakpoint_all_write_hook_model_write_field_config_model_name" />
                                     <field name="breakpoint_all_write_hook_model_write_field_config_field_name" />
                                     <field name="breakpoint_all_write_hook_model_write_field_config_field_att" />
                                 </group>
