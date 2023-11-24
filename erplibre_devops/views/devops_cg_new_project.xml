@@ -251,6 +251,18 @@
                                         type="object"
                                     />
                                 </group>
+                                <group string="Breakpoint extract python module">
+                                    <field name="breakpoint_ucA_extract_module_get_min_max_crop" />
+                                    <button
+                                        class="oe_highlight"
+                                        name="action_start_pycharm"
+                                        string="Open"
+                                        context="{'breakpoint_name': 'breakpoint_ucA_extract_module_get_min_max_crop'}"
+                                        type="object"
+                                    />
+                                    <field name="breakpoint_ucA_extract_module_get_min_max_crop_model_name" />
+                                    <field name="breakpoint_ucA_extract_module_get_min_max_crop_method_name" />
+                                </group>
                             </group>
                         </page>
                         <page string="Debug UcB">

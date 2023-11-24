@@ -82,5 +82,11 @@
             <field name="keyword">dct_field_attr_diff = defaultdict(list)</field>
             <field name="description">UcB gc breakpoint when writing attributes of field into model.</field>
         </record>
+        <record model="devops.ide.breakpoint" id="breakpoint_ucA_extract_module_get_min_max_crop">
+            <field name="name">breakpoint_ucA_extract_module_get_min_max_crop</field>
+            <field name="filename">addons/TechnoLibre_odoo-code-generator/code_generator/extractor_module_file.py</field>
+            <field name="keyword">no_line_min, no_line_max = self._get_min_max_no_line(</field>
+            <field name="description">UcA extract python module - get min/max line method to crop it.</field>
+        </record>
     </data>
 </odoo>

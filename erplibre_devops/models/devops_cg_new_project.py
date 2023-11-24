@@ -272,6 +272,24 @@ class DevopsCgNewProject(models.Model):
         )
     )
 
+    breakpoint_ucA_extract_module_get_min_max_crop = fields.Boolean(
+        help="Breakpoint uCA to diagnostic warning when extract view."
+    )
+
+    breakpoint_ucA_extract_module_get_min_max_crop_model_name = fields.Char(
+        help=(
+            "Associate with breakpoint_ucA_extract_module_get_min_max_crop ,"
+            " can set model name to break."
+        )
+    )
+
+    breakpoint_ucA_extract_module_get_min_max_crop_method_name = fields.Char(
+        help=(
+            "Associate with breakpoint_ucA_extract_module_get_min_max_crop ,"
+            " can set the method name to analyse to break."
+        )
+    )
+
     # internal_error = fields.Char(
     # compute="_compute_internal_error",
     # store=True,
@@ -396,6 +414,7 @@ class DevopsCgNewProject(models.Model):
         "breakpoint_uc0_bp_cg_uc0",
         "breakpoint_all_begin_generate_file",
         "breakpoint_ucA_bp_extract_view_warning",
+        "breakpoint_ucA_extract_module_get_min_max_crop",
         "breakpoint_ucA_bp_extract_view_first_line",
         "breakpoint_ucB_bp_generate_view_warning",
         "breakpoint_ucB_write_code_model_field",
@@ -415,6 +434,7 @@ class DevopsCgNewProject(models.Model):
                 + rec.breakpoint_uc0_bp_cg_uc0
                 + rec.breakpoint_all_begin_generate_file
                 + rec.breakpoint_ucA_bp_extract_view_warning
+                + rec.breakpoint_ucA_extract_module_get_min_max_crop
                 + rec.breakpoint_ucA_bp_extract_view_first_line
                 + rec.breakpoint_ucB_bp_generate_view_warning
                 + rec.breakpoint_ucB_write_code_model_field
@@ -440,6 +460,7 @@ class DevopsCgNewProject(models.Model):
                 rec.breakpoint_uc0_bp_cg_uc0 = False
                 rec.breakpoint_all_begin_generate_file = False
                 rec.breakpoint_ucA_bp_extract_view_warning = False
+                rec.breakpoint_ucA_extract_module_get_min_max_crop = False
                 rec.breakpoint_ucA_bp_extract_view_first_line = False
                 rec.breakpoint_ucB_bp_generate_view_warning = False
                 rec.breakpoint_ucB_write_code_model_field = False
@@ -576,6 +597,28 @@ class DevopsCgNewProject(models.Model):
                         if lst_condition:
                             dct_condition[
                                 "breakpoint_ucB_write_code_model_field"
+                            ] = " and ".join(lst_condition)
+                    if rec.breakpoint_ucA_extract_module_get_min_max_crop:
+                        lst_name.append(
+                            "breakpoint_ucA_extract_module_get_min_max_crop"
+                        )
+                        lst_condition = []
+                        if (
+                            rec.breakpoint_ucA_extract_module_get_min_max_crop_model_name
+                        ):
+                            lst_condition.append(
+                                f'self.model=="{rec.breakpoint_ucA_extract_module_get_min_max_crop_model_name}"'
+                            )
+                        if (
+                            rec.breakpoint_ucA_extract_module_get_min_max_crop_method_name
+                        ):
+                            lst_condition.append(
+                                f'node.name=="{rec.breakpoint_ucA_extract_module_get_min_max_crop_method_name}"'
+                            )
+
+                        if lst_condition:
+                            dct_condition[
+                                "breakpoint_ucA_extract_module_get_min_max_crop"
                             ] = " and ".join(lst_condition)
 
                     # Generate breakpoint
