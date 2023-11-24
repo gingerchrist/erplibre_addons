@@ -36,7 +36,6 @@
                         <field name="debug_command" />
                     </group>
                 </group>
-
                 <div attrs="{'invisible': [('method', '!=', 'ssh')]}">
                     <div class="bg-warning">
                         <h3>Warning:</h3>
@@ -48,7 +47,6 @@
                     <group string="SSH Settings">
                         <field name="ssh_host" placeholder="ssh.example.com" />
                         <field name="ssh_use_sshpass" />
-
                         <field name="ssh_port" />
                         <field name="ssh_user" placeholder="john" />
                         <field name="ssh_password" password="True" />

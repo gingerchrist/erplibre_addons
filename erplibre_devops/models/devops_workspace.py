@@ -26,7 +26,7 @@ SLEEP_ERROR_RESTORE_KILL = 5
 
 class DevopsWorkspace(models.Model):
     _name = "devops.workspace"
-    _inherit = ["mail.thread", "mail.activity.mixin"]
+    _inherit = ["mail.activity.mixin", "mail.thread"]
     _description = "ERPLibre DevOps Workspace"
 
     name = fields.Char(
@@ -46,32 +46,32 @@ class DevopsWorkspace(models.Model):
     )
 
     devops_exec_count = fields.Integer(
-        compute="_compute_devops_exec_count",
         string="Executions count",
+        compute="_compute_devops_exec_count",
         store=True,
     )
 
     new_project_count = fields.Integer(
-        compute="_compute_new_project_count",
         string="New project count",
+        compute="_compute_new_project_count",
         store=True,
     )
 
     devops_exec_error_count = fields.Integer(
-        compute="_compute_devops_exec_error_count",
         string="Executions error count",
+        compute="_compute_devops_exec_error_count",
         store=True,
     )
 
     devops_exec_bundle_count = fields.Integer(
-        compute="_compute_devops_exec_bundle_count",
         string="Executions bundle count",
+        compute="_compute_devops_exec_bundle_count",
         store=True,
     )
 
     devops_exec_bundle_root_count = fields.Integer(
-        compute="_compute_devops_exec_bundle_count",
         string="Executions bundle root count",
+        compute="_compute_devops_exec_bundle_count",
         store=True,
     )
 
@@ -153,7 +153,6 @@ class DevopsWorkspace(models.Model):
     ide_pycharm = fields.Many2one(comodel_name="devops.ide.pycharm")
 
     # TODO backup button and restore button
-
     port_http = fields.Integer(
         string="port http",
         default=8069,
@@ -427,10 +426,11 @@ class DevopsWorkspace(models.Model):
         help="Support base version communautaire",
     )
 
-    git_branch = fields.Char("Git branch")
+    git_branch = fields.Char(string="Git branch")
 
     git_url = fields.Char(
-        "Git URL", default="https://github.com/ERPLibre/ERPLibre"
+        string="Git URL",
+        default="https://github.com/ERPLibre/ERPLibre",
     )
 
     time_exec_action_clear_all_generated_module = fields.Char(
@@ -522,7 +522,8 @@ class DevopsWorkspace(models.Model):
         )
 
     image_db_selection = fields.Many2one(
-        comodel_name="devops.db.image", default=_default_image_db_selection
+        comodel_name="devops.db.image",
+        default=_default_image_db_selection,
     )
 
     @api.model_create_multi

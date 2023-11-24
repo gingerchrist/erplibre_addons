@@ -20,13 +20,11 @@
                         <field name="name" />
                     </h1>
                 </div>
-
                 <group>
                     <group>
                         <field name="devops_workspace_ids" />
                     </group>
                 </group>
-
                 <notebook>
                     <page name="log" string="Docker">
                         <group string="Log">

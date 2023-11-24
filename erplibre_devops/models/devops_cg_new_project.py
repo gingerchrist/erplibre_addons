@@ -23,10 +23,6 @@ class DevopsCgNewProject(models.Model):
     _name = "devops.cg.new_project"
     _description = "Create new project for CG project"
 
-    @api.model
-    def default_stage_id(self):
-        return self.env.ref("erplibre_devops.devops_cg_new_project_stage_init")
-
     name = fields.Char(
         compute="_compute_name",
         store=True,
@@ -360,6 +356,10 @@ class DevopsCgNewProject(models.Model):
             " default = True."
         ),
     )
+
+    @api.model
+    def default_stage_id(self):
+        return self.env.ref("erplibre_devops.devops_cg_new_project_stage_init")
 
     @api.depends(
         "devops_workspace",

@@ -27,8 +27,8 @@ class DevopsSystem(models.Model):
 
     method = fields.Selection(
         selection=[("local", "Local disk"), ("ssh", "SSH remote server")],
-        default="local",
         required=True,
+        default="local",
         help="Choose the communication method.",
     )
 
@@ -58,8 +58,8 @@ class DevopsSystem(models.Model):
     ssh_password = fields.Char(
         string="SSH Password",
         help=(
-            "The password for the SSH connection. If you specify a private"
-            " key file, then this is the password to decrypt it."
+            "The password for the SSH connection. If you specify a private key"
+            " file, then this is the password to decrypt it."
         ),
     )
 
@@ -81,12 +81,12 @@ class DevopsSystem(models.Model):
     )
 
     debug_command = fields.Boolean(
-        default=False,
-        help="This will show in log the command when execute it.",
+        help="This will show in log the command when execute it."
     )
 
     iterator_port_generator = fields.Integer(
-        default=10000, help="Iterate to generate next port"
+        default=10000,
+        help="Iterate to generate next port",
     )
 
     ssh_private_key = fields.Char(
@@ -128,6 +128,7 @@ class DevopsSystem(models.Model):
                     rec.ssh_user,
                     rec.ssh_host,
                     rec.ssh_port,
+                    "",
                 )
 
     @api.model
