@@ -76,7 +76,6 @@ class DevopsCgNewProject(models.Model):
 
     mode_view_snippet_template_generate_website_snippet_generic_mdl = (
         fields.Char(
-            default="devops.workspace",
             help="Feature for mode_view_snippet",
         )
     )

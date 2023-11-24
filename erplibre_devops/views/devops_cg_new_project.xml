@@ -78,6 +78,15 @@
                         </h1>
                     </div>
                     <group>
+                        <group string="Project">
+                            <field name="last_new_project" />
+                            <field name="devops_workspace" />
+                            <field name="devops_exec_bundle_id" />
+                            <!--                            <field name="devops_exec_error_ids" />-->
+                        </group>
+                        <group string="Pycharm">
+                            <field name="ide_pycharm_configuration_ids" widget="many2many_tags" />
+                        </group>
                         <group string="Execution">
                             <field name="exec_start_date" />
                             <field name="exec_stop_date" />
@@ -91,19 +100,7 @@
                             <field name="has_warning" />
                             <field name="execution_finish" />
                         </group>
-                        <group string="Project">
-                            <field name="last_new_project" />
-                            <field name="devops_workspace" />
-                            <field name="devops_exec_bundle_id" />
-                            <!--                            <field name="devops_exec_error_ids" />-->
-                        </group>
-                        <group string="Pycharm">
-                            <field name="ide_pycharm_configuration_ids" widget="many2many_tags" />
-                        </group>
-                    </group>
-
-                    <group string="Configuration">
-                        <group>
+                        <group string="Configuration">
                             <field name="code_generator_name" />
                             <field name="template_name" />
                             <field name="module" />
@@ -111,8 +108,6 @@
                             <field name="config" />
                             <field name="odoo_config" />
                             <field name="new_project_with_code_generator" />
-                        </group>
-                        <group>
                             <field name="keep_bd_alive" />
                             <field name="bd_name_demo" />
                             <field name="bd_name_template" />
@@ -121,16 +116,17 @@
                             <field name="active_coverage" />
                             <field name="force" />
                         </group>
+                        <group name="group_cg_config" string="CG config view">
+                            <field name="mode_view" />
+                            <field name="mode_view_snippet" />
+                            <field name="mode_view_snippet_enable_template_website_snippet_view" />
+                            <field name="mode_view_snippet_template_generate_website_snippet_generic_mdl" />
+                            <field name="mode_view_snippet_template_generate_website_snippet_ctrl_featur" />
+                            <field name="mode_view_snippet_template_generate_website_enable_javascript" />
+                            <field name="mode_view_snippet_template_generate_website_snippet_type" />
+                        </group>
                     </group>
-                    <group name="group_cg_config" string="CG config view">
-                        <field name="mode_view" />
-                        <field name="mode_view_snippet" />
-                        <field name="mode_view_snippet_enable_template_website_snippet_view" />
-                        <field name="mode_view_snippet_template_generate_website_snippet_generic_mdl" />
-                        <field name="mode_view_snippet_template_generate_website_snippet_ctrl_featur" />
-                        <field name="mode_view_snippet_template_generate_website_enable_javascript" />
-                        <field name="mode_view_snippet_template_generate_website_snippet_type" />
-                    </group>
+
                     <group name="group_path" string="Path">
                         <field name="module_path" />
                         <field name="config_path" />
