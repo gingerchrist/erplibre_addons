@@ -58,7 +58,7 @@ class DevopsIdeBreakpoint(models.Model):
             return lst_no_line
 
     @api.multi
-    def get_breakpoint_info(self, ws, new_project_id=None):
+    def get_breakpoint_info(self, ws, new_project_id=None, condition=None):
         with ws.devops_create_exec_bundle("Get breakpoint info") as rec_ws:
             lst_all_no_line = []
             for rec in self:
@@ -89,7 +89,8 @@ class DevopsIdeBreakpoint(models.Model):
                 lst_no_line = rec.get_no_line_breakpoint(
                     rec.keyword, filename, rec_ws
                 )
-                lst_all_no_line.append((filename, lst_no_line))
+                tpl_info = (filename, lst_no_line, condition)
+                lst_all_no_line.append(tpl_info)
         return lst_all_no_line
 
     @api.multi

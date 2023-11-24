@@ -381,26 +381,26 @@ class DevopsIdePycharm(models.Model):
                     )
 
     @api.model
-    def add_breakpoint(self, file_path, line, condition=None):
+    def add_breakpoint(
+        self, file_path, line, condition=None, minus_1_line=False
+    ):
         # TODO change tactic, fill variable into erplibre with breakpoint to support
         # TODO support validate already exist to not duplicate
         with self.devops_workspace.devops_create_exec_bundle(
             "PyCharm add breakpoint"
         ) as rec_ws:
+            if type(line) is int:
+                lst_line = [line]
+            elif type(line) is list:
+                lst_line = line
+            elif type(line) is str:
+                lst_line = [int(line)]
+            else:
+                raise ValueError(
+                    "Variable line need to by type int or list, and got"
+                    f" '{type(line)}' for line '{line}'."
+                )
             url = file_path.replace(rec_ws.folder, "file://$PROJECT_DIR$")
-            dct_config_breakpoint = {
-                "@enabled": "true",
-                "@suspend": "THREAD",
-                "@type": "python-line",
-                "url": url,
-                "line": line,
-                "option": {"@name": "timeStamp", "@value": "104"},
-            }
-            if condition:
-                dct_config_breakpoint["condition"] = {
-                    "@expression": condition,
-                    "@language": "Python",
-                }
             workspace_xml_path = os.path.join(
                 rec_ws.folder, ".idea", "workspace.xml"
             )
@@ -426,49 +426,70 @@ class DevopsIdePycharm(models.Model):
                 x_debug_manager = {"@name": "XDebuggerManager"}
                 project["component"].append(x_debug_manager)
 
-            has_update = False
-            breakpoints = None
-            breakpoint_manager = x_debug_manager.get("breakpoint-manager")
-            if not breakpoint_manager:
-                x_debug_manager["breakpoint-manager"] = {
-                    "breakpoints": {"line-breakpoint": dct_config_breakpoint}
+            for no_line in lst_line:
+                if minus_1_line:
+                    no_line -= 1
+                dct_config_breakpoint = {
+                    "@enabled": "true",
+                    "@suspend": "THREAD",
+                    "@type": "python-line",
+                    "url": url,
+                    "line": no_line,
+                    "option": {"@name": "timeStamp", "@value": "104"},
                 }
-                has_update = True
+                if condition:
+                    dct_config_breakpoint["condition"] = {
+                        "@expression": condition,
+                        "@language": "Python",
+                    }
 
-            if not has_update:
-                breakpoints = breakpoint_manager.get("breakpoints")
-                if not breakpoints:
-                    breakpoint_manager["breakpoints"] = {
-                        "line-breakpoint": dct_config_breakpoint
+                has_update = False
+                breakpoints = None
+                breakpoint_manager = x_debug_manager.get("breakpoint-manager")
+                if not breakpoint_manager:
+                    x_debug_manager["breakpoint-manager"] = {
+                        "breakpoints": {
+                            "line-breakpoint": dct_config_breakpoint
+                        }
                     }
                     has_update = True
 
-            if not has_update:
-                line_breakpoint = breakpoints.get("line-breakpoint")
-                # line_breakpoint can be dict or list
-                if type(line_breakpoint) is dict:
-                    line_breakpoint = [line_breakpoint]
-                    breakpoints["line-breakpoint"] = line_breakpoint
-
-                config_exist = False
-                if type(line_breakpoint) is list:
-                    for a_line_bp in line_breakpoint:
-                        if a_line_bp.get("url") == dct_config_breakpoint.get(
-                            "url"
-                        ) and a_line_bp.get(
-                            "line"
-                        ) == dct_config_breakpoint.get(
-                            "line"
-                        ):
-                            config_exist = True
-                    if not config_exist:
-                        breakpoints["line-breakpoint"].append(
-                            dct_config_breakpoint
-                        )
+                if not has_update:
+                    breakpoints = breakpoint_manager.get("breakpoints")
+                    if not breakpoints:
+                        breakpoint_manager["breakpoints"] = {
+                            "line-breakpoint": dct_config_breakpoint
+                        }
                         has_update = True
-                else:
-                    breakpoints["line-breakpoint"] = dct_config_breakpoint
-                    has_update = True
+
+                if not has_update:
+                    line_breakpoint = breakpoints.get("line-breakpoint")
+                    # line_breakpoint can be dict or list
+                    if type(line_breakpoint) is dict:
+                        line_breakpoint = [line_breakpoint]
+                        breakpoints["line-breakpoint"] = line_breakpoint
+
+                    config_exist = False
+                    if type(line_breakpoint) is list:
+                        for a_line_bp in line_breakpoint:
+                            if a_line_bp.get(
+                                "url"
+                            ) == dct_config_breakpoint.get(
+                                "url"
+                            ) and a_line_bp.get(
+                                "line"
+                            ) == dct_config_breakpoint.get(
+                                "line"
+                            ):
+                                config_exist = True
+                        if not config_exist:
+                            breakpoints["line-breakpoint"].append(
+                                dct_config_breakpoint
+                            )
+                            has_update = True
+                    else:
+                        breakpoints["line-breakpoint"] = dct_config_breakpoint
+                        has_update = True
 
             # Write modification
             if has_update:

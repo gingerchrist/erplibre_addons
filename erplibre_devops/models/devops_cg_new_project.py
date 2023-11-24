@@ -621,6 +621,7 @@ class DevopsCgNewProject(models.Model):
                             ] = " and ".join(lst_condition)
 
                     # Generate breakpoint
+                    lst_bp_id = []
                     for name in lst_name:
                         bp_id = (
                             self.env["devops.ide.breakpoint"]
@@ -632,10 +633,10 @@ class DevopsCgNewProject(models.Model):
                                 f"Missing devops.ide.breakpoint name '{name}'"
                             )
                         condition = dct_condition.get(name, None)
-                        rec.add_breakpoint(
-                            bp_id=bp_id,
-                            condition=condition,
-                        )
+                        lst_bp_id.append((bp_id, condition))
+
+                    if lst_bp_id:
+                        rec.add_breakpoint(lst_bp_id=lst_bp_id)
                 if conf_add_mode:
                     rec_ws.ide_pycharm.add_configuration(
                         conf_add_mode=conf_add_mode,
@@ -1525,16 +1526,29 @@ class DevopsCgNewProject(models.Model):
 
     @api.multi
     def add_breakpoint(
-        self, bp_id=None, file=None, key=None, no_line=None, condition=None
+        self,
+        bp_id=None,
+        lst_bp_id=None,
+        file=None,
+        key=None,
+        no_line=None,
+        condition=None,
     ):
         for rec in self:
             with rec.devops_workspace.devops_create_exec_bundle(
                 "New project add breakpoint", devops_cg_new_project=rec.id
             ) as rec_ws:
                 lst_no_line = []
-                if bp_id:
+                if lst_bp_id:
+                    for i_bp_id, s_cond in lst_bp_id:
+                        result = i_bp_id.get_breakpoint_info(
+                            rec_ws, new_project_id=rec, condition=s_cond
+                        )
+                        lst_no_line.extend(result)
+
+                elif bp_id:
                     lst_no_line = bp_id.get_breakpoint_info(
-                        rec_ws, new_project_id=rec
+                        rec_ws, new_project_id=rec, condition=condition
                     )
                 elif file:
                     file_path = os.path.normpath(
@@ -1549,16 +1563,19 @@ class DevopsCgNewProject(models.Model):
                             self.env[
                                 "devops.ide.breakpoint"
                             ].get_no_line_breakpoint(key, file_path, rec_ws),
+                            condition,
                         )
                     elif no_line:
-                        lst_no_line = [(file_path, int(no_line))]
+                        lst_no_line = [(file_path, int(no_line), condition)]
 
                 if lst_no_line:
-                    for filename, lst_line in lst_no_line:
-                        for i_no_line in lst_line:
-                            rec_ws.ide_pycharm.add_breakpoint(
-                                filename, i_no_line - 1, condition=condition
-                            )
+                    for filename, lst_line, s_cond in lst_no_line:
+                        rec_ws.ide_pycharm.add_breakpoint(
+                            filename,
+                            lst_line,
+                            condition=s_cond,
+                            minus_1_line=True,
+                        )
                 else:
                     _logger.warning(
                         "Missing no_line to method add_breakpoint. Or specify"
