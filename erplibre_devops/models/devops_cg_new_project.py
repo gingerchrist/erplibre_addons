@@ -1644,12 +1644,18 @@ class DevopsCgNewProject(models.Model):
 
     @api.multi
     def action_kill_pycharm(self):
-        self.ensure_one()
-        self.devops_workspace.ide_pycharm.action_kill_pycharm()
+        for rec in self:
+            with rec.devops_workspace.devops_create_exec_bundle(
+                "New project kill PyCharm", devops_cg_new_project=rec.id
+            ) as rec_ws:
+                rec_ws.ide_pycharm.action_kill_pycharm()
 
     @api.multi
     def action_start_pycharm(self, ctx=None):
-        self.ensure_one()
-        self.devops_workspace.ide_pycharm.action_start_pycharm(
-            ctx=ctx, new_project_id=self
-        )
+        for rec in self:
+            with rec.devops_workspace.devops_create_exec_bundle(
+                "New project start PyCharm", devops_cg_new_project=rec.id
+            ) as rec_ws:
+                rec_ws.ide_pycharm.action_start_pycharm(
+                    ctx=ctx, new_project_id=self
+                )
