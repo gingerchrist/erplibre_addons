@@ -139,6 +139,14 @@
                         <field name="template_hooks_py" />
                         <field name="template_manifest_py" />
                     </group>
+                    <group>
+                        <group string="General breakpoint condition">
+                            <field name="breakpoint_condition_model_name" />
+                            <field name="breakpoint_condition_field_name" />
+                            <field name="breakpoint_condition_field_attribute_name" />
+                            <field name="breakpoint_condition_method_name" />
+                        </group>
+                    </group>
                     <notebook>
                         <page string="Debug all">
                             <group>
@@ -172,9 +180,6 @@
                                         context="{'breakpoint_name': 'breakpoint_all_write_hook_model_write_field'}"
                                         type="object"
                                     />
-                                    <field name="breakpoint_all_write_hook_model_write_field_config_model_name" />
-                                    <field name="breakpoint_all_write_hook_model_write_field_config_field_name" />
-                                    <field name="breakpoint_all_write_hook_model_write_field_config_field_att" />
                                     <field name="breakpoint_all_bp_prepare_data_before_write" />
                                     <button
                                         class="oe_highlight"
@@ -183,8 +188,6 @@
                                         context="{'breakpoint_name': 'breakpoint_all_bp_prepare_data_before_write'}"
                                         type="object"
                                     />
-                                    <field name="breakpoint_all_bp_prepare_data_before_write_cond_model" />
-                                    <field name="breakpoint_all_bp_prepare_data_before_write_cond_field" />
                                 </group>
                             </group>
                         </page>
@@ -291,8 +294,6 @@
                                         context="{'breakpoint_name': 'breakpoint_ucA_extract_module_get_min_max_crop'}"
                                         type="object"
                                     />
-                                    <field name="breakpoint_ucA_extract_module_get_min_max_crop_model_name" />
-                                    <field name="breakpoint_ucA_extract_module_get_min_max_crop_method_name" />
                                     <field name="breakpoint_ucA_bp_extract_python_detect_field" />
                                     <button
                                         class="oe_highlight"
@@ -301,8 +302,6 @@
                                         context="{'breakpoint_name': 'breakpoint_ucA_bp_extract_python_detect_field'}"
                                         type="object"
                                     />
-                                    <field name="breakpoint_ucA_bp_extract_python_detect_field_cond_model" />
-                                    <field name="breakpoint_ucA_bp_extract_python_detect_field_cond_field" />
                                 </group>
                             </group>
                         </page>
@@ -350,8 +349,6 @@
                                         context="{'breakpoint_name': 'breakpoint_ucB_write_code_model_field'}"
                                         type="object"
                                     />
-                                    <field name="breakpoint_ucB_write_code_model_field_config_model_name" />
-                                    <field name="breakpoint_ucB_write_code_model_field_config_field_name" />
                                 </group>
                             </group>
                         </page>

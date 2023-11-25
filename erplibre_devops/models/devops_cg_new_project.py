@@ -195,31 +195,28 @@ class DevopsCgNewProject(models.Model):
     breakpoint_all_write_hook_model_write_field = fields.Boolean(
         help=(
             "Breakpoint general when write hook while writing model, before"
-            " write field. Can use field"
-            " breakpoint_all_write_hook_model_write_field_config_field_name to"
-            " specify field name."
+            " write field."
         )
     )
 
-    breakpoint_all_write_hook_model_write_field_config_model_name = fields.Char(
-        help=(
-            "Associate with breakpoint_all_write_hook_model_write_field , can"
-            " set model name to break."
-        )
+    breakpoint_condition_model_name = fields.Char(
+        string="Model name",
+        help="General breakpoint condition with model name.",
     )
 
-    breakpoint_all_write_hook_model_write_field_config_field_name = fields.Char(
-        help=(
-            "Associate with breakpoint_all_write_hook_model_write_field , can"
-            " set field name to break."
-        )
+    breakpoint_condition_field_name = fields.Char(
+        string="Field name",
+        help="General breakpoint condition with field name.",
     )
 
-    breakpoint_all_write_hook_model_write_field_config_field_att = fields.Char(
-        help=(
-            "Associate with breakpoint_all_write_hook_model_write_field , can"
-            " set attribute field name to break."
-        )
+    breakpoint_condition_field_attribute_name = fields.Char(
+        string="Field attribute name",
+        help="General breakpoint condition with field attribute name.",
+    )
+
+    breakpoint_condition_method_name = fields.Char(
+        string="Method name",
+        help="General breakpoint condition to diagnostic method.",
     )
 
     breakpoint_ucA_first_line_hook = fields.Boolean(
@@ -260,36 +257,8 @@ class DevopsCgNewProject(models.Model):
         help="Breakpoint uCA when extract Python field of model."
     )
 
-    breakpoint_ucA_bp_extract_python_detect_field_cond_model = fields.Char(
-        help=(
-            "Associate with breakpoint_ucA_bp_extract_python_detect_field ,"
-            " can set model name to break."
-        )
-    )
-
-    breakpoint_ucA_bp_extract_python_detect_field_cond_field = fields.Char(
-        help=(
-            "Associate with breakpoint_ucA_bp_extract_python_detect_field ,"
-            " can set field name to break."
-        )
-    )
-
     breakpoint_all_bp_prepare_data_before_write = fields.Boolean(
         help="Breakpoint all prepare set of data before write code."
-    )
-
-    breakpoint_all_bp_prepare_data_before_write_cond_model = fields.Char(
-        help=(
-            "Associate with breakpoint_all_bp_prepare_data_before_write ,"
-            " can set model name to break."
-        )
-    )
-
-    breakpoint_all_bp_prepare_data_before_write_cond_field = fields.Char(
-        help=(
-            "Associate with breakpoint_all_bp_prepare_data_before_write ,"
-            " can set field name to break."
-        )
     )
 
     breakpoint_ucA_bp_extract_view_warning = fields.Boolean(
@@ -311,23 +280,7 @@ class DevopsCgNewProject(models.Model):
     breakpoint_ucB_write_code_model_field = fields.Boolean(
         help=(
             "Breakpoint dans la section génération de code du uCB - write"
-            " model field module. Can use field"
-            " breakpoint_ucB_write_code_model_field_config_field_name to"
-            " specify field name."
-        )
-    )
-
-    breakpoint_ucB_write_code_model_field_config_model_name = fields.Char(
-        help=(
-            "Associate with breakpoint_ucB_write_code_model_field , can set"
-            " model name to break."
-        )
-    )
-
-    breakpoint_ucB_write_code_model_field_config_field_name = fields.Char(
-        help=(
-            "Associate with breakpoint_ucB_write_code_model_field , can set"
-            " field name to break."
+            " model field module."
         )
     )
 
@@ -335,24 +288,6 @@ class DevopsCgNewProject(models.Model):
         help="Breakpoint uCA to diagnostic warning when extract view."
     )
 
-    breakpoint_ucA_extract_module_get_min_max_crop_model_name = fields.Char(
-        help=(
-            "Associate with breakpoint_ucA_extract_module_get_min_max_crop ,"
-            " can set model name to break."
-        )
-    )
-
-    breakpoint_ucA_extract_module_get_min_max_crop_method_name = fields.Char(
-        help=(
-            "Associate with breakpoint_ucA_extract_module_get_min_max_crop ,"
-            " can set the method name to analyse to break."
-        )
-    )
-
-    # internal_error = fields.Char(
-    # compute="_compute_internal_error",
-    # store=True,
-    # )
     # TODO need to support related field
     # devops_exec_error_ids = fields.One2many(
     # related="devops_exec_bundle_id.devops_exec_parent_error_ids"
@@ -612,53 +547,24 @@ class DevopsCgNewProject(models.Model):
                             "breakpoint_all_write_hook_before_model"
                         )
                     if rec.breakpoint_all_write_hook_model_write_field:
-                        lst_name.append(
-                            "breakpoint_all_write_hook_model_write_field"
+                        bp_name = "breakpoint_all_write_hook_model_write_field"
+                        lst_name.append(bp_name)
+                        rec.create_bp_condition(
+                            bp_name,
+                            dct_condition,
+                            var_model="model_id.model",
+                            var_field="key",
+                            var_field_att="subkey",
                         )
-                        lst_condition = []
-                        if (
-                            rec.breakpoint_all_write_hook_model_write_field_config_model_name
-                        ):
-                            lst_condition.append(
-                                f'model_id.model=="{rec.breakpoint_all_write_hook_model_write_field_config_model_name}"'
-                            )
-                        if (
-                            rec.breakpoint_all_write_hook_model_write_field_config_field_name
-                        ):
-                            lst_condition.append(
-                                f'key=="{rec.breakpoint_all_write_hook_model_write_field_config_field_name}"'
-                            )
-                        if (
-                            rec.breakpoint_all_write_hook_model_write_field_config_field_att
-                        ):
-                            lst_condition.append(
-                                f'subkey=="{rec.breakpoint_all_write_hook_model_write_field_config_field_att}"'
-                            )
-                        if lst_condition:
-                            dct_condition[
-                                "breakpoint_all_write_hook_model_write_field"
-                            ] = " and ".join(lst_condition)
                     if rec.breakpoint_all_bp_prepare_data_before_write:
-                        lst_name.append(
-                            "breakpoint_all_bp_prepare_data_before_write"
+                        bp_name = "breakpoint_all_bp_prepare_data_before_write"
+                        lst_name.append(bp_name)
+                        rec.create_bp_condition(
+                            bp_name,
+                            dct_condition,
+                            var_model="model_id.model",
+                            var_field="field_id.name",
                         )
-                        lst_condition = []
-                        if (
-                            rec.breakpoint_all_bp_prepare_data_before_write_cond_model
-                        ):
-                            lst_condition.append(
-                                f'model_id.model=="{rec.breakpoint_all_bp_prepare_data_before_write_cond_model}"'
-                            )
-                        if (
-                            rec.breakpoint_all_bp_prepare_data_before_write_cond_field
-                        ):
-                            lst_condition.append(
-                                f'field_id.name=="{rec.breakpoint_all_bp_prepare_data_before_write_cond_field}"'
-                            )
-                        if lst_condition:
-                            dct_condition[
-                                "breakpoint_all_bp_prepare_data_before_write"
-                            ] = " and ".join(lst_condition)
                     if rec.breakpoint_uc0_first_line_hook:
                         lst_name.append("breakpoint_uc0_first_line_hook")
                     if rec.breakpoint_ucA_first_line_hook:
@@ -688,26 +594,16 @@ class DevopsCgNewProject(models.Model):
                             "breakpoint_ucA_bp_extract_python_module_file_warning"
                         )
                     if rec.breakpoint_ucA_bp_extract_python_detect_field:
-                        lst_name.append(
+                        bp_name = (
                             "breakpoint_ucA_bp_extract_python_detect_field"
                         )
-                        lst_condition = []
-                        if (
-                            rec.breakpoint_ucA_bp_extract_python_detect_field_cond_model
-                        ):
-                            lst_condition.append(
-                                f'self.model=="{rec.breakpoint_ucA_bp_extract_python_detect_field_cond_model}"'
-                            )
-                        if (
-                            rec.breakpoint_ucA_bp_extract_python_detect_field_cond_field
-                        ):
-                            lst_condition.append(
-                                f'node.targets[0].id=="{rec.breakpoint_ucA_bp_extract_python_detect_field_cond_field}"'
-                            )
-                        if lst_condition:
-                            dct_condition[
-                                "breakpoint_ucA_bp_extract_python_detect_field"
-                            ] = " and ".join(lst_condition)
+                        lst_name.append(bp_name)
+                        rec.create_bp_condition(
+                            bp_name,
+                            dct_condition,
+                            var_model="self.model",
+                            var_field="node.targets[0].id",
+                        )
                     if rec.breakpoint_ucA_bp_extract_view_first_line:
                         lst_name.append(
                             "breakpoint_ucA_bp_extract_view_first_line"
@@ -717,48 +613,25 @@ class DevopsCgNewProject(models.Model):
                             "breakpoint_ucB_bp_generate_view_warning"
                         )
                     if rec.breakpoint_ucB_write_code_model_field:
-                        lst_name.append(
-                            "breakpoint_ucB_write_code_model_field"
+                        bp_name = "breakpoint_ucB_write_code_model_field"
+                        lst_name.append(bp_name)
+                        rec.create_bp_condition(
+                            bp_name,
+                            dct_condition,
+                            var_model="model.model",
+                            var_field="f2export.name",
                         )
-                        lst_condition = []
-                        if (
-                            rec.breakpoint_ucB_write_code_model_field_config_model_name
-                        ):
-                            lst_condition.append(
-                                f'model.model=="{rec.breakpoint_ucB_write_code_model_field_config_model_name}"'
-                            )
-                        if (
-                            rec.breakpoint_ucB_write_code_model_field_config_field_name
-                        ):
-                            lst_condition.append(
-                                f'f2export.name=="{rec.breakpoint_ucB_write_code_model_field_config_field_name}"'
-                            )
-                        if lst_condition:
-                            dct_condition[
-                                "breakpoint_ucB_write_code_model_field"
-                            ] = " and ".join(lst_condition)
                     if rec.breakpoint_ucA_extract_module_get_min_max_crop:
-                        lst_name.append(
+                        bp_name = (
                             "breakpoint_ucA_extract_module_get_min_max_crop"
                         )
-                        lst_condition = []
-                        if (
-                            rec.breakpoint_ucA_extract_module_get_min_max_crop_model_name
-                        ):
-                            lst_condition.append(
-                                f'self.model=="{rec.breakpoint_ucA_extract_module_get_min_max_crop_model_name}"'
-                            )
-                        if (
-                            rec.breakpoint_ucA_extract_module_get_min_max_crop_method_name
-                        ):
-                            lst_condition.append(
-                                f'node.name=="{rec.breakpoint_ucA_extract_module_get_min_max_crop_method_name}"'
-                            )
-
-                        if lst_condition:
-                            dct_condition[
-                                "breakpoint_ucA_extract_module_get_min_max_crop"
-                            ] = " and ".join(lst_condition)
+                        lst_name.append(bp_name)
+                        rec.create_bp_condition(
+                            bp_name,
+                            dct_condition,
+                            var_model="self.model",
+                            var_method="node.name",
+                        )
 
                     # Generate breakpoint
                     lst_bp_id = []
@@ -784,6 +657,37 @@ class DevopsCgNewProject(models.Model):
                         conf_add_module=conf_add_module,
                         conf_add_config_path=conf_add_config_path,
                     )
+
+    @api.multi
+    def create_bp_condition(
+        self,
+        bp_name,
+        dct_condition,
+        var_model=None,
+        var_field=None,
+        var_field_att=None,
+        var_method=None,
+    ):
+        for rec in self:
+            lst_condition = []
+            if rec.breakpoint_condition_model_name:
+                lst_condition.append(
+                    f'{var_model}=="{rec.breakpoint_condition_model_name}"'
+                )
+            if rec.breakpoint_condition_field_name:
+                lst_condition.append(
+                    f'{var_field}=="{rec.breakpoint_condition_field_name}"'
+                )
+            if rec.breakpoint_condition_field_attribute_name:
+                lst_condition.append(
+                    f'{var_field_att}=="{rec.breakpoint_condition_field_attribute_name}"'
+                )
+            if rec.breakpoint_condition_method_name:
+                lst_condition.append(
+                    f'{var_method}=="{rec.breakpoint_condition_method_name}"'
+                )
+            if lst_condition:
+                dct_condition[bp_name] = " and ".join(lst_condition)
 
     @api.multi
     def action_run_test(self, ctx=None):
