@@ -1,7 +1,7 @@
 import logging
 import os
 
-from odoo import _, api, fields, models
+from odoo import _, api, exceptions, fields, models
 
 _logger = logging.getLogger(__name__)
 
@@ -50,15 +50,19 @@ class DevopsIdeBreakpoint(models.Model):
             cmd = f'grep -n "{key}" {file}'
             cmd += " | awk -F: '{print $1}'"
             result = rec.execute(to_instance=True, cmd=cmd, engine="sh")
-            try:
-                lst_no_line = [
-                    int(a) for a in result.log_all.strip().split("\n")
-                ]
-            except:
+            log_all = result.log_all.strip()
+            if not log_all:
                 raise Exception(
-                    f"Wrong output command : {cmd}\n{result.log_all.strip()}"
+                    f"Cannot find breakpoint into file '{file}' with key"
+                    f" '{key}'. Command : {cmd}"
                 )
-            return lst_no_line
+            if "No such file or directory" in log_all:
+                raise exceptions.Warning(f"No such file '{file}'")
+            if log_all:
+                try:
+                    return [int(a) for a in log_all.split("\n")]
+                except:
+                    raise Exception(f"Wrong output command : {cmd}\n{log_all}")
 
     @api.multi
     def get_breakpoint_info(self, ws, new_project_id=None, condition=None):
@@ -92,8 +96,9 @@ class DevopsIdeBreakpoint(models.Model):
                 lst_no_line = rec.get_no_line_breakpoint(
                     rec.keyword, filename, rec_ws
                 )
-                tpl_info = (filename, lst_no_line, condition)
-                lst_all_no_line.append(tpl_info)
+                if lst_no_line:
+                    tpl_info = (filename, lst_no_line, condition)
+                    lst_all_no_line.append(tpl_info)
         return lst_all_no_line
 
     @api.multi
