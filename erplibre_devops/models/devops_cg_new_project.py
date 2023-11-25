@@ -540,116 +540,35 @@ class DevopsCgNewProject(models.Model):
                     lst_name = []
                     dct_condition = {}
                     # Create breakpoint data
-                    if rec.breakpoint_all_write_hook_begin:
-                        lst_name.append("breakpoint_all_write_hook_begin")
-                    if rec.breakpoint_all_write_hook_before_model:
-                        lst_name.append(
-                            "breakpoint_all_write_hook_before_model"
-                        )
-                    if rec.breakpoint_all_write_hook_model_write_field:
-                        bp_name = "breakpoint_all_write_hook_model_write_field"
-                        lst_name.append(bp_name)
-                        rec.create_bp_condition(
-                            bp_name,
-                            dct_condition,
-                            var_model="model_id.model",
-                            var_field="key",
-                            var_field_att="subkey",
-                        )
-                    if rec.breakpoint_all_bp_prepare_data_before_write:
-                        bp_name = "breakpoint_all_bp_prepare_data_before_write"
-                        lst_name.append(bp_name)
-                        rec.create_bp_condition(
-                            bp_name,
-                            dct_condition,
-                            var_model="model_id.model",
-                            var_field="field_id.name",
-                        )
-                    if rec.breakpoint_uc0_first_line_hook:
-                        lst_name.append("breakpoint_uc0_first_line_hook")
-                    if rec.breakpoint_ucA_first_line_hook:
-                        lst_name.append("breakpoint_ucA_first_line_hook")
-                    if rec.breakpoint_ucB_first_line_hook:
-                        lst_name.append("breakpoint_ucB_first_line_hook")
-                    if rec.breakpoint_uc0_bp_cg_uc0:
-                        lst_name.append("breakpoint_uc0_bp_cg_uc0")
-                    if rec.breakpoint_all_begin_generate_file:
-                        lst_name.append("breakpoint_all_begin_generate_file")
-                    if rec.breakpoint_ucA_bp_extract_view_warning:
-                        lst_name.append(
-                            "breakpoint_ucA_bp_extract_view_warning"
-                        )
-                    if rec.breakpoint_ucA_bp_extract_python_controller_warning:
-                        lst_name.append(
-                            "breakpoint_ucA_bp_extract_python_controller_warning"
-                        )
-                    if rec.breakpoint_ucA_bp_extract_python_module_warning:
-                        lst_name.append(
-                            "breakpoint_ucA_bp_extract_python_module_warning"
-                        )
-                    if (
-                        rec.breakpoint_ucA_bp_extract_python_module_file_warning
-                    ):
-                        lst_name.append(
-                            "breakpoint_ucA_bp_extract_python_module_file_warning"
-                        )
-                    if rec.breakpoint_ucA_bp_extract_python_detect_field:
-                        bp_name = (
-                            "breakpoint_ucA_bp_extract_python_detect_field"
-                        )
-                        lst_name.append(bp_name)
-                        rec.create_bp_condition(
-                            bp_name,
-                            dct_condition,
-                            var_model="self.model",
-                            var_field="node.targets[0].id",
-                        )
-                    if rec.breakpoint_ucA_bp_extract_view_first_line:
-                        lst_name.append(
-                            "breakpoint_ucA_bp_extract_view_first_line"
-                        )
-                    if rec.breakpoint_ucB_bp_generate_view_warning:
-                        lst_name.append(
-                            "breakpoint_ucB_bp_generate_view_warning"
-                        )
-                    if rec.breakpoint_ucB_write_code_model_field:
-                        bp_name = "breakpoint_ucB_write_code_model_field"
-                        lst_name.append(bp_name)
-                        rec.create_bp_condition(
-                            bp_name,
-                            dct_condition,
-                            var_model="model.model",
-                            var_field="f2export.name",
-                        )
-                    if rec.breakpoint_ucA_extract_module_get_min_max_crop:
-                        bp_name = (
-                            "breakpoint_ucA_extract_module_get_min_max_crop"
-                        )
-                        lst_name.append(bp_name)
-                        rec.create_bp_condition(
-                            bp_name,
-                            dct_condition,
-                            var_model="self.model",
-                            var_method="node.name",
-                        )
-
-                    # Generate breakpoint
-                    lst_bp_id = []
-                    for name in lst_name:
-                        bp_id = (
+                    for field_name, field_value in rec._fields.items():
+                        if not (
+                            field_name.startswith("breakpoint_")
+                            and field_value.type == "boolean"
+                        ):
+                            continue
+                        field_id = getattr(rec, field_name)
+                        if not field_id:
+                            continue
+                        lst_name.append(field_name)
+                    if lst_name:
+                        bp_ids = (
                             self.env["devops.ide.breakpoint"]
-                            .search([("name", "=", name)], limit=1)
+                            .search([("name", "in", lst_name)])
                             .exists()
                         )
-                        if not bp_id:
-                            raise ValueError(
-                                f"Missing devops.ide.breakpoint name '{name}'"
-                            )
-                        condition = dct_condition.get(name, None)
-                        lst_bp_id.append((bp_id, condition))
-
-                    if lst_bp_id:
-                        rec.add_breakpoint(lst_bp_id=lst_bp_id)
+                        if len(bp_ids) != len(lst_name):
+                            # error, missing breakpoint, search it
+                            for name in lst_name:
+                                find_it = bp_ids.filtered(
+                                    lambda a: a.name == name
+                                )
+                                if not find_it:
+                                    raise Exception(
+                                        "Cannot find breakpoint name"
+                                        f" '{name}'."
+                                    )
+                        if bp_ids:
+                            rec.add_breakpoint(bp_ids=bp_ids)
                 if conf_add_mode:
                     rec_ws.ide_pycharm.add_configuration(
                         conf_add_mode=conf_add_mode,
@@ -657,37 +576,6 @@ class DevopsCgNewProject(models.Model):
                         conf_add_module=conf_add_module,
                         conf_add_config_path=conf_add_config_path,
                     )
-
-    @api.multi
-    def create_bp_condition(
-        self,
-        bp_name,
-        dct_condition,
-        var_model=None,
-        var_field=None,
-        var_field_att=None,
-        var_method=None,
-    ):
-        for rec in self:
-            lst_condition = []
-            if rec.breakpoint_condition_model_name:
-                lst_condition.append(
-                    f'{var_model}=="{rec.breakpoint_condition_model_name}"'
-                )
-            if rec.breakpoint_condition_field_name:
-                lst_condition.append(
-                    f'{var_field}=="{rec.breakpoint_condition_field_name}"'
-                )
-            if rec.breakpoint_condition_field_attribute_name:
-                lst_condition.append(
-                    f'{var_field_att}=="{rec.breakpoint_condition_field_attribute_name}"'
-                )
-            if rec.breakpoint_condition_method_name:
-                lst_condition.append(
-                    f'{var_method}=="{rec.breakpoint_condition_method_name}"'
-                )
-            if lst_condition:
-                dct_condition[bp_name] = " and ".join(lst_condition)
 
     @api.multi
     def action_run_test(self, ctx=None):
@@ -722,6 +610,17 @@ class DevopsCgNewProject(models.Model):
                         )
                         _logger.error(msg)
                         raise exceptions.Warning(msg)
+                    if not bp_id.is_multiple and (
+                        len(lst_line) != 1 or len(lst_line[0][1]) > 1
+                    ):
+                        msg = (
+                            f"Breakpoint {bp_id.name} is not suppose to find"
+                            f" multiple line and got '{lst_line}' into file"
+                            f" '{bp_id.filename}' with key '{bp_id.keyword}'"
+                        )
+                        _logger.error(msg)
+                        raise exceptions.Warning(msg)
+
                 _logger.info("Test pass")
 
     @api.multi
@@ -1572,24 +1471,32 @@ class DevopsCgNewProject(models.Model):
     def add_breakpoint(
         self,
         bp_id=None,
+        bp_ids=None,
         lst_bp_id=None,
         file=None,
         key=None,
         no_line=None,
         condition=None,
     ):
+        # lst_bp_id is deprecated
+        # bp_id is deprecated, use instead bp_ids
         for rec in self:
             with rec.devops_workspace.devops_create_exec_bundle(
                 "New project add breakpoint", devops_cg_new_project=rec.id
             ) as rec_ws:
                 lst_no_line = []
-                if lst_bp_id:
-                    for i_bp_id, s_cond in lst_bp_id:
-                        result = i_bp_id.get_breakpoint_info(
+                if bp_ids:
+                    for rec_bp_id in bp_ids:
+                        result = rec_bp_id.get_breakpoint_info(
+                            rec_ws, new_project_id=rec, condition=condition
+                        )
+                        lst_no_line.extend(result)
+                elif lst_bp_id:
+                    for rec_bp_id, s_cond in lst_bp_id:
+                        result = rec_bp_id.get_breakpoint_info(
                             rec_ws, new_project_id=rec, condition=s_cond
                         )
                         lst_no_line.extend(result)
-
                 elif bp_id:
                     lst_no_line = bp_id.get_breakpoint_info(
                         rec_ws, new_project_id=rec, condition=condition

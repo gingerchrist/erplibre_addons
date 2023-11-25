@@ -29,11 +29,47 @@ class DevopsIdeBreakpoint(models.Model):
 
     keyword = fields.Char()
 
+    condition_var_model_name = fields.Char(
+        string="Variable model name",
+        help=(
+            "Will be a condition in the breakpoint, it contains the variable"
+            " name about the model name."
+        ),
+    )
+
+    condition_var_field_name = fields.Char(
+        string="Variable field name",
+        help=(
+            "Will be a condition in the breakpoint, it contains the variable"
+            " name about the field name."
+        ),
+    )
+
+    condition_var_field_attr_name = fields.Char(
+        string="Variable field attribute name",
+        help=(
+            "Will be a condition in the breakpoint, it contains the variable"
+            " name about the field attribute."
+        ),
+    )
+
+    condition_var_method_name = fields.Char(
+        string="Variable method name",
+        help=(
+            "Will be a condition in the breakpoint, it contains the variable"
+            " name about the method name."
+        ),
+    )
+
     ignore_test = fields.Boolean(
         help=(
             "Will ignore this breakpoint when do test, because it will fail"
             " for some reason."
         )
+    )
+
+    is_multiple = fields.Boolean(
+        help="Support multiple breakpoint for this file and key."
     )
 
     generated_by_execution = fields.Boolean(
@@ -66,9 +102,10 @@ class DevopsIdeBreakpoint(models.Model):
 
     @api.multi
     def get_breakpoint_info(self, ws, new_project_id=None, condition=None):
-        with ws.devops_create_exec_bundle("Get breakpoint info") as rec_ws:
-            lst_all_no_line = []
-            for rec in self:
+        for rec in self:
+            with ws.devops_create_exec_bundle("Get breakpoint info") as rec_ws:
+                rec = rec.with_context(rec_ws._context)
+                lst_all_no_line = []
                 if rec.filename_is_code_generator_demo_hooks_py:
                     if not new_project_id:
                         continue
@@ -97,7 +134,17 @@ class DevopsIdeBreakpoint(models.Model):
                     rec.keyword, filename, rec_ws
                 )
                 if lst_no_line:
-                    tpl_info = (filename, lst_no_line, condition)
+                    s_cond = None
+                    if condition:
+                        s_cond = condition
+                    elif new_project_id:
+                        s_cond = rec.get_condition_str(
+                            value_model=new_project_id.breakpoint_condition_model_name,
+                            value_field=new_project_id.breakpoint_condition_field_name,
+                            value_field_attr=new_project_id.breakpoint_condition_field_attribute_name,
+                            value_method_name=new_project_id.breakpoint_condition_method_name,
+                        )
+                    tpl_info = (filename, lst_no_line, s_cond)
                     lst_all_no_line.append(tpl_info)
         return lst_all_no_line
 
@@ -113,3 +160,34 @@ class DevopsIdeBreakpoint(models.Model):
                 rec_ws.with_context(
                     breakpoint_id=o_rec.id
                 ).ide_pycharm.action_start_pycharm()
+
+    @api.multi
+    def get_condition_str(
+        self,
+        value_model=None,
+        value_field=None,
+        value_field_attr=None,
+        value_method_name=None,
+    ):
+        lst_condition = []
+        for rec in self:
+            if rec.condition_var_model_name and value_model is not None:
+                lst_condition.append(
+                    f'{rec.condition_var_model_name}=="{value_model}"'
+                )
+            if rec.condition_var_field_name and value_field is not None:
+                lst_condition.append(
+                    f'{rec.condition_var_field_name}=="{value_field}"'
+                )
+            if (
+                rec.condition_var_field_attr_name
+                and value_field_attr is not None
+            ):
+                lst_condition.append(
+                    f'{rec.condition_var_field_attr_name}=="{value_field_attr}"'
+                )
+            if rec.condition_var_method_name and value_method_name is not None:
+                lst_condition.append(
+                    f'{rec.condition_var_method_name}=="{value_method_name}"'
+                )
+        return " and ".join(lst_condition)
