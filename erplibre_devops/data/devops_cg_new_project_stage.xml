@@ -12,7 +12,7 @@
         <field name="sequence">11</field>
     </record>
 
-    <record model="devops.cg.new_project.stage" id="devops_cg_new_project_stage_generate_uc0">
+    <record model="devops.cg.new_project.stage" id="devops_cg_new_project_stage_generate_Uc0">
         <field name="name">Generate Uc0</field>
         <field name="description">Generate code_generator_demo to create UcA</field>
         <field name="sequence">12</field>

@@ -171,13 +171,13 @@ class DevopsCgNewProject(models.Model):
         store=True,
     )
 
-    config_debug_uc0 = fields.Boolean(help="Debug uC0.")
+    config_debug_Uc0 = fields.Boolean(help="Debug Uc0.")
 
-    config_debug_ucA = fields.Boolean(help="Debug uCA.")
+    config_debug_UcA = fields.Boolean(help="Debug UcA.")
 
-    config_debug_ucB = fields.Boolean(help="Debug uCB.")
+    config_debug_UcB = fields.Boolean(help="Debug UcB.")
 
-    breakpoint_uc0_first_line_hook = fields.Boolean(
+    breakpoint_Uc0_first_line_hook = fields.Boolean(
         help="Breakpoint first line hook file uc0."
     )
 
@@ -219,73 +219,96 @@ class DevopsCgNewProject(models.Model):
         help="General breakpoint condition to diagnostic method.",
     )
 
-    breakpoint_ucA_first_line_hook = fields.Boolean(
+    breakpoint_condition_module_name = fields.Char(
+        string="Module name",
+        help=(
+            "General breakpoint condition to diagnostic module. It's generally"
+            " the name of the generated module."
+        ),
+    )
+
+    breakpoint_UcA_first_line_hook = fields.Boolean(
         help="Breakpoint first line hook file ucA."
     )
 
-    breakpoint_ucB_first_line_hook = fields.Boolean(
+    breakpoint_UcB_first_line_hook = fields.Boolean(
         help="Breakpoint first line hook file ucB."
     )
 
-    breakpoint_uc0_bp_cg_uc0 = fields.Boolean(
-        help="Breakpoint dans la section génération de code du uC0."
+    breakpoint_Uc0_cg_Uc0 = fields.Boolean(
+        help="Breakpoint dans la section génération de code du Uc0."
     )
 
     breakpoint_all_begin_generate_file = fields.Boolean(
         help="Breakpoint dans la section génération de code."
     )
 
-    breakpoint_ucA_bp_extract_python_controller_warning = fields.Boolean(
+    breakpoint_UcA_extract_python_controller_warning = fields.Boolean(
         help=(
-            "Breakpoint uCA to diagnostic warning when extract python"
+            "Breakpoint UcA to diagnostic warning when extract python"
             " controller."
         )
     )
 
-    breakpoint_ucA_bp_extract_python_module_warning = fields.Boolean(
-        help="Breakpoint uCA to diagnostic warning when extract python module."
+    breakpoint_UcA_extract_python_module_warning = fields.Boolean(
+        help="Breakpoint UcA to diagnostic warning when extract python module."
     )
 
-    breakpoint_ucA_bp_extract_python_module_file_warning = fields.Boolean(
+    breakpoint_UcA_extract_python_module_file_warning = fields.Boolean(
         help=(
-            "Breakpoint uCA to diagnostic warning when extract python module"
+            "Breakpoint UcA to diagnostic warning when extract python module"
             " file."
         )
     )
 
-    breakpoint_ucA_bp_extract_python_detect_field = fields.Boolean(
-        help="Breakpoint uCA when extract Python field of model."
+    breakpoint_UcA_extract_python_detect_field = fields.Boolean(
+        help="Breakpoint UcA when extract Python field of model."
     )
 
     breakpoint_all_bp_prepare_data_before_write = fields.Boolean(
         help="Breakpoint all prepare set of data before write code."
     )
 
-    breakpoint_ucA_bp_extract_view_warning = fields.Boolean(
-        help="Breakpoint uCA to diagnostic warning when extract view."
+    breakpoint_UcA_extract_view_warning = fields.Boolean(
+        help="Breakpoint UcA to diagnostic warning when extract view."
     )
 
-    breakpoint_ucA_bp_extract_view_first_line = fields.Boolean(
-        help="Breakpoint uCA to diagnostic when extract view."
+    breakpoint_UcA_extract_view_first_line = fields.Boolean(
+        help="Breakpoint UcA to diagnostic when extract view."
     )
 
-    breakpoint_ucB_bp_generate_view_warning = fields.Boolean(
-        help="Breakpoint uCB to diagnostic warning when generate view."
-    )
-
-    breakpoint_ucB_bp_cg_ucB = fields.Boolean(
-        help="Breakpoint dans la section génération de code du uCB."
-    )
-
-    breakpoint_ucB_write_code_model_field = fields.Boolean(
+    breakpoint_UcA_extract_module_create_cg_model_code = fields.Boolean(
         help=(
-            "Breakpoint dans la section génération de code du uCB - write"
+            "Breakpoint UcA when extract module before create"
+            " code.generator.model.code ."
+        )
+    )
+
+    breakpoint_UcA_write_hook_code = fields.Boolean(
+        help="Breakpoint UcA when write code into hooks."
+    )
+
+    breakpoint_UcB_write_code_with_cw = fields.Boolean(
+        help="Breakpoint UcB when write code with code_writer."
+    )
+
+    breakpoint_UcB_generate_view_warning = fields.Boolean(
+        help="Breakpoint UcB to diagnostic warning when generate view."
+    )
+
+    breakpoint_UcB_cg_UcB = fields.Boolean(
+        help="Breakpoint dans la section génération de code du UcB."
+    )
+
+    breakpoint_UcB_write_code_model_field = fields.Boolean(
+        help=(
+            "Breakpoint dans la section génération de code du UcB - write"
             " model field module."
         )
     )
 
-    breakpoint_ucA_extract_module_get_min_max_crop = fields.Boolean(
-        help="Breakpoint uCA to diagnostic warning when extract view."
+    breakpoint_UcA_extract_module_get_min_max_crop = fields.Boolean(
+        help="Breakpoint UcA to diagnostic warning when extract view."
     )
 
     # TODO need to support related field
@@ -396,52 +419,58 @@ class DevopsCgNewProject(models.Model):
                 rec.name += f" - start {rec.exec_start_date}"
 
     @api.depends(
-        "config_debug_uc0",
-        "config_debug_ucA",
-        "config_debug_ucB",
+        "config_debug_Uc0",
+        "config_debug_UcA",
+        "config_debug_UcB",
         "breakpoint_all_write_hook_begin",
         "breakpoint_all_write_hook_before_model",
         "breakpoint_all_write_hook_model_write_field",
         "breakpoint_all_bp_prepare_data_before_write",
-        "breakpoint_uc0_first_line_hook",
-        "breakpoint_ucA_first_line_hook",
-        "breakpoint_ucB_first_line_hook",
-        "breakpoint_uc0_bp_cg_uc0",
+        "breakpoint_Uc0_first_line_hook",
+        "breakpoint_UcA_first_line_hook",
+        "breakpoint_UcB_first_line_hook",
+        "breakpoint_Uc0_cg_Uc0",
         "breakpoint_all_begin_generate_file",
-        "breakpoint_ucA_bp_extract_view_warning",
-        "breakpoint_ucA_bp_extract_python_controller_warning",
-        "breakpoint_ucA_bp_extract_python_module_warning",
-        "breakpoint_ucA_bp_extract_python_module_file_warning",
-        "breakpoint_ucA_bp_extract_python_detect_field",
-        "breakpoint_ucA_extract_module_get_min_max_crop",
-        "breakpoint_ucA_bp_extract_view_first_line",
-        "breakpoint_ucB_bp_generate_view_warning",
-        "breakpoint_ucB_write_code_model_field",
+        "breakpoint_UcA_extract_view_warning",
+        "breakpoint_UcA_extract_python_controller_warning",
+        "breakpoint_UcA_extract_python_module_warning",
+        "breakpoint_UcA_extract_python_module_file_warning",
+        "breakpoint_UcA_extract_python_detect_field",
+        "breakpoint_UcA_extract_module_create_cg_model_code",
+        "breakpoint_UcA_write_hook_code",
+        "breakpoint_UcB_write_code_with_cw",
+        "breakpoint_UcA_extract_module_get_min_max_crop",
+        "breakpoint_UcA_extract_view_first_line",
+        "breakpoint_UcB_generate_view_warning",
+        "breakpoint_UcB_write_code_model_field",
     )
     def _compute_can_setup_ide(self):
         for rec in self:
             rec.can_setup_ide = (
-                rec.config_debug_uc0
-                + rec.config_debug_ucA
-                + rec.config_debug_ucB
+                rec.config_debug_Uc0
+                + rec.config_debug_UcA
+                + rec.config_debug_UcB
                 + rec.breakpoint_all_write_hook_begin
                 + rec.breakpoint_all_write_hook_before_model
                 + rec.breakpoint_all_write_hook_model_write_field
                 + rec.breakpoint_all_bp_prepare_data_before_write
-                + rec.breakpoint_uc0_first_line_hook
-                + rec.breakpoint_ucA_first_line_hook
-                + rec.breakpoint_ucB_first_line_hook
-                + rec.breakpoint_uc0_bp_cg_uc0
+                + rec.breakpoint_Uc0_first_line_hook
+                + rec.breakpoint_UcA_first_line_hook
+                + rec.breakpoint_UcB_first_line_hook
+                + rec.breakpoint_Uc0_cg_Uc0
                 + rec.breakpoint_all_begin_generate_file
-                + rec.breakpoint_ucA_bp_extract_view_warning
-                + rec.breakpoint_ucA_bp_extract_python_controller_warning
-                + rec.breakpoint_ucA_bp_extract_python_module_warning
-                + rec.breakpoint_ucA_bp_extract_python_module_file_warning
-                + rec.breakpoint_ucA_bp_extract_python_detect_field
-                + rec.breakpoint_ucA_extract_module_get_min_max_crop
-                + rec.breakpoint_ucA_bp_extract_view_first_line
-                + rec.breakpoint_ucB_bp_generate_view_warning
-                + rec.breakpoint_ucB_write_code_model_field
+                + rec.breakpoint_UcA_extract_view_warning
+                + rec.breakpoint_UcA_extract_python_controller_warning
+                + rec.breakpoint_UcA_extract_python_module_warning
+                + rec.breakpoint_UcA_extract_python_module_file_warning
+                + rec.breakpoint_UcA_extract_python_detect_field
+                + rec.breakpoint_UcA_extract_module_create_cg_model_code
+                + rec.breakpoint_UcA_write_hook_code
+                + rec.breakpoint_UcB_write_code_with_cw
+                + rec.breakpoint_UcA_extract_module_get_min_max_crop
+                + rec.breakpoint_UcA_extract_view_first_line
+                + rec.breakpoint_UcB_generate_view_warning
+                + rec.breakpoint_UcB_write_code_model_field
             )
 
     def action_new_project_clear_pause(self, ctx=None):
@@ -452,29 +481,30 @@ class DevopsCgNewProject(models.Model):
                 ctx=ctx,
             ) as rec_ws:
                 rec.is_pause = False
-                rec.config_debug_uc0 = False
-                rec.config_debug_ucA = False
-                rec.config_debug_ucB = False
+                rec.config_debug_Uc0 = False
+                rec.config_debug_UcA = False
+                rec.config_debug_UcB = False
                 rec.breakpoint_all_write_hook_begin = False
                 rec.breakpoint_all_write_hook_before_model = False
                 rec.breakpoint_all_write_hook_model_write_field = False
                 rec.breakpoint_all_bp_prepare_data_before_write = False
-                rec.breakpoint_uc0_first_line_hook = False
-                rec.breakpoint_ucA_first_line_hook = False
-                rec.breakpoint_ucB_first_line_hook = False
-                rec.breakpoint_uc0_bp_cg_uc0 = False
+                rec.breakpoint_Uc0_first_line_hook = False
+                rec.breakpoint_UcA_first_line_hook = False
+                rec.breakpoint_UcB_first_line_hook = False
+                rec.breakpoint_Uc0_cg_Uc0 = False
                 rec.breakpoint_all_begin_generate_file = False
-                rec.breakpoint_ucA_bp_extract_python_controller_warning = False
-                rec.breakpoint_ucA_bp_extract_python_module_warning = False
-                rec.breakpoint_ucA_bp_extract_python_module_file_warning = (
-                    False
-                )
-                rec.breakpoint_ucA_bp_extract_python_detect_field = False
-                rec.breakpoint_ucA_bp_extract_view_warning = False
-                rec.breakpoint_ucA_extract_module_get_min_max_crop = False
-                rec.breakpoint_ucA_bp_extract_view_first_line = False
-                rec.breakpoint_ucB_bp_generate_view_warning = False
-                rec.breakpoint_ucB_write_code_model_field = False
+                rec.breakpoint_UcA_extract_python_controller_warning = False
+                rec.breakpoint_UcA_extract_python_module_warning = False
+                rec.breakpoint_UcA_extract_python_module_file_warning = False
+                rec.breakpoint_UcA_extract_python_detect_field = False
+                rec.breakpoint_UcA_extract_module_create_cg_model_code = False
+                rec.breakpoint_UcA_write_hook_code = False
+                rec.breakpoint_UcB_write_code_with_cw = False
+                rec.breakpoint_UcA_extract_view_warning = False
+                rec.breakpoint_UcA_extract_module_get_min_max_crop = False
+                rec.breakpoint_UcA_extract_view_first_line = False
+                rec.breakpoint_UcB_generate_view_warning = False
+                rec.breakpoint_UcB_write_code_model_field = False
 
     @api.depends("exec_start_date", "exec_stop_date")
     def _compute_exec_time_duration(self):
@@ -493,23 +523,23 @@ class DevopsCgNewProject(models.Model):
                 "New project debug", devops_cg_new_project=rec.id, ctx=ctx
             ) as rec_ws:
                 has_debug = False
-                stage_uc0 = self.env.ref(
-                    "erplibre_devops.devops_cg_new_project_stage_generate_uc0"
+                stage_Uc0 = self.env.ref(
+                    "erplibre_devops.devops_cg_new_project_stage_generate_Uc0"
                 )
-                if rec.stage_id == stage_uc0:
-                    rec.config_debug_uc0 = True
+                if rec.stage_id == stage_Uc0:
+                    rec.config_debug_Uc0 = True
                     has_debug = True
                 stage_uca = self.env.ref(
                     "erplibre_devops.devops_cg_new_project_stage_generate_uca"
                 )
                 if rec.stage_id == stage_uca:
-                    rec.config_debug_ucA = True
+                    rec.config_debug_UcA = True
                     has_debug = True
                 stage_ucb = self.env.ref(
                     "erplibre_devops.devops_cg_new_project_stage_generate_ucb"
                 )
                 if rec.stage_id == stage_ucb:
-                    rec.config_debug_ucB = True
+                    rec.config_debug_UcB = True
                     has_debug = True
                 if has_debug:
                     rec.with_context(rec_ws._context).action_new_project()
@@ -648,8 +678,8 @@ class DevopsCgNewProject(models.Model):
                 stage_gen_conf_id = self.env.ref(
                     "erplibre_devops.devops_cg_new_project_stage_generate_config"
                 )
-                stage_uc0_id = self.env.ref(
-                    "erplibre_devops.devops_cg_new_project_stage_generate_uc0"
+                stage_Uc0_id = self.env.ref(
+                    "erplibre_devops.devops_cg_new_project_stage_generate_Uc0"
                 )
                 stage_uca_id = self.env.ref(
                     "erplibre_devops.devops_cg_new_project_stage_generate_uca"
@@ -684,8 +714,8 @@ class DevopsCgNewProject(models.Model):
                     stop_exec = True
 
                 # Stage Uc0
-                if not stop_exec and rec.stage_id == stage_uc0_id:
-                    rec.action_generate_uc0(rec_ws=rec_ws)
+                if not stop_exec and rec.stage_id == stage_Uc0_id:
+                    rec.action_generate_Uc0(rec_ws=rec_ws)
                     count_stage_execute += 1
 
                 if one_stage_only and count_stage_execute > 0:
@@ -928,18 +958,18 @@ class DevopsCgNewProject(models.Model):
                 rec.config_path = temp_file
 
                 rec.stage_id = self.env.ref(
-                    "erplibre_devops.devops_cg_new_project_stage_generate_uc0"
+                    "erplibre_devops.devops_cg_new_project_stage_generate_Uc0"
                 )
 
     @api.multi
-    def action_generate_uc0(self, ctx=None, rec_ws=None):
+    def action_generate_Uc0(self, ctx=None, rec_ws=None):
         for rec in self:
             ws_param = rec_ws if rec_ws else rec.devops_workspace
             with ws_param.devops_create_exec_bundle(
                 "New project generate 3.Uc0", devops_cg_new_project=rec.id
             ) as ws:
                 rec.stage_id = self.env.ref(
-                    "erplibre_devops.devops_cg_new_project_stage_generate_uc0"
+                    "erplibre_devops.devops_cg_new_project_stage_generate_Uc0"
                 )
                 if not rec.bd_name_demo:
                     rec.bd_name_demo = (

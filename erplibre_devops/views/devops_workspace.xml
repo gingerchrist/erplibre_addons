@@ -95,8 +95,8 @@
                     <button
                         class="btn-warning"
                         name="action_execute_last_stage_new_project"
-                        string="Re-execute uC0"
-                        context="{'default_stage_uc0': True}"
+                        string="Re-execute Uc0"
+                        context="{'default_stage_Uc0': True}"
                         type="object"
                         attrs="{'invisible': ['|', ('is_conflict_mode_exec', '=', True), ('has_re_execute_new_project', '=', False)]}"
                     />

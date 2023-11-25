@@ -2395,9 +2395,9 @@ class DevopsWorkspace(models.Model):
             with rec_o.devops_create_exec_bundle(
                 "Re-execute last new project"
             ) as rec:
-                if rec._context.get("default_stage_uc0"):
+                if rec._context.get("default_stage_Uc0"):
                     rec.last_new_project_self.stage_id = self.env.ref(
-                        "erplibre_devops.devops_cg_new_project_stage_generate_uc0"
+                        "erplibre_devops.devops_cg_new_project_stage_generate_Uc0"
                     ).id
                 # TODO create a copy of new project and not modify older version
                 # TODO next sentence is not useful if made a copy
