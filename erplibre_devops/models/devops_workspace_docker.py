@@ -17,7 +17,10 @@ class DevopsWorkspaceDocker(models.Model):
     _name = "devops.workspace.docker"
     _description = "ERPLibre DevOps Workspace Docker"
 
-    name = fields.Char(readonly=True, compute="_compute_name", store=True)
+    name = fields.Char(
+        compute="_compute_name",
+        store=True,
+    )
 
     workspace_id = fields.Many2one(
         comodel_name="devops.workspace",
@@ -26,8 +29,8 @@ class DevopsWorkspaceDocker(models.Model):
 
     docker_is_running = fields.Boolean(
         readonly=True,
-        help="When false, it's because not running docker.",
         default=True,
+        help="When false, it's because not running docker.",
     )
 
     force_create_docker_compose = fields.Boolean(

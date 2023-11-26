@@ -7,49 +7,49 @@
             <form string="Titre">
                 <header>
                     <button
-                        class="oe_highlight"
                         name="action_new_project"
                         string="New project"
                         type="object"
+                        class="oe_highlight"
                         attrs="{'invisible': [('execution_finish', '=', True)]}"
                     />
                     <button
-                        class="oe_highlight"
                         name="action_new_project"
                         string="Re-execute"
                         type="object"
+                        class="oe_highlight"
                         attrs="{'invisible': [('execution_finish', '=', False)]}"
                     />
                     <button
-                        class="oe_highlight"
                         name="action_new_project_setup_IDE"
                         string="Setup IDE"
                         type="object"
+                        class="oe_highlight"
                         attrs="{'invisible': [('can_setup_ide', '=', False)]}"
                     />
                     <button
-                        class="oe_highlight"
                         name="action_new_project_clear_pause"
                         string="Clear pause"
                         type="object"
+                        class="oe_highlight"
                         attrs="{'invisible': [('is_pause', '=', False)]}"
                     />
-                    <button class="oe_highlight" name="action_new_project_debug" string="Debug" type="object" />
+                    <button name="action_new_project_debug" string="Debug" type="object" class="oe_highlight" />
                     <button
-                        class="oe_highlight"
                         name="action_new_project_debug"
                         string="Debug only"
-                        context="{'new_project_with_breakpoint': False}"
                         type="object"
-                    />
-                    <button class="oe_highlight" name="action_start_pycharm" string="Start PyCharm" type="object" />
-                    <button class="oe_highlight" name="action_kill_pycharm" string="Kill PyCharm" type="object" />
-                    <button class="oe_highlight" name="action_run_test" string="Run test" type="object" />
-                    <button
                         class="oe_highlight"
+                        context="{'new_project_with_breakpoint': False}"
+                    />
+                    <button name="action_start_pycharm" string="Start PyCharm" type="object" class="oe_highlight" />
+                    <button name="action_kill_pycharm" string="Kill PyCharm" type="object" class="oe_highlight" />
+                    <button name="action_run_test" string="Run test" type="object" class="oe_highlight" />
+                    <button
                         name="action_new_project"
                         string="Run this stage only"
                         type="object"
+                        class="oe_highlight"
                         context="{'one_stage_only': True}"
                     />
                     <field name="stage_id" widget="statusbar" clickable="False" options="{'fold_field': 'fold'}" />
@@ -68,7 +68,7 @@
                         Warning
                     </div>
                     <div class="oe_button_box" name="button_box">
-                        <button class="oe_stat_button" icon="fa-archive" name="toggle_active" type="object">
+                        <button name="toggle_active" type="object" class="oe_stat_button" icon="fa-archive">
                             <field name="active" widget="boolean_button" options='{"terminology": "archive"}' />
                         </button>
                     </div>

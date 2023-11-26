@@ -23,7 +23,6 @@ class DevopsTest(models.Model):
 
     devops_workspace_ids = fields.Many2many(
         comodel_name="devops.workspace",
-        inverse_name="test_id",
         string="DevOps Workspace",
     )
 

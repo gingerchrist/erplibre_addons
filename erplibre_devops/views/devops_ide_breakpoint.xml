@@ -7,10 +7,10 @@
             <form string="Titre">
                 <header>
                     <button
-                        class="oe_highlight"
                         name="open_file_ide"
                         string="Open into PyCharm"
                         type="object"
+                        class="oe_highlight"
                         attrs="{'invisible': [('filename', '=', False)]}"
                     />
                 </header>
@@ -147,8 +147,8 @@
                     string="Open file"
                     tabindex="-1"
                     type="object"
-                    icon="fa-play-circle text-success"
                     class="oe_stat_button"
+                    icon="fa-play-circle text-success"
                     attrs="{'invisible': [('filename', '=', False)]}"
                 />
             </tree>

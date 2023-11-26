@@ -71,7 +71,6 @@ class DevopsSystem(models.Model):
 
     ssh_use_sshpass = fields.Boolean(
         string="SSH use SSHPass",
-        default=False,
         help="This tool automatic add password to ssh connexion.",
     )
 

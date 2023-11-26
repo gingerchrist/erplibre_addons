@@ -130,10 +130,7 @@ class DevopsWorkspace(models.Model):
     is_debug_log = fields.Boolean(help="Will print cmd to debug.")
 
     # TODO transform in in compute with devops_workspace_docker.is_running
-    is_running = fields.Boolean(
-        readonly=True,
-        default=False,
-    )
+    is_running = fields.Boolean(readonly=True)
 
     folder = fields.Char(
         required=True,
@@ -176,7 +173,8 @@ class DevopsWorkspace(models.Model):
     )
 
     db_is_restored = fields.Boolean(
-        readonly=True, help="When false, it's because actually restoring a DB."
+        readonly=True,
+        help="When false, it's because actually restoring a DB.",
     )
 
     exec_reboot_process = fields.Boolean(
@@ -200,34 +198,23 @@ class DevopsWorkspace(models.Model):
 
     devops_code_generator_ids = fields.Many2many(
         comodel_name="devops.code_generator",
-        inverse_name="devops_workspace_id",
         string="Project",
     )
 
     devops_code_generator_module_ids = fields.Many2many(
         comodel_name="devops.code_generator.module",
-        # related="devops_code_generator_ids.module_ids",
         string="Module",
-        readonly=False,
     )
 
     devops_code_generator_model_ids = fields.Many2many(
-        # related="devops_code_generator_module_ids.model_ids",
         comodel_name="devops.code_generator.module.model",
         string="Model",
-        readonly=False,
     )
 
     devops_code_generator_field_ids = fields.Many2many(
-        # related="devops_code_generator_model_ids.field_ids",
         comodel_name="devops.code_generator.module.model.field",
         string="Field",
-        readonly=False,
     )
-
-    # devops_code_generator_finish_compute = fields.Boolean(
-    #     store=True, compute="_compute_devops_code_generator_finish_compute"
-    # )
 
     devops_code_generator_tree_addons = fields.Text(
         string="Tree addons",
@@ -256,20 +243,20 @@ class DevopsWorkspace(models.Model):
 
     devops_cg_erplibre_devops_log = fields.Text(
         string="Log CG erplibre_devops new_project",
+        readonly=True,
         help=(
             "Will show code generator log for new project erplibre_devops,"
             " last execution"
         ),
-        readonly=True,
     )
 
     devops_cg_erplibre_devops_error_log = fields.Text(
         string="Error CG erplibre_devops new_project",
+        readonly=True,
         help=(
             "Will show code generator error for new project erplibre_devops,"
             " last execution"
         ),
-        readonly=True,
     )
 
     time_exec_action_code_generator_generate_all = fields.Char(
@@ -313,9 +300,7 @@ class DevopsWorkspace(models.Model):
     )
 
     mode_view_snippet_template_generate_website_snippet_generic_mdl = (
-        fields.Char(
-            help="Feature for mode_view_snippet",
-        )
+        fields.Char(help="Feature for mode_view_snippet")
     )
 
     mode_view_snippet_template_generate_website_snippet_ctrl_featur = (
@@ -350,14 +335,11 @@ class DevopsWorkspace(models.Model):
         )
     )
 
+    # TODO add SystemD
     mode_exec = fields.Selection(
-        selection=[
-            ("docker", "Docker"),
-            ("terminal", "Terminal"),
-            # ("systemd", "SystemD"),
-        ],
-        default="docker",
+        selection=[("docker", "Docker"), ("terminal", "Terminal")],
         required=True,
+        default="docker",
     )
 
     mode_environnement = fields.Selection(

@@ -25,8 +25,8 @@ class DevopsExecBundle(models.Model):
 
     parent_id = fields.Many2one(
         comodel_name="devops.exec.bundle",
-        index=True,
         string="Parent bundle",
+        index=True,
     )
 
     child_ids = fields.One2many(

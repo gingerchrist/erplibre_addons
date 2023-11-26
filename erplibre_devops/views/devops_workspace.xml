@@ -7,104 +7,104 @@
             <form string="DevOps Workspace">
                 <header>
                     <button
-                        class="oe_highlight"
                         name="action_install_workspace"
                         string="Install"
                         type="object"
+                        class="oe_highlight"
                         attrs="{'invisible': ['|', ('is_installed', '=', True), ('is_conflict_mode_exec', '=', True)]}"
                     />
                     <button
-                        class="oe_highlight"
                         name="action_install_me_workspace"
                         string="Me"
                         type="object"
+                        class="oe_highlight"
                         attrs="{'invisible': ['|', ('is_installed', '=', True), ('is_conflict_mode_exec', '=', True)]}"
                     />
                     <button
-                        class="oe_highlight"
                         name="action_check"
                         string="Status"
                         type="object"
+                        class="oe_highlight"
                         attrs="{'invisible': ['|', ('is_installed', '=', False), ('is_conflict_mode_exec', '=', True)]}"
                     />
                     <button
-                        class="oe_highlight"
                         name="action_start"
                         string="Start"
                         type="object"
+                        class="oe_highlight"
                         attrs="{'invisible': ['|', '|', ('is_installed', '=', False), ('is_running', '=', True), ('is_conflict_mode_exec', '=', True)]}"
                     />
                     <button
-                        class="btn-success"
                         name="action_start"
                         string="Start"
                         type="object"
-                        attrs="{'invisible': ['|', '|', ('is_installed', '=', False), ('is_running', '=', False), ('is_conflict_mode_exec', '=', True)]}"
-                    />
-                    <button
-                        class="oe_highlight"
-                        name="action_stop"
-                        string="Stop"
-                        type="object"
-                        attrs="{'invisible': ['|', '|', ('is_installed', '=', False), ('is_running', '=', False), ('is_conflict_mode_exec', '=', True)]}"
-                    />
-                    <button
                         class="btn-success"
+                        attrs="{'invisible': ['|', '|', ('is_installed', '=', False), ('is_running', '=', False), ('is_conflict_mode_exec', '=', True)]}"
+                    />
+                    <button
                         name="action_stop"
                         string="Stop"
                         type="object"
+                        class="oe_highlight"
+                        attrs="{'invisible': ['|', '|', ('is_installed', '=', False), ('is_running', '=', False), ('is_conflict_mode_exec', '=', True)]}"
+                    />
+                    <button
+                        name="action_stop"
+                        string="Stop"
+                        type="object"
+                        class="btn-success"
                         attrs="{'invisible': ['|', '|', ('is_installed', '=', False), ('is_running', '=', True), ('is_conflict_mode_exec', '=', True)]}"
                     />
                     <button
-                        class="oe_highlight"
                         name="action_reboot"
                         string="Reboot"
                         type="object"
+                        class="oe_highlight"
                         attrs="{'invisible': ['|', ('is_installed', '=', False), ('is_conflict_mode_exec', '=', True)]}"
                     />
                     <button
-                        class="oe_highlight"
                         name="action_reboot"
                         string="Hard Reboot"
-                        context="{'default_exec_reboot_process': True}"
                         type="object"
+                        class="oe_highlight"
+                        context="{'default_exec_reboot_process': True}"
                         attrs="{'invisible': ['|', ('is_installed', '=', False), ('is_conflict_mode_exec', '=', True)]}"
                     />
                     <button
-                        class="oe_highlight"
                         name="action_update"
                         string="Update"
                         type="object"
+                        class="oe_highlight"
                         attrs="{'invisible': ['|', ('is_installed', '=', False), ('is_conflict_mode_exec', '=', True)]}"
                     />
                     <button
-                        class="oe_highlight"
                         name="action_install_workspace"
                         string="Re-install"
                         type="object"
+                        class="oe_highlight"
                         attrs="{'invisible': [('is_conflict_mode_exec', '=', True)]}"
                         groups="base.group_no_one"
                     />
                     <button
-                        class="btn-warning"
                         name="action_execute_last_stage_new_project"
                         string="Re-execute last"
                         type="object"
+                        class="btn-warning"
                         attrs="{'invisible': ['|', ('is_conflict_mode_exec', '=', True), ('has_re_execute_new_project', '=', False)]}"
                     />
                     <button
-                        class="btn-warning"
                         name="action_execute_last_stage_new_project"
                         string="Re-execute Uc0"
-                        context="{'default_stage_Uc0': True}"
                         type="object"
+                        class="btn-warning"
+                        context="{'default_stage_Uc0': True}"
                         attrs="{'invisible': ['|', ('is_conflict_mode_exec', '=', True), ('has_re_execute_new_project', '=', False)]}"
                     />
                     <button
-                        class="btn-danger"
                         name="action_clear_error_exec"
                         string="Clear error exec"
                         type="object"
+                        class="btn-danger"
                         attrs="{'invisible': ['|', ('devops_exec_error_count', '==', 0), ('is_installed', '=', False)]}"
                     />
                 </header>
@@ -113,11 +113,7 @@
                 </div>
                 <div class="oe_button_box" name="button_box">
                     <button name="toggle_active" type="object" class="oe_stat_button" icon="fa-archive">
-                        <field
-                            name="active"
-                            widget="boolean_button"
-                            options="{&quot;terminology&quot;: &quot;archive&quot;}"
-                        />
+                        <field name="active" widget="boolean_button" options='{"terminology": "archive"}' />
                     </button>
                     <button
                         class="oe_stat_button"
@@ -204,17 +200,17 @@
                     </group>
                     <group string="Network" attrs="{'invisible': [('is_installed', '=', False)]}">
                         <button
-                            class="oe_highlight"
                             name="action_network_change_port_random"
                             string="Random port"
                             type="object"
+                            class="oe_highlight"
                             attrs="{'invisible': [('exec_reboot_process', '=', False)]}"
                         />
                         <button
-                            class="oe_highlight"
                             name="action_network_change_port_default"
                             string="Default port"
                             type="object"
+                            class="oe_highlight"
                             attrs="{'invisible': ['|', ('exec_reboot_process', '=', False), ('is_me', '=', False)]}"
                         />
                         <field name="port_http" attrs="{'readonly': [('exec_reboot_process', '=', False)]}" />
@@ -308,10 +304,10 @@
                         <group string="Action CG">
                             <group>
                                 <button
-                                    class="oe_highlight"
                                     name="action_install_and_generate_all_generated_module"
                                     string="All"
                                     type="object"
+                                    class="oe_highlight"
                                 />
                                 <div
                                     attrs="{'invisible': [('time_exec_action_install_and_generate_all_generated_module', '=', False)]}"
@@ -397,10 +393,10 @@
                         <group string="Action addons">
                             <group>
                                 <button
-                                    class="oe_highlight"
                                     name="action_clear_all_generated_module"
                                     string="Clear all"
                                     type="object"
+                                    class="oe_highlight"
                                 />
                                 <div
                                     attrs="{'invisible': [('time_exec_action_clear_all_generated_module', '=', False)]}"
@@ -411,10 +407,10 @@
                             </group>
                             <group>
                                 <button
-                                    class="oe_highlight"
                                     name="action_git_commit_all_generated_module"
                                     string="Git commit"
                                     type="object"
+                                    class="oe_highlight"
                                 />
                                 <div
                                     attrs="{'invisible': [('time_exec_action_git_commit_all_generated_module', '=', False)]}"
@@ -443,10 +439,10 @@
                         <group string="Action other">
                             <group>
                                 <button
-                                    class="oe_highlight"
                                     name="action_cg_generate_demo"
                                     string="Generate demo"
                                     type="object"
+                                    class="oe_highlight"
                                 />
                                 <field name="is_clear_before_cg_demo" />
                                 <field name="cg_demo_type_data" />
@@ -496,10 +492,10 @@
                             <group>
                                 <field name="need_debugger_cg_erplibre_devops" invisible="True" />
                                 <button
-                                    class="oe_highlight"
                                     name="action_cg_erplibre_devops"
                                     string="ERPLibre DevOps"
                                     type="object"
+                                    class="oe_highlight"
                                 />
                                 <div attrs="{'invisible': [('time_exec_action_cg_erplibre_devops', '=', False)]}">
                                     Exec in
@@ -507,41 +503,41 @@
                                 </div>
                                 <div attrs="{'invisible': [('need_debugger_cg_erplibre_devops', '=', False)]}">
                                     <button
-                                        class="oe_highlight"
                                         name="action_cg_setup_pycharm_debug"
                                         string="Setup Pycharm debug"
                                         type="object"
+                                        class="oe_highlight"
                                     />
                                 </div>
                                 <button
-                                    class="oe_highlight"
                                     name="action_open_terminal_path_erplibre_devops"
                                     string="Terminal path erplibre_devops"
                                     type="object"
+                                    class="oe_highlight"
                                 />
                                 <button
-                                    class="oe_highlight"
                                     name="action_format_erplibre_devops"
                                     string="Format module erplibre_devops"
                                     type="object"
+                                    class="oe_highlight"
                                 />
                                 <button
-                                    class="oe_highlight"
                                     name="action_update_erplibre_devops"
                                     string="Update module erplibre_devops"
                                     type="object"
+                                    class="oe_highlight"
                                 />
                                 <button
-                                    class="oe_highlight"
                                     name="workspace_CG_remove_module"
                                     string="Clear modules"
                                     type="object"
+                                    class="oe_highlight"
                                 />
                                 <button
-                                    class="oe_highlight"
                                     name="workspace_CG_git_commit"
                                     string="Git commit"
                                     type="object"
+                                    class="oe_highlight"
                                 />
                             </group>
                             <group>
@@ -584,10 +580,10 @@
                     <page name="code_generator_info_tree" string="Tree">
                         <group>
                             <button
-                                class="oe_highlight"
                                 name="action_check_tree_addons"
                                 string="Update tree"
                                 type="object"
+                                class="oe_highlight"
                             />
                         </group>
                         <field name="devops_code_generator_tree_addons" />
@@ -604,10 +600,10 @@
                         <group>
                             <group>
                                 <button
-                                    class="oe_highlight"
                                     name="action_poetry_install"
                                     string="Poetry install"
                                     type="object"
+                                    class="oe_highlight"
                                 />
                             </group>
                         </group>
@@ -675,31 +671,6 @@
         res_model="devops.workspace"
     />
 
-    <!-- Execute devops_workspace from "More" menu -->
-    <record id="action_server_devops_workspace_start" model="ir.actions.server">
-        <field name="name">Start workspace(s)</field>
-        <field name="model_id" ref="model_devops_workspace" />
-        <field name="binding_model_id" ref="model_devops_workspace" />
-        <field name="state">code</field>
-        <field name="code">records.action_start()</field>
-    </record>
-
-    <record id="action_server_devops_workspace_stop" model="ir.actions.server">
-        <field name="name">Stop workspace(s)</field>
-        <field name="model_id" ref="model_devops_workspace" />
-        <field name="binding_model_id" ref="model_devops_workspace" />
-        <field name="state">code</field>
-        <field name="code">records.action_stop()</field>
-    </record>
-
-    <record id="action_server_devops_workspace_reboot" model="ir.actions.server">
-        <field name="name">Reboot workspace(s)</field>
-        <field name="model_id" ref="model_devops_workspace" />
-        <field name="binding_model_id" ref="model_devops_workspace" />
-        <field name="state">code</field>
-        <field name="code">records.action_reboot()</field>
-    </record>
-
     <record id="action_server_devops_workspace_check" model="ir.actions.server">
         <field name="name">Check workspace(s)</field>
         <field name="model_id" ref="model_devops_workspace" />
@@ -714,5 +685,29 @@
         <field name="binding_model_id" ref="model_devops_workspace" />
         <field name="state">code</field>
         <field name="code">records.action_open_terminal()</field>
+    </record>
+
+    <record id="action_server_devops_workspace_reboot" model="ir.actions.server">
+        <field name="name">Reboot workspace(s)</field>
+        <field name="model_id" ref="model_devops_workspace" />
+        <field name="binding_model_id" ref="model_devops_workspace" />
+        <field name="state">code</field>
+        <field name="code">records.action_reboot()</field>
+    </record>
+
+    <record id="action_server_devops_workspace_start" model="ir.actions.server">
+        <field name="name">Start workspace(s)</field>
+        <field name="model_id" ref="model_devops_workspace" />
+        <field name="binding_model_id" ref="model_devops_workspace" />
+        <field name="state">code</field>
+        <field name="code">records.action_start()</field>
+    </record>
+
+    <record id="action_server_devops_workspace_stop" model="ir.actions.server">
+        <field name="name">Stop workspace(s)</field>
+        <field name="model_id" ref="model_devops_workspace" />
+        <field name="binding_model_id" ref="model_devops_workspace" />
+        <field name="state">code</field>
+        <field name="code">records.action_stop()</field>
     </record>
 </odoo>
