@@ -182,13 +182,14 @@ class DevopsExec(models.Model):
                 "devops_log_warning.py",
             ]
             for line in rec.log_all.split("\n"):
-                line_fix = line.lower()
+                # line_fix = line.lower()
+                line_fix = line
                 for key_to_remove in keyword_error_to_remove:
                     line_fix = line_fix.replace(key_to_remove, "")
                 for key_to_remove in keyword_warning_to_remove:
                     line_fix = line_fix.replace(key_to_remove, "")
 
-                if "error" in line_fix:
+                if "ERROR" in line_fix or "error:" in line_fix:
                     for ignore_item in lst_item_ignore_error:
                         if ignore_item in line:
                             break
@@ -200,7 +201,7 @@ class DevopsExec(models.Model):
                         if rec.new_project_id:
                             v["new_project_id"] = rec.new_project_id.id
                         self.env["devops.log.error"].create(v)
-                if "warning" in line_fix:
+                if "WARNING" in line_fix or "warning:" in line_fix:
                     for ignore_item in lst_item_ignore_warning:
                         if ignore_item in line:
                             break
