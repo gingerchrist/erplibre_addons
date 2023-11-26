@@ -368,6 +368,14 @@
                                         context="{'breakpoint_name': 'breakpoint_UcB_write_code_model_field'}"
                                         type="object"
                                     />
+                                    <field name="breakpoint_UcB_write_code_model_field_prepare_field" />
+                                    <button
+                                        class="oe_highlight"
+                                        name="action_start_pycharm"
+                                        string="Open"
+                                        context="{'breakpoint_name': 'breakpoint_UcB_write_code_model_field_prepare_field'}"
+                                        type="object"
+                                    />
                                 </group>
                                 <group string="Breakpoint write code">
                                     <field name="breakpoint_UcB_write_code_with_cw" />

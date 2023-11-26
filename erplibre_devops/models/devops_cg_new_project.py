@@ -296,14 +296,14 @@ class DevopsCgNewProject(models.Model):
         help="Breakpoint UcB to diagnostic warning when generate view."
     )
 
-    breakpoint_UcB_cg_UcB = fields.Boolean(
-        help="Breakpoint dans la section génération de code du UcB."
+    breakpoint_UcB_write_code_model_field = fields.Boolean(
+        help="Breakpoint UcB generate code - write model field module."
     )
 
-    breakpoint_UcB_write_code_model_field = fields.Boolean(
+    breakpoint_UcB_write_code_model_field_prepare_field = fields.Boolean(
         help=(
-            "Breakpoint dans la section génération de code du UcB - write"
-            " model field module."
+            "Breakpoint UcB generate code - prepare set of data for field to"
+            " generate field."
         )
     )
 
