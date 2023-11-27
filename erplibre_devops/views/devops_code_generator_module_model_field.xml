@@ -109,10 +109,10 @@
         <field name="model">devops.code_generator.module.model.field</field>
         <field name="arch" type="xml">
             <search string="DevOps code generator module model field">
-                <filter domain="[('name','!=',False)]" name="name" string="Name" />
-                <filter domain="[('help','!=',False)]" name="help" string="Help" />
-                <filter domain="[('model_id','!=',False)]" name="model_id" string="Model" />
-                <filter domain="[('type','!=',False)]" name="type" string="Type" />
+                <filter name="name" string="Name" domain="[('name','!=',False)]" />
+                <filter name="help" string="Help" domain="[('help','!=',False)]" />
+                <filter name="model_id" string="Model" domain="[('model_id','!=',False)]" />
+                <filter name="type" string="Type" domain="[('type','!=',False)]" />
             </search>
         </field>
     </record>

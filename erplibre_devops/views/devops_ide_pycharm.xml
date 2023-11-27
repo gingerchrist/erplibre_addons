@@ -90,7 +90,7 @@
         <field name="arch" type="xml">
             <search string="DevOps ide pycharm">
                 <field name="name" string="Name" />
-                <filter domain="[('name','!=',False)]" name="name" string="Name" />
+                <filter name="name" string="Name" domain="[('name','!=',False)]" />
             </search>
         </field>
     </record>

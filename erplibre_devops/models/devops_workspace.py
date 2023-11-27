@@ -29,6 +29,11 @@ class DevopsWorkspace(models.Model):
     _inherit = ["mail.activity.mixin", "mail.thread"]
     _description = "ERPLibre DevOps Workspace"
 
+    def _default_image_db_selection(self):
+        return self.env["devops.db.image"].search(
+            [("name", "like", "erplibre_base")], limit=1
+        )
+
     name = fields.Char(
         compute="_compute_name",
         store=True,
@@ -496,11 +501,6 @@ class DevopsWorkspace(models.Model):
         inverse_name="devops_workspace",
         string="All new project associate with this workspace",
     )
-
-    def _default_image_db_selection(self):
-        return self.env["devops.db.image"].search(
-            [("name", "like", "erplibre_base")], limit=1
-        )
 
     image_db_selection = fields.Many2one(
         comodel_name="devops.db.image",
@@ -2131,8 +2131,6 @@ class DevopsWorkspace(models.Model):
         force_docker=False,
         add_stdin_log=False,
         add_stderr_log=True,
-        # get_stderr=False,
-        # get_status=False,
         run_into_workspace=False,
         to_instance=False,
         engine="bash",

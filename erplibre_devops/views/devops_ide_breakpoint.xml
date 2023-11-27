@@ -114,11 +114,11 @@
         <field name="model">devops.ide.breakpoint</field>
         <field name="arch" type="xml">
             <search string="Devops ide breakpoint">
-                <filter domain="[('name','!=',False)]" name="name" string="Name" />
-                <filter domain="[('filename','!=',False)]" name="filename" string="Filename" />
-                <filter domain="[('no_line','!=',False)]" name="no_line" string="No Line" />
-                <group expand="1" string="Group By">
-                    <filter string="Filename" name="filename" context="{'group_by':'filename'}" />
+                <filter name="name" string="Name" domain="[('name','!=',False)]" />
+                <filter name="filename" string="Filename" domain="[('filename','!=',False)]" />
+                <filter name="no_line" string="No Line" domain="[('no_line','!=',False)]" />
+                <group string="Group By" expand="1">
+                    <filter name="filename" string="Filename" context="{'group_by':'filename'}" />
                 </group>
             </search>
         </field>

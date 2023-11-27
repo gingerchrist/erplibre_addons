@@ -91,5 +91,10 @@
         </field>
     </record>
 
-    <act_window id="action_devops_check_system_conf_form" name="Automated devops_systems" res_model="devops.system" />
+    <act_window
+        id="action_devops_check_system_conf_form"
+        name="Automated devops_systems"
+        res_model="devops.system"
+        view_mode="kanban,tree,pivot,graph,form"
+    />
 </odoo>

@@ -8,8 +8,6 @@
                 <sheet>
                     <group>
                         <field name="name" />
-                    </group>
-                    <group>
                         <field name="path" />
                     </group>
                 </sheet>
@@ -75,8 +73,8 @@
         <field name="model">devops.db.image</field>
         <field name="arch" type="xml">
             <search string="DevOps db image">
-                <filter domain="[('name','!=',False)]" name="name" string="Name" />
-                <filter domain="[('path','!=',False)]" name="path" string="Path" />
+                <filter name="name" string="Name" domain="[('name','!=',False)]" />
+                <filter name="path" string="Path" domain="[('path','!=',False)]" />
             </search>
         </field>
     </record>

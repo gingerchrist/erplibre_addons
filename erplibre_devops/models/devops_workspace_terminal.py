@@ -33,8 +33,6 @@ class DevopsWorkspaceTerminal(models.Model):
         help="When false, it's because not running terminal.",
     )
 
-    terminal_initiate_succeed = fields.Boolean(help="Terminal is ready to run")
-
     @api.multi
     @api.depends("workspace_id", "terminal_is_running")
     def _compute_name(self):
