@@ -174,10 +174,10 @@
                 <button
                     name="open_file_ide"
                     string="Open file"
-                    tabindex="-1"
                     type="object"
-                    icon="fa-play-circle text-success"
                     class="oe_stat_button"
+                    icon="fa-play-circle text-success"
+                    tabindex="-1"
                     attrs="{'invisible': [('ide_breakpoint', '=', False)]}"
                 />
             </tree>
