@@ -2303,6 +2303,7 @@ class DevopsWorkspace(models.Model):
             "TypeError:",
             "AttributeError:",
             "ValueError:",
+            "KeyError:",
             "UnboundLocalError:",
             "FileNotFoundError:",
             "raise ValidationError",
