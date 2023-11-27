@@ -156,6 +156,7 @@ class DevopsIdePycharm(models.Model):
                     "TypeError:",
                     "AttributeError:",
                     "ValueError:",
+                    "SyntaxError:",
                     "KeyError:",
                     "UnboundLocalError:",
                     "FileNotFoundError:",
