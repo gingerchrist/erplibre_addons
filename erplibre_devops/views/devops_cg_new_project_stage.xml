@@ -11,17 +11,6 @@
         </field>
     </record>
 
-    <record id="devops_cg_new_project_stage_tree" model="ir.ui.view">
-        <field name="name">devops.cg.new_project.stage.tree</field>
-        <field name="model">devops.cg.new_project.stage</field>
-        <field name="arch" type="xml">
-            <tree string="Stages">
-                <field name="sequence" widget="handle" />
-                <field name="name" />
-            </tree>
-        </field>
-    </record>
-
     <record id="devops_cg_new_project_stage_form" model="ir.ui.view">
         <field name="name">devops.cg.new_project.stage.form</field>
         <field name="model">devops.cg.new_project.stage</field>
@@ -38,13 +27,16 @@
         </field>
     </record>
 
-    <record id="devops_cg_new_project_stage_action" model="ir.actions.act_window">
-        <field name="name">Stages</field>
-        <field name="res_model">devops.cg.new_project.stage</field>
-        <field name="view_type">form</field>
-        <field name="view_id" ref="erplibre_devops.devops_cg_new_project_stage_tree" />
-        <field name="help" type="html">
-            <p class="o_view_nocontent_smiling_face">Set a new stage in your new project</p>
+    <record id="devops_cg_new_project_stage_tree" model="ir.ui.view">
+        <field name="name">devops.cg.new_project.stage.tree</field>
+        <field name="model">devops.cg.new_project.stage</field>
+        <field name="arch" type="xml">
+            <tree string="Stages">
+                <field name="sequence" widget="handle" />
+                <field name="name" />
+            </tree>
         </field>
     </record>
+
+    <act_window id="devops_cg_new_project_stage_action" name="Stages" res_model="devops.cg.new_project.stage" />
 </odoo>
