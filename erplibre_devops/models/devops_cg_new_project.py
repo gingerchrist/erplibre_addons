@@ -227,6 +227,14 @@ class DevopsCgNewProject(models.Model):
         ),
     )
 
+    breakpoint_condition_xml_id = fields.Char(
+        string="Xml ID",
+        help=(
+            "View breakpoint condition to diagnostic module. XML_id is the"
+            " identifiant of view."
+        ),
+    )
+
     breakpoint_UcA_first_line_hook = fields.Boolean(
         help="Breakpoint first line hook file ucA."
     )
@@ -275,6 +283,10 @@ class DevopsCgNewProject(models.Model):
 
     breakpoint_UcA_extract_view_first_line = fields.Boolean(
         help="Breakpoint UcA to diagnostic when extract view."
+    )
+
+    breakpoint_UcA_extract_xml_like_button = fields.Boolean(
+        help="Breakpoint UcA gc breakpoint extract xml like button."
     )
 
     breakpoint_UcA_extract_module_create_cg_model_code = fields.Boolean(
@@ -441,6 +453,7 @@ class DevopsCgNewProject(models.Model):
         "breakpoint_UcB_write_code_with_cw",
         "breakpoint_UcA_extract_module_get_min_max_crop",
         "breakpoint_UcA_extract_view_first_line",
+        "breakpoint_UcA_extract_xml_like_button",
         "breakpoint_UcB_generate_view_warning",
         "breakpoint_UcB_write_code_model_field",
     )
@@ -469,6 +482,7 @@ class DevopsCgNewProject(models.Model):
                 + rec.breakpoint_UcB_write_code_with_cw
                 + rec.breakpoint_UcA_extract_module_get_min_max_crop
                 + rec.breakpoint_UcA_extract_view_first_line
+                + rec.breakpoint_UcA_extract_xml_like_button
                 + rec.breakpoint_UcB_generate_view_warning
                 + rec.breakpoint_UcB_write_code_model_field
             )
@@ -503,6 +517,7 @@ class DevopsCgNewProject(models.Model):
                 rec.breakpoint_UcA_extract_view_warning = False
                 rec.breakpoint_UcA_extract_module_get_min_max_crop = False
                 rec.breakpoint_UcA_extract_view_first_line = False
+                rec.breakpoint_UcA_extract_xml_like_button = False
                 rec.breakpoint_UcB_generate_view_warning = False
                 rec.breakpoint_UcB_write_code_model_field = False
 

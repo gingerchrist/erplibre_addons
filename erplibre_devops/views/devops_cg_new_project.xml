@@ -141,13 +141,16 @@
                         <field name="template_hooks_py" />
                         <field name="template_manifest_py" />
                     </group>
-                    <group>
-                        <group string="General breakpoint condition">
+                    <group string="General breakpoint condition">
+                        <group string="Model">
                             <field name="breakpoint_condition_model_name" />
                             <field name="breakpoint_condition_field_name" />
                             <field name="breakpoint_condition_field_attribute_name" />
                             <field name="breakpoint_condition_method_name" />
                             <field name="breakpoint_condition_module_name" />
+                        </group>
+                        <group string="View">
+                            <field name="breakpoint_condition_xml_id" />
                         </group>
                     </group>
                     <notebook>
@@ -254,6 +257,14 @@
                                         type="object"
                                         class="oe_highlight"
                                         context="{'breakpoint_name': 'breakpoint_UcA_extract_view_first_line'}"
+                                    />
+                                    <field name="breakpoint_UcA_extract_xml_like_button" />
+                                    <button
+                                        name="action_start_pycharm"
+                                        string="Open"
+                                        type="object"
+                                        class="oe_highlight"
+                                        context="{'breakpoint_name': 'breakpoint_UcA_extract_xml_like_button'}"
                                     />
                                     <field name="breakpoint_UcA_extract_view_warning" />
                                     <button

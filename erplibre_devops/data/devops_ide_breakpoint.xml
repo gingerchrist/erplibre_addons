@@ -111,6 +111,15 @@
             <field name="keyword">self._module = module</field>
             <field name="description">UcA gc breakpoint extract view first line.</field>
         </record>
+        <record model="devops.ide.breakpoint" id="breakpoint_UcA_extract_xml_like_button">
+            <field name="name">breakpoint_UcA_extract_xml_like_button</field>
+            <field name="filename">addons/TechnoLibre_odoo-code-generator/code_generator/extractor_view.py</field>
+            <field name="keyword">"name": "action_name",</field>
+            <field name="method">_extract_child_xml</field>
+            <field name="condition_var_model_name">self.model_id.model</field>
+            <field name="condition_var_xml_id">debug_xmlid</field>
+            <field name="description">breakpoint_UcA_extract_xml_like_button</field>
+        </record>
         <record model="devops.ide.breakpoint" id="breakpoint_UcA_extract_module_create_cg_model_code">
             <field name="name">breakpoint_UcA_extract_module_create_cg_model_code</field>
             <field name="filename">addons/TechnoLibre_odoo-code-generator/code_generator/extractor_module_file.py</field>
@@ -132,7 +141,7 @@
         <record model="devops.ide.breakpoint" id="breakpoint_UcB_write_code_with_cw">
             <field name="name">breakpoint_UcB_write_code_with_cw</field>
             <field name="filename">addons/TechnoLibre_odoo-code-generator/code_generator/models/code_generator_writer.py</field>
-            <field name="keyword">cw.emit(f"def {code.name}({code.param}){return_v}:")</field>
+            <field name="keyword">cw.emit(f"def {code.name}({param_formatted}){return_v}:")</field>
             <field name="description">UcB gc breakpoint write code.</field>
             <field name="condition_var_method_name">code.name</field>
             <field name="condition_var_model_name">model.model</field>

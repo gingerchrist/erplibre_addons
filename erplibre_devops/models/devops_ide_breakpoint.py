@@ -14,6 +14,8 @@ class DevopsIdeBreakpoint(models.Model):
 
     description = fields.Char()
 
+    method = fields.Char()
+
     filename = fields.Char()
 
     filename_is_code_generator_demo_hooks_py = fields.Boolean()
@@ -66,6 +68,14 @@ class DevopsIdeBreakpoint(models.Model):
         help=(
             "Will be a condition in the breakpoint, it contains the variable"
             " name about the module name."
+        ),
+    )
+
+    condition_var_xml_id = fields.Char(
+        string="Variable xml_id",
+        help=(
+            "Will be a condition in the breakpoint, it contains the variable"
+            " name about the xml_id."
         ),
     )
 
@@ -152,6 +162,7 @@ class DevopsIdeBreakpoint(models.Model):
                             value_field_attr=new_project_id.breakpoint_condition_field_attribute_name,
                             value_method_name=new_project_id.breakpoint_condition_method_name,
                             value_module_name=new_project_id.breakpoint_condition_module_name,
+                            value_xml_id=new_project_id.breakpoint_condition_xml_id,
                         )
                     tpl_info = (filename, lst_no_line, s_cond)
                     lst_all_no_line.append(tpl_info)
@@ -178,6 +189,7 @@ class DevopsIdeBreakpoint(models.Model):
         value_field_attr=None,
         value_method_name=None,
         value_module_name=None,
+        value_xml_id=None,
     ):
         lst_condition = []
         for rec in self:
@@ -203,5 +215,9 @@ class DevopsIdeBreakpoint(models.Model):
             if rec.condition_var_module_name and value_module_name is not None:
                 lst_condition.append(
                     f'{rec.condition_var_module_name}=="{value_module_name}"'
+                )
+            if rec.condition_var_module_name and value_xml_id is not None:
+                lst_condition.append(
+                    f'{rec.condition_var_module_name}=="{value_xml_id}"'
                 )
         return " and ".join(lst_condition)
