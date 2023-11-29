@@ -1203,36 +1203,23 @@ class DevopsCgNewProject(models.Model):
                         self.env[
                             "devops.ide.breakpoint"
                         ].get_no_line_breakpoint(
-                            'value\["template_model_name"\] = ""',
+                            'value\["template_model_name"\] =',
                             rec.template_hooks_py,
                             ws,
                         )
-                        old_str = 'value["template_model_name"] = ""'
-                        new_str = (
-                            f'value["template_model_name"] = "{str_lst_model}"'
-                        )
                     except Exception:
-                        try:
-                            self.env[
-                                "devops.ide.breakpoint"
-                            ].get_no_line_breakpoint(
-                                'value\["template_model_name"\] = (',
-                                rec.template_hooks_py,
-                                ws,
-                            )
-                            old_str = 'value["template_model_name"] = ('
-                            new_str = (
-                                'value["template_model_name"] ='
-                                f' ("{str_lst_model}; "'
-                            )
-                        except Exception:
-                            _logger.warning(
-                                "Cannot find template_model_name"
-                                f" configuration into {rec.template_hooks_py}"
-                            )
-                            has_error = True
-
+                        _logger.warning(
+                            "Cannot find template_model_name"
+                            f" configuration into {rec.template_hooks_py}"
+                        )
+                        has_error = True
                     if not has_error:
+                        old_str = 'value["template_model_name"] ='
+                        new_str = (
+                            'value["template_model_name"] ='
+                            f' "{str_lst_model};"\n       '
+                            ' value["template_model_name"] +='
+                        )
                         lst_template_hooks_py_replace.append(
                             (old_str, new_str)
                         )
