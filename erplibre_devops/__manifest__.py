@@ -9,6 +9,7 @@
     "author": "Mathieu Benoit",
     "license": "AGPL-3",
     "website": "https://erplibre.ca",
+    "application": True,
     "depends": ["mail"],
     "data": [
         "security/ir.model.access.csv",
