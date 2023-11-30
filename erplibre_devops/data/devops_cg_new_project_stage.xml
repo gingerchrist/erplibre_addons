@@ -6,33 +6,27 @@
         <field name="sequence">10</field>
     </record>
 
-    <record model="devops.cg.new_project.stage" id="devops_cg_new_project_stage_generate_config">
-        <field name="name">Generate configuration</field>
-        <field name="description">Generate configuration file for Odoo with new path</field>
-        <field name="sequence">11</field>
-    </record>
-
     <record model="devops.cg.new_project.stage" id="devops_cg_new_project_stage_generate_Uc0">
         <field name="name">Generate Uc0</field>
         <field name="description">Generate code_generator_demo to create UcA</field>
-        <field name="sequence">12</field>
+        <field name="sequence">11</field>
     </record>
 
     <record model="devops.cg.new_project.stage" id="devops_cg_new_project_stage_generate_uca">
         <field name="name">Generate UcA</field>
         <field name="description">Generate code_generator_template to create UcB</field>
-        <field name="sequence">13</field>
+        <field name="sequence">12</field>
     </record>
 
     <record model="devops.cg.new_project.stage" id="devops_cg_new_project_stage_generate_ucb">
         <field name="name">Generate UcB</field>
         <field name="description">Generate code_generator to create the module C</field>
-        <field name="sequence">14</field>
+        <field name="sequence">13</field>
     </record>
 
     <record model="devops.cg.new_project.stage" id="devops_cg_new_project_stage_generate_terminate">
         <field name="name">Terminate</field>
         <field name="description">New project finish to execute</field>
-        <field name="sequence">15</field>
+        <field name="sequence">14</field>
     </record>
 </odoo>

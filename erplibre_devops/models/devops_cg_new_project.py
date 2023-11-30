@@ -690,10 +690,7 @@ class DevopsCgNewProject(models.Model):
                 stage_init_id = self.env.ref(
                     "erplibre_devops.devops_cg_new_project_stage_init"
                 )
-                stage_gen_conf_id = self.env.ref(
-                    "erplibre_devops.devops_cg_new_project_stage_generate_config"
-                )
-                stage_Uc0_id = self.env.ref(
+                stage_uc0_id = self.env.ref(
                     "erplibre_devops.devops_cg_new_project_stage_generate_Uc0"
                 )
                 stage_uca_id = self.env.ref(
@@ -717,19 +714,8 @@ class DevopsCgNewProject(models.Model):
                     rec.has_error = True
                     stop_exec = True
 
-                # Stage CONFIG
-                if not stop_exec and rec.stage_id == stage_gen_conf_id:
-                    rec.action_generate_config(rec_ws=rec_ws)
-                    count_stage_execute += 1
-
-                if one_stage_only and count_stage_execute > 0:
-                    stop_exec = True
-                elif exec_bundle_parent_id.devops_exec_parent_error_ids:
-                    rec.has_error = True
-                    stop_exec = True
-
                 # Stage Uc0
-                if not stop_exec and rec.stage_id == stage_Uc0_id:
+                if not stop_exec and rec.stage_id == stage_uc0_id:
                     rec.action_generate_Uc0(rec_ws=rec_ws)
                     count_stage_execute += 1
 
@@ -878,18 +864,18 @@ class DevopsCgNewProject(models.Model):
                     raise Exception(msg_error)
 
                 rec.stage_id = self.env.ref(
-                    "erplibre_devops.devops_cg_new_project_stage_generate_config"
+                    "erplibre_devops.devops_cg_new_project_stage_generate_Uc0"
                 )
 
     @api.multi
-    def action_generate_config(self, ctx=None, rec_ws=None):
+    def action_generate_Uc0(self, ctx=None, rec_ws=None):
         for rec in self:
             ws_param = rec_ws if rec_ws else rec.devops_workspace
             with ws_param.devops_create_exec_bundle(
-                "New project generate 2.config", devops_cg_new_project=rec.id
+                "New project generate 2.Uc0", devops_cg_new_project=rec.id
             ) as ws:
                 rec.stage_id = self.env.ref(
-                    "erplibre_devops.devops_cg_new_project_stage_generate_config"
+                    "erplibre_devops.devops_cg_new_project_stage_generate_Uc0"
                 )
 
                 if not (
@@ -972,20 +958,6 @@ class DevopsCgNewProject(models.Model):
                 _logger.info(f"Create temporary config file: {temp_file}")
                 rec.config_path = temp_file
 
-                rec.stage_id = self.env.ref(
-                    "erplibre_devops.devops_cg_new_project_stage_generate_Uc0"
-                )
-
-    @api.multi
-    def action_generate_Uc0(self, ctx=None, rec_ws=None):
-        for rec in self:
-            ws_param = rec_ws if rec_ws else rec.devops_workspace
-            with ws_param.devops_create_exec_bundle(
-                "New project generate 3.Uc0", devops_cg_new_project=rec.id
-            ) as ws:
-                rec.stage_id = self.env.ref(
-                    "erplibre_devops.devops_cg_new_project_stage_generate_Uc0"
-                )
                 if not rec.bd_name_demo:
                     rec.bd_name_demo = (
                         f"new_project_code_generator_demo_{uuid.uuid4()}"[:63]
@@ -1081,7 +1053,7 @@ class DevopsCgNewProject(models.Model):
         for rec in self:
             ws_param = rec_ws if rec_ws else rec.devops_workspace
             with ws_param.devops_create_exec_bundle(
-                "New project generate 4.UcA", devops_cg_new_project=rec.id
+                "New project generate 3.UcA", devops_cg_new_project=rec.id
             ) as ws:
                 rec.stage_id = self.env.ref(
                     "erplibre_devops.devops_cg_new_project_stage_generate_uca"
@@ -1317,7 +1289,7 @@ class DevopsCgNewProject(models.Model):
         for rec in self:
             ws_param = rec_ws if rec_ws else rec.devops_workspace
             with ws_param.devops_create_exec_bundle(
-                "New project generate 5.UcB", devops_cg_new_project=rec.id
+                "New project generate 4.UcB", devops_cg_new_project=rec.id
             ) as ws:
                 rec.stage_id = self.env.ref(
                     "erplibre_devops.devops_cg_new_project_stage_generate_ucb"
