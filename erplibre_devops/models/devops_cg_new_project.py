@@ -178,25 +178,29 @@ class DevopsCgNewProject(models.Model):
     config_debug_UcB = fields.Boolean(help="Debug UcB.")
 
     breakpoint_Uc0_first_line_hook = fields.Boolean(
-        help="Breakpoint first line hook file uc0."
+        string="Uc0 First line hook",
+        help="Breakpoint first line hook file uc0.",
     )
 
     breakpoint_all_write_hook_begin = fields.Boolean(
-        help="Breakpoint general when write hook."
+        string="ALL Write hook file at begin",
+        help="Breakpoint general when write hook.",
     )
 
     breakpoint_all_write_hook_before_model = fields.Boolean(
+        string="ALL Write hook before model",
         help=(
             "Breakpoint general when write hook before write model/fields into"
             " hook."
-        )
+        ),
     )
 
     breakpoint_all_write_hook_model_write_field = fields.Boolean(
+        string="ALL Write hook model write field",
         help=(
             "Breakpoint general when write hook while writing model, before"
             " write field."
-        )
+        ),
     )
 
     breakpoint_condition_model_name = fields.Char(
@@ -236,91 +240,112 @@ class DevopsCgNewProject(models.Model):
     )
 
     breakpoint_UcA_first_line_hook = fields.Boolean(
-        help="Breakpoint first line hook file ucA."
+        string="UcA First line hook",
+        help="Breakpoint first line hook file ucA.",
     )
 
     breakpoint_UcB_first_line_hook = fields.Boolean(
-        help="Breakpoint first line hook file ucB."
+        string="UcB First line hook",
+        help="Breakpoint first line hook file ucB.",
     )
 
     breakpoint_Uc0_cg_Uc0 = fields.Boolean(
-        help="Breakpoint dans la section génération de code du Uc0."
+        string="Uc0 cg Uc0",
+        help="Breakpoint dans la section génération de code du Uc0.",
     )
 
     breakpoint_all_begin_generate_file = fields.Boolean(
-        help="Breakpoint dans la section génération de code."
+        string="ALL Begin generate file",
+        help="Breakpoint dans la section génération de code.",
     )
 
     breakpoint_UcA_extract_python_controller_warning = fields.Boolean(
+        string="UcA Extract Python controller WARNING",
         help=(
             "Breakpoint UcA to diagnostic warning when extract python"
             " controller."
-        )
+        ),
     )
 
     breakpoint_UcA_extract_python_module_warning = fields.Boolean(
-        help="Breakpoint UcA to diagnostic warning when extract python module."
+        string="UcA Extract Python module WARNING",
+        help=(
+            "Breakpoint UcA to diagnostic warning when extract python module."
+        ),
     )
 
     breakpoint_UcA_extract_python_module_file_warning = fields.Boolean(
+        string="UcA Extract Python module file WARNING",
         help=(
             "Breakpoint UcA to diagnostic warning when extract python module"
             " file."
-        )
+        ),
     )
 
     breakpoint_UcA_extract_python_detect_field = fields.Boolean(
-        help="Breakpoint UcA when extract Python field of model."
+        string="UcA Extract Python detect field",
+        help="Breakpoint UcA when extract Python field of model.",
     )
 
-    breakpoint_all_bp_prepare_data_before_write = fields.Boolean(
-        help="Breakpoint all prepare set of data before write code."
+    breakpoint_all_prepare_data_before_write = fields.Boolean(
+        string="ALL Prepare data before write",
+        help="Breakpoint all prepare set of data before write code.",
     )
 
     breakpoint_UcA_extract_view_warning = fields.Boolean(
-        help="Breakpoint UcA to diagnostic warning when extract view."
+        string="UcA Extract view WARNING",
+        help="Breakpoint UcA to diagnostic warning when extract view.",
     )
 
     breakpoint_UcA_extract_view_first_line = fields.Boolean(
-        help="Breakpoint UcA to diagnostic when extract view."
+        string="UcA Extract view first line",
+        help="Breakpoint UcA to diagnostic when extract view.",
     )
 
     breakpoint_UcA_extract_xml_like_button = fields.Boolean(
-        help="Breakpoint UcA gc breakpoint extract xml like button."
+        string="UcA Extract XML like button",
+        help="Breakpoint UcA gc breakpoint extract xml like button.",
     )
 
     breakpoint_UcA_extract_module_create_cg_model_code = fields.Boolean(
+        string="UcA Extract module create cg model code",
         help=(
             "Breakpoint UcA when extract module before create"
             " code.generator.model.code ."
-        )
+        ),
     )
 
     breakpoint_UcA_write_hook_code = fields.Boolean(
-        help="Breakpoint UcA when write code into hooks."
+        string="UcA Write hook code",
+        help="Breakpoint UcA when write code into hooks.",
     )
 
     breakpoint_UcB_write_code_with_cw = fields.Boolean(
-        help="Breakpoint UcB when write code with code_writer."
+        string="UcB Write code with CodeWriter",
+        help="Breakpoint UcB when write code with code_writer.",
     )
 
     breakpoint_UcB_generate_view_warning = fields.Boolean(
-        help="Breakpoint UcB to diagnostic warning when generate view."
+        string="UcB Generate view WARNING",
+        help="Breakpoint UcB to diagnostic warning when generate view.",
     )
 
     breakpoint_UcB_write_code_model_field = fields.Boolean(
-        help="Breakpoint UcB generate code - write model field module."
+        string="UcB Write code model field",
+        help="Breakpoint UcB generate code - write model field module.",
     )
 
     breakpoint_UcB_write_code_model_field_prepare_field = fields.Boolean(
+        string="UcB Write code model field prepare field",
         help=(
             "Breakpoint UcB generate code - prepare set of data for field to"
             " generate field."
-        )
+        ),
     )
 
     breakpoint_UcA_extract_module_get_min_max_crop = fields.Boolean(
-        help="Breakpoint UcA to diagnostic warning when extract view."
+        string="UcA Extract module get min/max crop",
+        help="Breakpoint UcA to diagnostic warning when extract view.",
     )
 
     # TODO need to support related field
@@ -437,7 +462,7 @@ class DevopsCgNewProject(models.Model):
         "breakpoint_all_write_hook_begin",
         "breakpoint_all_write_hook_before_model",
         "breakpoint_all_write_hook_model_write_field",
-        "breakpoint_all_bp_prepare_data_before_write",
+        "breakpoint_all_prepare_data_before_write",
         "breakpoint_Uc0_first_line_hook",
         "breakpoint_UcA_first_line_hook",
         "breakpoint_UcB_first_line_hook",
@@ -466,7 +491,7 @@ class DevopsCgNewProject(models.Model):
                 + rec.breakpoint_all_write_hook_begin
                 + rec.breakpoint_all_write_hook_before_model
                 + rec.breakpoint_all_write_hook_model_write_field
-                + rec.breakpoint_all_bp_prepare_data_before_write
+                + rec.breakpoint_all_prepare_data_before_write
                 + rec.breakpoint_Uc0_first_line_hook
                 + rec.breakpoint_UcA_first_line_hook
                 + rec.breakpoint_UcB_first_line_hook
@@ -501,7 +526,7 @@ class DevopsCgNewProject(models.Model):
                 rec.breakpoint_all_write_hook_begin = False
                 rec.breakpoint_all_write_hook_before_model = False
                 rec.breakpoint_all_write_hook_model_write_field = False
-                rec.breakpoint_all_bp_prepare_data_before_write = False
+                rec.breakpoint_all_prepare_data_before_write = False
                 rec.breakpoint_Uc0_first_line_hook = False
                 rec.breakpoint_UcA_first_line_hook = False
                 rec.breakpoint_UcB_first_line_hook = False

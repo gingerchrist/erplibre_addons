@@ -186,13 +186,13 @@
                                         class="oe_highlight"
                                         context="{'breakpoint_name': 'breakpoint_all_write_hook_model_write_field'}"
                                     />
-                                    <field name="breakpoint_all_bp_prepare_data_before_write" />
+                                    <field name="breakpoint_all_prepare_data_before_write" />
                                     <button
                                         name="action_start_pycharm"
                                         string="Open"
                                         type="object"
                                         class="oe_highlight"
-                                        context="{'breakpoint_name': 'breakpoint_all_bp_prepare_data_before_write'}"
+                                        context="{'breakpoint_name': 'breakpoint_all_prepare_data_before_write'}"
                                     />
                                 </group>
                             </group>

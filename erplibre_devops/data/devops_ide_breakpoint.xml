@@ -22,8 +22,8 @@
             <field name="condition_var_field_name">key</field>
             <field name="condition_var_field_attr_name">subkey</field>
         </record>
-        <record model="devops.ide.breakpoint" id="breakpoint_all_bp_prepare_data_before_write">
-            <field name="name">breakpoint_all_bp_prepare_data_before_write</field>
+        <record model="devops.ide.breakpoint" id="breakpoint_all_prepare_data_before_write">
+            <field name="name">breakpoint_all_prepare_data_before_write</field>
             <field name="filename">addons/TechnoLibre_odoo-code-generator/code_generator_hook/models/code_generator_writer.py</field>
             <field name="keyword">if model_id.has_same_model_in_inherit_model():</field>
             <field name="description">Generic gc breakpoint in code writing, prepare a set of data before write.</field>
