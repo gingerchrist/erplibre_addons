@@ -239,6 +239,14 @@ class DevopsCgNewProject(models.Model):
         ),
     )
 
+    breakpoint_condition_short_xml_id = fields.Char(
+        string="Xml Short ID",
+        help=(
+            "View breakpoint condition to diagnostic module. XML_id is the"
+            " identifiant of view, without the module name."
+        ),
+    )
+
     breakpoint_UcA_first_line_hook = fields.Boolean(
         string="UcA First line hook",
         help="Breakpoint first line hook file ucA.",

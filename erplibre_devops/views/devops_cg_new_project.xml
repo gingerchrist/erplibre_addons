@@ -151,6 +151,7 @@
                         </group>
                         <group string="View">
                             <field name="breakpoint_condition_xml_id" />
+                            <field name="breakpoint_condition_short_xml_id" />
                         </group>
                     </group>
                     <notebook>
