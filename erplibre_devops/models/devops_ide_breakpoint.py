@@ -87,6 +87,38 @@ class DevopsIdeBreakpoint(models.Model):
         ),
     )
 
+    condition_var_label_view_item = fields.Char(
+        string="Variable label view item",
+        help=(
+            "Will be a condition in the breakpoint, it contains the variable"
+            " name about the xml_id without the label view item."
+        ),
+    )
+
+    condition_var_name_view_item = fields.Char(
+        string="Variable name view item",
+        help=(
+            "Will be a condition in the breakpoint, it contains the variable"
+            " name about the xml_id without the name view item."
+        ),
+    )
+
+    condition_var_item_type_view_item = fields.Char(
+        string="Variable item type view item",
+        help=(
+            "Will be a condition in the breakpoint, it contains the variable"
+            " name about the xml_id without the name view item type view item."
+        ),
+    )
+
+    condition_var_view_name = fields.Char(
+        string="Variable view name",
+        help=(
+            "Will be a condition in the breakpoint, it contains the variable"
+            " name about the xml_id without the name view name."
+        ),
+    )
+
     ignore_test = fields.Boolean(
         help=(
             "Will ignore this breakpoint when do test, because it will fail"
@@ -172,6 +204,10 @@ class DevopsIdeBreakpoint(models.Model):
                             value_module_name=new_project_id.breakpoint_condition_module_name,
                             value_xml_id=new_project_id.breakpoint_condition_xml_id,
                             value_short_xml_id=new_project_id.breakpoint_condition_short_xml_id,
+                            value_label_view_item=new_project_id.breakpoint_condition_value_label_view_item,
+                            value_name_view_item=new_project_id.breakpoint_condition_name_view_item,
+                            value_item_type_view_item=new_project_id.breakpoint_condition_item_type_view_item,
+                            value_view_name=new_project_id.breakpoint_condition_view_name,
                         )
                     tpl_info = (filename, lst_no_line, s_cond)
                     lst_all_no_line.append(tpl_info)
@@ -200,6 +236,10 @@ class DevopsIdeBreakpoint(models.Model):
         value_module_name=None,
         value_xml_id=None,
         value_short_xml_id=None,
+        value_label_view_item=None,
+        value_name_view_item=None,
+        value_item_type_view_item=None,
+        value_view_name=None,
     ):
         lst_condition = []
         for rec in self:
@@ -230,8 +270,36 @@ class DevopsIdeBreakpoint(models.Model):
                 lst_condition.append(
                     f'{rec.condition_var_xml_id}=="{value_xml_id}"'
                 )
-            if rec.condition_var_short_xml_id and value_short_xml_id is not None:
+            if (
+                rec.condition_var_short_xml_id
+                and value_short_xml_id is not None
+            ):
                 lst_condition.append(
                     f'{rec.condition_var_short_xml_id}=="{value_short_xml_id}"'
+                )
+            if (
+                rec.condition_var_label_view_item
+                and value_label_view_item is not None
+            ):
+                lst_condition.append(
+                    f'{rec.condition_var_label_view_item}=="{value_label_view_item}"'
+                )
+            if (
+                rec.condition_var_name_view_item
+                and value_name_view_item is not None
+            ):
+                lst_condition.append(
+                    f'{rec.condition_var_name_view_item}=="{value_name_view_item}"'
+                )
+            if (
+                rec.condition_var_item_type_view_item
+                and value_item_type_view_item is not None
+            ):
+                lst_condition.append(
+                    f'{rec.condition_var_item_type_view_item}=="{value_item_type_view_item}"'
+                )
+            if rec.condition_var_view_name and value_view_name is not None:
+                lst_condition.append(
+                    f'{rec.condition_var_view_name}=="{value_view_name}"'
                 )
         return " and ".join(lst_condition)

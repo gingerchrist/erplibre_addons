@@ -247,6 +247,38 @@ class DevopsCgNewProject(models.Model):
         ),
     )
 
+    breakpoint_condition_value_label_view_item = fields.Char(
+        string="String view item",
+        help=(
+            "View breakpoint condition to diagnostic module. The string of"
+            " view item."
+        ),
+    )
+
+    breakpoint_condition_name_view_item = fields.Char(
+        string="Name view item",
+        help=(
+            "View breakpoint condition to diagnostic module. The name of view"
+            " item."
+        ),
+    )
+
+    breakpoint_condition_item_type_view_item = fields.Char(
+        string="Item type view item",
+        help=(
+            "View breakpoint condition to diagnostic module. The item type of"
+            " view item."
+        ),
+    )
+
+    breakpoint_condition_view_name = fields.Char(
+        string="View name",
+        help=(
+            "View breakpoint condition to diagnostic module. The id of the"
+            " view."
+        ),
+    )
+
     breakpoint_UcA_first_line_hook = fields.Boolean(
         string="UcA First line hook",
         help="Breakpoint first line hook file ucA.",

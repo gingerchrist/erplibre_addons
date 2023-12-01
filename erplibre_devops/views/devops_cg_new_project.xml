@@ -152,6 +152,10 @@
                         <group string="View">
                             <field name="breakpoint_condition_xml_id" />
                             <field name="breakpoint_condition_short_xml_id" />
+                            <field name="breakpoint_condition_value_label_view_item" />
+                            <field name="breakpoint_condition_name_view_item" />
+                            <field name="breakpoint_condition_item_type_view_item" />
+                            <field name="breakpoint_condition_view_name" />
                         </group>
                     </group>
                     <notebook>
