@@ -332,6 +332,11 @@ class DevopsCgNewProject(models.Model):
         help="Breakpoint all prepare set of data before write code.",
     )
 
+    breakpoint_all_before_sync_code = fields.Boolean(
+        string="ALL Before sync module",
+        help="Breakpoint before sync module in writing code.",
+    )
+
     breakpoint_UcA_extract_view_warning = fields.Boolean(
         string="UcA Extract view WARNING",
         help="Breakpoint UcA to diagnostic warning when extract view.",
@@ -342,9 +347,34 @@ class DevopsCgNewProject(models.Model):
         help="Breakpoint UcA to diagnostic when extract view.",
     )
 
-    breakpoint_UcA_extract_xml_like_button = fields.Boolean(
-        string="UcA Extract XML like button",
-        help="Breakpoint UcA gc breakpoint extract xml like button.",
+    breakpoint_UcA_extract_xml_button = fields.Boolean(
+        string="UcA Extract XML button",
+        help="Breakpoint UcA gc breakpoint extract xml button.",
+    )
+
+    breakpoint_UcA_extract_xml_header = fields.Boolean(
+        string="UcA Extract XML header",
+        help="Breakpoint UcA gc breakpoint extract xml header.",
+    )
+
+    breakpoint_UcA_extract_xml_title = fields.Boolean(
+        string="UcA Extract XML title",
+        help="Breakpoint UcA gc breakpoint extract xml title.",
+    )
+
+    breakpoint_UcA_extract_xml_view_item = fields.Boolean(
+        string="UcA Extract XML view item",
+        help="Breakpoint UcA gc breakpoint extract xml item.",
+    )
+
+    breakpoint_UcA_extract_xml_act_window = fields.Boolean(
+        string="UcA Extract XML Act Window",
+        help="Breakpoint UcA gc breakpoint extract xml act window.",
+    )
+
+    breakpoint_UcA_extract_xml_div_container = fields.Boolean(
+        string="UcA Extract XML div container",
+        help="Breakpoint UcA gc breakpoint extract xml div container.",
     )
 
     breakpoint_UcA_extract_module_create_cg_model_code = fields.Boolean(
@@ -365,9 +395,24 @@ class DevopsCgNewProject(models.Model):
         help="Breakpoint UcB when write code with code_writer.",
     )
 
+    breakpoint_UcB_write_act_window = fields.Boolean(
+        string="UcB Write act_window with xml_writer",
+        help="Breakpoint UcB when write act_window with xml_writer.",
+    )
+
     breakpoint_UcB_generate_view_warning = fields.Boolean(
         string="UcB Generate view WARNING",
         help="Breakpoint UcB to diagnostic warning when generate view.",
+    )
+
+    breakpoint_UcB_generate_view_specific_form_item = fields.Boolean(
+        string="UcB Generate view specific form item",
+        help="Breakpoint UcB to generate specific form view item.",
+    )
+
+    breakpoint_UcB_generate_xml_view_object = fields.Boolean(
+        string="UcB Generate view xml view object",
+        help="Breakpoint UcB to generate xml view object.",
     )
 
     breakpoint_UcB_write_code_model_field = fields.Boolean(
@@ -503,6 +548,7 @@ class DevopsCgNewProject(models.Model):
         "breakpoint_all_write_hook_before_model",
         "breakpoint_all_write_hook_model_write_field",
         "breakpoint_all_prepare_data_before_write",
+        "breakpoint_all_before_sync_code",
         "breakpoint_Uc0_first_line_hook",
         "breakpoint_UcA_first_line_hook",
         "breakpoint_UcB_first_line_hook",
@@ -516,10 +562,18 @@ class DevopsCgNewProject(models.Model):
         "breakpoint_UcA_extract_module_create_cg_model_code",
         "breakpoint_UcA_write_hook_code",
         "breakpoint_UcB_write_code_with_cw",
+        "breakpoint_UcB_write_act_window",
         "breakpoint_UcA_extract_module_get_min_max_crop",
         "breakpoint_UcA_extract_view_first_line",
-        "breakpoint_UcA_extract_xml_like_button",
+        "breakpoint_UcA_extract_xml_button",
+        "breakpoint_UcA_extract_xml_header",
+        "breakpoint_UcA_extract_xml_title",
+        "breakpoint_UcA_extract_xml_view_item",
+        "breakpoint_UcA_extract_xml_act_window",
+        "breakpoint_UcA_extract_xml_div_container",
         "breakpoint_UcB_generate_view_warning",
+        "breakpoint_UcB_generate_view_specific_form_item",
+        "breakpoint_UcB_generate_xml_view_object",
         "breakpoint_UcB_write_code_model_field",
     )
     def _compute_can_setup_ide(self):
@@ -532,6 +586,7 @@ class DevopsCgNewProject(models.Model):
                 + rec.breakpoint_all_write_hook_before_model
                 + rec.breakpoint_all_write_hook_model_write_field
                 + rec.breakpoint_all_prepare_data_before_write
+                + rec.breakpoint_all_before_sync_code
                 + rec.breakpoint_Uc0_first_line_hook
                 + rec.breakpoint_UcA_first_line_hook
                 + rec.breakpoint_UcB_first_line_hook
@@ -545,10 +600,18 @@ class DevopsCgNewProject(models.Model):
                 + rec.breakpoint_UcA_extract_module_create_cg_model_code
                 + rec.breakpoint_UcA_write_hook_code
                 + rec.breakpoint_UcB_write_code_with_cw
+                + rec.breakpoint_UcB_write_act_window
                 + rec.breakpoint_UcA_extract_module_get_min_max_crop
                 + rec.breakpoint_UcA_extract_view_first_line
-                + rec.breakpoint_UcA_extract_xml_like_button
+                + rec.breakpoint_UcA_extract_xml_button
+                + rec.breakpoint_UcA_extract_xml_header
+                + rec.breakpoint_UcA_extract_xml_title
+                + rec.breakpoint_UcA_extract_xml_view_item
+                + rec.breakpoint_UcA_extract_xml_act_window
+                + rec.breakpoint_UcA_extract_xml_div_container
                 + rec.breakpoint_UcB_generate_view_warning
+                + rec.breakpoint_UcB_generate_view_specific_form_item
+                + rec.breakpoint_UcB_generate_xml_view_object
                 + rec.breakpoint_UcB_write_code_model_field
             )
 
@@ -567,6 +630,7 @@ class DevopsCgNewProject(models.Model):
                 rec.breakpoint_all_write_hook_before_model = False
                 rec.breakpoint_all_write_hook_model_write_field = False
                 rec.breakpoint_all_prepare_data_before_write = False
+                rec.breakpoint_all_before_sync_code = False
                 rec.breakpoint_Uc0_first_line_hook = False
                 rec.breakpoint_UcA_first_line_hook = False
                 rec.breakpoint_UcB_first_line_hook = False
@@ -579,11 +643,19 @@ class DevopsCgNewProject(models.Model):
                 rec.breakpoint_UcA_extract_module_create_cg_model_code = False
                 rec.breakpoint_UcA_write_hook_code = False
                 rec.breakpoint_UcB_write_code_with_cw = False
+                rec.breakpoint_UcB_write_act_window = False
                 rec.breakpoint_UcA_extract_view_warning = False
                 rec.breakpoint_UcA_extract_module_get_min_max_crop = False
                 rec.breakpoint_UcA_extract_view_first_line = False
-                rec.breakpoint_UcA_extract_xml_like_button = False
+                rec.breakpoint_UcA_extract_xml_button = False
+                rec.breakpoint_UcA_extract_xml_header = False
+                rec.breakpoint_UcA_extract_xml_title = False
+                rec.breakpoint_UcA_extract_xml_view_item = False
+                rec.breakpoint_UcA_extract_xml_act_window = False
+                rec.breakpoint_UcA_extract_xml_div_container = False
                 rec.breakpoint_UcB_generate_view_warning = False
+                rec.breakpoint_UcB_generate_view_specific_form_item = False
+                rec.breakpoint_UcB_generate_xml_view_object = False
                 rec.breakpoint_UcB_write_code_model_field = False
 
     @api.depends("exec_start_date", "exec_stop_date")
