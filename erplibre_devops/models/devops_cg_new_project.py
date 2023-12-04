@@ -1468,6 +1468,7 @@ class DevopsCgNewProject(models.Model):
                     for model in config_lst_model:
                         model_name = model.get("name")
                         dct_field = {}
+                        # TODO add here nomenclator to each model
                         for a in model.get("fields"):
                             dct_value = {"ttype": a.get("type")}
                             if "relation" in a.keys():
@@ -1503,6 +1504,17 @@ class DevopsCgNewProject(models.Model):
                     # lst_update_cg.append(
                     #     ('"disable_generate_access": True,', "")
                     # )
+                    #             # TODO add option nomenclature
+                    #             if True:
+                    #                 # Add option "nomenclature", this will export data from all generated model
+                    #                 #  This is a mess when inherit another model
+                    #                 txt_replace = 'env["code.generator.writer"].create(value)'
+                    #                 txt_replace_to = f"""        values = {
+                    #     "s_data2export": "nomenclator",
+                    # }
+                    # event_config = env["res.config.settings"].sudo().create(values)
+                    # event_config.execute()\n        """ + txt_replace
+                    #                 lst_update_cg.append((txt_replace, txt_replace_to))
                     self.search_and_replace_file(
                         rec.cg_hooks_py,
                         lst_update_cg,
