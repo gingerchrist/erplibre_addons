@@ -396,6 +396,7 @@ class DevopsWorkspace(models.Model):
             ("1.5.0", "1.5.0"),
             ("master", "Master"),
             ("develop", "Develop"),
+            ("robotlibre", "RobotLibre"),
         ],
         required=True,
         default="1.5.0",
