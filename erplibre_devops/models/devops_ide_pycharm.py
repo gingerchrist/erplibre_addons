@@ -149,6 +149,8 @@ class DevopsIdePycharm(models.Model):
             ) as rec_ws:
                 if not log:
                     log = rec_ws.devops_cg_erplibre_devops_log
+                    if not log:
+                        log = ""
                 lst_exception = (
                     "odoo.exceptions.ValidationError:",
                     "Exception:",
