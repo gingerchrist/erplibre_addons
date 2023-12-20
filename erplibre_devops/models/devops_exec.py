@@ -163,6 +163,7 @@ class DevopsExec(models.Model):
                 "odoo.addons.code_generator.extractor_module_file: Ignore next"
                 " error about ALTER TABLE DROP CONSTRAINT.",
                 "has no access rules, consider adding one.",
+                "Failed to load registry",
             ]
             keyword_error_to_remove = [
                 "devops.code_generator.module.model.field.has_error",
