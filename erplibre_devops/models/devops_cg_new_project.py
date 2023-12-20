@@ -390,6 +390,11 @@ class DevopsCgNewProject(models.Model):
         help="Breakpoint UcA when write code into hooks.",
     )
 
+    breakpoint_UcA_write_hook_model = fields.Boolean(
+        string="UcA Write hook model",
+        help="Breakpoint UcA when write model into hooks.",
+    )
+
     breakpoint_UcB_write_code_with_cw = fields.Boolean(
         string="UcB Write code with CodeWriter",
         help="Breakpoint UcB when write code with code_writer.",
@@ -561,6 +566,7 @@ class DevopsCgNewProject(models.Model):
         "breakpoint_UcA_extract_python_detect_field",
         "breakpoint_UcA_extract_module_create_cg_model_code",
         "breakpoint_UcA_write_hook_code",
+        "breakpoint_UcA_write_hook_model",
         "breakpoint_UcB_write_code_with_cw",
         "breakpoint_UcB_write_act_window",
         "breakpoint_UcA_extract_module_get_min_max_crop",
@@ -599,6 +605,7 @@ class DevopsCgNewProject(models.Model):
                 + rec.breakpoint_UcA_extract_python_detect_field
                 + rec.breakpoint_UcA_extract_module_create_cg_model_code
                 + rec.breakpoint_UcA_write_hook_code
+                + rec.breakpoint_UcA_write_hook_model
                 + rec.breakpoint_UcB_write_code_with_cw
                 + rec.breakpoint_UcB_write_act_window
                 + rec.breakpoint_UcA_extract_module_get_min_max_crop
@@ -642,6 +649,7 @@ class DevopsCgNewProject(models.Model):
                 rec.breakpoint_UcA_extract_python_detect_field = False
                 rec.breakpoint_UcA_extract_module_create_cg_model_code = False
                 rec.breakpoint_UcA_write_hook_code = False
+                rec.breakpoint_UcA_write_hook_model = False
                 rec.breakpoint_UcB_write_code_with_cw = False
                 rec.breakpoint_UcB_write_act_window = False
                 rec.breakpoint_UcA_extract_view_warning = False

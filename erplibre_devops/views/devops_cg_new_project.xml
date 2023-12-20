@@ -387,6 +387,14 @@
                                         class="oe_highlight"
                                         context="{'breakpoint_name': 'breakpoint_UcA_write_hook_code'}"
                                     />
+                                    <field name="breakpoint_UcA_write_hook_model" />
+                                    <button
+                                        name="action_start_pycharm"
+                                        string="Open"
+                                        type="object"
+                                        class="oe_highlight"
+                                        context="{'breakpoint_name': 'breakpoint_UcA_write_hook_model'}"
+                                    />
                                 </group>
                             </group>
                         </page>

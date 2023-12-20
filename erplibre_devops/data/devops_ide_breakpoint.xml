@@ -184,6 +184,14 @@
             <field name="condition_var_model_name">model_id.model</field>
             <field name="condition_var_module_name">module.name</field>
         </record>
+        <record model="devops.ide.breakpoint" id="breakpoint_UcA_write_hook_model">
+            <field name="name">breakpoint_UcA_write_hook_model</field>
+            <field name="filename">addons/TechnoLibre_odoo-code-generator/code_generator_hook/models/code_generator_writer.py</field>
+            <field name="keyword">lst_dependency = [a.name for a in model_id.inherit_model_ids]</field>
+            <field name="description">UcA gc breakpoint write hook model.</field>
+            <field name="condition_var_model_name">model_id.model</field>
+            <field name="condition_var_module_name">module.name</field>
+        </record>
         <record model="devops.ide.breakpoint" id="breakpoint_UcA_write_hook_cg_view_item">
             <field name="name">breakpoint_UcA_write_hook_cg_view_item</field>
             <field name="filename">addons/TechnoLibre_odoo-code-generator/code_generator_hook/models/code_generator_writer.py</field>
