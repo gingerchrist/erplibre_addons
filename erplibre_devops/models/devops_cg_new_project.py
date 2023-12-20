@@ -60,6 +60,14 @@ class DevopsCgNewProject(models.Model):
         help="Mode view, enable rebuild same view or create new view.",
     )
 
+    config_uca_enable_export_data = fields.Boolean(
+        default=True,
+        help=(
+            "Will enable option nonmenclator in CG to export data associate to"
+            " models."
+        ),
+    )
+
     mode_view_snippet = fields.Selection(
         selection=[
             ("no_snippet", "No snippet"),
@@ -1277,6 +1285,22 @@ class DevopsCgNewProject(models.Model):
                                 " True",
                             )
                         )
+                if rec.config_uca_enable_export_data:
+                    lst_template_hooks_py_replace.append(
+                        (
+                            'value["enable_template_website_snippet_view"] ='
+                            " False",
+                            f'value["enable_template_website_snippet_view"] ='
+                            f" False\n"
+                            f"       "
+                            f' value["template_auto_export_data"]'
+                            f" = True\n"
+                            f"       "
+                            f' value["template_auto_export_data_exclude_model"]'
+                            f" = 'devops.db.image;devops.exec;devops.exec.bundle;devops.ide.pycharm;"
+                            f"devops.log.makefile.target;devops.workspace.terminal;devops.workspace'",
+                        )
+                    )
                 if rec.mode_view_snippet in ["enable_snippet"]:
                     lst_template_hooks_py_replace.append(
                         (

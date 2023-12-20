@@ -119,6 +119,9 @@
                             <field name="active_coverage" />
                             <field name="force" />
                         </group>
+                        <group name="group_cg_uca" string="CG config UcA">
+                            <field name="config_uca_enable_export_data" />
+                        </group>
                         <group name="group_cg_config" string="CG config view">
                             <field name="mode_view" />
                             <field name="mode_view_snippet" />

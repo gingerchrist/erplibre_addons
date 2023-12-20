@@ -290,6 +290,14 @@ class DevopsWorkspace(models.Model):
         help="Mode view, enable rebuild same view or create new view.",
     )
 
+    config_uca_enable_export_data = fields.Boolean(
+        default=True,
+        help=(
+            "Will enable option nonmenclator in CG to export data associate to"
+            " models."
+        ),
+    )
+
     mode_view_snippet = fields.Selection(
         selection=[
             ("no_snippet", "No snippet"),
@@ -663,6 +671,7 @@ class DevopsWorkspace(models.Model):
                     "mode_view_snippet_template_generate_website_snippet_ctrl_featur": rec.mode_view_snippet_template_generate_website_snippet_ctrl_featur,
                     "mode_view_snippet_template_generate_website_enable_javascript": rec.mode_view_snippet_template_generate_website_enable_javascript,
                     "mode_view_snippet_template_generate_website_snippet_type": rec.mode_view_snippet_template_generate_website_snippet_type,
+                    "config_uca_enable_export_data": rec.config_uca_enable_export_data,
                 }
 
                 model_conf = None
