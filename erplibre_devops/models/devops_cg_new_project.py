@@ -405,6 +405,11 @@ class DevopsCgNewProject(models.Model):
         help="Breakpoint UcB when write act_window with xml_writer.",
     )
 
+    breakpoint_UcB_write_data = fields.Boolean(
+        string="UcB Write xml data",
+        help="Breakpoint UcB when generate data to xml_data.",
+    )
+
     breakpoint_UcB_generate_view_warning = fields.Boolean(
         string="UcB Generate view WARNING",
         help="Breakpoint UcB to diagnostic warning when generate view.",
@@ -569,6 +574,7 @@ class DevopsCgNewProject(models.Model):
         "breakpoint_UcA_write_hook_model",
         "breakpoint_UcB_write_code_with_cw",
         "breakpoint_UcB_write_act_window",
+        "breakpoint_UcB_write_data",
         "breakpoint_UcA_extract_module_get_min_max_crop",
         "breakpoint_UcA_extract_view_first_line",
         "breakpoint_UcA_extract_xml_button",
@@ -608,6 +614,7 @@ class DevopsCgNewProject(models.Model):
                 + rec.breakpoint_UcA_write_hook_model
                 + rec.breakpoint_UcB_write_code_with_cw
                 + rec.breakpoint_UcB_write_act_window
+                + rec.breakpoint_UcB_write_data
                 + rec.breakpoint_UcA_extract_module_get_min_max_crop
                 + rec.breakpoint_UcA_extract_view_first_line
                 + rec.breakpoint_UcA_extract_xml_button
@@ -652,6 +659,7 @@ class DevopsCgNewProject(models.Model):
                 rec.breakpoint_UcA_write_hook_model = False
                 rec.breakpoint_UcB_write_code_with_cw = False
                 rec.breakpoint_UcB_write_act_window = False
+                rec.breakpoint_UcB_write_data = False
                 rec.breakpoint_UcA_extract_view_warning = False
                 rec.breakpoint_UcA_extract_module_get_min_max_crop = False
                 rec.breakpoint_UcA_extract_view_first_line = False

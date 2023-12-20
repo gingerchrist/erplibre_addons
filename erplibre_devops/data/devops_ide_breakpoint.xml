@@ -219,6 +219,14 @@
             <field name="description">UcB gc breakpoint write act_window.</field>
             <field name="condition_var_short_xml_id">record_id</field>
         </record>
+        <record model="devops.ide.breakpoint" id="breakpoint_UcB_write_data">
+            <field name="name">breakpoint_UcB_write_data</field>
+            <field name="filename">addons/TechnoLibre_odoo-code-generator/code_generator/models/code_generator_writer.py</field>
+            <field name="keyword">expression_export_data = model.expression_export_data</field>
+            <field name="description">UcB gc breakpoint generate data to xml_data.</field>
+            <field name="condition_var_model_name">model.model</field>
+            <field name="condition_var_module_name">module.name</field>
+        </record>
         <record model="devops.ide.breakpoint" id="breakpoint_UcB_generate_view_warning">
             <field name="name">breakpoint_UcB_generate_view_warning</field>
             <field name="filename">addons/TechnoLibre_odoo-code-generator/code_generator/wizards/code_generator_generate_views_wizard.py</field>

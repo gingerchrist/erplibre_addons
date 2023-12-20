@@ -485,6 +485,16 @@
                                         context="{'breakpoint_name': 'breakpoint_UcB_write_act_window'}"
                                     />
                                 </group>
+                                <group string="Breakpoint generate data">
+                                    <field name="breakpoint_UcB_write_data" />
+                                    <button
+                                        name="action_start_pycharm"
+                                        string="Open"
+                                        type="object"
+                                        class="oe_highlight"
+                                        context="{'breakpoint_name': 'breakpoint_UcB_write_data'}"
+                                    />
+                                </group>
                             </group>
                         </page>
                         <page string="Execution">
