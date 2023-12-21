@@ -1,276 +1,272 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <odoo>
-    <data>
-        <record model="devops.ide.breakpoint" id="breakpoint_all_write_hook_begin">
-            <field name="name">breakpoint_all_write_hook_begin</field>
+    <data noupdate="1">
+        <record id="breakpoint_all_write_hook_begin" model="devops.ide.breakpoint">
+            <field name="description">Generic gc breakpoint in beginning of code writing about hooks file.</field>
             <field name="filename">addons/TechnoLibre_odoo-code-generator/code_generator_hook/models/code_generator_writer.py</field>
             <field name="keyword">if post_init_hook_feature_code_generator:</field>
-            <field name="description">Generic gc breakpoint in beginning of code writing about hooks file.</field>
+            <field name="name">breakpoint_all_write_hook_begin</field>
         </record>
-        <record model="devops.ide.breakpoint" id="breakpoint_all_write_hook_before_model">
-            <field name="name">breakpoint_all_write_hook_before_model</field>
+        <record id="breakpoint_all_write_hook_before_model" model="devops.ide.breakpoint">
+            <field name="description">Generic gc breakpoint in code writing about hooks file before create model.</field>
             <field name="filename">addons/TechnoLibre_odoo-code-generator/code_generator_hook/models/code_generator_writer.py</field>
             <field name="keyword">lst_dependency = [a.name for a in model_id.inherit_model_ids]</field>
-            <field name="description">Generic gc breakpoint in code writing about hooks file before create model.</field>
+            <field name="name">breakpoint_all_write_hook_before_model</field>
         </record>
-        <record model="devops.ide.breakpoint" id="breakpoint_all_write_hook_model_write_field">
-            <field name="name">breakpoint_all_write_hook_model_write_field</field>
+        <record id="breakpoint_all_write_hook_model_write_field" model="devops.ide.breakpoint">
+            <field name="condition_var_field_attr_name">subkey</field>
+            <field name="condition_var_field_name">key</field>
+            <field name="condition_var_model_name">model_id.model</field>
+            <field name="description">Generic gc breakpoint in code writing about hooks file before write field into model.</field>
             <field name="filename">addons/TechnoLibre_odoo-code-generator/code_generator_hook/models/code_generator_writer.py</field>
             <field name="keyword">self._write_dict_key(cw, subkey, value)</field>
-            <field name="description">Generic gc breakpoint in code writing about hooks file before write field into model.</field>
-            <field name="condition_var_model_name">model_id.model</field>
-            <field name="condition_var_field_name">key</field>
-            <field name="condition_var_field_attr_name">subkey</field>
+            <field name="name">breakpoint_all_write_hook_model_write_field</field>
         </record>
-        <record model="devops.ide.breakpoint" id="breakpoint_all_prepare_data_before_write">
-            <field name="name">breakpoint_all_prepare_data_before_write</field>
+        <record id="breakpoint_all_prepare_data_before_write" model="devops.ide.breakpoint">
+            <field name="condition_var_field_name">field_id.name</field>
+            <field name="condition_var_model_name">model_id.model</field>
+            <field name="description">Generic gc breakpoint in code writing, prepare a set of data before write.</field>
             <field name="filename">addons/TechnoLibre_odoo-code-generator/code_generator_hook/models/code_generator_writer.py</field>
             <field name="keyword">if model_id.has_same_model_in_inherit_model():</field>
-            <field name="description">Generic gc breakpoint in code writing, prepare a set of data before write.</field>
-            <field name="condition_var_model_name">model_id.model</field>
-            <field name="condition_var_field_name">field_id.name</field>
+            <field name="name">breakpoint_all_prepare_data_before_write</field>
         </record>
-        <record model="devops.ide.breakpoint" id="breakpoint_all_before_sync_code">
-            <field name="name">breakpoint_all_before_sync_code</field>
+        <record id="breakpoint_all_before_sync_code" model="devops.ide.breakpoint">
             <field name="filename">addons/TechnoLibre_odoo-code-generator/code_generator/models/code_generator_writer.py</field>
             <field name="keyword">self.code_generator_data.sync_code(</field>
-            <field name="description">
-                Generic gc breakpoint in code writing, before sync and overwrite dedicated module, best for testing
-                without doing action.
-            </field>
+            <field name="name">breakpoint_all_before_sync_code</field>
         </record>
-        <record model="devops.ide.breakpoint" id="breakpoint_devops_diagnostic">
-            <field name="name">breakpoint_devops_diagnostic</field>
+        <record id="breakpoint_devops_diagnostic" model="devops.ide.breakpoint">
+            <field name="description">DEVOPS diagnostic add feature.</field>
             <field name="filename">addons/ERPLibre_erplibre_addons/erplibre_devops/models/devops_ide_pycharm.py</field>
             <field name="keyword">id_devops_cg_new_project = self._context.get("devops_cg_new_project")</field>
-            <field name="description">DEVOPS diagnostic add feature.</field>
+            <field name="name">breakpoint_devops_diagnostic</field>
         </record>
-        <record model="devops.ide.breakpoint" id="breakpoint_Uc0_first_line_hook">
-            <field name="name">breakpoint_Uc0_first_line_hook</field>
-            <field name="filename_is_code_generator_demo_hooks_py" eval="True" />
-            <field name="ignore_test" eval="True" />
-            <field name="keyword">env = api.Environment(cr, SUPERUSER_ID, {})</field>
+        <record id="breakpoint_Uc0_first_line_hook" model="devops.ide.breakpoint">
             <field name="description">Uc0 gc breakpoint into hook.</field>
-        </record>
-        <record model="devops.ide.breakpoint" id="breakpoint_UcA_first_line_hook">
-            <field name="name">breakpoint_UcA_first_line_hook</field>
-            <field name="filename_is_template_hooks_py" eval="True" />
-            <field name="ignore_test" eval="True" />
+            <field name="filename_is_code_generator_demo_hooks_py">True</field>
+            <field name="ignore_test">True</field>
             <field name="keyword">env = api.Environment(cr, SUPERUSER_ID, {})</field>
+            <field name="name">breakpoint_Uc0_first_line_hook</field>
+        </record>
+        <record id="breakpoint_UcA_first_line_hook" model="devops.ide.breakpoint">
             <field name="description">UcA gc breakpoint into hook.</field>
-        </record>
-        <record model="devops.ide.breakpoint" id="breakpoint_UcB_first_line_hook">
-            <field name="name">breakpoint_UcB_first_line_hook</field>
-            <field name="filename_is_cg_hooks_py" eval="True" />
-            <field name="ignore_test" eval="True" />
+            <field name="filename_is_template_hooks_py">True</field>
+            <field name="ignore_test">True</field>
             <field name="keyword">env = api.Environment(cr, SUPERUSER_ID, {})</field>
-            <field name="description">UcB gc breakpoint into hook.</field>
+            <field name="name">breakpoint_UcA_first_line_hook</field>
         </record>
-        <record model="devops.ide.breakpoint" id="breakpoint_Uc0_cg_Uc0">
-            <field name="name">breakpoint_Uc0_cg_Uc0</field>
+        <record id="breakpoint_UcB_first_line_hook" model="devops.ide.breakpoint">
+            <field name="description">UcB gc breakpoint into hook.</field>
+            <field name="filename_is_cg_hooks_py">True</field>
+            <field name="ignore_test">True</field>
+            <field name="keyword">env = api.Environment(cr, SUPERUSER_ID, {})</field>
+            <field name="name">breakpoint_UcB_first_line_hook</field>
+        </record>
+        <record id="breakpoint_Uc0_cg_Uc0" model="devops.ide.breakpoint">
+            <field name="description">Uc0 gc breakpoint when generate Uc0.</field>
             <field name="filename">addons/TechnoLibre_odoo-code-generator/code_generator_hook/models/code_generator_writer.py</field>
             <field name="keyword">cw.emit("new_module_name = MODULE_NAME")</field>
-            <field name="description">Uc0 gc breakpoint when generate Uc0.</field>
+            <field name="name">breakpoint_Uc0_cg_Uc0</field>
         </record>
-        <record model="devops.ide.breakpoint" id="breakpoint_all_begin_generate_file">
-            <field name="name">breakpoint_all_begin_generate_file</field>
+        <record id="breakpoint_all_begin_generate_file" model="devops.ide.breakpoint">
+            <field name="description">All gc breakpoint beginning write file.</field>
             <field name="filename">addons/TechnoLibre_odoo-code-generator/code_generator/models/code_generator_writer.py</field>
             <field name="keyword">if module.template_model_name or module.template_inherit_model_name:</field>
-            <field name="description">All gc breakpoint beginning write file.</field>
+            <field name="name">breakpoint_all_begin_generate_file</field>
         </record>
-        <record model="devops.ide.breakpoint" id="breakpoint_UcA_extract_view_warning">
-            <field name="name">breakpoint_UcA_extract_view_warning</field>
-            <field name="filename">addons/TechnoLibre_odoo-code-generator/code_generator/extractor_view.py</field>
-            <field name="keyword">_logger.warning(</field>
-            <field name="is_multiple" eval="True" />
+        <record id="breakpoint_UcA_extract_view_warning" model="devops.ide.breakpoint">
             <field name="description">UcA gc breakpoint diagnostic warning into extract view.</field>
-        </record>
-        <record model="devops.ide.breakpoint" id="breakpoint_UcA_extract_python_controller_warning">
-            <field name="name">breakpoint_UcA_extract_python_controller_warning</field>
-            <field name="filename">addons/TechnoLibre_odoo-code-generator/code_generator/extractor_controller.py</field>
+            <field name="filename">addons/TechnoLibre_odoo-code-generator/code_generator/extractor_view.py</field>
+            <field name="is_multiple">True</field>
             <field name="keyword">_logger.warning(</field>
-            <field name="is_multiple" eval="True" />
+            <field name="name">breakpoint_UcA_extract_view_warning</field>
+        </record>
+        <record id="breakpoint_UcA_extract_python_controller_warning" model="devops.ide.breakpoint">
             <field name="description">UcA gc breakpoint diagnostic warning into extract python controller.</field>
-        </record>
-        <record model="devops.ide.breakpoint" id="breakpoint_UcA_extract_python_module_warning">
-            <field name="name">breakpoint_UcA_extract_python_module_warning</field>
-            <field name="filename">addons/TechnoLibre_odoo-code-generator/code_generator/extractor_module.py</field>
+            <field name="filename">addons/TechnoLibre_odoo-code-generator/code_generator/extractor_controller.py</field>
+            <field name="is_multiple">True</field>
             <field name="keyword">_logger.warning(</field>
-            <field name="is_multiple" eval="True" />
+            <field name="name">breakpoint_UcA_extract_python_controller_warning</field>
+        </record>
+        <record id="breakpoint_UcA_extract_python_module_warning" model="devops.ide.breakpoint">
             <field name="description">UcA gc breakpoint diagnostic warning into extract python module.</field>
-        </record>
-        <record model="devops.ide.breakpoint" id="breakpoint_UcA_extract_python_module_file_warning">
-            <field name="name">breakpoint_UcA_extract_python_module_file_warning</field>
-            <field name="filename">addons/TechnoLibre_odoo-code-generator/code_generator/extractor_module_file.py</field>
+            <field name="filename">addons/TechnoLibre_odoo-code-generator/code_generator/extractor_module.py</field>
+            <field name="is_multiple">True</field>
             <field name="keyword">_logger.warning(</field>
-            <field name="is_multiple" eval="True" />
-            <field name="description">UcA gc breakpoint diagnostic warning into extract python module file.</field>
+            <field name="name">breakpoint_UcA_extract_python_module_warning</field>
         </record>
-        <record model="devops.ide.breakpoint" id="breakpoint_UcA_extract_python_detect_field">
-            <field name="name">breakpoint_UcA_extract_python_detect_field</field>
+        <record id="breakpoint_UcA_extract_python_module_file_warning" model="devops.ide.breakpoint">
+            <field name="description">UcA gc breakpoint diagnostic warning into extract python module file.</field>
+            <field name="filename">addons/TechnoLibre_odoo-code-generator/code_generator/extractor_module_file.py</field>
+            <field name="is_multiple">True</field>
+            <field name="keyword">_logger.warning(</field>
+            <field name="name">breakpoint_UcA_extract_python_module_file_warning</field>
+        </record>
+        <record id="breakpoint_UcA_extract_python_detect_field" model="devops.ide.breakpoint">
+            <field name="condition_var_field_name">node.targets[0].id</field>
+            <field name="condition_var_model_name">self.model</field>
+            <field name="description">UcA gc breakpoint when extract Python field of model.</field>
             <field name="filename">addons/TechnoLibre_odoo-code-generator/code_generator/extractor_module_file.py</field>
             <field name="keyword">var_name = node.targets[0].id</field>
-            <field name="description">UcA gc breakpoint when extract Python field of model.</field>
-            <field name="condition_var_model_name">self.model</field>
-            <field name="condition_var_field_name">node.targets[0].id</field>
+            <field name="name">breakpoint_UcA_extract_python_detect_field</field>
         </record>
-        <record model="devops.ide.breakpoint" id="breakpoint_UcA_extract_view_first_line">
-            <field name="name">breakpoint_UcA_extract_view_first_line</field>
+        <record id="breakpoint_UcA_extract_view_first_line" model="devops.ide.breakpoint">
+            <field name="description">UcA gc breakpoint extract view first line.</field>
             <field name="filename">addons/TechnoLibre_odoo-code-generator/code_generator/extractor_view.py</field>
             <field name="keyword">self._module = module</field>
-            <field name="description">UcA gc breakpoint extract view first line.</field>
+            <field name="name">breakpoint_UcA_extract_view_first_line</field>
         </record>
-        <record model="devops.ide.breakpoint" id="breakpoint_UcA_extract_xml_button">
-            <field name="name">breakpoint_UcA_extract_xml_button</field>
-            <field name="filename">addons/TechnoLibre_odoo-code-generator/code_generator/extractor_view.py</field>
-            <field name="keyword">"name": "action_name",</field>
-            <field name="method">_extract_child_xml</field>
+        <record id="breakpoint_UcA_extract_xml_button" model="devops.ide.breakpoint">
             <field name="condition_var_model_name">self.model_id.model</field>
             <field name="condition_var_xml_id">debug_xmlid</field>
             <field name="description">UcA gc breakpoint extract view button</field>
-        </record>
-        <record model="devops.ide.breakpoint" id="breakpoint_UcA_extract_xml_header">
-            <field name="name">breakpoint_UcA_extract_xml_header</field>
             <field name="filename">addons/TechnoLibre_odoo-code-generator/code_generator/extractor_view.py</field>
-            <field name="keyword">view_item_id = self.env["code.generator.view.item"].create(</field>
+            <field name="keyword">"name": "action_name",</field>
+            <field name="method">_extract_child_xml</field>
+            <field name="name">breakpoint_UcA_extract_xml_button</field>
+        </record>
+        <record id="breakpoint_UcA_extract_xml_header" model="devops.ide.breakpoint">
             <field name="condition_var_model_name">self.model_id.model</field>
             <field name="condition_var_xml_id">debug_xmlid</field>
             <field name="description">UcA gc breakpoint extract view header</field>
-        </record>
-        <record model="devops.ide.breakpoint" id="breakpoint_UcA_extract_xml_title">
-            <field name="name">breakpoint_UcA_extract_xml_title</field>
             <field name="filename">addons/TechnoLibre_odoo-code-generator/code_generator/extractor_view.py</field>
-            <field name="keyword">].create(dct_attributes)</field>
+            <field name="keyword">view_item_id = self.env["code.generator.view.item"].create(</field>
+            <field name="name">breakpoint_UcA_extract_xml_header</field>
+        </record>
+        <record id="breakpoint_UcA_extract_xml_title" model="devops.ide.breakpoint">
             <field name="condition_var_model_name">self.model_id.model</field>
             <field name="condition_var_xml_id">debug_xmlid</field>
             <field name="description">UcA gc breakpoint extract view title</field>
-        </record>
-        <record model="devops.ide.breakpoint" id="breakpoint_UcA_extract_xml_view_item">
-            <field name="name">breakpoint_UcA_extract_xml_view_item</field>
             <field name="filename">addons/TechnoLibre_odoo-code-generator/code_generator/extractor_view.py</field>
-            <field name="keyword">"item_type": node.nodeName,</field>
+            <field name="keyword">].create(dct_attributes)</field>
+            <field name="name">breakpoint_UcA_extract_xml_title</field>
+        </record>
+        <record id="breakpoint_UcA_extract_xml_view_item" model="devops.ide.breakpoint">
             <field name="condition_var_model_name">self.model_id.model</field>
             <field name="condition_var_xml_id">debug_xmlid</field>
             <field name="description">UcA gc breakpoint extract view item</field>
-        </record>
-        <record model="devops.ide.breakpoint" id="breakpoint_UcA_extract_xml_act_window">
-            <field name="name">breakpoint_UcA_extract_xml_act_window</field>
             <field name="filename">addons/TechnoLibre_odoo-code-generator/code_generator/extractor_view.py</field>
-            <field name="keyword">menu_action = self.env["code.generator.act_window"].create(</field>
+            <field name="keyword">"item_type": node.nodeName,</field>
+            <field name="name">breakpoint_UcA_extract_xml_view_item</field>
+        </record>
+        <record id="breakpoint_UcA_extract_xml_act_window" model="devops.ide.breakpoint">
             <field name="condition_var_short_xml_id">dct_act_value.get("id_name")</field>
             <field name="description">UcA gc breakpoint extract view act_window</field>
+            <field name="filename">addons/TechnoLibre_odoo-code-generator/code_generator/extractor_view.py</field>
+            <field name="keyword">menu_action = self.env["code.generator.act_window"].create(</field>
+            <field name="name">breakpoint_UcA_extract_xml_act_window</field>
         </record>
-        <record model="devops.ide.breakpoint" id="breakpoint_UcA_extract_xml_div_container">
-            <field name="name">breakpoint_UcA_extract_xml_div_container</field>
+        <record id="breakpoint_UcA_extract_xml_div_container" model="devops.ide.breakpoint">
+            <field name="description">UcA gc breakpoint extract view div container</field>
             <field name="filename">addons/TechnoLibre_odoo-code-generator/code_generator/extractor_view.py</field>
             <field name="keyword">for cached_node in lst_node:</field>
-            <field name="description">UcA gc breakpoint extract view div container</field>
+            <field name="name">breakpoint_UcA_extract_xml_div_container</field>
         </record>
-        <record model="devops.ide.breakpoint" id="breakpoint_UcA_extract_module_create_cg_model_code">
-            <field name="name">breakpoint_UcA_extract_module_create_cg_model_code</field>
-            <field name="filename">addons/TechnoLibre_odoo-code-generator/code_generator/extractor_module_file.py</field>
-            <field name="keyword">if node.args:</field>
-            <field name="description">UcA gc breakpoint extract module when create model code.</field>
+        <record id="breakpoint_UcA_extract_module_create_cg_model_code" model="devops.ide.breakpoint">
             <field name="condition_var_method_name">node.name</field>
             <field name="condition_var_model_name">self.model</field>
             <field name="condition_var_module_name">self.module.name</field>
+            <field name="description">UcA gc breakpoint extract module when create model code.</field>
+            <field name="filename">addons/TechnoLibre_odoo-code-generator/code_generator/extractor_module_file.py</field>
+            <field name="keyword">if node.args:</field>
+            <field name="name">breakpoint_UcA_extract_module_create_cg_model_code</field>
         </record>
-        <record model="devops.ide.breakpoint" id="breakpoint_UcA_write_hook_code">
-            <field name="name">breakpoint_UcA_write_hook_code</field>
-            <field name="filename">addons/TechnoLibre_odoo-code-generator/code_generator_hook/models/code_generator_writer.py</field>
-            <field name="keyword">lst_line = code_id.code.split(</field>
-            <field name="description">UcA gc breakpoint write hook code.</field>
+        <record id="breakpoint_UcA_write_hook_code" model="devops.ide.breakpoint">
             <field name="condition_var_method_name">code_id.name</field>
             <field name="condition_var_model_name">model_id.model</field>
             <field name="condition_var_module_name">module.name</field>
-        </record>
-        <record model="devops.ide.breakpoint" id="breakpoint_UcA_write_hook_model">
-            <field name="name">breakpoint_UcA_write_hook_model</field>
+            <field name="description">UcA gc breakpoint write hook code.</field>
             <field name="filename">addons/TechnoLibre_odoo-code-generator/code_generator_hook/models/code_generator_writer.py</field>
-            <field name="keyword">lst_dependency = [a.name for a in model_id.inherit_model_ids]</field>
-            <field name="description">UcA gc breakpoint write hook model.</field>
+            <field name="keyword">lst_line = code_id.code.split(</field>
+            <field name="name">breakpoint_UcA_write_hook_code</field>
+        </record>
+        <record id="breakpoint_UcA_write_hook_model" model="devops.ide.breakpoint">
             <field name="condition_var_model_name">model_id.model</field>
             <field name="condition_var_module_name">module.name</field>
+            <field name="description">UcA gc breakpoint write hook model.</field>
+            <field name="filename">addons/TechnoLibre_odoo-code-generator/code_generator_hook/models/code_generator_writer.py</field>
+            <field name="keyword">lst_dependency = [a.name for a in model_id.inherit_model_ids]</field>
+            <field name="name">breakpoint_UcA_write_hook_model</field>
         </record>
-        <record model="devops.ide.breakpoint" id="breakpoint_UcA_write_hook_cg_view_item">
-            <field name="name">breakpoint_UcA_write_hook_cg_view_item</field>
+        <record id="breakpoint_UcA_write_hook_cg_view_item" model="devops.ide.breakpoint">
+            <field name="condition_var_item_type_view_item">view_item_id.item_type</field>
+            <field name="condition_var_label_view_item">view_item_id.label</field>
+            <field name="condition_var_model_name">view_id.m2o_model.model</field>
+            <field name="condition_var_name_view_item">view_item_id.name</field>
+            <field name="condition_var_view_name">view_id.id_name</field>
+            <field name="description">UcA gc breakpoint write hook code.generator.view.item</field>
             <field name="filename">addons/TechnoLibre_odoo-code-generator/code_generator_hook/models/code_generator_writer.py</field>
             <field name="keyword">f"{var_create_view_item} ="</field>
-            <field name="description">UcA gc breakpoint write hook code.generator.view.item</field>
-            <field name="condition_var_label_view_item">view_item_id.label</field>
-            <field name="condition_var_name_view_item">view_item_id.name</field>
-            <field name="condition_var_item_type_view_item">view_item_id.item_type</field>
-            <field name="condition_var_view_name">view_id.id_name</field>
-            <field name="condition_var_model_name">view_id.m2o_model.model</field>
+            <field name="name">breakpoint_UcA_write_hook_cg_view_item</field>
         </record>
-        <record model="devops.ide.breakpoint" id="breakpoint_UcB_write_code_with_cw">
-            <field name="name">breakpoint_UcB_write_code_with_cw</field>
-            <field name="filename">addons/TechnoLibre_odoo-code-generator/code_generator/models/code_generator_writer.py</field>
-            <field name="keyword">if code.decorator:</field>
-            <field name="description">UcB gc breakpoint write code.</field>
+        <record id="breakpoint_UcB_write_code_with_cw" model="devops.ide.breakpoint">
             <field name="condition_var_method_name">code.name</field>
             <field name="condition_var_model_name">model.model</field>
             <field name="condition_var_module_name">module.name</field>
+            <field name="description">UcB gc breakpoint write code.</field>
+            <field name="filename">addons/TechnoLibre_odoo-code-generator/code_generator/models/code_generator_writer.py</field>
+            <field name="keyword">if code.decorator:</field>
+            <field name="name">breakpoint_UcB_write_code_with_cw</field>
         </record>
-        <record model="devops.ide.breakpoint" id="breakpoint_UcB_write_act_window">
-            <field name="name">breakpoint_UcB_write_act_window</field>
+        <record id="breakpoint_UcB_write_act_window" model="devops.ide.breakpoint">
+            <field name="condition_var_short_xml_id">record_id</field>
+            <field name="description">UcB gc breakpoint write act_window.</field>
             <field name="filename">addons/TechnoLibre_odoo-code-generator/code_generator/models/code_generator_writer.py</field>
             <field name="keyword">if use_complex_view:</field>
-            <field name="description">UcB gc breakpoint write act_window.</field>
-            <field name="condition_var_short_xml_id">record_id</field>
+            <field name="name">breakpoint_UcB_write_act_window</field>
         </record>
-        <record model="devops.ide.breakpoint" id="breakpoint_UcB_write_data">
-            <field name="name">breakpoint_UcB_write_data</field>
-            <field name="filename">addons/TechnoLibre_odoo-code-generator/code_generator/models/code_generator_writer.py</field>
-            <field name="keyword">expression_export_data = model.expression_export_data</field>
-            <field name="description">UcB gc breakpoint generate data to xml_data.</field>
+        <record id="breakpoint_UcB_write_data" model="devops.ide.breakpoint">
             <field name="condition_var_model_name">model.model</field>
             <field name="condition_var_module_name">module.name</field>
+            <field name="description">UcB gc breakpoint generate data to xml_data.</field>
+            <field name="filename">addons/TechnoLibre_odoo-code-generator/code_generator/models/code_generator_writer.py</field>
+            <field name="keyword">expression_export_data = model.expression_export_data</field>
+            <field name="name">breakpoint_UcB_write_data</field>
         </record>
-        <record model="devops.ide.breakpoint" id="breakpoint_UcB_generate_view_warning">
-            <field name="name">breakpoint_UcB_generate_view_warning</field>
-            <field name="filename">addons/TechnoLibre_odoo-code-generator/code_generator/wizards/code_generator_generate_views_wizard.py</field>
-            <field name="keyword">_logger.warning(</field>
-            <field name="is_multiple" eval="True" />
+        <record id="breakpoint_UcB_generate_view_warning" model="devops.ide.breakpoint">
             <field name="description">UcB gc breakpoint diagnostic warning when generate views.</field>
+            <field name="filename">addons/TechnoLibre_odoo-code-generator/code_generator/wizards/code_generator_generate_views_wizard.py</field>
+            <field name="is_multiple">True</field>
+            <field name="keyword">_logger.warning(</field>
+            <field name="name">breakpoint_UcB_generate_view_warning</field>
         </record>
-        <record model="devops.ide.breakpoint" id="breakpoint_UcB_generate_view_specific_form_item">
-            <field name="name">breakpoint_UcB_generate_view_specific_form_item</field>
+        <record id="breakpoint_UcB_generate_view_specific_form_item" model="devops.ide.breakpoint">
+            <field name="condition_var_model_name">code_generator_view_id.m2o_model.model</field>
+            <field name="condition_var_short_xml_id">code_generator_view_id.id_name</field>
+            <field name="description">UcB gc breakpoint when generate specific form view item.</field>
             <field name="filename">addons/TechnoLibre_odoo-code-generator/code_generator/wizards/code_generator_generate_views_wizard.py</field>
             <field name="keyword">view_type = code_generator_view_id.view_type</field>
-            <field name="description">UcB gc breakpoint when generate specific form view item.</field>
-            <field name="condition_var_short_xml_id">code_generator_view_id.id_name</field>
-            <field name="condition_var_model_name">code_generator_view_id.m2o_model.model</field>
+            <field name="name">breakpoint_UcB_generate_view_specific_form_item</field>
         </record>
-        <record model="devops.ide.breakpoint" id="breakpoint_UcB_generate_xml_view_object">
-            <field name="name">breakpoint_UcB_generate_xml_view_object</field>
+        <record id="breakpoint_UcB_generate_xml_view_object" model="devops.ide.breakpoint">
+            <field name="description">UcB gc breakpoint when generate xml view object.</field>
             <field name="filename">addons/TechnoLibre_odoo-code-generator/code_generator/wizards/code_generator_generate_views_wizard.py</field>
             <field name="keyword">lst_child_update = [] if not lst_child else lst_child</field>
-            <field name="description">UcB gc breakpoint when generate xml view object.</field>
+            <field name="name">breakpoint_UcB_generate_xml_view_object</field>
         </record>
-        <record model="devops.ide.breakpoint" id="breakpoint_UcB_write_code_model_field">
-            <field name="name">breakpoint_UcB_write_code_model_field</field>
+        <record id="breakpoint_UcB_write_code_model_field" model="devops.ide.breakpoint">
+            <field name="condition_var_field_name">f2export.name</field>
+            <field name="condition_var_model_name">model.model</field>
+            <field name="description">UcB gc breakpoint when writing attributes of field into model.</field>
             <field name="filename">addons/TechnoLibre_odoo-code-generator/code_generator/models/code_generator_writer.py</field>
             <field name="keyword">dct_field_attr_diff = defaultdict(list)</field>
-            <field name="description">UcB gc breakpoint when writing attributes of field into model.</field>
-            <field name="condition_var_model_name">model.model</field>
-            <field name="condition_var_field_name">f2export.name</field>
+            <field name="name">breakpoint_UcB_write_code_model_field</field>
         </record>
-        <record model="devops.ide.breakpoint" id="breakpoint_UcB_write_code_model_field_prepare_field">
-            <field name="name">breakpoint_UcB_write_code_model_field_prepare_field</field>
+        <record id="breakpoint_UcB_write_code_model_field_prepare_field" model="devops.ide.breakpoint">
+            <field name="condition_var_field_name">f2export.name</field>
+            <field name="condition_var_model_name">f2export.model</field>
+            <field name="description">UcB gc breakpoint generate code - prepare field.</field>
             <field name="filename">addons/TechnoLibre_odoo-code-generator/code_generator/models/code_generator_writer.py</field>
             <field name="keyword">if dct_field_attr_diff:</field>
-            <field name="description">UcB gc breakpoint generate code - prepare field.</field>
-            <field name="condition_var_model_name">f2export.model</field>
-            <field name="condition_var_field_name">f2export.name</field>
+            <field name="name">breakpoint_UcB_write_code_model_field_prepare_field</field>
         </record>
-        <record model="devops.ide.breakpoint" id="breakpoint_UcA_extract_module_get_min_max_crop">
-            <field name="name">breakpoint_UcA_extract_module_get_min_max_crop</field>
+        <record id="breakpoint_UcA_extract_module_get_min_max_crop" model="devops.ide.breakpoint">
+            <field name="condition_var_method_name">node.name</field>
+            <field name="condition_var_model_name">self.model</field>
+            <field name="description">UcA extract python module - get min/max line method to crop it.</field>
             <field name="filename">addons/TechnoLibre_odoo-code-generator/code_generator/extractor_module_file.py</field>
             <field name="keyword">no_line_min, no_line_max = self._get_min_max_no_line(</field>
-            <field name="description">UcA extract python module - get min/max line method to crop it.</field>
-            <field name="condition_var_model_name">self.model</field>
-            <field name="condition_var_method_name">node.name</field>
+            <field name="name">breakpoint_UcA_extract_module_get_min_max_crop</field>
         </record>
     </data>
 </odoo>
