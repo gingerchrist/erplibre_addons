@@ -71,6 +71,14 @@
                         attrs="{'invisible': ['|', ('is_installed', '=', False), ('is_conflict_mode_exec', '=', True)]}"
                     />
                     <button
+                        name="%(devops_plan_action_action)d"
+                        string="Plan"
+                        type="action"
+                        class="btn btn-secondary"
+                        context="{'default_root_workspace_id': id, 'default_user_id': uid}"
+                        attrs="{'invisible': ['|', ('is_installed', '=', False), ('is_conflict_mode_exec', '=', True), ('is_me', '=', False)]}"
+                    />
+                    <button
                         name="action_update"
                         string="Update"
                         type="object"

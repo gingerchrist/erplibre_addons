@@ -1269,6 +1269,17 @@ class DevopsCgNewProject(models.Model):
 
                 lst_template_hooks_py_replace = []
                 lst_template_manifest_py_replace = []
+                # Extract module dependency
+                # ir_module_id = self.env["ir.module.module"].search(
+                #     [("name", "=", rec.module)], limit=1
+                # )
+                # if ir_module_id:
+                #     lst_depend_module = [
+                #         a.name for a in ir_module_id.dependencies_id
+                #     ]
+                # else:
+                #     lst_depend_module = []
+                lst_depend_module = []
                 if rec.mode_view in ["same_view", "new_view"]:
                     lst_template_hooks_py_replace.append(
                         (
@@ -1323,19 +1334,24 @@ class DevopsCgNewProject(models.Model):
                         )
                     )
 
-                    lst_template_hooks_py_replace.append(
-                        (
-                            "code_generator_id.add_module_dependency(lst_depend_module)",
-                            'lst_depend_module.extend(["code_generator_website_snippet"])\n'
-                            "       "
-                            " code_generator_id.add_module_dependency(lst_depend_module)",
-                        )
-                    )
                     lst_template_manifest_py_replace.append(
                         (
                             '"depends": [',
                             '"depends": [\n       '
                             ' "code_generator_website_snippet",',
+                        )
+                    )
+
+                    lst_depend_module.append("code_generator_website_snippet")
+
+                if lst_depend_module:
+                    l_d = [f'"{a}"' for a in lst_depend_module]
+                    lst_template_hooks_py_replace.append(
+                        (
+                            "code_generator_id.add_module_dependency(lst_depend_module)",
+                            f'lst_depend_module.extend([{", ".join(l_d)}])\n'
+                            "       "
+                            " code_generator_id.add_module_dependency(lst_depend_module)",
                         )
                     )
 

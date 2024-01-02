@@ -174,6 +174,7 @@ class DevopsWorkspace(models.Model):
 
     is_me = fields.Boolean(
         string="Self instance",
+        readonly=True,
         help="Add more automatisation about manage itself.",
     )
 
