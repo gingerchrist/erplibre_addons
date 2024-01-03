@@ -229,76 +229,82 @@ class DevopsIdeBreakpoint(models.Model):
     @api.multi
     def get_condition_str(
         self,
-        value_model=None,
-        value_field=None,
-        value_field_attr=None,
-        value_method_name=None,
-        value_module_name=None,
-        value_xml_id=None,
-        value_short_xml_id=None,
-        value_label_view_item=None,
-        value_name_view_item=None,
-        value_item_type_view_item=None,
-        value_view_name=None,
+        value_model=False,
+        value_field=False,
+        value_field_attr=False,
+        value_method_name=False,
+        value_module_name=False,
+        value_xml_id=False,
+        value_short_xml_id=False,
+        value_label_view_item=False,
+        value_name_view_item=False,
+        value_item_type_view_item=False,
+        value_view_name=False,
     ):
         lst_condition = []
         for rec in self:
-            if rec.condition_var_model_name and value_model is not None:
+            if rec.condition_var_model_name and value_model is not False:
                 lst_condition.append(
                     f'{rec.condition_var_model_name}=="{value_model}"'
                 )
-            if rec.condition_var_field_name and value_field is not None:
+            if rec.condition_var_field_name and value_field is not False:
                 lst_condition.append(
                     f'{rec.condition_var_field_name}=="{value_field}"'
                 )
             if (
                 rec.condition_var_field_attr_name
-                and value_field_attr is not None
+                and value_field_attr is not False
             ):
                 lst_condition.append(
                     f'{rec.condition_var_field_attr_name}=="{value_field_attr}"'
                 )
-            if rec.condition_var_method_name and value_method_name is not None:
+            if (
+                rec.condition_var_method_name
+                and value_method_name is not False
+            ):
                 lst_condition.append(
                     f'{rec.condition_var_method_name}=="{value_method_name}"'
                 )
-            if rec.condition_var_module_name and value_module_name is not None:
+            if (
+                rec.condition_var_module_name
+                and value_module_name is not False
+            ):
                 lst_condition.append(
                     f'{rec.condition_var_module_name}=="{value_module_name}"'
                 )
-            if rec.condition_var_xml_id and value_xml_id is not None:
+            if rec.condition_var_xml_id and value_xml_id is not False:
                 lst_condition.append(
                     f'{rec.condition_var_xml_id}=="{value_xml_id}"'
                 )
             if (
                 rec.condition_var_short_xml_id
-                and value_short_xml_id is not None
+                and value_short_xml_id is not False
             ):
                 lst_condition.append(
                     f'{rec.condition_var_short_xml_id}=="{value_short_xml_id}"'
                 )
             if (
                 rec.condition_var_label_view_item
-                and value_label_view_item is not None
+                and value_label_view_item is not False
             ):
                 lst_condition.append(
                     f'{rec.condition_var_label_view_item}=="{value_label_view_item}"'
                 )
             if (
                 rec.condition_var_name_view_item
-                and value_name_view_item is not None
+                and value_name_view_item is not False
             ):
                 lst_condition.append(
                     f'{rec.condition_var_name_view_item}=="{value_name_view_item}"'
                 )
             if (
                 rec.condition_var_item_type_view_item
-                and value_item_type_view_item is not None
+                and value_item_type_view_item is not False
             ):
                 lst_condition.append(
                     f'{rec.condition_var_item_type_view_item}=="{value_item_type_view_item}"'
                 )
-            if rec.condition_var_view_name and value_view_name is not None:
+            if rec.condition_var_view_name and value_view_name is not False:
                 lst_condition.append(
                     f'{rec.condition_var_view_name}=="{value_view_name}"'
                 )
