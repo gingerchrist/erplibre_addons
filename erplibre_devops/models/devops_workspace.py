@@ -2311,6 +2311,7 @@ class DevopsWorkspace(models.Model):
             "TypeError:",
             "AttributeError:",
             "ValueError:",
+            "AssertionError:",
             "SyntaxError:",
             "KeyError:",
             "UnboundLocalError:",
