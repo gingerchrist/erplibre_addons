@@ -150,6 +150,7 @@
             <field name="name">breakpoint_UcA_extract_xml_view_item</field>
         </record>
         <record id="breakpoint_UcA_extract_xml_act_window" model="devops.ide.breakpoint">
+            <field name="condition_var_model_name">menu_id.action.res_model</field>
             <field name="condition_var_short_xml_id">dct_act_value.get("id_name")</field>
             <field name="description">UcA gc breakpoint extract view act_window</field>
             <field name="filename">addons/TechnoLibre_odoo-code-generator/code_generator/extractor_view.py</field>
