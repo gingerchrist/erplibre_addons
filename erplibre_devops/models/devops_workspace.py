@@ -2354,7 +2354,7 @@ class DevopsWorkspace(models.Model):
                 ]
             )
             if not found_same_error_ids:
-                exec_error_id = self.create_exec_error(
+                self.create_exec_error(
                     devops_exec_bundle_id.description,
                     escaped_tb,
                     self,
@@ -2530,7 +2530,17 @@ sock.close()
                 error_value["partner_ids"] = partner_ids
             if channel_ids:
                 error_value["channel_ids"] = channel_ids
-            exec_error_id = self.env["devops.exec.error"].create(error_value)
+            if rec._context.get("devops_workspace_create_exec_error"):
+                exec_error_id = None
+                _logger.warning(
+                    "Detect infinite loop when create exec_error, stop it."
+                )
+            else:
+                exec_error_id = (
+                    self.env["devops.exec.error"]
+                    .with_context(devops_workspace_create_exec_error=True)
+                    .create(error_value)
+                )
             lst_result.append(exec_error_id)
         if len(self) == 1:
             return lst_result[0]
