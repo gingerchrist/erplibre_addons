@@ -1,7 +1,8 @@
+import os
 import time
 import uuid
 
-from odoo import _, api, fields, models
+from odoo import _, api, exceptions, fields, models
 
 
 class DevopsPlanActionWizard(models.TransientModel):
@@ -37,6 +38,15 @@ class DevopsPlanActionWizard(models.TransientModel):
     generated_new_project_id = fields.Many2one(
         comodel_name="devops.cg.new_project",
         string="Generated project",
+    )
+
+    working_module_id = fields.Many2one(
+        comodel_name="ir.module.module",
+        string="Working module",
+    )
+
+    working_module_name = fields.Char(
+        help="working_module_id or working_module_name"
     )
 
     state = fields.Selection(default="init")
@@ -93,12 +103,13 @@ class DevopsPlanActionWizard(models.TransientModel):
         return [
             ("init", "Init"),
             ("a_autopoiesis_devops", "Autopoiesis DevOps"),
-            ("a_a_model", "Model"),
+            ("a_a_model", "Model autopoiesis devops"),
             ("a_b_field", "Field"),
             ("a_c_action", "Action"),
             ("a_d_view", "View"),
             ("b_new_module", "New module"),
             ("c_existing_module", "Existing module"),
+            ("c_a_model", "Model existing module"),
             ("d_import_data", "Import data"),
             ("e_migrate_from_external_ddb", "Migrate from external database"),
             ("f_new_project_society", "New society"),
@@ -146,6 +157,14 @@ class DevopsPlanActionWizard(models.TransientModel):
         self.state = "not_supported"
         return self._reopen_self()
 
+    def state_goto_c_existing_module(self):
+        self.state = "c_existing_module"
+        return self._reopen_self()
+
+    def state_goto_c_a_model(self):
+        self.state = "c_a_model"
+        return self._reopen_self()
+
     # def state_exit_configure(self):
     #     self.state = 'custom'
 
@@ -175,6 +194,85 @@ class DevopsPlanActionWizard(models.TransientModel):
 
     def state_previous_g_a_local(self):
         self.state = "g_test_erplibre"
+
+    def state_exit_c_a_model(self):
+        with self.root_workspace_id.devops_create_exec_bundle(
+            "Plan c_a_model"
+        ) as wp_id:
+            print(self.model_name)
+            module_name = (
+                self.working_module_id.name
+                if self.working_module_id
+                else self.working_module_name
+            )
+            exec_id = wp_id.execute(
+                cmd=(
+                    "./script/addons/check_addons_exist.py --output_path -m"
+                    f" {module_name}"
+                ),
+                run_into_workspace=True,
+            )
+            if exec_id.exec_status:
+                raise exceptions.Warning(f"Cannot find module '{module_name}'")
+            path_module = exec_id.log_all.strip()
+            dir_name, basename = os.path.split(path_module)
+            if dir_name.startswith(wp_id.folder):
+                relative_path_module = dir_name[len(wp_id.folder) + 1 :]
+            else:
+                relative_path_module = dir_name
+            # Project
+            cg_id = self.env["devops.code_generator"].create(
+                {
+                    "name": "Existing module new model",
+                    "devops_workspace_ids": [(6, 0, wp_id.ids)],
+                    "force_clean_before_generate": False,
+                }
+            )
+            # Module
+            cg_module_id = self.env["devops.code_generator.module"].create(
+                {
+                    "name": module_name,
+                    "code_generator": cg_id.id,
+                    "devops_workspace_ids": [(6, 0, wp_id.ids)],
+                }
+            )
+            # Model
+            cg_model_id = self.env[
+                "devops.code_generator.module.model"
+            ].create(
+                {
+                    "name": self.model_name,
+                    "description": "Example feature to add",
+                    "module_id": cg_module_id.id,
+                    "devops_workspace_ids": [(6, 0, wp_id.ids)],
+                }
+            )
+            # Field
+            # cg_field_id = self.env[
+            #     "devops.code_generator.module.model.field"
+            # ].create(
+            #     {
+            #         "name": "size",
+            #         "help": "Size of this example.",
+            #         "type": "integer",
+            #         "model_id": cg_model_id.id,
+            #         "devops_workspace_ids": [(6, 0, wp_id.ids)],
+            #     }
+            # )
+            # Overwrite information
+            wp_id.path_code_generator_to_generate = relative_path_module
+            wp_id.devops_code_generator_ids = [(6, 0, cg_id.ids)]
+            wp_id.devops_code_generator_module_ids = [(6, 0, cg_module_id.ids)]
+            wp_id.devops_code_generator_model_ids = [(6, 0, [cg_model_id.id])]
+            wp_id.devops_code_generator_field_ids = [(6, 0, [])]
+            # Update configuration self-gen
+            # wp_id.cg_self_add_config_cg = True
+            # wp_id.mode_view = "new_view"
+            # Generate
+            wp_id.action_code_generator_generate_all()
+            self.generated_new_project_id = wp_id.last_new_project_self.id
+            # finally
+            self.state = "final"
 
     def state_exit_g_a_local(self):
         # Create a workspace with same system of actual workspace, will be in test mode
