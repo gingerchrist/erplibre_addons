@@ -2239,6 +2239,7 @@ class DevopsWorkspace(models.Model):
 
             devops_exec = self.env["devops.exec"].create(devops_exec_value)
             lst_result.append(devops_exec)
+            status = None
             if force_open_terminal:
                 rec_force_docker = rec_force_docker or docker
                 rec.system_id.execute_terminal_gui(
@@ -2247,19 +2248,24 @@ class DevopsWorkspace(models.Model):
                     docker=rec_force_docker,
                 )
             elif rec_force_docker:
-                out = rec.system_id.exec_docker(cmd, force_folder)
+                out, status = rec.system_id.exec_docker(
+                    cmd, force_folder, return_status=True
+                )
             else:
                 if run_into_workspace and not folder:
                     folder = force_folder
-                out = rec.system_id.execute_with_result(
+                out, status = rec.system_id.execute_with_result(
                     cmd,
                     folder,
                     add_stdin_log=add_stdin_log,
                     add_stderr_log=add_stderr_log,
                     engine=engine,
                     delimiter_bash=delimiter_bash,
+                    return_status=True,
                 )
 
+            if status:
+                devops_exec.exec_status = int(status)
             devops_exec.exec_stop_date = fields.Datetime.now()
             if out is not False:
                 devops_exec.log_stdout = out

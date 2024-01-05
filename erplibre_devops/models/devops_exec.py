@@ -22,6 +22,8 @@ class DevopsExec(models.Model):
 
     cmd = fields.Char()
 
+    exec_status = fields.Integer(help="Return status of execution. 0=success")
+
     exec_start_date = fields.Datetime(
         string="Execution start date",
         default=fields.Datetime.now,

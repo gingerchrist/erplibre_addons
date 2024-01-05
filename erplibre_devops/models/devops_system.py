@@ -131,7 +131,13 @@ class DevopsSystem(models.Model):
                 )
 
     @api.model
-    def execute_process(self, cmd, add_stdin_log=False, add_stderr_log=True):
+    def execute_process(
+        self,
+        cmd,
+        add_stdin_log=False,
+        add_stderr_log=True,
+        return_status=False,
+    ):
         # subprocess.Popen("date", stdout=subprocess.PIPE, shell=True)
         # (output, err) = p.communicate()
         p = subprocess.Popen(
@@ -162,7 +168,9 @@ class DevopsSystem(models.Model):
         result = output.decode()
         if add_stderr_log:
             result += err.decode()
-        return result
+        if not return_status:
+            return result
+        return result, p_status
 
     def execute_with_result(
         self,
@@ -172,6 +180,7 @@ class DevopsSystem(models.Model):
         add_stderr_log=True,
         engine="bash",
         delimiter_bash="'",
+        return_status=False,
     ):
         """
         engine can be bash, python or sh
@@ -187,9 +196,16 @@ class DevopsSystem(models.Model):
         if self.debug_command:
             print(cmd)
         for rec in self.filtered(lambda r: r.method == "local"):
-            result = rec.execute_process(cmd)
+            if not return_status:
+                result = rec.execute_process(cmd)
+                status = None
+            else:
+                result, status = rec.execute_process(cmd, return_status=True)
             if len(self) == 1:
-                return result
+                if not return_status:
+                    return result
+                else:
+                    return result, status
             lst_result.append(result)
         for rec in self.filtered(lambda r: r.method == "ssh"):
             with rec.ssh_connection() as ssh_client:
@@ -202,11 +218,16 @@ class DevopsSystem(models.Model):
                 if add_stderr_log:
                     result += stderr.read().decode("utf-8")
                 if len(self) == 1:
-                    return result
+                    if not return_status:
+                        return result
+                    else:
+                        # TODO support status with ssh_client
+                        return result, None
                 lst_result.append(result)
         return lst_result
 
     def execute_terminal_gui(self, folder="", cmd="", docker=False):
+        # TODO support argument return_status
         # TODO if folder not exist, cannot CD. don't execute the command if wrong directory
         for rec in self.filtered(lambda r: r.method == "local"):
             str_keep_open = ""
@@ -299,7 +320,7 @@ class DevopsSystem(models.Model):
             if rec.debug_command:
                 print(cmd_output)
 
-    def exec_docker(self, cmd, folder):
+    def exec_docker(self, cmd, folder, return_status=False):
         workspace = os.path.basename(folder)
         docker_name = f"{workspace}-ERPLibre-1"
         # for "docker exec", command line need "-ti", but "popen" no need
@@ -307,7 +328,9 @@ class DevopsSystem(models.Model):
         cmd_output = f'docker exec -u root {docker_name} /bin/bash -c "{cmd}"'
         if self.debug_command:
             print(cmd_output)
-        return self.execute_with_result(cmd_output, folder)
+        return self.execute_with_result(
+            cmd_output, folder, return_status=return_status
+        )
 
     @api.multi
     def action_ssh_test_connection(self):

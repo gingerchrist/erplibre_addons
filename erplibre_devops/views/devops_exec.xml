@@ -52,6 +52,7 @@
                             <field name="cmd" />
                         </group>
                         <group string="Error">
+                            <field name="exec_status" />
                             <field name="devops_exec_error_ids" />
                         </group>
                         <group string="Code">
