@@ -1,3 +1,6 @@
+import time
+import uuid
+
 from odoo import _, api, fields, models
 
 
@@ -5,6 +8,11 @@ class DevopsPlanActionWizard(models.TransientModel):
     _name = "devops.plan.action.wizard"
     _description = "Devops planification do an action with a specific workflow"
     _inherit = ["multi.step.wizard.mixin"]
+
+    def _default_image_db_selection(self):
+        return self.env["devops.db.image"].search(
+            [("name", "like", "erplibre_base")], limit=1
+        )
 
     name = fields.Char()
 
@@ -15,6 +23,13 @@ class DevopsPlanActionWizard(models.TransientModel):
         default=lambda self: self.env.context.get("active_id"),
         ondelete="cascade",
         help="Workspace where to execute the action.",
+    )
+
+    create_workspace_id = fields.Many2one(
+        comodel_name="devops.workspace",
+        string="Created workspace",
+        ondelete="cascade",
+        help="Workspace generate by this wizard.",
     )
 
     root_workspace_id_is_me = fields.Boolean(related="root_workspace_id.is_me")
@@ -29,6 +44,11 @@ class DevopsPlanActionWizard(models.TransientModel):
     has_next = fields.Boolean(compute="_compute_has_next")
 
     model_name = fields.Char(string="Model")
+
+    image_db_selection = fields.Many2one(
+        comodel_name="devops.db.image",
+        default=_default_image_db_selection,
+    )
 
     # option_adding = fields.Selection([
     #     ('inherit', 'Inherit Model'),
@@ -79,6 +99,9 @@ class DevopsPlanActionWizard(models.TransientModel):
             ("c_existing_module", "Existing module"),
             ("d_import_data", "Import data"),
             ("e_migrate_from_external_ddb", "Migrate from external database"),
+            ("f_new_project_society", "New society"),
+            ("g_test_erplibre", "Test ERPLibre"),
+            ("g_a_local", "Test ERPLibre local"),
             ("not_supported", "Not supported"),
             ("final", "Final"),
         ]
@@ -93,6 +116,18 @@ class DevopsPlanActionWizard(models.TransientModel):
 
     def state_goto_a_b_field(self):
         self.state = "a_b_field"
+        return self._reopen_self()
+
+    def state_goto_f_new_project_society(self):
+        self.state = "f_new_project_society"
+        return self._reopen_self()
+
+    def state_goto_g_test_erplibre(self):
+        self.state = "g_test_erplibre"
+        return self._reopen_self()
+
+    def state_goto_g_a_local(self):
+        self.state = "g_a_local"
         return self._reopen_self()
 
     def state_goto_a_c_action(self):
@@ -129,6 +164,43 @@ class DevopsPlanActionWizard(models.TransientModel):
 
     def state_previous_a_d_view(self):
         self.state = "a_autopoiesis_devops"
+
+    def state_previous_f_new_project_society(self):
+        self.state = "init"
+
+    def state_previous_g_test_erplibre(self):
+        self.state = "init"
+
+    def state_previous_g_a_local(self):
+        self.state = "g_test_erplibre"
+
+    def state_exit_g_a_local(self):
+        # Create a workspace with same system of actual workspace, will be in test mode
+        wp_id = self.root_workspace_id
+        dct_wp = {
+            "system_id": wp_id.system_id.id,
+            "folder": f"/tmp/test_erplibre_{uuid.uuid4()}",
+            "mode_source": "docker",
+            "mode_exec": "docker",
+            "image_db_selection": self.image_db_selection.id,
+        }
+        local_wp_id = self.env["devops.workspace"].create(dct_wp)
+        self.create_workspace_id = local_wp_id.id
+        local_wp_id.action_install_workspace()
+        local_wp_id.action_start()
+        # TODO implement detect when website is up or cancel state with error
+        time.sleep(5)
+        local_wp_id.action_restore_db_image()
+        wp_id.execute(
+            cmd=(
+                "source ./.venv/bin/activate;./script/selenium/web_login.py"
+                f" --url {local_wp_id.url_instance}"
+            ),
+            force_open_terminal=True,
+            run_into_workspace=True,
+        )
+        # finally
+        self.state = "final"
 
     def state_exit_a_a_model(self):
         wp_id = self.root_workspace_id
