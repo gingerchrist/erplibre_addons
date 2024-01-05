@@ -275,84 +275,91 @@ class DevopsPlanActionWizard(models.TransientModel):
             self.state = "final"
 
     def state_exit_g_a_local(self):
-        # Create a workspace with same system of actual workspace, will be in test mode
-        wp_id = self.root_workspace_id
-        dct_wp = {
-            "system_id": wp_id.system_id.id,
-            "folder": f"/tmp/test_erplibre_{uuid.uuid4()}",
-            "mode_source": "docker",
-            "mode_exec": "docker",
-            "image_db_selection": self.image_db_selection.id,
-        }
-        local_wp_id = self.env["devops.workspace"].create(dct_wp)
-        self.create_workspace_id = local_wp_id.id
-        local_wp_id.action_install_workspace()
-        local_wp_id.action_start()
-        # TODO implement detect when website is up or cancel state with error
-        time.sleep(5)
-        local_wp_id.action_restore_db_image()
-        if self.enable_package_srs:
-            local_wp_id.install_module("project_srs")
-        wp_id.execute(
-            cmd=(
-                "source ./.venv/bin/activate;./script/selenium/web_login.py"
-                f" --url {local_wp_id.url_instance}"
-            ),
-            force_open_terminal=True,
-            run_into_workspace=True,
-        )
-        # finally
-        self.state = "final"
+        with self.root_workspace_id.devops_create_exec_bundle(
+            "Plan g_a_local"
+        ) as wp_id:
+            # Create a workspace with same system of actual workspace, will be in test mode
+            dct_wp = {
+                "system_id": wp_id.system_id.id,
+                "folder": f"/tmp/test_erplibre_{uuid.uuid4()}",
+                "mode_source": "docker",
+                "mode_exec": "docker",
+                "image_db_selection": self.image_db_selection.id,
+            }
+            local_wp_id = self.env["devops.workspace"].create(dct_wp)
+            self.create_workspace_id = local_wp_id.id
+            local_wp_id.action_install_workspace()
+            local_wp_id.action_start()
+            # TODO implement detect when website is up or cancel state with error
+            time.sleep(5)
+            local_wp_id.action_restore_db_image()
+            if self.enable_package_srs:
+                local_wp_id.install_module("project_srs")
+            wp_id.execute(
+                cmd=(
+                    "source"
+                    " ./.venv/bin/activate;./script/selenium/web_login.py"
+                    f" --url {local_wp_id.url_instance}"
+                ),
+                force_open_terminal=True,
+                run_into_workspace=True,
+            )
+            # finally
+            self.state = "final"
 
     def state_exit_a_a_model(self):
-        wp_id = self.root_workspace_id
-        # Project
-        cg_id = self.env["devops.code_generator"].create(
-            {
-                "name": "Autopoiesis",
-                "devops_workspace_ids": [(6, 0, wp_id.ids)],
-                "force_clean_before_generate": False,
-            }
-        )
-        # Module
-        cg_module_id = self.env["devops.code_generator.module"].create(
-            {
-                "name": "erplibre_devops",
-                "code_generator": cg_id.id,
-                "devops_workspace_ids": [(6, 0, wp_id.ids)],
-            }
-        )
-        # Model
-        cg_model_id = self.env["devops.code_generator.module.model"].create(
-            {
-                "name": self.model_name,
-                "description": "Example feature to add to devops",
-                "module_id": cg_module_id.id,
-                "devops_workspace_ids": [(6, 0, wp_id.ids)],
-            }
-        )
-        # Field
-        # cg_field_id = self.env[
-        #     "devops.code_generator.module.model.field"
-        # ].create(
-        #     {
-        #         "name": "size",
-        #         "help": "Size of this example.",
-        #         "type": "integer",
-        #         "model_id": cg_model_id.id,
-        #         "devops_workspace_ids": [(6, 0, wp_id.ids)],
-        #     }
-        # )
-        # Overwrite information
-        wp_id.devops_code_generator_ids = [(6, 0, cg_id.ids)]
-        wp_id.devops_code_generator_module_ids = [(6, 0, cg_module_id.ids)]
-        wp_id.devops_code_generator_model_ids = [(6, 0, [cg_model_id.id])]
-        wp_id.devops_code_generator_field_ids = [(6, 0, [])]
-        # Update configuration self-gen
-        wp_id.cg_self_add_config_cg = True
-        wp_id.mode_view = "new_view"
-        # Generate
-        wp_id.action_cg_erplibre_devops()
-        self.generated_new_project_id = wp_id.last_new_project_self.id
-        # finally
-        self.state = "final"
+        with self.root_workspace_id.devops_create_exec_bundle(
+            "Plan a_a_model"
+        ) as wp_id:
+            # Project
+            cg_id = self.env["devops.code_generator"].create(
+                {
+                    "name": "Autopoiesis",
+                    "devops_workspace_ids": [(6, 0, wp_id.ids)],
+                    "force_clean_before_generate": False,
+                }
+            )
+            # Module
+            cg_module_id = self.env["devops.code_generator.module"].create(
+                {
+                    "name": "erplibre_devops",
+                    "code_generator": cg_id.id,
+                    "devops_workspace_ids": [(6, 0, wp_id.ids)],
+                }
+            )
+            # Model
+            cg_model_id = self.env[
+                "devops.code_generator.module.model"
+            ].create(
+                {
+                    "name": self.model_name,
+                    "description": "Example feature to add to devops",
+                    "module_id": cg_module_id.id,
+                    "devops_workspace_ids": [(6, 0, wp_id.ids)],
+                }
+            )
+            # Field
+            # cg_field_id = self.env[
+            #     "devops.code_generator.module.model.field"
+            # ].create(
+            #     {
+            #         "name": "size",
+            #         "help": "Size of this example.",
+            #         "type": "integer",
+            #         "model_id": cg_model_id.id,
+            #         "devops_workspace_ids": [(6, 0, wp_id.ids)],
+            #     }
+            # )
+            # Overwrite information
+            wp_id.devops_code_generator_ids = [(6, 0, cg_id.ids)]
+            wp_id.devops_code_generator_module_ids = [(6, 0, cg_module_id.ids)]
+            wp_id.devops_code_generator_model_ids = [(6, 0, [cg_model_id.id])]
+            wp_id.devops_code_generator_field_ids = [(6, 0, [])]
+            # Update configuration self-gen
+            wp_id.cg_self_add_config_cg = True
+            wp_id.mode_view = "new_view"
+            # Generate
+            wp_id.action_cg_erplibre_devops()
+            self.generated_new_project_id = wp_id.last_new_project_self.id
+            # finally
+            self.state = "final"
