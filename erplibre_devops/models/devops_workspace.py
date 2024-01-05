@@ -1176,6 +1176,31 @@ class DevopsWorkspace(models.Model):
         return status
 
     @api.multi
+    def install_module(self, str_module_list):
+        for rec_o in self:
+            with rec_o.devops_create_exec_bundle("Install module") as rec:
+                # str_module_list is string separate module by ','
+                if rec.mode_exec in ["docker"]:
+                    last_cmd = rec.workspace_docker_id.docker_cmd_extra
+                    rec.workspace_docker_id.docker_cmd_extra = (
+                        f"-d {rec.db_name} -i {str_module_list} -u"
+                        f" {str_module_list}"
+                    )
+                    # TODO option install continuous or stop execution.
+                    # TODO Use install continuous in production, else stop execution for dev
+                    # TODO actually, it's continuous
+                    # TODO maybe add an auto-update when detect installation finish
+                    rec.action_reboot()
+                    rec.workspace_docker_id.docker_cmd_extra = last_cmd
+                elif rec.mode_exec in ["terminal"]:
+                    rec.execute(
+                        "./script/addons/install_addons.sh"
+                        f" {rec.db_name} {str_module_list}",
+                        to_instance=True,
+                    )
+                    rec.action_reboot()
+
+    @api.multi
     def action_install_all_generated_module(self):
         for rec_o in self:
             with rec_o.devops_create_exec_bundle(
@@ -1189,24 +1214,7 @@ class DevopsWorkspace(models.Model):
                         for m in cg.module_ids
                     ]
                 )
-                if rec.mode_exec in ["docker"]:
-                    last_cmd = rec.workspace_docker_id.docker_cmd_extra
-                    rec.workspace_docker_id.docker_cmd_extra = (
-                        f"-d {rec.db_name} -i {module_list} -u {module_list}"
-                    )
-                    # TODO option install continuous or stop execution.
-                    # TODO Use install continuous in production, else stop execution for dev
-                    # TODO actually, it's continuous
-                    # TODO maybe add an auto-update when detect installation finish
-                    rec.action_reboot()
-                    rec.workspace_docker_id.docker_cmd_extra = last_cmd
-                elif rec.mode_exec in ["terminal"]:
-                    rec.execute(
-                        "./script/addons/install_addons.sh"
-                        f" {rec.db_name} {module_list}",
-                        to_instance=True,
-                    )
-                    rec.action_reboot()
+                rec.install_module(module_list)
                 end = datetime.now()
                 td = (end - start).total_seconds()
                 rec.time_exec_action_install_all_generated_module = (

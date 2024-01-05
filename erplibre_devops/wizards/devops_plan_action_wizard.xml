@@ -118,6 +118,9 @@
                     <group string="DB">
                         <field name="image_db_selection" />
                     </group>
+                    <group string="Package">
+                        <field name="enable_package_srs" />
+                    </group>
                 </group>
                 <group
                     name="group_f_new_project_society"

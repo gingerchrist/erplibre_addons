@@ -73,6 +73,8 @@ class DevopsPlanActionWizard(models.TransientModel):
     #     help="Select the model you want to inherit or import data.",
     # )
 
+    enable_package_srs = fields.Boolean()
+
     user_id = fields.Many2one(
         comodel_name="res.users",
         string="User",
@@ -191,6 +193,8 @@ class DevopsPlanActionWizard(models.TransientModel):
         # TODO implement detect when website is up or cancel state with error
         time.sleep(5)
         local_wp_id.action_restore_db_image()
+        if self.enable_package_srs:
+            local_wp_id.install_module("project_srs")
         wp_id.execute(
             cmd=(
                 "source ./.venv/bin/activate;./script/selenium/web_login.py"
