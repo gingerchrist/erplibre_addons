@@ -270,11 +270,6 @@ class DevopsWorkspace(models.Model):
         help="Execution time of method action_code_generator_generate_all",
     )
 
-    time_exec_action_cg_erplibre_devops = fields.Char(
-        readonly=True,
-        help="Execution time of method action_cg_erplibre_devops",
-    )
-
     mode_source = fields.Selection(
         selection=[("docker", "Docker"), ("git", "Git")],
         required=True,
@@ -289,6 +284,16 @@ class DevopsWorkspace(models.Model):
         ],
         default="same_view",
         help="Mode view, enable rebuild same view or create new view.",
+    )
+
+    code_mode_context_generator = fields.Selection(
+        selection=[
+            ("default", "Default"),
+            ("autopoiesis", "Autopoiesis"),
+            ("custom", "Custom"),
+        ],
+        default="default",
+        help="Change context variable easy change.",
     )
 
     config_uca_enable_export_data = fields.Boolean(
@@ -641,68 +646,6 @@ class DevopsWorkspace(models.Model):
             ].search_count([("devops_workspace", "=", rec.id)])
 
     @api.multi
-    def action_cg_erplibre_devops(self):
-        for rec_o in self:
-            with rec_o.devops_create_exec_bundle(
-                "Code generator erplibre DevOps"
-            ) as rec:
-                start = datetime.now()
-                rec.devops_cg_erplibre_devops_error_log = False
-                rec.need_debugger_cg_erplibre_devops = False
-                addons_path = "./addons/ERPLibre_erplibre_addons"
-                module_name = "erplibre_devops"
-
-                devops_exec_bundle_parent_root_id = (
-                    self.env["devops.exec.bundle"]
-                    .browse(rec._context.get("devops_exec_bundle"))
-                    .get_parent_root()
-                )
-
-                dct_new_project = {
-                    "module": module_name,
-                    "directory": addons_path,
-                    "devops_workspace": rec.id,
-                    "project_type": "self",
-                    "stop_execution_if_env_not_clean": rec.stop_execution_if_env_not_clean,
-                    "devops_exec_bundle_id": devops_exec_bundle_parent_root_id.id,
-                    "mode_view": rec.mode_view,
-                    "mode_view_snippet": rec.mode_view_snippet,
-                    "mode_view_snippet_enable_template_website_snippet_view": rec.mode_view_snippet_enable_template_website_snippet_view,
-                    "mode_view_snippet_template_generate_website_snippet_generic_mdl": rec.mode_view_snippet_template_generate_website_snippet_generic_mdl,
-                    "mode_view_snippet_template_generate_website_snippet_ctrl_featur": rec.mode_view_snippet_template_generate_website_snippet_ctrl_featur,
-                    "mode_view_snippet_template_generate_website_enable_javascript": rec.mode_view_snippet_template_generate_website_enable_javascript,
-                    "mode_view_snippet_template_generate_website_snippet_type": rec.mode_view_snippet_template_generate_website_snippet_type,
-                    "config_uca_enable_export_data": rec.config_uca_enable_export_data,
-                }
-
-                model_conf = None
-                if rec.cg_self_add_config_cg:
-                    if rec.devops_code_generator_ids:
-                        cg_gen_id = rec.devops_code_generator_ids[0]
-                        if cg_gen_id.module_ids:
-                            module_id = cg_gen_id.module_ids[0]
-                            model_conf = rec.get_cg_model_config(module_id)
-                if model_conf:
-                    dct_new_project["config"] = model_conf
-
-                new_project_id = self.env["devops.cg.new_project"].create(
-                    dct_new_project
-                )
-                if rec.last_new_project_self:
-                    new_project_id.last_new_project = (
-                        rec.last_new_project_self.id
-                    )
-                rec.last_new_project_self = new_project_id.id
-                new_project_id.with_context(rec._context).action_new_project()
-                # result = rec.execute(
-                #     cmd=f"cd {rec.folder};./script/code_generator/new_project.py"
-                #     f" -d {addons_path} -m {module_name}",
-                # )
-                end = datetime.now()
-                td = (end - start).total_seconds()
-                rec.time_exec_action_cg_erplibre_devops = f"{td:.03f}s"
-
-    @api.multi
     def action_cg_setup_pycharm_debug(self):
         for rec_o in self:
             with rec_o.devops_create_exec_bundle("Setup PyCharm debug") as rec:
@@ -817,6 +760,9 @@ class DevopsWorkspace(models.Model):
         for rec_o in self:
             with rec_o.devops_create_exec_bundle("CG generate module") as rec:
                 start = datetime.now()
+                # TODO no where this variable are set at true, need hook
+                rec.devops_cg_erplibre_devops_error_log = False
+                rec.need_debugger_cg_erplibre_devops = False
                 # TODO add try catch, add breakpoint, rerun loop. Careful when lose context
                 # Start with local storage
                 # Increase speed
@@ -830,25 +776,45 @@ class DevopsWorkspace(models.Model):
                     rec.workspace_docker_id.docker_config_gen_cg = False
                 for rec_cg in rec.devops_code_generator_ids:
                     for module_id in rec_cg.module_ids:
-                        model_conf = rec.get_cg_model_config(module_id)
-                        if rec_cg.force_clean_before_generate:
-                            rec.workspace_code_remove_module(module_id)
-                        directory = os.path.join(
-                            rec.path_working_erplibre,
-                            rec.path_code_generator_to_generate,
-                        )
                         devops_exec_bundle_parent_root_id = (
                             self.env["devops.exec.bundle"]
                             .browse(rec._context.get("devops_exec_bundle"))
                             .get_parent_root()
                         )
+                        if rec_cg.force_clean_before_generate:
+                            rec.workspace_code_remove_module(module_id)
+                        model_conf = None
+                        if rec.code_mode_context_generator == "autopoieses":
+                            # TODO found path by this __file__
+                            directory = "./addons/ERPLibre_erplibre_addons"
+                            module = "erplibre_devops"
+                            project_type = "self"
+                            if rec.cg_self_add_config_cg:
+                                model_conf = rec.get_cg_model_config(module_id)
+                        else:
+                            model_conf = rec.get_cg_model_config(module_id)
+                            directory = os.path.join(
+                                rec.path_working_erplibre,
+                                rec.path_code_generator_to_generate,
+                            )
+                            module = module_id.name
+                            project_type = "cg"
                         dct_new_project = {
-                            "module": module_id.name,
+                            "module": module,
                             "directory": directory,
                             "keep_bd_alive": True,
                             "devops_workspace": rec.id,
-                            "project_type": "cg",
+                            "project_type": project_type,
                             "devops_exec_bundle_id": devops_exec_bundle_parent_root_id.id,
+                            "stop_execution_if_env_not_clean": rec.stop_execution_if_env_not_clean,
+                            "mode_view": rec.mode_view,
+                            "mode_view_snippet": rec.mode_view_snippet,
+                            "mode_view_snippet_enable_template_website_snippet_view": rec.mode_view_snippet_enable_template_website_snippet_view,
+                            "mode_view_snippet_template_generate_website_snippet_generic_mdl": rec.mode_view_snippet_template_generate_website_snippet_generic_mdl,
+                            "mode_view_snippet_template_generate_website_snippet_ctrl_featur": rec.mode_view_snippet_template_generate_website_snippet_ctrl_featur,
+                            "mode_view_snippet_template_generate_website_enable_javascript": rec.mode_view_snippet_template_generate_website_enable_javascript,
+                            "mode_view_snippet_template_generate_website_snippet_type": rec.mode_view_snippet_template_generate_website_snippet_type,
+                            "config_uca_enable_export_data": rec.config_uca_enable_export_data,
                         }
                         # extra_arg = ""
                         if model_conf:
@@ -863,7 +829,9 @@ class DevopsWorkspace(models.Model):
                                 rec.last_new_project_cg.id
                             )
                         rec.last_new_project_cg = new_project_id.id
-                        new_project_id.action_new_project()
+                        new_project_id.with_context(
+                            rec._context
+                        ).action_new_project()
                         # cmd = (
                         #     f"cd {rec.path_working_erplibre};./script/code_generator/new_project.py"
                         #     f" --keep_bd_alive -m {module_name} -d"
@@ -871,6 +839,11 @@ class DevopsWorkspace(models.Model):
                         # )
                         # result = rec.execute(cmd=cmd, to_instance=True)
                         # rec.devops_code_generator_log_addons = result
+                        # OR
+                        # result = rec.execute(
+                        #     cmd=f"cd {rec.folder};./script/code_generator/new_project.py"
+                        #     f" -d {addons_path} -m {module_name}",
+                        # )
                 if rec.devops_code_generator_ids and rec.mode_exec in [
                     "docker"
                 ]:
@@ -1327,7 +1300,6 @@ class DevopsWorkspace(models.Model):
     def action_clear_cache(self):
         for rec in self:
             rec.time_exec_action_code_generator_generate_all = False
-            rec.time_exec_action_cg_erplibre_devops = False
             rec.time_exec_action_clear_all_generated_module = False
             rec.time_exec_action_install_all_generated_module = False
             rec.time_exec_action_install_all_uca_generated_module = False

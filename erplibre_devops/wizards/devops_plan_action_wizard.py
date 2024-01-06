@@ -199,7 +199,6 @@ class DevopsPlanActionWizard(models.TransientModel):
         with self.root_workspace_id.devops_create_exec_bundle(
             "Plan c_a_model"
         ) as wp_id:
-            print(self.model_name)
             module_name = (
                 self.working_module_id.name
                 if self.working_module_id
@@ -267,7 +266,7 @@ class DevopsPlanActionWizard(models.TransientModel):
             wp_id.devops_code_generator_field_ids = [(6, 0, [])]
             # Update configuration self-gen
             # wp_id.cg_self_add_config_cg = True
-            # wp_id.mode_view = "new_view"
+            wp_id.mode_view = "new_view"
             # Generate
             wp_id.action_code_generator_generate_all()
             self.generated_new_project_id = wp_id.last_new_project_self.id
@@ -358,8 +357,10 @@ class DevopsPlanActionWizard(models.TransientModel):
             # Update configuration self-gen
             wp_id.cg_self_add_config_cg = True
             wp_id.mode_view = "new_view"
+            wp_id.code_mode_context_generator = "autopoiesis"
             # Generate
-            wp_id.action_cg_erplibre_devops()
+            wp_id.action_code_generator_generate_all()
+
             self.generated_new_project_id = wp_id.last_new_project_self.id
             # finally
             self.state = "final"

@@ -266,6 +266,10 @@
                         </group>
                     </page>
                     <page name="code_generator" string="Code">
+                        <div class="bg-warning">
+                            <h3>Warning:</h3>
+                            Create new project with code generator
+                        </div>
                         <group string="Action CG">
                             <group>
                                 <button
@@ -401,79 +405,9 @@
                                 />
                             </group>
                         </group>
-                        <group string="Action other">
-                            <group>
-                                <button
-                                    name="action_cg_generate_demo"
-                                    string="Generate demo"
-                                    type="object"
-                                    class="oe_highlight"
-                                />
-                                <field name="is_clear_before_cg_demo" />
-                                <field name="cg_demo_type_data" />
-                            </group>
-                        </group>
-                        <group string="Execution">
-                            <field name="last_new_project_cg" />
-                        </group>
-                        <group string="Configuration">
-                            <field name="path_code_generator_to_generate" />
-                            <field name="path_working_erplibre" />
-                        </group>
-                        <group string="Generator">
-                            <field name="id" invisible="True" />
-                            <field
-                                name="devops_code_generator_ids"
-                                widget="many2many"
-                                options="{'always_reload': True}"
-                                context="{'default_devops_workspace_ids': [id]}"
-                            />
-                            <field
-                                name="devops_code_generator_module_ids"
-                                widget="many2many"
-                                options="{'always_reload': True}"
-                                context="{'default_devops_workspace_ids': [id]}"
-                            />
-                            <field
-                                name="devops_code_generator_model_ids"
-                                widget="many2many"
-                                options="{'always_reload': True}"
-                                context="{'default_devops_workspace_ids': [id]}"
-                            />
-                            <field
-                                name="devops_code_generator_field_ids"
-                                widget="many2many"
-                                options="{'always_reload': True}"
-                                context="{'default_devops_workspace_ids': [id]}"
-                            />
-                        </group>
-                    </page>
-                    <page name="code_generator_misc" string="CG">
-                        <div class="bg-warning">
-                            <h3>Warning:</h3>
-                            Create new project with code generator
-                        </div>
+                        <field name="need_debugger_cg_erplibre_devops" invisible="True" />
                         <group string="CG new project">
                             <group>
-                                <field name="need_debugger_cg_erplibre_devops" invisible="True" />
-                                <button
-                                    name="action_cg_erplibre_devops"
-                                    string="ERPLibre DevOps"
-                                    type="object"
-                                    class="oe_highlight"
-                                />
-                                <div attrs="{'invisible': [('time_exec_action_cg_erplibre_devops', '=', False)]}">
-                                    Exec in
-                                    <field name="time_exec_action_cg_erplibre_devops" nolabel="1" />
-                                </div>
-                                <div attrs="{'invisible': [('need_debugger_cg_erplibre_devops', '=', False)]}">
-                                    <button
-                                        name="action_cg_setup_pycharm_debug"
-                                        string="Setup Pycharm debug"
-                                        type="object"
-                                        class="oe_highlight"
-                                    />
-                                </div>
                                 <button
                                     name="action_open_terminal_path_erplibre_devops"
                                     string="Terminal path erplibre_devops"
@@ -504,33 +438,83 @@
                                     type="object"
                                     class="oe_highlight"
                                 />
+                                <button
+                                    name="action_cg_setup_pycharm_debug"
+                                    string="Setup Pycharm debug"
+                                    type="object"
+                                    class="oe_highlight"
+                                    attrs="{'invisible': [('need_debugger_cg_erplibre_devops', '=', False)]}"
+                                />
                             </group>
-                            <group>
+                        </group>
+                        <group>
+                            <group string="Action other">
+                                <button
+                                    name="action_cg_generate_demo"
+                                    string="Generate demo"
+                                    type="object"
+                                    class="oe_highlight"
+                                />
+                                <field name="is_clear_before_cg_demo" />
+                                <field name="cg_demo_type_data" />
+                            </group>
+                            <group string="Execution">
+                                <field name="last_new_project_cg" />
+                                <field name="last_new_project_self" />
                                 <field name="stop_execution_if_env_not_clean" />
                                 <field name="cg_self_add_config_cg" />
                             </group>
+                            <group name="group_cg_uca" string="CG config UcA">
+                                <field name="config_uca_enable_export_data" />
+                            </group>
+                            <group string="Log">
+                                <field
+                                    name="devops_cg_erplibre_devops_error_log"
+                                    attrs="{'invisible': [('devops_cg_erplibre_devops_error_log', '=', False)]}"
+                                />
+                                <field name="devops_cg_erplibre_devops_log" />
+                            </group>
+                            <group name="group_cg_config" string="CG config view">
+                                <field name="mode_view" />
+                                <field name="mode_view_snippet" />
+                                <field name="mode_view_snippet_enable_template_website_snippet_view" />
+                                <field name="mode_view_snippet_template_generate_website_snippet_generic_mdl" />
+                                <field name="mode_view_snippet_template_generate_website_snippet_ctrl_featur" />
+                                <field name="mode_view_snippet_template_generate_website_enable_javascript" />
+                                <field name="mode_view_snippet_template_generate_website_snippet_type" />
+                            </group>
+                            <group string="Configuration">
+                                <field name="code_mode_context_generator" />
+                                <field name="path_code_generator_to_generate" />
+                                <field name="path_working_erplibre" />
+                            </group>
                         </group>
-                        <group name="group_cg_uca" string="CG config UcA">
-                            <field name="config_uca_enable_export_data" />
-                        </group>
-                        <group name="group_cg_config" string="CG config view">
-                            <field name="mode_view" />
-                            <field name="mode_view_snippet" />
-                            <field name="mode_view_snippet_enable_template_website_snippet_view" />
-                            <field name="mode_view_snippet_template_generate_website_snippet_generic_mdl" />
-                            <field name="mode_view_snippet_template_generate_website_snippet_ctrl_featur" />
-                            <field name="mode_view_snippet_template_generate_website_enable_javascript" />
-                            <field name="mode_view_snippet_template_generate_website_snippet_type" />
-                        </group>
-                        <group string="Execution">
-                            <field name="last_new_project_self" />
-                        </group>
-                        <group string="Log">
+                        <group string="Generator">
+                            <field name="id" invisible="True" />
                             <field
-                                name="devops_cg_erplibre_devops_error_log"
-                                attrs="{'invisible': [('devops_cg_erplibre_devops_error_log', '=', False)]}"
+                                name="devops_code_generator_ids"
+                                widget="many2many"
+                                options="{'always_reload': True}"
+                                context="{'default_devops_workspace_ids': [id]}"
                             />
-                            <field name="devops_cg_erplibre_devops_log" />
+                            <field
+                                name="devops_code_generator_module_ids"
+                                widget="many2many"
+                                options="{'always_reload': True}"
+                                context="{'default_devops_workspace_ids': [id]}"
+                            />
+                            <field
+                                name="devops_code_generator_model_ids"
+                                widget="many2many"
+                                options="{'always_reload': True}"
+                                context="{'default_devops_workspace_ids': [id]}"
+                            />
+                            <field
+                                name="devops_code_generator_field_ids"
+                                widget="many2many"
+                                options="{'always_reload': True}"
+                                context="{'default_devops_workspace_ids': [id]}"
+                            />
                         </group>
                     </page>
                     <page name="code_generator_info_diff" string="Diff">
