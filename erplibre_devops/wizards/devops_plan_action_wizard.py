@@ -55,6 +55,8 @@ class DevopsPlanActionWizard(models.TransientModel):
 
     model_name = fields.Char(string="Model")
 
+    model_description = fields.Char(string="Model description")
+
     image_db_selection = fields.Many2one(
         comodel_name="devops.db.image",
         default=_default_image_db_selection,
@@ -204,74 +206,9 @@ class DevopsPlanActionWizard(models.TransientModel):
                 if self.working_module_id
                 else self.working_module_name
             )
-            exec_id = wp_id.execute(
-                cmd=(
-                    "./script/addons/check_addons_exist.py --output_path -m"
-                    f" {module_name}"
-                ),
-                run_into_workspace=True,
+            self.generate_new_model(
+                wp_id, module_name, "Existing module new model"
             )
-            if exec_id.exec_status:
-                raise exceptions.Warning(f"Cannot find module '{module_name}'")
-            path_module = exec_id.log_all.strip()
-            dir_name, basename = os.path.split(path_module)
-            if dir_name.startswith(wp_id.folder):
-                relative_path_module = dir_name[len(wp_id.folder) + 1 :]
-            else:
-                relative_path_module = dir_name
-            # Project
-            cg_id = self.env["devops.code_generator"].create(
-                {
-                    "name": "Existing module new model",
-                    "devops_workspace_ids": [(6, 0, wp_id.ids)],
-                    "force_clean_before_generate": False,
-                }
-            )
-            # Module
-            cg_module_id = self.env["devops.code_generator.module"].create(
-                {
-                    "name": module_name,
-                    "code_generator": cg_id.id,
-                    "devops_workspace_ids": [(6, 0, wp_id.ids)],
-                }
-            )
-            # Model
-            cg_model_id = self.env[
-                "devops.code_generator.module.model"
-            ].create(
-                {
-                    "name": self.model_name,
-                    "description": "Example feature to add",
-                    "module_id": cg_module_id.id,
-                    "devops_workspace_ids": [(6, 0, wp_id.ids)],
-                }
-            )
-            # Field
-            # cg_field_id = self.env[
-            #     "devops.code_generator.module.model.field"
-            # ].create(
-            #     {
-            #         "name": "size",
-            #         "help": "Size of this example.",
-            #         "type": "integer",
-            #         "model_id": cg_model_id.id,
-            #         "devops_workspace_ids": [(6, 0, wp_id.ids)],
-            #     }
-            # )
-            # Overwrite information
-            wp_id.path_code_generator_to_generate = relative_path_module
-            wp_id.devops_code_generator_ids = [(6, 0, cg_id.ids)]
-            wp_id.devops_code_generator_module_ids = [(6, 0, cg_module_id.ids)]
-            wp_id.devops_code_generator_model_ids = [(6, 0, [cg_model_id.id])]
-            wp_id.devops_code_generator_field_ids = [(6, 0, [])]
-            # Update configuration self-gen
-            # wp_id.cg_self_add_config_cg = True
-            wp_id.mode_view = "new_view"
-            # Generate
-            wp_id.action_code_generator_generate_all()
-            self.generated_new_project_id = wp_id.last_new_project_self.id
-            # finally
-            self.state = "final"
 
     def state_exit_g_a_local(self):
         with self.root_workspace_id.devops_create_exec_bundle(
@@ -310,57 +247,98 @@ class DevopsPlanActionWizard(models.TransientModel):
         with self.root_workspace_id.devops_create_exec_bundle(
             "Plan a_a_model"
         ) as wp_id:
-            # Project
-            cg_id = self.env["devops.code_generator"].create(
-                {
-                    "name": "Autopoiesis",
-                    "devops_workspace_ids": [(6, 0, wp_id.ids)],
-                    "force_clean_before_generate": False,
-                }
+            module_name = "erplibre_devops"
+            self.model_description = "Example feature to add to devops"
+            self.generate_new_model(
+                wp_id, module_name, "Autopoiesis", is_autopoiesis=True
             )
-            # Module
-            cg_module_id = self.env["devops.code_generator.module"].create(
-                {
-                    "name": "erplibre_devops",
-                    "code_generator": cg_id.id,
-                    "devops_workspace_ids": [(6, 0, wp_id.ids)],
-                }
-            )
-            # Model
-            cg_model_id = self.env[
-                "devops.code_generator.module.model"
-            ].create(
-                {
-                    "name": self.model_name,
-                    "description": "Example feature to add to devops",
-                    "module_id": cg_module_id.id,
-                    "devops_workspace_ids": [(6, 0, wp_id.ids)],
-                }
-            )
-            # Field
-            # cg_field_id = self.env[
-            #     "devops.code_generator.module.model.field"
-            # ].create(
-            #     {
-            #         "name": "size",
-            #         "help": "Size of this example.",
-            #         "type": "integer",
-            #         "model_id": cg_model_id.id,
-            #         "devops_workspace_ids": [(6, 0, wp_id.ids)],
-            #     }
-            # )
-            # Overwrite information
-            wp_id.devops_code_generator_ids = [(6, 0, cg_id.ids)]
-            wp_id.devops_code_generator_module_ids = [(6, 0, cg_module_id.ids)]
-            wp_id.devops_code_generator_model_ids = [(6, 0, [cg_model_id.id])]
-            wp_id.devops_code_generator_field_ids = [(6, 0, [])]
-            # Update configuration self-gen
-            wp_id.cg_self_add_config_cg = True
-            wp_id.mode_view = "new_view"
-            wp_id.code_mode_context_generator = "autopoiesis"
-            # Generate
-            wp_id.action_code_generator_generate_all()
 
-            self.generated_new_project_id = wp_id.last_new_project_self.id
-            # finally
-            self.state = "final"
+    def generate_new_model(
+        self, wp_id, module_name, project_name, is_autopoiesis=False
+    ):
+        # Search relative path
+        exec_id = wp_id.execute(
+            cmd=(
+                "./script/addons/check_addons_exist.py --output_path -m"
+                f" {module_name}"
+            ),
+            run_into_workspace=True,
+        )
+        if exec_id.exec_status:
+            raise exceptions.Warning(f"Cannot find module '{module_name}'")
+        path_module = exec_id.log_all.strip()
+        dir_name, basename = os.path.split(path_module)
+        if dir_name.startswith(wp_id.folder):
+            relative_path_module = dir_name[len(wp_id.folder) + 1 :]
+        else:
+            relative_path_module = dir_name
+        # Project
+        cg_id = self.env["devops.code_generator"].create(
+            {
+                "name": project_name,
+                "devops_workspace_ids": [(6, 0, wp_id.ids)],
+                "force_clean_before_generate": False,
+            }
+        )
+        # Module
+        cg_module_id = self.env["devops.code_generator.module"].create(
+            {
+                "name": module_name,
+                "code_generator": cg_id.id,
+                "devops_workspace_ids": [(6, 0, wp_id.ids)],
+            }
+        )
+        # Model
+        cg_model_id = self.env["devops.code_generator.module.model"].create(
+            {
+                "name": self.model_name,
+                "description": self.model_description,
+                "module_id": cg_module_id.id,
+                "devops_workspace_ids": [(6, 0, wp_id.ids)],
+            }
+        )
+        # Field
+        # cg_field_id = self.env[
+        #     "devops.code_generator.module.model.field"
+        # ].create(
+        #     {
+        #         "name": "size",
+        #         "help": "Size of this example.",
+        #         "type": "integer",
+        #         "model_id": cg_model_id.id,
+        #         "devops_workspace_ids": [(6, 0, wp_id.ids)],
+        #     }
+        # )
+        # Overwrite information
+        wp_id.path_code_generator_to_generate = relative_path_module
+        wp_id.devops_code_generator_ids = [(6, 0, cg_id.ids)]
+        wp_id.devops_code_generator_module_ids = [(6, 0, cg_module_id.ids)]
+        wp_id.devops_code_generator_model_ids = [(6, 0, [cg_model_id.id])]
+        wp_id.devops_code_generator_field_ids = [(6, 0, [])]
+        # Update configuration self-gen
+        wp_id.mode_view = "new_view"
+        if is_autopoiesis:
+            wp_id.cg_self_add_config_cg = True
+            wp_id.code_mode_context_generator = "autopoiesis"
+        # Generate
+        wp_id.action_code_generator_generate_all()
+        self.generated_new_project_id = wp_id.last_new_project_self.id
+        # Git add
+        model_file_name = self.model_name.replace(".", "_")
+        lst_default_file = [
+            f"{module_name}/__manifest__.py",
+            f"{module_name}/models/__init__.py",
+            f"{module_name}/models/{model_file_name}.py",
+            f"{module_name}/security/ir.model.access.csv",
+            f"{module_name}/views/menu.xml",
+            f"{module_name}/views/{model_file_name}.xml",
+        ]
+        cmd_git_add = ";".join([f"git add '{a}'" for a in lst_default_file])
+        wp_id.execute(
+            cmd=cmd_git_add,
+            folder=relative_path_module,
+            run_into_workspace=True,
+            to_instance=True,
+        )
+        # finally
+        self.state = "final"

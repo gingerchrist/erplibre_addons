@@ -110,10 +110,11 @@
                 >
                     <group string="Module" attrs="{'invisible': [('state', '!=', 'c_a_model')]}">
                         <field name="working_module_id" />
-                        <field name="working_module_name" />
+                        <field name="working_module_name" string="OR Working Module Name" />
                     </group>
                     <group string="Param">
                         <field name="model_name" />
+                        <field name="model_description" />
                     </group>
                 </group>
                 <group name="group_g_test_erplibre" attrs="{'invisible': [('state', '!=', 'g_test_erplibre')]}">
