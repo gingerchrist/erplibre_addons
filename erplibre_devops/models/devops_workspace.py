@@ -778,7 +778,8 @@ class DevopsWorkspace(models.Model):
                         if rec_cg.force_clean_before_generate:
                             rec.workspace_code_remove_module(module_id)
                         model_conf = None
-                        if rec.code_mode_context_generator == "autopoieses":
+                        if rec.code_mode_context_generator == "autopoiesis":
+                            # TODO this seems outdated, fix by wizard
                             # TODO found path by this __file__
                             directory = "./addons/ERPLibre_erplibre_addons"
                             module = "erplibre_devops"

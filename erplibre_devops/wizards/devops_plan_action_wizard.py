@@ -53,6 +53,12 @@ class DevopsPlanActionWizard(models.TransientModel):
 
     has_next = fields.Boolean(compute="_compute_has_next")
 
+    force_generate = fields.Boolean(
+        help=(
+            "Ignore secure file edited, can overwrite this file and lost data."
+        )
+    )
+
     model_name = fields.Char(string="Model")
 
     model_description = fields.Char(string="Model description")
@@ -109,6 +115,7 @@ class DevopsPlanActionWizard(models.TransientModel):
             ("a_b_field", "Field"),
             ("a_c_action", "Action"),
             ("a_d_view", "View"),
+            ("a_f_devops_regen", "DevOps regenerate"),
             ("b_new_module", "New module"),
             ("c_existing_module", "Existing module"),
             ("c_a_model", "Model existing module"),
@@ -131,6 +138,18 @@ class DevopsPlanActionWizard(models.TransientModel):
 
     def state_goto_a_b_field(self):
         self.state = "a_b_field"
+        return self._reopen_self()
+
+    def state_goto_a_e_cg_regen(self):
+        self.state = "a_e_cg_regen"
+        return self._reopen_self()
+
+    def state_goto_a_f_devops_regen(self):
+        self.state = "a_f_devops_regen"
+        return self._reopen_self()
+
+    def state_goto_a_g_regen(self):
+        self.state = "a_g_regen"
         return self._reopen_self()
 
     def state_goto_f_new_project_society(self):
@@ -186,6 +205,9 @@ class DevopsPlanActionWizard(models.TransientModel):
         self.state = "a_autopoiesis_devops"
 
     def state_previous_a_d_view(self):
+        self.state = "a_autopoiesis_devops"
+
+    def state_previous_a_f_devops_regen(self):
         self.state = "a_autopoiesis_devops"
 
     def state_previous_f_new_project_society(self):
@@ -252,6 +274,42 @@ class DevopsPlanActionWizard(models.TransientModel):
             self.generate_new_model(
                 wp_id, module_name, "Autopoiesis", is_autopoiesis=True
             )
+
+    def state_exit_a_f_devops_regen(self):
+        with self.root_workspace_id.devops_create_exec_bundle(
+            "Plan a_f_devops_regen"
+        ) as wp_id:
+            if self.force_generate:
+                wp_id.stop_execution_if_env_not_clean = False
+            wp_id.cg_self_add_config_cg = True
+            wp_id.code_mode_context_generator = "autopoiesis"
+            # Project
+            cg_id = self.env["devops.code_generator"].create(
+                {
+                    "name": "Autopoiesis regenerate",
+                    "devops_workspace_ids": [(6, 0, wp_id.ids)],
+                    "force_clean_before_generate": self.force_generate,
+                }
+            )
+            # Module
+            cg_module_id = self.env["devops.code_generator.module"].create(
+                {
+                    "name": "erplibre_devops",
+                    "code_generator": cg_id.id,
+                    "devops_workspace_ids": [(6, 0, wp_id.ids)],
+                }
+            )
+            # Overwrite information
+            # TODO this is a bug, no need that in reality, but action_code_generator_generate_all loop into it
+            wp_id.devops_code_generator_ids = [(6, 0, cg_id.ids)]
+            wp_id.devops_code_generator_module_ids = [(6, 0, cg_module_id.ids)]
+            wp_id.devops_code_generator_model_ids = [(6, 0, [])]
+            wp_id.devops_code_generator_field_ids = [(6, 0, [])]
+            # Generate
+            wp_id.action_code_generator_generate_all()
+            self.generated_new_project_id = wp_id.last_new_project_cg.id
+            # finally
+            self.state = "final"
 
     def generate_new_model(
         self, wp_id, module_name, project_name, is_autopoiesis=False

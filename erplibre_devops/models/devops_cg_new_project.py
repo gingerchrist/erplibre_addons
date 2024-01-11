@@ -1378,7 +1378,7 @@ class DevopsCgNewProject(models.Model):
                             f" configuration into {rec.template_hooks_py}"
                         )
                         has_error = True
-                    if not has_error:
+                    if not has_error and str_lst_model:
                         old_str = 'value["template_model_name"] ='
                         new_str = (
                             'value["template_model_name"] ='
