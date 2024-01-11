@@ -501,11 +501,6 @@ class DevopsWorkspace(models.Model):
 
     has_error_restore_db = fields.Boolean()
 
-    last_new_project_self = fields.Many2one(
-        comodel_name="devops.cg.new_project",
-        string="Last new project self",
-    )
-
     last_new_project_cg = fields.Many2one(
         comodel_name="devops.cg.new_project",
         string="Last new project cg",
@@ -572,12 +567,11 @@ class DevopsWorkspace(models.Model):
             )
 
     @api.multi
-    @api.depends("last_new_project_self", "last_new_project_self.has_error")
+    @api.depends("last_new_project_cg", "last_new_project_cg.has_error")
     def _compute_has_re_execute_new_project(self):
         for rec in self:
             rec.has_re_execute_new_project = bool(
-                rec.last_new_project_self
-                and rec.last_new_project_self.has_error
+                rec.last_new_project_cg and rec.last_new_project_cg.has_error
             )
 
     @api.multi
@@ -2376,15 +2370,15 @@ class DevopsWorkspace(models.Model):
                 "Re-execute last new project"
             ) as rec:
                 if rec._context.get("default_stage_Uc0"):
-                    rec.last_new_project_self.stage_id = self.env.ref(
+                    rec.last_new_project_cg.stage_id = self.env.ref(
                         "erplibre_devops.devops_cg_new_project_stage_generate_Uc0"
                     ).id
                 # TODO create a copy of new project and not modify older version
                 # TODO next sentence is not useful if made a copy
-                rec.last_new_project_self.devops_exec_bundle_id = (
+                rec.last_new_project_cg.devops_exec_bundle_id = (
                     rec._context.get("devops_exec_bundle")
                 )
-                rec.last_new_project_self.action_new_project()
+                rec.last_new_project_cg.action_new_project()
 
     @api.multi
     @api.model

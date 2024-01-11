@@ -322,7 +322,7 @@ class DevopsPlanActionWizard(models.TransientModel):
             wp_id.code_mode_context_generator = "autopoiesis"
         # Generate
         wp_id.action_code_generator_generate_all()
-        self.generated_new_project_id = wp_id.last_new_project_self.id
+        self.generated_new_project_id = wp_id.last_new_project_cg.id
         # Git add
         model_file_name = self.model_name.replace(".", "_")
         lst_default_file = [
