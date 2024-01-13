@@ -10,9 +10,13 @@
     "license": "AGPL-3",
     "website": "https://erplibre.ca",
     "application": True,
-    "depends": ["mail"],
+    "depends": [
+        "mail",
+        "multi_step_wizard",
+    ],
     "data": [
         "security/ir.model.access.csv",
+        "wizards/devops_plan_action_wizard.xml",
         "data/mail_message_subtype.xml",
         "views/devops_cg_new_project.xml",
         "views/devops_cg_new_project_stage.xml",

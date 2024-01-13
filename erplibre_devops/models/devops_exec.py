@@ -22,6 +22,8 @@ class DevopsExec(models.Model):
 
     cmd = fields.Char()
 
+    exec_status = fields.Integer(help="Return status of execution. 0=success")
+
     exec_start_date = fields.Datetime(
         string="Execution start date",
         default=fields.Datetime.now,
@@ -177,11 +179,15 @@ class DevopsExec(models.Model):
                 "have the same label:",
                 "odoo.addons.code_generator.extractor_module_file: Ignore next"
                 " error about ALTER TABLE DROP CONSTRAINT.",
-                "has no access rules, consider adding one.",
             ]
             keyword_warning_to_remove = [
                 "devops_log_warning.py",
             ]
+            lst_warning_key = [
+                "WARNING",
+                "warning:",
+            ]
+            lst_error_key = ["ERROR", "error:"]
             for line in rec.log_all.split("\n"):
                 # line_fix = line.lower()
                 line_fix = line
@@ -190,7 +196,21 @@ class DevopsExec(models.Model):
                 for key_to_remove in keyword_warning_to_remove:
                     line_fix = line_fix.replace(key_to_remove, "")
 
-                if "ERROR" in line_fix or "error:" in line_fix:
+                # Search error or warning
+                for key in lst_error_key:
+                    if key in line_fix:
+                        has_error = True
+                        break
+                else:
+                    has_error = False
+                for key in lst_warning_key:
+                    if key in line_fix:
+                        has_warning = True
+                        break
+                else:
+                    has_warning = False
+
+                if has_error:
                     for ignore_item in lst_item_ignore_error:
                         if ignore_item in line:
                             break
@@ -202,7 +222,8 @@ class DevopsExec(models.Model):
                         if rec.new_project_id:
                             v["new_project_id"] = rec.new_project_id.id
                         self.env["devops.log.error"].create(v)
-                if "WARNING" in line_fix or "warning:" in line_fix:
+
+                if has_warning:
                     for ignore_item in lst_item_ignore_warning:
                         if ignore_item in line:
                             break
