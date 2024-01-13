@@ -39,14 +39,12 @@ class DevopsIdePycharm(models.Model):
         result.action_pycharm_check()
         return result
 
-    @api.depends(
-        "devops_workspace.name",
-    )
+    @api.depends("devops_workspace.name")
     def _compute_name(self):
         for rec in self:
             rec.name = f"{rec.devops_workspace.name}"
 
-    @api.multi
+    @api.model
     def action_kill_pycharm(self):
         self.ensure_one()
         with self.devops_workspace.devops_create_exec_bundle(
@@ -59,15 +57,58 @@ class DevopsIdePycharm(models.Model):
             rec.execute(cmd=cmd, engine="")
 
     @api.multi
-    def action_start_pycharm(self):
+    def action_start_pycharm(self, ctx=None, new_project_id=None):
         self.ensure_one()
         with self.devops_workspace.devops_create_exec_bundle(
-            "Start PyCharm"
+            "Start PyCharm", ctx=ctx
         ) as rec_ws:
-            cmd = (
-                "~/.local/share/JetBrains/Toolbox/scripts/pycharm"
-                f" {rec_ws.folder}"
-            )
+            # TODO support diff "pycharm diff <path1> <path2> <path3>
+            # TODO support merge "pycharm merge <path1> <path2> <path3>
+            # TODO support format "pycharm format <path1> <path2> <path3>
+            # TODO support inspect "pycharm inspect <path1> <path2> <path3>
+            # TODO support inspect "pycharm inspect <path1> <path2> <path3>
+            lst_line = []
+            bp_id = None
+            breakpoint_name = rec_ws._context.get("breakpoint_name")
+            id_breakpoint = rec_ws._context.get("breakpoint_id")
+            if id_breakpoint:
+                bp_id = (
+                    self.env["devops.ide.breakpoint"]
+                    .browse(id_breakpoint)
+                    .exists()
+                )
+            elif breakpoint_name:
+                bp_id = (
+                    self.env["devops.ide.breakpoint"]
+                    .search([("name", "=", breakpoint_name)], limit=1)
+                    .exists()
+                )
+            if bp_id:
+                if bp_id.filename and bp_id.no_line >= 0:
+                    lst_line = [(bp_id.filename, [bp_id.no_line])]
+                else:
+                    try:
+                        lst_line = bp_id.get_breakpoint_info(
+                            rec_ws, new_project_id=new_project_id
+                        )
+                    except Exception as e:
+                        raise exceptions.Warning(
+                            f"Breakpoint '{bp_id.name}' : {e}"
+                        )
+            if lst_line:
+                filename = lst_line[0][0]
+                no_line = lst_line[0][1][0]
+                add_line = f" --line {no_line}" if no_line > 0 else ""
+                cmd = (
+                    f"~/.local/share/JetBrains/Toolbox/scripts/pycharm{add_line}"
+                    f" {filename}"
+                )
+            else:
+                cmd = (
+                    "~/.local/share/JetBrains/Toolbox/scripts/pycharm"
+                    f" {rec_ws.folder}"
+                )
+
             rec_ws.execute(cmd=cmd, force_open_terminal=True, force_exit=True)
 
     @api.multi
@@ -108,6 +149,8 @@ class DevopsIdePycharm(models.Model):
             ) as rec_ws:
                 if not log:
                     log = rec_ws.devops_cg_erplibre_devops_log
+                    if not log:
+                        log = ""
                 lst_exception = (
                     "odoo.exceptions.ValidationError:",
                     "Exception:",
@@ -115,6 +158,10 @@ class DevopsIdePycharm(models.Model):
                     "TypeError:",
                     "AttributeError:",
                     "ValueError:",
+                    "AssertionError:",
+                    "SyntaxError:",
+                    "KeyError:",
+                    "UnboundLocalError:",
                     "FileNotFoundError:",
                     "raise ValidationError",
                     "odoo.exceptions.CacheMiss:",
@@ -127,6 +174,8 @@ class DevopsIdePycharm(models.Model):
                 else:
                     _logger.info("Not exception found from log.")
                     continue
+                if exec_error_id:
+                    exec_error_id.exception_name = exception
                 # TODO search multiple path
                 search_path = (
                     "File"
@@ -137,6 +186,8 @@ class DevopsIdePycharm(models.Model):
                 error_line = log[no_last_file_error:no_end_line_error]
                 rec.line_file_tb_detected = error_line
                 # Detect no line
+                # TODO this code is duplicated by a non-regex method, search into workspace
+                #  for str_tb in traceback.format_stack()[::-1]:
                 regex = r"line (\d+),"
                 result_regex = re.search(regex, error_line)
                 line_breakpoint = None
@@ -152,32 +203,54 @@ class DevopsIdePycharm(models.Model):
                     exec_error_id.find_resolution = "error"
                     rec.try_find_why(log, exception, rec_ws, exec_error_id)
                     raise Exception("Cannot find breakpoint information")
+                else:
+                    rec.try_find_why(log, exception, rec_ws, exec_error_id)
                 # -1 to line because start 0, but show 1
                 line = str(line_breakpoint - 1)
                 rec.line_file_tb_detected = error_line
                 if exec_error_id:
                     exec_error_id.line_file_tb_detected = error_line
                     exec_error_id.find_resolution = "find"
+
+                update_line = int(line) + 1
+                # Create breakpoint
+                bp_value = {
+                    "name": "breakpoint_exec",
+                    "description": (
+                        "Breakpoint generate when create an execution."
+                    ),
+                    "filename": filepath_breakpoint,
+                    "no_line": update_line,
+                    # "keyword": keyword,
+                    "ignore_test": True,
+                    "generated_by_execution": True,
+                }
+                bp_id = self.env["devops.ide.breakpoint"].create(bp_value)
+                exec_error_id.exec_filename = filepath_breakpoint
+                exec_error_id.exec_line_number = update_line
+                exec_error_id.ide_breakpoint = bp_id.id
+
                 rec.add_breakpoint(filepath_breakpoint, line)
 
     def try_find_why(self, log, exception, ws, exec_error_id):
         id_devops_cg_new_project = self._context.get("devops_cg_new_project")
-        if not id_devops_cg_new_project:
-            return False
-        devops_cg_new_project_id = (
-            self.env["devops.cg.new_project"]
-            .browse(id_devops_cg_new_project)
-            .exists()
-        )
-        if not devops_cg_new_project_id:
-            return False
-        work_dir = os.path.normpath(
-            os.path.join(
-                ws.folder,
-                devops_cg_new_project_id.directory,
-                devops_cg_new_project_id.module,
+        if id_devops_cg_new_project:
+            devops_cg_new_project_id = (
+                self.env["devops.cg.new_project"]
+                .browse(id_devops_cg_new_project)
+                .exists()
             )
-        )
+            if not devops_cg_new_project_id:
+                return False
+            work_dir = os.path.normpath(
+                os.path.join(
+                    ws.folder,
+                    devops_cg_new_project_id.directory,
+                    devops_cg_new_project_id.module,
+                )
+            )
+        else:
+            work_dir = ws.folder
         if exception == "NameError:":
             # Check 1, is not defined
             result = re.search(r"NameError: name '(\w+)' is not defined", log)
@@ -190,9 +263,31 @@ class DevopsIdePycharm(models.Model):
                 )
                 if exec_error_id and result.log_all:
                     exec_error_id.diagnostic_idea = result.log_all
-                    exec_error_id.line_file_tb_detected = result.log_all
+                    if not exec_error_id.line_file_tb_detected:
+                        exec_error_id.line_file_tb_detected = result.log_all
+                    else:
+                        exec_error_id.line_file_tb_detected += result.log_all
                     exec_error_id.find_resolution = "diagnostic"
                     return True
+        elif exception == "FileNotFoundError:":
+            if (
+                "FileNotFoundError: [Errno 2] No such file or directory:"
+                " './addons/ERPLibre_erplibre_addons/code_generator_template_erplibre_devops/hooks.py'"
+                in log
+            ):
+                exec_error_id.diagnostic_idea = (
+                    "UcA doesn't exist, rerun new project to create it."
+                )
+                return True
+            elif (
+                "FileNotFoundError: [Errno 2] No such file or directory:"
+                " './addons/ERPLibre_erplibre_addons/code_generator_erplibre_devops/hooks.py'"
+                in log
+            ):
+                exec_error_id.diagnostic_idea = (
+                    "UcB doesn't exist, rerun new project to create it."
+                )
+                return True
         elif exception == "ValueError:":
             # Check 1, while evaluating
             if 'while evaluating\n"' in log:
@@ -212,7 +307,14 @@ class DevopsIdePycharm(models.Model):
                     )
                     if exec_error_id and result.log_all:
                         exec_error_id.diagnostic_idea = result.log_all
-                        exec_error_id.line_file_tb_detected = result.log_all
+                        if not exec_error_id.line_file_tb_detected:
+                            exec_error_id.line_file_tb_detected = (
+                                result.log_all
+                            )
+                        else:
+                            exec_error_id.line_file_tb_detected += (
+                                result.log_all
+                            )
                         exec_error_id.find_resolution = "diagnostic"
                         return True
 
@@ -284,26 +386,26 @@ class DevopsIdePycharm(models.Model):
                     )
 
     @api.model
-    def add_breakpoint(self, file_path, line, condition=None):
+    def add_breakpoint(
+        self, file_path, line, condition=None, minus_1_line=False
+    ):
         # TODO change tactic, fill variable into erplibre with breakpoint to support
         # TODO support validate already exist to not duplicate
         with self.devops_workspace.devops_create_exec_bundle(
             "PyCharm add breakpoint"
         ) as rec_ws:
+            if type(line) is int:
+                lst_line = [line]
+            elif type(line) is list:
+                lst_line = line
+            elif type(line) is str:
+                lst_line = [int(line)]
+            else:
+                raise ValueError(
+                    "Variable line need to by type int or list, and got"
+                    f" '{type(line)}' for line '{line}'."
+                )
             url = file_path.replace(rec_ws.folder, "file://$PROJECT_DIR$")
-            dct_config_breakpoint = {
-                "@enabled": "true",
-                "@suspend": "THREAD",
-                "@type": "python-line",
-                "url": url,
-                "line": line,
-                "option": {"@name": "timeStamp", "@value": "104"},
-            }
-            if condition:
-                dct_config_breakpoint["condition"] = {
-                    "@expression": condition,
-                    "@language": "Python",
-                }
             workspace_xml_path = os.path.join(
                 rec_ws.folder, ".idea", "workspace.xml"
             )
@@ -329,49 +431,70 @@ class DevopsIdePycharm(models.Model):
                 x_debug_manager = {"@name": "XDebuggerManager"}
                 project["component"].append(x_debug_manager)
 
-            has_update = False
-            breakpoints = None
-            breakpoint_manager = x_debug_manager.get("breakpoint-manager")
-            if not breakpoint_manager:
-                x_debug_manager["breakpoint-manager"] = {
-                    "breakpoints": {"line-breakpoint": dct_config_breakpoint}
+            for no_line in lst_line:
+                if minus_1_line:
+                    no_line -= 1
+                dct_config_breakpoint = {
+                    "@enabled": "true",
+                    "@suspend": "THREAD",
+                    "@type": "python-line",
+                    "url": url,
+                    "line": no_line,
+                    "option": {"@name": "timeStamp", "@value": "104"},
                 }
-                has_update = True
+                if condition:
+                    dct_config_breakpoint["condition"] = {
+                        "@expression": condition,
+                        "@language": "Python",
+                    }
 
-            if not has_update:
-                breakpoints = breakpoint_manager.get("breakpoints")
-                if not breakpoints:
-                    breakpoint_manager["breakpoints"] = {
-                        "line-breakpoint": dct_config_breakpoint
+                has_update = False
+                breakpoints = None
+                breakpoint_manager = x_debug_manager.get("breakpoint-manager")
+                if not breakpoint_manager:
+                    x_debug_manager["breakpoint-manager"] = {
+                        "breakpoints": {
+                            "line-breakpoint": dct_config_breakpoint
+                        }
                     }
                     has_update = True
 
-            if not has_update:
-                line_breakpoint = breakpoints.get("line-breakpoint")
-                # line_breakpoint can be dict or list
-                if type(line_breakpoint) is dict:
-                    line_breakpoint = [line_breakpoint]
-                    breakpoints["line-breakpoint"] = line_breakpoint
-
-                config_exist = False
-                if type(line_breakpoint) is list:
-                    for a_line_bp in line_breakpoint:
-                        if a_line_bp.get("url") == dct_config_breakpoint.get(
-                            "url"
-                        ) and a_line_bp.get(
-                            "line"
-                        ) == dct_config_breakpoint.get(
-                            "line"
-                        ):
-                            config_exist = True
-                    if not config_exist:
-                        breakpoints["line-breakpoint"].append(
-                            dct_config_breakpoint
-                        )
+                if not has_update:
+                    breakpoints = breakpoint_manager.get("breakpoints")
+                    if not breakpoints:
+                        breakpoint_manager["breakpoints"] = {
+                            "line-breakpoint": dct_config_breakpoint
+                        }
                         has_update = True
-                else:
-                    breakpoints["line-breakpoint"] = dct_config_breakpoint
-                    has_update = True
+
+                if not has_update:
+                    line_breakpoint = breakpoints.get("line-breakpoint")
+                    # line_breakpoint can be dict or list
+                    if type(line_breakpoint) is dict:
+                        line_breakpoint = [line_breakpoint]
+                        breakpoints["line-breakpoint"] = line_breakpoint
+
+                    config_exist = False
+                    if type(line_breakpoint) is list:
+                        for a_line_bp in line_breakpoint:
+                            if a_line_bp.get(
+                                "url"
+                            ) == dct_config_breakpoint.get(
+                                "url"
+                            ) and a_line_bp.get(
+                                "line"
+                            ) == dct_config_breakpoint.get(
+                                "line"
+                            ):
+                                config_exist = True
+                        if not config_exist:
+                            breakpoints["line-breakpoint"].append(
+                                dct_config_breakpoint
+                            )
+                            has_update = True
+                    else:
+                        breakpoints["line-breakpoint"] = dct_config_breakpoint
+                        has_update = True
 
             # Write modification
             if has_update:

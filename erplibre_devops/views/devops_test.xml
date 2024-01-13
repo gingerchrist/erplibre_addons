@@ -6,12 +6,12 @@
         <field name="arch" type="xml">
             <form>
                 <header>
-                    <button class="oe_highlight" name="action_run_erplibre_test" string="Test all" type="object" />
+                    <button name="action_run_erplibre_test" string="Test all" type="object" class="oe_highlight" />
                     <button
-                        class="oe_highlight"
                         name="action_run_erplibre_test"
                         string="Test all debug"
                         type="object"
+                        class="oe_highlight"
                         context="{'default_debug': True}"
                     />
                 </header>
@@ -20,13 +20,11 @@
                         <field name="name" />
                     </h1>
                 </div>
-
                 <group>
                     <group>
                         <field name="devops_workspace_ids" />
                     </group>
                 </group>
-
                 <notebook>
                     <page name="log" string="Docker">
                         <group string="Log">
@@ -59,5 +57,10 @@
         </field>
     </record>
 
-    <act_window id="action_devops_test_conf_form" name="Automated devops_tests" res_model="devops.test" />
+    <act_window
+        id="action_devops_test_conf_form"
+        name="Automated devops_tests"
+        res_model="devops.test"
+        view_mode="kanban,tree,pivot,graph,form"
+    />
 </odoo>

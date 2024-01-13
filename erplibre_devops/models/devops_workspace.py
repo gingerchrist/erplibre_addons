@@ -4,6 +4,7 @@
 import json
 import logging
 import os
+import pathlib
 import platform
 import re
 import subprocess
@@ -25,8 +26,13 @@ SLEEP_ERROR_RESTORE_KILL = 5
 
 class DevopsWorkspace(models.Model):
     _name = "devops.workspace"
-    _inherit = ["mail.thread", "mail.activity.mixin"]
+    _inherit = ["mail.activity.mixin", "mail.thread"]
     _description = "ERPLibre DevOps Workspace"
+
+    def _default_image_db_selection(self):
+        return self.env["devops.db.image"].search(
+            [("name", "like", "erplibre_base")], limit=1
+        )
 
     name = fields.Char(
         compute="_compute_name",
@@ -45,32 +51,32 @@ class DevopsWorkspace(models.Model):
     )
 
     devops_exec_count = fields.Integer(
-        compute="_compute_devops_exec_count",
         string="Executions count",
+        compute="_compute_devops_exec_count",
         store=True,
     )
 
     new_project_count = fields.Integer(
-        compute="_compute_new_project_count",
         string="New project count",
+        compute="_compute_new_project_count",
         store=True,
     )
 
     devops_exec_error_count = fields.Integer(
-        compute="_compute_devops_exec_error_count",
         string="Executions error count",
+        compute="_compute_devops_exec_error_count",
         store=True,
     )
 
     devops_exec_bundle_count = fields.Integer(
-        compute="_compute_devops_exec_bundle_count",
         string="Executions bundle count",
+        compute="_compute_devops_exec_bundle_count",
         store=True,
     )
 
     devops_exec_bundle_root_count = fields.Integer(
-        compute="_compute_devops_exec_bundle_count",
         string="Executions bundle root count",
+        compute="_compute_devops_exec_bundle_count",
         store=True,
     )
 
@@ -129,10 +135,7 @@ class DevopsWorkspace(models.Model):
     is_debug_log = fields.Boolean(help="Will print cmd to debug.")
 
     # TODO transform in in compute with devops_workspace_docker.is_running
-    is_running = fields.Boolean(
-        readonly=True,
-        default=False,
-    )
+    is_running = fields.Boolean(readonly=True)
 
     folder = fields.Char(
         required=True,
@@ -152,7 +155,6 @@ class DevopsWorkspace(models.Model):
     ide_pycharm = fields.Many2one(comodel_name="devops.ide.pycharm")
 
     # TODO backup button and restore button
-
     port_http = fields.Integer(
         string="port http",
         default=8069,
@@ -176,7 +178,8 @@ class DevopsWorkspace(models.Model):
     )
 
     db_is_restored = fields.Boolean(
-        readonly=True, help="When false, it's because actually restoring a DB."
+        readonly=True,
+        help="When false, it's because actually restoring a DB.",
     )
 
     exec_reboot_process = fields.Boolean(
@@ -200,34 +203,23 @@ class DevopsWorkspace(models.Model):
 
     devops_code_generator_ids = fields.Many2many(
         comodel_name="devops.code_generator",
-        inverse_name="devops_workspace_id",
         string="Project",
     )
 
     devops_code_generator_module_ids = fields.Many2many(
         comodel_name="devops.code_generator.module",
-        # related="devops_code_generator_ids.module_ids",
         string="Module",
-        readonly=False,
     )
 
     devops_code_generator_model_ids = fields.Many2many(
-        # related="devops_code_generator_module_ids.model_ids",
         comodel_name="devops.code_generator.module.model",
         string="Model",
-        readonly=False,
     )
 
     devops_code_generator_field_ids = fields.Many2many(
-        # related="devops_code_generator_model_ids.field_ids",
         comodel_name="devops.code_generator.module.model.field",
         string="Field",
-        readonly=False,
     )
-
-    # devops_code_generator_finish_compute = fields.Boolean(
-    #     store=True, compute="_compute_devops_code_generator_finish_compute"
-    # )
 
     devops_code_generator_tree_addons = fields.Text(
         string="Tree addons",
@@ -256,20 +248,20 @@ class DevopsWorkspace(models.Model):
 
     devops_cg_erplibre_devops_log = fields.Text(
         string="Log CG erplibre_devops new_project",
+        readonly=True,
         help=(
             "Will show code generator log for new project erplibre_devops,"
             " last execution"
         ),
-        readonly=True,
     )
 
     devops_cg_erplibre_devops_error_log = fields.Text(
         string="Error CG erplibre_devops new_project",
+        readonly=True,
         help=(
             "Will show code generator error for new project erplibre_devops,"
             " last execution"
         ),
-        readonly=True,
     )
 
     time_exec_action_code_generator_generate_all = fields.Char(
@@ -290,22 +282,77 @@ class DevopsWorkspace(models.Model):
 
     mode_view = fields.Selection(
         selection=[
-            ("normal", "Normal"),
-            ("wizard_view", "Wizard"),
-            ("wizard_new_view", "New"),
+            ("no_view", "No view"),
+            ("same_view", "Autopoiesis"),
+            ("new_view", "New"),
         ],
-        default="normal",
-        help="For code generator",
+        default="same_view",
+        help="Mode view, enable rebuild same view or create new view.",
     )
 
-    mode_exec = fields.Selection(
+    config_uca_enable_export_data = fields.Boolean(
+        default=True,
+        help=(
+            "Will enable option nonmenclator in CG to export data associate to"
+            " models."
+        ),
+    )
+
+    mode_view_snippet = fields.Selection(
         selection=[
-            ("docker", "Docker"),
-            ("terminal", "Terminal"),
-            # ("systemd", "SystemD"),
+            ("no_snippet", "No snippet"),
+            ("enable_snippet", "Enable snippet"),
         ],
-        default="docker",
+        default="no_snippet",
+        help="Will active feature to generate snippet",
+    )
+
+    mode_view_snippet_enable_template_website_snippet_view = fields.Boolean(
+        default=True,
+        help="Feature for mode_view_snippet",
+    )
+
+    mode_view_snippet_template_generate_website_snippet_generic_mdl = (
+        fields.Char(help="Feature for mode_view_snippet")
+    )
+
+    mode_view_snippet_template_generate_website_snippet_ctrl_featur = (
+        fields.Selection(
+            selection=[
+                ("helloworld", "helloworld"),
+                ("model_show_item_individual", "Model show item individual"),
+                ("model_show_item_list", "Model show item list"),
+            ],
+            default="model_show_item_individual",
+            help="Feature for mode_view_snippet",
+        )
+    )
+
+    mode_view_snippet_template_generate_website_enable_javascript = (
+        fields.Boolean(
+            default=True,
+            help="Feature for mode_view_snippet",
+        )
+    )
+
+    mode_view_snippet_template_generate_website_snippet_type = (
+        fields.Selection(
+            selection=[
+                ("content", "Content"),
+                ("effect", "Effect"),
+                ("feature", "Feature"),
+                ("structure", "Structure"),
+            ],
+            default="effect",
+            help="Feature for mode_view_snippet",
+        )
+    )
+
+    # TODO add SystemD
+    mode_exec = fields.Selection(
+        selection=[("docker", "Docker"), ("terminal", "Terminal")],
         required=True,
+        default="docker",
     )
 
     mode_environnement = fields.Selection(
@@ -345,6 +392,7 @@ class DevopsWorkspace(models.Model):
         selection=[
             ("simple", "Simple"),
             ("ore", "ORE"),
+            ("devops_example", "devops example"),
         ],
         required=True,
         default="simple",
@@ -356,6 +404,7 @@ class DevopsWorkspace(models.Model):
             ("1.5.0", "1.5.0"),
             ("master", "Master"),
             ("develop", "Develop"),
+            ("robotlibre", "RobotLibre"),
         ],
         required=True,
         default="1.5.0",
@@ -372,10 +421,11 @@ class DevopsWorkspace(models.Model):
         help="Support base version communautaire",
     )
 
-    git_branch = fields.Char("Git branch")
+    git_branch = fields.Char(string="Git branch")
 
     git_url = fields.Char(
-        "Git URL", default="https://github.com/ERPLibre/ERPLibre"
+        string="Git URL",
+        default="https://github.com/ERPLibre/ERPLibre",
     )
 
     time_exec_action_clear_all_generated_module = fields.Char(
@@ -429,6 +479,10 @@ class DevopsWorkspace(models.Model):
 
     stop_execution_if_env_not_clean = fields.Boolean(default=True)
 
+    cg_self_add_config_cg = fields.Boolean(
+        help="Will use both feature of cg for self generate."
+    )
+
     test_ids = fields.Many2many(
         comodel_name="devops.test",
         string="Tests",
@@ -457,13 +511,9 @@ class DevopsWorkspace(models.Model):
         string="All new project associate with this workspace",
     )
 
-    def _default_image_db_selection(self):
-        return self.env["devops.db.image"].search(
-            [("name", "like", "erplibre_base")], limit=1
-        )
-
     image_db_selection = fields.Many2one(
-        comodel_name="devops.db.image", default=_default_image_db_selection
+        comodel_name="devops.db.image",
+        default=_default_image_db_selection,
     )
 
     @api.model_create_multi
@@ -607,16 +657,35 @@ class DevopsWorkspace(models.Model):
                     .get_parent_root()
                 )
 
+                dct_new_project = {
+                    "module": module_name,
+                    "directory": addons_path,
+                    "devops_workspace": rec.id,
+                    "project_type": "self",
+                    "stop_execution_if_env_not_clean": rec.stop_execution_if_env_not_clean,
+                    "devops_exec_bundle_id": devops_exec_bundle_parent_root_id.id,
+                    "mode_view": rec.mode_view,
+                    "mode_view_snippet": rec.mode_view_snippet,
+                    "mode_view_snippet_enable_template_website_snippet_view": rec.mode_view_snippet_enable_template_website_snippet_view,
+                    "mode_view_snippet_template_generate_website_snippet_generic_mdl": rec.mode_view_snippet_template_generate_website_snippet_generic_mdl,
+                    "mode_view_snippet_template_generate_website_snippet_ctrl_featur": rec.mode_view_snippet_template_generate_website_snippet_ctrl_featur,
+                    "mode_view_snippet_template_generate_website_enable_javascript": rec.mode_view_snippet_template_generate_website_enable_javascript,
+                    "mode_view_snippet_template_generate_website_snippet_type": rec.mode_view_snippet_template_generate_website_snippet_type,
+                    "config_uca_enable_export_data": rec.config_uca_enable_export_data,
+                }
+
+                model_conf = None
+                if rec.cg_self_add_config_cg:
+                    if rec.devops_code_generator_ids:
+                        cg_gen_id = rec.devops_code_generator_ids[0]
+                        if cg_gen_id.module_ids:
+                            module_id = cg_gen_id.module_ids[0]
+                            model_conf = rec.get_cg_model_config(module_id)
+                if model_conf:
+                    dct_new_project["config"] = model_conf
+
                 new_project_id = self.env["devops.cg.new_project"].create(
-                    {
-                        "module": module_name,
-                        "directory": addons_path,
-                        "devops_workspace": rec.id,
-                        "project_type": "self",
-                        "stop_execution_if_env_not_clean": rec.stop_execution_if_env_not_clean,
-                        "devops_exec_bundle_id": devops_exec_bundle_parent_root_id.id,
-                        "mode_view": rec.mode_view,
-                    }
+                    dct_new_project
                 )
                 if rec.last_new_project_self:
                     new_project_id.last_new_project = (
@@ -684,6 +753,64 @@ class DevopsWorkspace(models.Model):
                     )
                 )
 
+    @api.model
+    def get_cg_model_config(self, module_id):
+        # Support only 1, but can run in parallel multiple if no dependencies between
+        lst_model = []
+        dct_model_conf = {"model": lst_model}
+        for model_id in module_id.model_ids:
+            lst_field = []
+            lst_model.append({"name": model_id.name, "fields": lst_field})
+            for field_id in model_id.field_ids:
+                dct_value_field = {
+                    "name": field_id.name,
+                    "help": field_id.help,
+                    "type": field_id.type,
+                }
+                if field_id.type in [
+                    "many2one",
+                    "many2many",
+                    "one2many",
+                ]:
+                    dct_value_field["relation"] = (
+                        field_id.relation.name
+                        if field_id.relation
+                        else field_id.relation_manual
+                    )
+                    if not dct_value_field["relation"]:
+                        msg_err = (
+                            f"Model '{model_id.name}', field"
+                            f" '{field_id.name}' need a"
+                            " relation because type is"
+                            f" '{field_id.type}'"
+                        )
+                        raise exceptions.Warning(msg_err)
+                if field_id.type in [
+                    "one2many",
+                ]:
+                    dct_value_field["relation_field"] = (
+                        field_id.field_relation.name
+                        if field_id.field_relation
+                        else field_id.field_relation_manual
+                    )
+                    if not dct_value_field["relation_field"]:
+                        msg_err = (
+                            f"Model '{model_id.name}', field"
+                            f" '{field_id.name}' need a"
+                            " relation field because type is"
+                            f" '{field_id.type}'"
+                        )
+                        raise exceptions.Warning(msg_err)
+                if field_id.widget:
+                    dct_value_field = field_id.widget
+                lst_field.append(dct_value_field)
+        model_conf = (
+            json.dumps(dct_model_conf)
+            # .replace('"', '\\"')
+            # .replace("'", "")
+        )
+        return model_conf
+
     @api.multi
     def action_code_generator_generate_all(self):
         for rec_o in self:
@@ -702,65 +829,9 @@ class DevopsWorkspace(models.Model):
                     rec.workspace_docker_id.docker_config_gen_cg = False
                 for rec_cg in rec.devops_code_generator_ids:
                     for module_id in rec_cg.module_ids:
-                        # Support only 1, but can run in parallel multiple if no dependencies between
-                        module_name = module_id.name
-                        lst_model = []
-                        dct_model_conf = {"model": lst_model}
-                        for model_id in module_id.model_ids:
-                            lst_field = []
-                            lst_model.append(
-                                {"name": model_id.name, "fields": lst_field}
-                            )
-                            for field_id in model_id.field_ids:
-                                dct_value_field = {
-                                    "name": field_id.name,
-                                    "help": field_id.help,
-                                    "type": field_id.type,
-                                }
-                                if field_id.type in [
-                                    "many2one",
-                                    "many2many",
-                                    "one2many",
-                                ]:
-                                    dct_value_field["relation"] = (
-                                        field_id.relation.name
-                                        if field_id.relation
-                                        else field_id.relation_manual
-                                    )
-                                    if not dct_value_field["relation"]:
-                                        msg_err = (
-                                            f"Model '{model_id.name}', field"
-                                            f" '{field_id.name}' need a"
-                                            " relation because type is"
-                                            f" '{field_id.type}'"
-                                        )
-                                        raise exceptions.Warning(msg_err)
-                                if field_id.type in [
-                                    "one2many",
-                                ]:
-                                    dct_value_field["relation_field"] = (
-                                        field_id.field_relation.name
-                                        if field_id.field_relation
-                                        else field_id.field_relation_manual
-                                    )
-                                    if not dct_value_field["relation_field"]:
-                                        msg_err = (
-                                            f"Model '{model_id.name}', field"
-                                            f" '{field_id.name}' need a"
-                                            " relation field because type is"
-                                            f" '{field_id.type}'"
-                                        )
-                                        raise exceptions.Warning(msg_err)
-                                if field_id.widget:
-                                    dct_value_field = field_id.widget
-                                lst_field.append(dct_value_field)
+                        model_conf = rec.get_cg_model_config(module_id)
                         if rec_cg.force_clean_before_generate:
                             rec.workspace_code_remove_module(module_id)
-                        model_conf = (
-                            json.dumps(dct_model_conf)
-                            # .replace('"', '\\"')
-                            # .replace("'", "")
-                        )
                         directory = os.path.join(
                             rec.path_working_erplibre,
                             rec.path_code_generator_to_generate,
@@ -771,7 +842,7 @@ class DevopsWorkspace(models.Model):
                             .get_parent_root()
                         )
                         dct_new_project = {
-                            "module": module_name,
+                            "module": module_id.name,
                             "directory": directory,
                             "keep_bd_alive": True,
                             "devops_workspace": rec.id,
@@ -1363,6 +1434,82 @@ class DevopsWorkspace(models.Model):
                         ]
                         rec.devops_code_generator_field_ids = [
                             (4, cg_field_voiture_couleur_id.id),
+                        ]
+                elif rec.cg_demo_type_data == "devops_example":
+                    # Project
+                    cg_id = self.env["devops.code_generator"].create(
+                        {
+                            "name": "Projet exemple",
+                            "devops_workspace_ids": [(6, 0, rec.ids)],
+                            "force_clean_before_generate": False,
+                        }
+                    )
+                    # Module
+                    cg_module_id = self.env[
+                        "devops.code_generator.module"
+                    ].create(
+                        {
+                            "name": "erplibre_devops",
+                            "code_generator": cg_id.id,
+                            "devops_workspace_ids": [(6, 0, rec.ids)],
+                        }
+                    )
+                    # Model
+                    cg_model_example_id = self.env[
+                        "devops.code_generator.module.model"
+                    ].create(
+                        {
+                            "name": "devops.example",
+                            "description": "Example feature to add to devops",
+                            "module_id": cg_module_id.id,
+                            "devops_workspace_ids": [(6, 0, rec.ids)],
+                        }
+                    )
+                    # Field
+                    cg_field_size_id = self.env[
+                        "devops.code_generator.module.model.field"
+                    ].create(
+                        {
+                            "name": "size",
+                            "help": "Size of this example.",
+                            "type": "integer",
+                            "model_id": cg_model_example_id.id,
+                            "devops_workspace_ids": [(6, 0, rec.ids)],
+                        }
+                    )
+                    if rec.is_clear_before_cg_demo:
+                        rec.devops_code_generator_ids = [(6, 0, cg_id.ids)]
+                        rec.devops_code_generator_module_ids = [
+                            (6, 0, cg_module_id.ids)
+                        ]
+                        rec.devops_code_generator_model_ids = [
+                            (
+                                6,
+                                0,
+                                [
+                                    cg_model_example_id.id,
+                                ],
+                            )
+                        ]
+                        rec.devops_code_generator_field_ids = [
+                            (
+                                6,
+                                0,
+                                [
+                                    cg_field_size_id.id,
+                                ],
+                            )
+                        ]
+                    else:
+                        rec.devops_code_generator_ids = [(4, cg_id.id)]
+                        rec.devops_code_generator_module_ids = [
+                            (4, cg_module_id.id)
+                        ]
+                        rec.devops_code_generator_model_ids = [
+                            (4, cg_model_example_id.id),
+                        ]
+                        rec.devops_code_generator_field_ids = [
+                            (4, cg_field_size_id.id),
                         ]
                 elif rec.cg_demo_type_data == "ore":
                     # Project
@@ -1994,8 +2141,6 @@ class DevopsWorkspace(models.Model):
         force_docker=False,
         add_stdin_log=False,
         add_stderr_log=True,
-        # get_stderr=False,
-        # get_status=False,
         run_into_workspace=False,
         to_instance=False,
         engine="bash",
@@ -2045,6 +2190,43 @@ class DevopsWorkspace(models.Model):
             )
             if id_devops_cg_new_project:
                 devops_exec_value["new_project_id"] = id_devops_cg_new_project
+
+            # ### Find who call us ###
+            actual_file = str(pathlib.Path(__file__).resolve())
+            is_found = False
+            str_tb = None
+            # When found it, the result is next one, extract filename and line
+            for str_tb in traceback.format_stack()[::-1]:
+                if is_found:
+                    break
+                if actual_file in str_tb:
+                    is_found = True
+            if is_found:
+                # index 0, filename like «file "/home..."»
+                # index 1, line number like «line 1234»
+                # index 2, keyword
+                lst_tb = [a.strip() for a in str_tb.split(",")]
+                # Remove absolute path
+                filename = lst_tb[0][6:-1][len(rec.folder) + 1 :]
+                line_number = int(lst_tb[1][5:])
+                keyword = lst_tb[2]
+                bp_value = {
+                    "name": "breakpoint_exec",
+                    "description": (
+                        "Breakpoint generate when create an execution."
+                    ),
+                    "filename": filename,
+                    "no_line": line_number,
+                    "keyword": keyword,
+                    "ignore_test": True,
+                    "generated_by_execution": True,
+                }
+                bp_id = self.env["devops.ide.breakpoint"].create(bp_value)
+                devops_exec_value["ide_breakpoint"] = bp_id.id
+                devops_exec_value["exec_filename"] = filename
+                devops_exec_value["exec_line_number"] = line_number
+                devops_exec_value["exec_keyword"] = keyword
+            # ### END Find who call us ###
 
             devops_exec = self.env["devops.exec"].create(devops_exec_value)
             lst_result.append(devops_exec)
@@ -2129,6 +2311,10 @@ class DevopsWorkspace(models.Model):
             "TypeError:",
             "AttributeError:",
             "ValueError:",
+            "AssertionError:",
+            "SyntaxError:",
+            "KeyError:",
+            "UnboundLocalError:",
             "FileNotFoundError:",
             "raise ValidationError",
             "odoo.exceptions.CacheMiss:",
@@ -2202,9 +2388,9 @@ class DevopsWorkspace(models.Model):
             with rec_o.devops_create_exec_bundle(
                 "Re-execute last new project"
             ) as rec:
-                if rec._context.get("default_stage_uc0"):
+                if rec._context.get("default_stage_Uc0"):
                     rec.last_new_project_self.stage_id = self.env.ref(
-                        "erplibre_devops.devops_cg_new_project_stage_generate_uc0"
+                        "erplibre_devops.devops_cg_new_project_stage_generate_Uc0"
                     ).id
                 # TODO create a copy of new project and not modify older version
                 # TODO next sentence is not useful if made a copy
@@ -2330,6 +2516,10 @@ sock.close()
             }
             if devops_exec_id:
                 error_value["devops_exec_id"] = devops_exec_id.id
+            if parent_root_id.devops_new_project_ids.exists():
+                error_value[
+                    "stage_new_project_id"
+                ] = parent_root_id.devops_new_project_ids[0].stage_id.id
             # this is not true, cannot associate exec_id to this error
             # exec_id = devops_exec_bundle_id.get_last_exec()
             # if exec_id:

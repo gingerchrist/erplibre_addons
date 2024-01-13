@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <record id="devops_ide_breakpoint_view_form" model="ir.ui.view">
+        <field name="name">devops_ide_breakpoint_form</field>
+        <field name="model">devops.ide.breakpoint</field>
+        <field name="arch" type="xml">
+            <form string="Titre">
+                <header>
+                    <button
+                        name="open_file_ide"
+                        string="Open into PyCharm"
+                        type="object"
+                        class="oe_highlight"
+                        attrs="{'invisible': [('filename', '=', False)]}"
+                    />
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" />
+                        </h1>
+                    </div>
+                    <group>
+                        <group string="Description">
+                            <field name="keyword" />
+                            <field name="description" />
+                            <field name="no_line" />
+                        </group>
+                        <group string="Filename">
+                            <field name="filename" />
+                            <field name="filename_is_code_generator_demo_hooks_py" />
+                            <field name="filename_is_template_hooks_py" />
+                            <field name="filename_is_cg_hooks_py" />
+                        </group>
+                        <group string="Condition name">
+                            <field name="condition_var_model_name" />
+                            <field name="condition_var_field_name" />
+                            <field name="condition_var_field_attr_name" />
+                            <field name="condition_var_method_name" />
+                        </group>
+                        <group string="Other">
+                            <field name="ignore_test" />
+                            <field name="generated_by_execution" />
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="devops_ide_breakpoint_view_graph" model="ir.ui.view">
+        <field name="name">devops_ide_breakpoint_graph</field>
+        <field name="model">devops.ide.breakpoint</field>
+        <field name="arch" type="xml">
+            <graph string="Devops ide breakpoint">
+                <field name="name" type="row" />
+                <field name="filename" type="row" />
+                <field name="no_line" type="measure" />
+            </graph>
+        </field>
+    </record>
+
+    <record id="devops_ide_breakpoint_view_kanban" model="ir.ui.view">
+        <field name="name">devops_ide_breakpoint_kanban</field>
+        <field name="model">devops.ide.breakpoint</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile">
+                <field name="name" />
+                <field name="filename" />
+                <field name="no_line" />
+                <templates>
+                    <t t-name="kanban-box">
+                        <div t-attf-class="oe_kanban_global_click">
+                            <div class="oe_kanban_details">
+                                <ul>
+                                    <li class="mb4">
+                                        <strong>
+                                            <field name="name" />
+                                        </strong>
+                                    </li>
+                                    <li class="mb4">
+                                        <strong>
+                                            <field name="filename" />
+                                        </strong>
+                                    </li>
+                                    <li class="mb4">
+                                        <strong>
+                                            <field name="no_line" />
+                                        </strong>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="devops_ide_breakpoint_view_pivot" model="ir.ui.view">
+        <field name="name">devops_ide_breakpoint_pivot</field>
+        <field name="model">devops.ide.breakpoint</field>
+        <field name="arch" type="xml">
+            <pivot string="Devops ide breakpoint">
+                <field name="name" type="row" />
+                <field name="filename" type="row" />
+                <field name="no_line" type="measure" />
+            </pivot>
+        </field>
+    </record>
+
+    <record id="devops_ide_breakpoint_view_search" model="ir.ui.view">
+        <field name="name">devops_ide_breakpoint_search</field>
+        <field name="model">devops.ide.breakpoint</field>
+        <field name="arch" type="xml">
+            <search string="Devops ide breakpoint">
+                <filter name="name" string="Name" domain="[('name','!=',False)]" />
+                <filter name="filename" string="Filename" domain="[('filename','!=',False)]" />
+                <filter name="no_line" string="No Line" domain="[('no_line','!=',False)]" />
+                <group string="Group By" expand="1">
+                    <filter name="filename" string="Filename" context="{'group_by':'filename'}" />
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="devops_ide_breakpoint_view_tree" model="ir.ui.view">
+        <field name="name">devops_ide_breakpoint_tree</field>
+        <field name="model">devops.ide.breakpoint</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name" />
+                <field name="no_line" />
+                <field name="keyword" />
+                <field name="filename" />
+                <field name="filename_is_code_generator_demo_hooks_py" />
+                <field name="filename_is_template_hooks_py" />
+                <field name="filename_is_cg_hooks_py" />
+                <field name="description" />
+                <field name="generated_by_execution" />
+                <field name="condition_var_model_name" />
+                <field name="condition_var_field_name" />
+                <field name="condition_var_field_attr_name" />
+                <field name="condition_var_method_name" />
+                <button
+                    name="open_file_ide"
+                    string="Open file"
+                    type="object"
+                    class="oe_stat_button"
+                    icon="fa-play-circle text-success"
+                    tabindex="-1"
+                    attrs="{'invisible': [('filename', '=', False)]}"
+                />
+            </tree>
+        </field>
+    </record>
+
+    <act_window
+        id="devops_ide_breakpoint_action_window"
+        name="IDE breakpoint"
+        res_model="devops.ide.breakpoint"
+        view_mode="tree,kanban,pivot,graph,form"
+    />
+</odoo>

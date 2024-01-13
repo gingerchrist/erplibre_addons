@@ -27,8 +27,8 @@ class DevopsSystem(models.Model):
 
     method = fields.Selection(
         selection=[("local", "Local disk"), ("ssh", "SSH remote server")],
-        default="local",
         required=True,
+        default="local",
         help="Choose the communication method.",
     )
 
@@ -58,8 +58,8 @@ class DevopsSystem(models.Model):
     ssh_password = fields.Char(
         string="SSH Password",
         help=(
-            "The password for the SSH connection. If you specify a private"
-            " key file, then this is the password to decrypt it."
+            "The password for the SSH connection. If you specify a private key"
+            " file, then this is the password to decrypt it."
         ),
     )
 
@@ -71,7 +71,6 @@ class DevopsSystem(models.Model):
 
     ssh_use_sshpass = fields.Boolean(
         string="SSH use SSHPass",
-        default=False,
         help="This tool automatic add password to ssh connexion.",
     )
 
@@ -81,12 +80,12 @@ class DevopsSystem(models.Model):
     )
 
     debug_command = fields.Boolean(
-        default=False,
-        help="This will show in log the command when execute it.",
+        help="This will show in log the command when execute it."
     )
 
     iterator_port_generator = fields.Integer(
-        default=10000, help="Iterate to generate next port"
+        default=10000,
+        help="Iterate to generate next port",
     )
 
     ssh_private_key = fields.Char(
@@ -128,6 +127,7 @@ class DevopsSystem(models.Model):
                     rec.ssh_user,
                     rec.ssh_host,
                     rec.ssh_port,
+                    "",
                 )
 
     @api.model
@@ -384,8 +384,8 @@ class DevopsSystem(models.Model):
             # TODO use mdfind on OSX
             # TODO need to do sometime «sudo updatedb»
             out = rec.execute_process(
-                'locate default.xml|grep -i erplibre|grep -v ".repo"|grep -v'
-                ' "/var/lib/docker"'
+                "locate -b -r '^default\.xml$'|grep -v"
+                ' ".repo"|grep -v "/var/lib/docker"'
             )
             lst_dir = out.strip().split("\n")
             # TODO detect is_me if not exist
@@ -397,6 +397,11 @@ class DevopsSystem(models.Model):
                     lambda r: r.folder == dirname
                 )
                 if rec_ws:
+                    continue
+                odoo_dir = os.path.join(dirname, "odoo")
+                out_odoo = rec.execute_process(f"ls {odoo_dir}")
+                if out_odoo.startswith("ls: cannot access"):
+                    # This is not a ERPLibre project
                     continue
                 git_dir = os.path.join(dirname, ".git")
                 docker_compose_dir = os.path.join(

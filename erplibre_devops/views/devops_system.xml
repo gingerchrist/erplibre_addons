@@ -7,16 +7,16 @@
             <form>
                 <header>
                     <button
-                        class="oe_highlight"
                         name="action_refresh_db_image"
                         string="Reload db image"
                         type="object"
+                        class="oe_highlight"
                     />
                     <button
-                        class="oe_highlight"
                         name="action_search_workspace"
                         string="Search workspace"
                         type="object"
+                        class="oe_highlight"
                     />
                 </header>
                 <div class="oe_title">
@@ -36,7 +36,6 @@
                         <field name="debug_command" />
                     </group>
                 </group>
-
                 <div attrs="{'invisible': [('method', '!=', 'ssh')]}">
                     <div class="bg-warning">
                         <h3>Warning:</h3>
@@ -48,17 +47,16 @@
                     <group string="SSH Settings">
                         <field name="ssh_host" placeholder="ssh.example.com" />
                         <field name="ssh_use_sshpass" />
-
                         <field name="ssh_port" />
                         <field name="ssh_user" placeholder="john" />
                         <field name="ssh_password" password="True" />
                         <field name="ssh_private_key" placeholder="/home/odoo/.ssh/id_rsa" />
                         <field name="ssh_public_host_key" placeholder="AAAA..." />
                         <button
-                            icon="fa-television"
                             name="action_ssh_test_connection"
                             string="Test SSH Connection"
                             type="object"
+                            icon="fa-television"
                         />
                     </group>
                 </div>
@@ -93,5 +91,10 @@
         </field>
     </record>
 
-    <act_window id="action_devops_check_system_conf_form" name="Automated devops_systems" res_model="devops.system" />
+    <act_window
+        id="action_devops_check_system_conf_form"
+        name="Automated devops_systems"
+        res_model="devops.system"
+        view_mode="kanban,tree,pivot,graph,form"
+    />
 </odoo>

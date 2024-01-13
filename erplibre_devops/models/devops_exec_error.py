@@ -11,10 +11,13 @@ _logger = logging.getLogger(__name__)
 
 class DevopsExecError(models.Model):
     _name = "devops.exec.error"
+    _inherit = ["mail.activity.mixin", "mail.thread"]
     _description = "Execution error"
-    _inherit = ["mail.thread", "mail.activity.mixin"]
 
-    name = fields.Char(compute="_compute_name", store=True)
+    name = fields.Char(
+        compute="_compute_name",
+        store=True,
+    )
 
     description = fields.Char()
 
@@ -23,12 +26,39 @@ class DevopsExecError(models.Model):
     active = fields.Boolean(default=True)
 
     devops_workspace = fields.Many2one(
-        comodel_name="devops.workspace", readonly=True
+        comodel_name="devops.workspace",
+        readonly=True,
     )
 
-    partner_ids = fields.Many2many(comodel_name="res.partner")
+    ide_breakpoint = fields.Many2one(
+        comodel_name="devops.ide.breakpoint",
+        help="Associate a breakpoint to this execution.",
+    )
 
-    channel_ids = fields.Many2many(comodel_name="mail.channel")
+    exec_filename = fields.Char(
+        string="Execution filename",
+        help="Execution information, where it's called.",
+    )
+
+    exec_keyword = fields.Char(
+        string="Execution keyword",
+        help="Execution information, where it's called.",
+    )
+
+    exec_line_number = fields.Integer(
+        string="Execution line number",
+        help="Execution information, where it's called.",
+    )
+
+    partner_ids = fields.Many2many(
+        comodel_name="res.partner",
+        string="Partner",
+    )
+
+    channel_ids = fields.Many2many(
+        comodel_name="mail.channel",
+        string="Channel",
+    )
 
     type_error = fields.Selection(
         selection=[("internal", "Internal"), ("execution", "Execution")]
@@ -40,16 +70,26 @@ class DevopsExecError(models.Model):
 
     devops_exec_id = fields.Many2one(
         comodel_name="devops.exec",
+        string="Devops Exec",
         readonly=True,
     )
 
     devops_exec_bundle_id = fields.Many2one(
         comodel_name="devops.exec.bundle",
+        string="Devops Exec Bundle",
         readonly=True,
+    )
+
+    exception_name = fields.Char(string="Name of exception")
+
+    stage_new_project_id = fields.Many2one(
+        comodel_name="devops.cg.new_project.stage",
+        string="Stage",
     )
 
     parent_root_exec_bundle_id = fields.Many2one(
         comodel_name="devops.exec.bundle",
+        string="Parent Root Exec Bundle",
         readonly=True,
     )
 
@@ -115,14 +155,26 @@ class DevopsExecError(models.Model):
         self.devops_workspace.action_stop()
 
     @api.multi
+    def action_debug_new_project(self, ctx=None):
+        for rec in self:
+            np_ids = (
+                rec.parent_root_exec_bundle_id.devops_new_project_ids.exists()
+            )
+            if np_ids:
+                np_id = np_ids[0]
+            for np_id in np_ids:
+                np_id.stage_id = rec.stage_new_project_id.id
+                np_id.action_new_project_debug(ctx=None)
+
+    @api.multi
     def action_kill_pycharm(self):
         self.ensure_one()
         self.devops_workspace.ide_pycharm.action_kill_pycharm()
 
     @api.multi
-    def action_start_pycharm(self):
+    def action_start_pycharm(self, ctx=None):
         self.ensure_one()
-        self.devops_workspace.ide_pycharm.action_start_pycharm()
+        self.devops_workspace.ide_pycharm.action_start_pycharm(ctx=ctx)
 
     @api.multi
     def action_set_breakpoint_pycharm(self):
@@ -134,3 +186,16 @@ class DevopsExecError(models.Model):
                     log=rec_o.escaped_tb.replace("&quot;", '"'),
                     exec_error_id=rec,
                 )
+
+    @api.multi
+    def open_file_ide(self):
+        ws_id = self.env["devops.workspace"].search(
+            [("is_me", "=", True)], limit=1
+        )
+        if not ws_id:
+            return
+        for o_rec in self:
+            with ws_id.devops_create_exec_bundle("Open file IDE") as rec_ws:
+                rec_ws.with_context(
+                    breakpoint_id=o_rec.ide_breakpoint.id
+                ).ide_pycharm.action_start_pycharm()

@@ -1,22 +1,22 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_devops_workspace_read,Read devops.workspace,model_devops_workspace,base.group_erp_manager,1,0,0,0
-access_devops_workspace_write,Write devops.workspace,model_devops_workspace,base.group_system,1,1,1,1
-access_devops_db_image,access_devops_db_image,model_devops_db_image,base.group_user,1,1,1,1
+devops_cg_new_project_access_user_types_/_internal_user,devops_cg_new_project Access User types / Internal User,model_devops_cg_new_project,base.group_user,1,1,1,1
+devops_cg_new_project_stage_access_user_types_/_internal_user,devops_cg_new_project_stage Access User types / Internal User,model_devops_cg_new_project_stage,base.group_user,1,1,1,1
 devops_code_generator_access_user_types_/_internal_user,devops_code_generator Access User types / Internal User,model_devops_code_generator,base.group_user,1,1,1,1
 devops_code_generator_module_access_user_types_/_internal_user,devops_code_generator_module Access User types / Internal User,model_devops_code_generator_module,base.group_user,1,1,1,1
 devops_code_generator_module_model_access_user_types_/_internal_user,devops_code_generator_module_model Access User types / Internal User,model_devops_code_generator_module_model,base.group_user,1,1,1,1
 devops_code_generator_module_model_field_access_user_types_/_internal_user,devops_code_generator_module_model_field Access User types / Internal User,model_devops_code_generator_module_model_field,base.group_user,1,1,1,1
+devops_db_image_access_user_types_/_internal_user,devops_db_image Access User types / Internal User,model_devops_db_image,base.group_user,1,1,1,1
+devops_exec_access_user_types_/_internal_user,devops_exec Access User types / Internal User,model_devops_exec,base.group_user,1,1,1,1
+devops_exec_bundle_access_user_types_/_internal_user,devops_exec_bundle Access User types / Internal User,model_devops_exec_bundle,base.group_user,1,1,1,1
+devops_exec_error_access_user_types_/_internal_user,devops_exec_error Access User types / Internal User,model_devops_exec_error,base.group_user,1,1,1,1
+devops_ide_breakpoint_access_user_types_/_internal_user,devops_ide_breakpoint Access User types / Internal User,model_devops_ide_breakpoint,base.group_user,1,1,1,1
+devops_ide_pycharm_access_user_types_/_internal_user,devops_ide_pycharm Access User types / Internal User,model_devops_ide_pycharm,base.group_user,1,1,1,1
+devops_ide_pycharm_configuration_access_user_types_/_internal_user,devops_ide_pycharm_configuration Access User types / Internal User,model_devops_ide_pycharm_configuration,base.group_user,1,1,1,1
+devops_log_error_access_user_types_/_internal_user,devops_log_error Access User types / Internal User,model_devops_log_error,base.group_user,1,1,1,1
+devops_log_makefile_target_access_user_types_/_internal_user,devops_log_makefile_target Access User types / Internal User,model_devops_log_makefile_target,base.group_user,1,1,1,1
+devops_log_warning_access_user_types_/_internal_user,devops_log_warning Access User types / Internal User,model_devops_log_warning,base.group_user,1,1,1,1
 devops_system_access_user_types_/_internal_user,devops_system Access User types / Internal User,model_devops_system,base.group_user,1,1,1,1
-access_devops_cg_new_project,access_devops_cg_new_project,model_devops_cg_new_project,base.group_user,1,1,1,1
-access_devops_ide_pycharm,access_devops_ide_pycharm,model_devops_ide_pycharm,base.group_user,1,1,1,1
-access_devops_workspace_docker,access_devops_workspace_docker,model_devops_workspace_docker,base.group_user,1,1,1,1
-access_devops_workspace_terminal,access_devops_workspace_terminal,model_devops_workspace_terminal,base.group_user,1,1,1,1
-access_devops_test,access_devops_test,model_devops_test,base.group_user,1,1,1,1
-access_devops_cg_new_project_stage,access_devops_cg_new_project_stage,model_devops_cg_new_project_stage,base.group_user,1,1,1,1
-access_devops_exec,access_devops_exec,model_devops_exec,base.group_user,1,1,1,1
-access_devops_exec_bundle,access_devops_exec_bundle,model_devops_exec_bundle,base.group_user,1,1,1,1
-access_devops_exec_error,access_devops_exec_error,model_devops_exec_error,base.group_user,1,1,1,1
-access_devops_log_makefile_target,access_devops_log_makefile_target,model_devops_log_makefile_target,base.group_user,1,1,1,1
-access_devops_ide_pycharm_configuration,access_devops_ide_pycharm_configuration,model_devops_ide_pycharm_configuration,base.group_user,1,1,1,1
-access_devops_log_error,access_devops_log_error,model_devops_log_error,base.group_user,1,1,1,1
-access_devops_log_warning,access_devops_log_warning,model_devops_log_warning,base.group_user,1,1,1,1
+devops_test_access_user_types_/_internal_user,devops_test Access User types / Internal User,model_devops_test,base.group_user,1,1,1,1
+devops_workspace_access_user_types_/_internal_user,devops_workspace Access User types / Internal User,model_devops_workspace,base.group_user,1,1,1,1
+devops_workspace_docker_access_user_types_/_internal_user,devops_workspace_docker Access User types / Internal User,model_devops_workspace_docker,base.group_user,1,1,1,1
+devops_workspace_terminal_access_user_types_/_internal_user,devops_workspace_terminal Access User types / Internal User,model_devops_workspace_terminal,base.group_user,1,1,1,1

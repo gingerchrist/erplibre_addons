@@ -55,8 +55,8 @@ class DevopsCodeGeneratorModuleModelField(models.Model):
 
     field_relation = fields.Many2one(
         comodel_name="devops.code_generator.module.model.field",
-        string="Inverse field",
         domain="[('model_id', '=', relation)]",
+        string="Inverse field",
         help="inverse_name - Need for one2many to associate with many2one.",
     )
 

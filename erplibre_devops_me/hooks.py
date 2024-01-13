@@ -14,10 +14,7 @@ def post_init_hook(cr, e):
     with api.Environment.manage():
         env = api.Environment(cr, SUPERUSER_ID, {})
 
-        env.ref(
-            "erplibre_devops.devops_system_local"
-        ).action_search_workspace()
-
+        # Trick to attach a running process live
         # ok = False
         # first_print = False
         # while ok is False:
@@ -30,10 +27,22 @@ def post_init_hook(cr, e):
         #             " for ever! Add to watch «ok = True» + «Ctrl+Shift+Enter»."
         #         )
 
+        # Generate system local
+        if not os.environ.get("IS_ONLY_ME", False):
+            env.ref(
+                "erplibre_devops.devops_system_local"
+            ).action_search_workspace()
+        # select Selenium
         if os.environ.get("IS_ME_AUTO", False):
             subprocess.Popen(
                 f"cd {os.getcwd()};./.venv/bin/python"
                 " ./script/selenium/web_login_open_me_devops_auto.py",
+                shell=True,
+            )
+        elif os.environ.get("IS_ME_AUTO_FORCE", False):
+            subprocess.Popen(
+                f"cd {os.getcwd()};./.venv/bin/python"
+                " ./script/selenium/web_login_open_me_devops_auto_force.py",
                 shell=True,
             )
         else:

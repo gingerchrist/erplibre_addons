@@ -23,10 +23,6 @@ class DevopsCgNewProject(models.Model):
     _name = "devops.cg.new_project"
     _description = "Create new project for CG project"
 
-    @api.model
-    def default_stage_id(self):
-        return self.env.ref("erplibre_devops.devops_cg_new_project_stage_init")
-
     name = fields.Char(
         compute="_compute_name",
         store=True,
@@ -35,13 +31,13 @@ class DevopsCgNewProject(models.Model):
     active = fields.Boolean(default=True)
 
     has_error = fields.Boolean(
-        help="Will be True if got error into execution of new project.",
         readonly=True,
+        help="Will be True if got error into execution of new project.",
     )
 
     has_warning = fields.Boolean(
-        help="Will be True if got warning into execution of new project.",
         readonly=True,
+        help="Will be True if got warning into execution of new project.",
     )
 
     stage_id = fields.Many2one(
@@ -56,11 +52,70 @@ class DevopsCgNewProject(models.Model):
 
     mode_view = fields.Selection(
         selection=[
-            ("normal", "Normal"),
-            ("wizard_view", "Wizard"),
-            ("wizard_new_view", "New"),
+            ("no_view", "No view"),
+            ("same_view", "Autopoiesis"),
+            ("new_view", "New"),
         ],
-        default="wizard_new_view",
+        default="same_view",
+        help="Mode view, enable rebuild same view or create new view.",
+    )
+
+    config_uca_enable_export_data = fields.Boolean(
+        default=True,
+        help=(
+            "Will enable option nonmenclator in CG to export data associate to"
+            " models."
+        ),
+    )
+
+    mode_view_snippet = fields.Selection(
+        selection=[
+            ("no_snippet", "No snippet"),
+            ("enable_snippet", "Enable snippet"),
+        ],
+        default="no_snippet",
+        help="Will active feature to generate snippet",
+    )
+
+    mode_view_snippet_enable_template_website_snippet_view = fields.Boolean(
+        default=True,
+        help="Feature for mode_view_snippet",
+    )
+
+    mode_view_snippet_template_generate_website_snippet_generic_mdl = (
+        fields.Char(help="Feature for mode_view_snippet")
+    )
+
+    mode_view_snippet_template_generate_website_snippet_ctrl_featur = (
+        fields.Selection(
+            selection=[
+                ("helloworld", "helloworld"),
+                ("model_show_item_individual", "Model show item individual"),
+                ("model_show_item_list", "Model show item list"),
+            ],
+            default="model_show_item_individual",
+            help="Feature for mode_view_snippet",
+        )
+    )
+
+    mode_view_snippet_template_generate_website_enable_javascript = (
+        fields.Boolean(
+            default=True,
+            help="Feature for mode_view_snippet",
+        )
+    )
+
+    mode_view_snippet_template_generate_website_snippet_type = (
+        fields.Selection(
+            selection=[
+                ("content", "Content"),
+                ("effect", "Effect"),
+                ("feature", "Feature"),
+                ("structure", "Structure"),
+            ],
+            default="effect",
+            help="Feature for mode_view_snippet",
+        )
     )
 
     last_new_project = fields.Many2one(
@@ -79,15 +134,16 @@ class DevopsCgNewProject(models.Model):
     )
 
     execution_finish = fields.Boolean(
-        readonly=True, help="Will be True when execution finish correctly."
+        readonly=True,
+        help="Will be True when execution finish correctly.",
     )
 
     is_pause = fields.Boolean(
+        readonly=True,
         help=(
             "Is pause is True when debug is execute and set at pause to run"
             " outside."
         ),
-        readonly=True,
     )
 
     module = fields.Char(required=True)
@@ -123,98 +179,278 @@ class DevopsCgNewProject(models.Model):
         store=True,
     )
 
-    config_debug_uc0 = fields.Boolean(help="Debug uC0.")
+    config_debug_Uc0 = fields.Boolean(help="Debug Uc0.")
 
-    config_debug_ucA = fields.Boolean(help="Debug uCA.")
+    config_debug_UcA = fields.Boolean(help="Debug UcA.")
 
-    config_debug_ucB = fields.Boolean(help="Debug uCB.")
+    config_debug_UcB = fields.Boolean(help="Debug UcB.")
 
-    breakpoint_uc0_first_line_hook = fields.Boolean(
-        help="Breakpoint first line hook file uc0."
+    breakpoint_Uc0_first_line_hook = fields.Boolean(
+        string="Uc0 First line hook",
+        help="Breakpoint first line hook file uc0.",
     )
 
     breakpoint_all_write_hook_begin = fields.Boolean(
-        help="Breakpoint general when write hook."
+        string="ALL Write hook file at begin",
+        help="Breakpoint general when write hook.",
     )
 
     breakpoint_all_write_hook_before_model = fields.Boolean(
+        string="ALL Write hook before model",
         help=(
             "Breakpoint general when write hook before write model/fields into"
             " hook."
-        )
+        ),
     )
 
     breakpoint_all_write_hook_model_write_field = fields.Boolean(
+        string="ALL Write hook model write field",
         help=(
             "Breakpoint general when write hook while writing model, before"
-            " write field. Can use field"
-            " breakpoint_all_write_hook_model_write_field_config_field_name to"
-            " specify field name."
-        )
+            " write field."
+        ),
     )
 
-    breakpoint_all_write_hook_model_write_field_config_field_name = fields.Char(
+    breakpoint_condition_model_name = fields.Char(
+        string="Model name",
+        help="General breakpoint condition with model name.",
+    )
+
+    breakpoint_condition_field_name = fields.Char(
+        string="Field name",
+        help="General breakpoint condition with field name.",
+    )
+
+    breakpoint_condition_field_attribute_name = fields.Char(
+        string="Field attribute name",
+        help="General breakpoint condition with field attribute name.",
+    )
+
+    breakpoint_condition_method_name = fields.Char(
+        string="Method name",
+        help="General breakpoint condition to diagnostic method.",
+    )
+
+    breakpoint_condition_module_name = fields.Char(
+        string="Module name",
         help=(
-            "Associate with breakpoint_all_write_hook_model_write_field , can"
-            " set field name to break."
-        )
+            "General breakpoint condition to diagnostic module. It's generally"
+            " the name of the generated module."
+        ),
     )
 
-    breakpoint_all_write_hook_model_write_field_config_field_att = fields.Char(
+    breakpoint_condition_xml_id = fields.Char(
+        string="Xml ID",
         help=(
-            "Associate with breakpoint_all_write_hook_model_write_field , can"
-            " set attribute field name to break."
-        )
+            "View breakpoint condition to diagnostic module. XML_id is the"
+            " identifiant of view."
+        ),
     )
 
-    breakpoint_ucA_first_line_hook = fields.Boolean(
-        help="Breakpoint first line hook file ucA."
-    )
-
-    breakpoint_ucB_first_line_hook = fields.Boolean(
-        help="Breakpoint first line hook file ucB."
-    )
-
-    breakpoint_uc0_bp_cg_uc0 = fields.Boolean(
-        help="Breakpoint dans la section génération de code du uC0."
-    )
-
-    breakpoint_ucA_bp_cg_ucA = fields.Boolean(
-        help="Breakpoint dans la section génération de code du uCA."
-    )
-
-    breakpoint_ucB_bp_cg_ucB = fields.Boolean(
-        help="Breakpoint dans la section génération de code du uCB."
-    )
-
-    breakpoint_ucB_write_code_model_field = fields.Boolean(
+    breakpoint_condition_short_xml_id = fields.Char(
+        string="Xml Short ID",
         help=(
-            "Breakpoint dans la section génération de code du uCB - write"
-            " model field module."
-            " Can use field"
-            " breakpoint_ucB_write_code_model_field_config_field_name to"
-            " specify field name."
-        )
+            "View breakpoint condition to diagnostic module. XML_id is the"
+            " identifiant of view, without the module name."
+        ),
     )
 
-    breakpoint_ucB_write_code_model_field_config_model_name = fields.Char(
+    breakpoint_condition_value_label_view_item = fields.Char(
+        string="String view item",
         help=(
-            "Associate with breakpoint_ucB_write_code_model_field , can"
-            " set model name to break."
-        )
+            "View breakpoint condition to diagnostic module. The string of"
+            " view item."
+        ),
     )
 
-    breakpoint_ucB_write_code_model_field_config_field_name = fields.Char(
+    breakpoint_condition_name_view_item = fields.Char(
+        string="Name view item",
         help=(
-            "Associate with breakpoint_ucB_write_code_model_field , can"
-            " set field name to break."
-        )
+            "View breakpoint condition to diagnostic module. The name of view"
+            " item."
+        ),
     )
 
-    # internal_error = fields.Char(
-    # compute="_compute_internal_error",
-    # store=True,
-    # )
+    breakpoint_condition_item_type_view_item = fields.Char(
+        string="Item type view item",
+        help=(
+            "View breakpoint condition to diagnostic module. The item type of"
+            " view item."
+        ),
+    )
+
+    breakpoint_condition_view_name = fields.Char(
+        string="View name",
+        help=(
+            "View breakpoint condition to diagnostic module. The id of the"
+            " view."
+        ),
+    )
+
+    breakpoint_UcA_first_line_hook = fields.Boolean(
+        string="UcA First line hook",
+        help="Breakpoint first line hook file ucA.",
+    )
+
+    breakpoint_UcB_first_line_hook = fields.Boolean(
+        string="UcB First line hook",
+        help="Breakpoint first line hook file ucB.",
+    )
+
+    breakpoint_Uc0_cg_Uc0 = fields.Boolean(
+        string="Uc0 cg Uc0",
+        help="Breakpoint dans la section génération de code du Uc0.",
+    )
+
+    breakpoint_all_begin_generate_file = fields.Boolean(
+        string="ALL Begin generate file",
+        help="Breakpoint dans la section génération de code.",
+    )
+
+    breakpoint_UcA_extract_python_controller_warning = fields.Boolean(
+        string="UcA Extract Python controller WARNING",
+        help=(
+            "Breakpoint UcA to diagnostic warning when extract python"
+            " controller."
+        ),
+    )
+
+    breakpoint_UcA_extract_python_module_warning = fields.Boolean(
+        string="UcA Extract Python module WARNING",
+        help=(
+            "Breakpoint UcA to diagnostic warning when extract python module."
+        ),
+    )
+
+    breakpoint_UcA_extract_python_module_file_warning = fields.Boolean(
+        string="UcA Extract Python module file WARNING",
+        help=(
+            "Breakpoint UcA to diagnostic warning when extract python module"
+            " file."
+        ),
+    )
+
+    breakpoint_UcA_extract_python_detect_field = fields.Boolean(
+        string="UcA Extract Python detect field",
+        help="Breakpoint UcA when extract Python field of model.",
+    )
+
+    breakpoint_all_prepare_data_before_write = fields.Boolean(
+        string="ALL Prepare data before write",
+        help="Breakpoint all prepare set of data before write code.",
+    )
+
+    breakpoint_all_before_sync_code = fields.Boolean(
+        string="ALL Before sync module",
+        help="Breakpoint before sync module in writing code.",
+    )
+
+    breakpoint_UcA_extract_view_warning = fields.Boolean(
+        string="UcA Extract view WARNING",
+        help="Breakpoint UcA to diagnostic warning when extract view.",
+    )
+
+    breakpoint_UcA_extract_view_first_line = fields.Boolean(
+        string="UcA Extract view first line",
+        help="Breakpoint UcA to diagnostic when extract view.",
+    )
+
+    breakpoint_UcA_extract_xml_button = fields.Boolean(
+        string="UcA Extract XML button",
+        help="Breakpoint UcA gc breakpoint extract xml button.",
+    )
+
+    breakpoint_UcA_extract_xml_header = fields.Boolean(
+        string="UcA Extract XML header",
+        help="Breakpoint UcA gc breakpoint extract xml header.",
+    )
+
+    breakpoint_UcA_extract_xml_title = fields.Boolean(
+        string="UcA Extract XML title",
+        help="Breakpoint UcA gc breakpoint extract xml title.",
+    )
+
+    breakpoint_UcA_extract_xml_view_item = fields.Boolean(
+        string="UcA Extract XML view item",
+        help="Breakpoint UcA gc breakpoint extract xml item.",
+    )
+
+    breakpoint_UcA_extract_xml_act_window = fields.Boolean(
+        string="UcA Extract XML Act Window",
+        help="Breakpoint UcA gc breakpoint extract xml act window.",
+    )
+
+    breakpoint_UcA_extract_xml_div_container = fields.Boolean(
+        string="UcA Extract XML div container",
+        help="Breakpoint UcA gc breakpoint extract xml div container.",
+    )
+
+    breakpoint_UcA_extract_module_create_cg_model_code = fields.Boolean(
+        string="UcA Extract module create cg model code",
+        help=(
+            "Breakpoint UcA when extract module before create"
+            " code.generator.model.code ."
+        ),
+    )
+
+    breakpoint_UcA_write_hook_code = fields.Boolean(
+        string="UcA Write hook code",
+        help="Breakpoint UcA when write code into hooks.",
+    )
+
+    breakpoint_UcA_write_hook_model = fields.Boolean(
+        string="UcA Write hook model",
+        help="Breakpoint UcA when write model into hooks.",
+    )
+
+    breakpoint_UcB_write_code_with_cw = fields.Boolean(
+        string="UcB Write code with CodeWriter",
+        help="Breakpoint UcB when write code with code_writer.",
+    )
+
+    breakpoint_UcB_write_act_window = fields.Boolean(
+        string="UcB Write act_window with xml_writer",
+        help="Breakpoint UcB when write act_window with xml_writer.",
+    )
+
+    breakpoint_UcB_write_data = fields.Boolean(
+        string="UcB Write xml data",
+        help="Breakpoint UcB when generate data to xml_data.",
+    )
+
+    breakpoint_UcB_generate_view_warning = fields.Boolean(
+        string="UcB Generate view WARNING",
+        help="Breakpoint UcB to diagnostic warning when generate view.",
+    )
+
+    breakpoint_UcB_generate_view_specific_form_item = fields.Boolean(
+        string="UcB Generate view specific form item",
+        help="Breakpoint UcB to generate specific form view item.",
+    )
+
+    breakpoint_UcB_generate_xml_view_object = fields.Boolean(
+        string="UcB Generate view xml view object",
+        help="Breakpoint UcB to generate xml view object.",
+    )
+
+    breakpoint_UcB_write_code_model_field = fields.Boolean(
+        string="UcB Write code model field",
+        help="Breakpoint UcB generate code - write model field module.",
+    )
+
+    breakpoint_UcB_write_code_model_field_prepare_field = fields.Boolean(
+        string="UcB Write code model field prepare field",
+        help=(
+            "Breakpoint UcB generate code - prepare set of data for field to"
+            " generate field."
+        ),
+    )
+
+    breakpoint_UcA_extract_module_get_min_max_crop = fields.Boolean(
+        string="UcA Extract module get min/max crop",
+        help="Breakpoint UcA to diagnostic warning when extract view.",
+    )
+
     # TODO need to support related field
     # devops_exec_error_ids = fields.One2many(
     # related="devops_exec_bundle_id.devops_exec_parent_error_ids"
@@ -222,6 +458,10 @@ class DevopsCgNewProject(models.Model):
     cg_hooks_py = fields.Char(help="Path of hooks python file.")
 
     template_hooks_py = fields.Char(help="Path of template hooks python file.")
+
+    template_manifest_py = fields.Char(
+        help="Path of template manifest python file."
+    )
 
     bd_name_demo = fields.Char(help="BD name for uc0")
 
@@ -292,6 +532,10 @@ class DevopsCgNewProject(models.Model):
         ),
     )
 
+    @api.model
+    def default_stage_id(self):
+        return self.env.ref("erplibre_devops.devops_cg_new_project_stage_init")
+
     @api.depends(
         "devops_workspace",
         "module",
@@ -315,36 +559,82 @@ class DevopsCgNewProject(models.Model):
                 rec.name += f" - start {rec.exec_start_date}"
 
     @api.depends(
-        "config_debug_uc0",
-        "config_debug_ucA",
-        "config_debug_ucB",
+        "config_debug_Uc0",
+        "config_debug_UcA",
+        "config_debug_UcB",
         "breakpoint_all_write_hook_begin",
         "breakpoint_all_write_hook_before_model",
         "breakpoint_all_write_hook_model_write_field",
-        "breakpoint_uc0_first_line_hook",
-        "breakpoint_ucA_first_line_hook",
-        "breakpoint_ucB_first_line_hook",
-        "breakpoint_uc0_bp_cg_uc0",
-        "breakpoint_ucA_bp_cg_ucA",
-        "breakpoint_ucB_bp_cg_ucB",
-        "breakpoint_ucB_write_code_model_field",
+        "breakpoint_all_prepare_data_before_write",
+        "breakpoint_all_before_sync_code",
+        "breakpoint_Uc0_first_line_hook",
+        "breakpoint_UcA_first_line_hook",
+        "breakpoint_UcB_first_line_hook",
+        "breakpoint_Uc0_cg_Uc0",
+        "breakpoint_all_begin_generate_file",
+        "breakpoint_UcA_extract_view_warning",
+        "breakpoint_UcA_extract_python_controller_warning",
+        "breakpoint_UcA_extract_python_module_warning",
+        "breakpoint_UcA_extract_python_module_file_warning",
+        "breakpoint_UcA_extract_python_detect_field",
+        "breakpoint_UcA_extract_module_create_cg_model_code",
+        "breakpoint_UcA_write_hook_code",
+        "breakpoint_UcA_write_hook_model",
+        "breakpoint_UcB_write_code_with_cw",
+        "breakpoint_UcB_write_act_window",
+        "breakpoint_UcB_write_data",
+        "breakpoint_UcA_extract_module_get_min_max_crop",
+        "breakpoint_UcA_extract_view_first_line",
+        "breakpoint_UcA_extract_xml_button",
+        "breakpoint_UcA_extract_xml_header",
+        "breakpoint_UcA_extract_xml_title",
+        "breakpoint_UcA_extract_xml_view_item",
+        "breakpoint_UcA_extract_xml_act_window",
+        "breakpoint_UcA_extract_xml_div_container",
+        "breakpoint_UcB_generate_view_warning",
+        "breakpoint_UcB_generate_view_specific_form_item",
+        "breakpoint_UcB_generate_xml_view_object",
+        "breakpoint_UcB_write_code_model_field",
     )
     def _compute_can_setup_ide(self):
         for rec in self:
             rec.can_setup_ide = (
-                rec.config_debug_uc0
-                + rec.config_debug_ucA
-                + rec.config_debug_ucB
+                rec.config_debug_Uc0
+                + rec.config_debug_UcA
+                + rec.config_debug_UcB
                 + rec.breakpoint_all_write_hook_begin
                 + rec.breakpoint_all_write_hook_before_model
                 + rec.breakpoint_all_write_hook_model_write_field
-                + rec.breakpoint_uc0_first_line_hook
-                + rec.breakpoint_ucA_first_line_hook
-                + rec.breakpoint_ucB_first_line_hook
-                + rec.breakpoint_uc0_bp_cg_uc0
-                + rec.breakpoint_ucA_bp_cg_ucA
-                + rec.breakpoint_ucB_bp_cg_ucB
-                + rec.breakpoint_ucB_write_code_model_field
+                + rec.breakpoint_all_prepare_data_before_write
+                + rec.breakpoint_all_before_sync_code
+                + rec.breakpoint_Uc0_first_line_hook
+                + rec.breakpoint_UcA_first_line_hook
+                + rec.breakpoint_UcB_first_line_hook
+                + rec.breakpoint_Uc0_cg_Uc0
+                + rec.breakpoint_all_begin_generate_file
+                + rec.breakpoint_UcA_extract_view_warning
+                + rec.breakpoint_UcA_extract_python_controller_warning
+                + rec.breakpoint_UcA_extract_python_module_warning
+                + rec.breakpoint_UcA_extract_python_module_file_warning
+                + rec.breakpoint_UcA_extract_python_detect_field
+                + rec.breakpoint_UcA_extract_module_create_cg_model_code
+                + rec.breakpoint_UcA_write_hook_code
+                + rec.breakpoint_UcA_write_hook_model
+                + rec.breakpoint_UcB_write_code_with_cw
+                + rec.breakpoint_UcB_write_act_window
+                + rec.breakpoint_UcB_write_data
+                + rec.breakpoint_UcA_extract_module_get_min_max_crop
+                + rec.breakpoint_UcA_extract_view_first_line
+                + rec.breakpoint_UcA_extract_xml_button
+                + rec.breakpoint_UcA_extract_xml_header
+                + rec.breakpoint_UcA_extract_xml_title
+                + rec.breakpoint_UcA_extract_xml_view_item
+                + rec.breakpoint_UcA_extract_xml_act_window
+                + rec.breakpoint_UcA_extract_xml_div_container
+                + rec.breakpoint_UcB_generate_view_warning
+                + rec.breakpoint_UcB_generate_view_specific_form_item
+                + rec.breakpoint_UcB_generate_xml_view_object
+                + rec.breakpoint_UcB_write_code_model_field
             )
 
     def action_new_project_clear_pause(self, ctx=None):
@@ -355,19 +645,42 @@ class DevopsCgNewProject(models.Model):
                 ctx=ctx,
             ) as rec_ws:
                 rec.is_pause = False
-                rec.config_debug_uc0 = False
-                rec.config_debug_ucA = False
-                rec.config_debug_ucB = False
+                rec.config_debug_Uc0 = False
+                rec.config_debug_UcA = False
+                rec.config_debug_UcB = False
                 rec.breakpoint_all_write_hook_begin = False
                 rec.breakpoint_all_write_hook_before_model = False
                 rec.breakpoint_all_write_hook_model_write_field = False
-                rec.breakpoint_uc0_first_line_hook = False
-                rec.breakpoint_ucA_first_line_hook = False
-                rec.breakpoint_ucB_first_line_hook = False
-                rec.breakpoint_uc0_bp_cg_uc0 = False
-                rec.breakpoint_ucA_bp_cg_ucA = False
-                rec.breakpoint_ucB_bp_cg_ucB = False
-                rec.breakpoint_ucB_write_code_model_field = False
+                rec.breakpoint_all_prepare_data_before_write = False
+                rec.breakpoint_all_before_sync_code = False
+                rec.breakpoint_Uc0_first_line_hook = False
+                rec.breakpoint_UcA_first_line_hook = False
+                rec.breakpoint_UcB_first_line_hook = False
+                rec.breakpoint_Uc0_cg_Uc0 = False
+                rec.breakpoint_all_begin_generate_file = False
+                rec.breakpoint_UcA_extract_python_controller_warning = False
+                rec.breakpoint_UcA_extract_python_module_warning = False
+                rec.breakpoint_UcA_extract_python_module_file_warning = False
+                rec.breakpoint_UcA_extract_python_detect_field = False
+                rec.breakpoint_UcA_extract_module_create_cg_model_code = False
+                rec.breakpoint_UcA_write_hook_code = False
+                rec.breakpoint_UcA_write_hook_model = False
+                rec.breakpoint_UcB_write_code_with_cw = False
+                rec.breakpoint_UcB_write_act_window = False
+                rec.breakpoint_UcB_write_data = False
+                rec.breakpoint_UcA_extract_view_warning = False
+                rec.breakpoint_UcA_extract_module_get_min_max_crop = False
+                rec.breakpoint_UcA_extract_view_first_line = False
+                rec.breakpoint_UcA_extract_xml_button = False
+                rec.breakpoint_UcA_extract_xml_header = False
+                rec.breakpoint_UcA_extract_xml_title = False
+                rec.breakpoint_UcA_extract_xml_view_item = False
+                rec.breakpoint_UcA_extract_xml_act_window = False
+                rec.breakpoint_UcA_extract_xml_div_container = False
+                rec.breakpoint_UcB_generate_view_warning = False
+                rec.breakpoint_UcB_generate_view_specific_form_item = False
+                rec.breakpoint_UcB_generate_xml_view_object = False
+                rec.breakpoint_UcB_write_code_model_field = False
 
     @api.depends("exec_start_date", "exec_stop_date")
     def _compute_exec_time_duration(self):
@@ -386,23 +699,23 @@ class DevopsCgNewProject(models.Model):
                 "New project debug", devops_cg_new_project=rec.id, ctx=ctx
             ) as rec_ws:
                 has_debug = False
-                stage_uc0 = self.env.ref(
-                    "erplibre_devops.devops_cg_new_project_stage_generate_uc0"
+                stage_Uc0 = self.env.ref(
+                    "erplibre_devops.devops_cg_new_project_stage_generate_Uc0"
                 )
-                if rec.stage_id == stage_uc0:
-                    rec.config_debug_uc0 = True
+                if rec.stage_id == stage_Uc0:
+                    rec.config_debug_Uc0 = True
                     has_debug = True
                 stage_uca = self.env.ref(
                     "erplibre_devops.devops_cg_new_project_stage_generate_uca"
                 )
                 if rec.stage_id == stage_uca:
-                    rec.config_debug_ucA = True
+                    rec.config_debug_UcA = True
                     has_debug = True
                 stage_ucb = self.env.ref(
                     "erplibre_devops.devops_cg_new_project_stage_generate_ucb"
                 )
                 if rec.stage_id == stage_ucb:
-                    rec.config_debug_ucB = True
+                    rec.config_debug_UcB = True
                     has_debug = True
                 if has_debug:
                     rec.with_context(rec_ws._context).action_new_project()
@@ -419,144 +732,56 @@ class DevopsCgNewProject(models.Model):
         conf_add_db=None,
         conf_add_module=None,
         conf_add_config_path="config.conf",
-        is_test=False,
     ):
-        lst_test = []
         for rec in self:
             with rec.devops_workspace.devops_create_exec_bundle(
                 "New project setup IDE", devops_cg_new_project=rec.id, ctx=ctx
             ) as rec_ws:
-                if not rec.can_setup_ide and not is_test:
+                if not rec.can_setup_ide:
                     continue
                 has_bp = rec_ws._context.get(
                     "new_project_with_breakpoint", True
                 )
-
-                if is_test or (has_bp and rec.breakpoint_all_write_hook_begin):
-                    file = "addons/TechnoLibre_odoo-code-generator/code_generator_hook/models/code_generator_writer.py"
-                    key = "if post_init_hook_feature_code_generator:"
-                    if is_test:
-                        lst_test.append((file, key))
-                    else:
-                        rec.add_breakpoint(file=file, key=key)
-                if is_test or (
-                    has_bp and rec.breakpoint_all_write_hook_before_model
-                ):
-                    file = "addons/TechnoLibre_odoo-code-generator/code_generator_hook/models/code_generator_writer.py"
-                    key = (
-                        "lst_dependency = \[a.name for a in"
-                        " model_id.inherit_model_ids\]"
-                    )
-                    if is_test:
-                        lst_test.append((file, key))
-                    else:
-                        rec.add_breakpoint(file=file, key=key)
-                if is_test or (
-                    has_bp and rec.breakpoint_all_write_hook_model_write_field
-                ):
-                    if (
-                        rec.breakpoint_all_write_hook_model_write_field_config_field_name
-                    ):
-                        condition = f'key=="{rec.breakpoint_all_write_hook_model_write_field_config_field_name}"'
-                        if (
-                            rec.breakpoint_all_write_hook_model_write_field_config_field_att
+                if has_bp:
+                    lst_name = []
+                    dct_condition = {}
+                    # Create breakpoint data
+                    for field_name, field_value in rec._fields.items():
+                        if not (
+                            field_name.startswith("breakpoint_")
+                            and field_value.type == "boolean"
                         ):
-                            condition += (
-                                " and"
-                                f' subkey=="{rec.breakpoint_all_write_hook_model_write_field_config_field_att}"'
-                            )
-                    else:
-                        condition = None
-
-                    file = "addons/TechnoLibre_odoo-code-generator/code_generator_hook/models/code_generator_writer.py"
-                    key = "self._write_dict_key(cw, subkey, value)"
-                    if is_test:
-                        lst_test.append((file, key))
-                    else:
-                        rec.add_breakpoint(
-                            file=file, key=key, condition=condition
+                            continue
+                        field_id = getattr(rec, field_name)
+                        if not field_id:
+                            continue
+                        lst_name.append(field_name)
+                    if lst_name:
+                        bp_ids = (
+                            self.env["devops.ide.breakpoint"]
+                            .search([("name", "in", lst_name)])
+                            .exists()
                         )
-                if is_test or (has_bp and rec.breakpoint_uc0_first_line_hook):
-                    file = rec.code_generator_demo_hooks_py
-                    key = "env = api.Environment(cr, SUPERUSER_ID, {})"
-                    if is_test:
-                        lst_test.append((file, key))
-                    else:
-                        rec.add_breakpoint(file=file, key=key)
-                if is_test or (has_bp and rec.breakpoint_ucA_first_line_hook):
-                    file = rec.template_hooks_py
-                    key = "env = api.Environment(cr, SUPERUSER_ID, {})"
-                    if is_test:
-                        lst_test.append((file, key))
-                    else:
-                        rec.add_breakpoint(file=file, key=key)
-                if is_test or (has_bp and rec.breakpoint_ucB_first_line_hook):
-                    file = rec.cg_hooks_py
-                    key = "env = api.Environment(cr, SUPERUSER_ID, {})"
-                    if is_test:
-                        lst_test.append((file, key))
-                    else:
-                        rec.add_breakpoint(file=file, key=key)
-                if is_test or (has_bp and rec.breakpoint_uc0_bp_cg_uc0):
-                    file = "addons/TechnoLibre_odoo-code-generator/code_generator_hook/models/code_generator_writer.py"
-                    key = 'cw.emit("new_module_name = MODULE_NAME")'
-                    if is_test:
-                        lst_test.append((file, key))
-                    else:
-                        rec.add_breakpoint(file=file, key=key)
-                if is_test or (
-                    has_bp
-                    and (
-                        rec.breakpoint_ucA_bp_cg_ucA
-                        or rec.breakpoint_ucB_bp_cg_ucB
-                    )
-                ):
-                    file = "addons/TechnoLibre_odoo-code-generator/code_generator/models/code_generator_writer.py"
-                    key = (
-                        "if module.template_model_name or"
-                        " module.template_inherit_model_name:"
-                    )
-                    if is_test:
-                        lst_test.append((file, key))
-                    else:
-                        rec.add_breakpoint(file=file, key=key)
-                if is_test or (
-                    has_bp and rec.breakpoint_ucB_write_code_model_field
-                ):
-                    lst_condition = []
-                    if (
-                        rec.breakpoint_ucB_write_code_model_field_config_model_name
-                    ):
-                        lst_condition.append(
-                            f'model.model=="{rec.breakpoint_ucB_write_code_model_field_config_model_name}"'
-                        )
-                    if (
-                        rec.breakpoint_ucB_write_code_model_field_config_field_name
-                    ):
-                        lst_condition.append(
-                            f'f2export.name=="{rec.breakpoint_ucB_write_code_model_field_config_field_name}"'
-                        )
-                    if lst_condition:
-                        condition = " and ".join(lst_condition)
-                    else:
-                        condition = None
-                    file = "addons/TechnoLibre_odoo-code-generator/code_generator/models/code_generator_writer.py"
-                    key = "dct_field_attr_diff = defaultdict(list)"
-                    if is_test:
-                        lst_test.append((file, key))
-                    else:
-                        rec.add_breakpoint(
-                            file=file, key=key, condition=condition
-                        )
-                if conf_add_mode and not is_test:
+                        if len(bp_ids) != len(lst_name):
+                            # error, missing breakpoint, search it
+                            for name in lst_name:
+                                find_it = bp_ids.filtered(
+                                    lambda a: a.name == name
+                                )
+                                if not find_it:
+                                    raise Exception(
+                                        "Cannot find breakpoint name"
+                                        f" '{name}'."
+                                    )
+                        if bp_ids:
+                            rec.add_breakpoint(bp_ids=bp_ids)
+                if conf_add_mode:
                     rec_ws.ide_pycharm.add_configuration(
                         conf_add_mode=conf_add_mode,
                         conf_add_db=conf_add_db,
                         conf_add_module=conf_add_module,
                         conf_add_config_path=conf_add_config_path,
                     )
-                if is_test:
-                    return lst_test
 
     @api.multi
     def action_run_test(self, ctx=None):
@@ -567,28 +792,41 @@ class DevopsCgNewProject(models.Model):
                 ctx=ctx,
             ) as rec_ws:
                 rec = rec.with_context(rec_ws._context)
-                lst_test = rec.action_new_project_setup_IDE(is_test=True)
-                if not lst_test:
+                bp_ids = self.env["devops.ide.breakpoint"].search([])
+                if not bp_ids:
                     msg = f"List of breakpoint is empty."
                     _logger.error(msg)
                     raise exceptions.Warning(msg)
-                for file, key in lst_test:
-                    if not file:
-                        # Ignore this breakpoint, the file doesn't exist, missing variable
+                for bp_id in bp_ids:
+                    if bp_id.ignore_test:
                         continue
+
                     try:
-                        lst_line = rec.get_no_line_breakpoint(
-                            key, file, rec_ws
+                        lst_line = bp_id.get_breakpoint_info(
+                            rec_ws, new_project_id=rec
                         )
                     except Exception as e:
-                        raise exceptions.Warning(e)
+                        raise exceptions.Warning(
+                            f"Breakpoint '{bp_id.name}' : {e}"
+                        )
                     if not lst_line:
                         msg = (
-                            f"Cannot find breakpoint for file {file}, key :"
-                            f" {key}"
+                            f"Cannot find breakpoint {bp_id.name} for file"
+                            f" {bp_id.filename}, key : {bp_id.keyword}"
                         )
                         _logger.error(msg)
                         raise exceptions.Warning(msg)
+                    if not bp_id.is_multiple and (
+                        len(lst_line) != 1 or len(lst_line[0][1]) > 1
+                    ):
+                        msg = (
+                            f"Breakpoint {bp_id.name} is not suppose to find"
+                            f" multiple line and got '{lst_line}' into file"
+                            f" '{bp_id.filename}' with key '{bp_id.keyword}'"
+                        )
+                        _logger.error(msg)
+                        raise exceptions.Warning(msg)
+
                 _logger.info("Test pass")
 
     @api.multi
@@ -603,18 +841,18 @@ class DevopsCgNewProject(models.Model):
                 rec.exec_start_date = fields.Datetime.now(self)
                 rec.has_error = False
                 rec.has_warning = False
-                id_exec_bundle = self.env.context.get("devops_exec_bundle")
+                stop_exec = False
+                count_stage_execute = 0
+                id_exec_bundle = rec_ws._context.get("devops_exec_bundle")
+                one_stage_only = rec_ws._context.get("one_stage_only", False)
                 exec_bundle_parent_id = self.env["devops.exec.bundle"].browse(
                     id_exec_bundle
                 )
                 stage_init_id = self.env.ref(
                     "erplibre_devops.devops_cg_new_project_stage_init"
                 )
-                stage_gen_conf_id = self.env.ref(
-                    "erplibre_devops.devops_cg_new_project_stage_generate_config"
-                )
                 stage_uc0_id = self.env.ref(
-                    "erplibre_devops.devops_cg_new_project_stage_generate_uc0"
+                    "erplibre_devops.devops_cg_new_project_stage_generate_Uc0"
                 )
                 stage_uca_id = self.env.ref(
                     "erplibre_devops.devops_cg_new_project_stage_generate_uca"
@@ -626,37 +864,43 @@ class DevopsCgNewProject(models.Model):
                 #     "erplibre_devops.devops_cg_new_project_stage_generate_terminate"
                 # )
 
+                # Stage INIT
                 if rec.stage_id == stage_init_id:
                     rec.action_init(rec_ws=rec_ws)
+                    count_stage_execute += 1
 
-                if (
-                    not exec_bundle_parent_id.devops_exec_parent_error_ids
-                    and rec.stage_id == stage_gen_conf_id
-                ):
-                    rec.action_generate_config(rec_ws=rec_ws)
-                else:
+                if one_stage_only and count_stage_execute > 0:
+                    stop_exec = True
+                elif exec_bundle_parent_id.devops_exec_parent_error_ids:
                     rec.has_error = True
-                if (
-                    not exec_bundle_parent_id.devops_exec_parent_error_ids
-                    and rec.stage_id == stage_uc0_id
-                ):
-                    rec.action_generate_uc0(rec_ws=rec_ws)
-                else:
+                    stop_exec = True
+
+                # Stage Uc0
+                if not stop_exec and rec.stage_id == stage_uc0_id:
+                    rec.action_generate_Uc0(rec_ws=rec_ws)
+                    count_stage_execute += 1
+
+                if one_stage_only and count_stage_execute > 0:
+                    stop_exec = True
+                elif exec_bundle_parent_id.devops_exec_parent_error_ids:
                     rec.has_error = True
-                if (
-                    not exec_bundle_parent_id.devops_exec_parent_error_ids
-                    and rec.stage_id == stage_uca_id
-                ):
+                    stop_exec = True
+
+                # Stage UcA
+                if not stop_exec and rec.stage_id == stage_uca_id:
                     rec.action_generate_uca(rec_ws=rec_ws)
-                else:
+                    count_stage_execute += 1
+
+                if one_stage_only and count_stage_execute > 0:
+                    stop_exec = True
+                elif exec_bundle_parent_id.devops_exec_parent_error_ids:
                     rec.has_error = True
-                if (
-                    not exec_bundle_parent_id.devops_exec_parent_error_ids
-                    and rec.stage_id == stage_ucb_id
-                ):
+                    stop_exec = True
+
+                # Stage UcB
+                if not stop_exec and rec.stage_id == stage_ucb_id:
                     rec.action_generate_ucb(rec_ws=rec_ws)
-                else:
-                    rec.has_error = True
+                    count_stage_execute += 1
 
                 rec.exec_stop_date = fields.Datetime.now(self)
                 rec.execution_finish = True
@@ -743,6 +987,9 @@ class DevopsCgNewProject(models.Model):
                 rec.template_hooks_py = os.path.join(
                     rec.template_path, "hooks.py"
                 )
+                rec.template_manifest_py = os.path.join(
+                    rec.template_path, "__manifest__.py"
+                )
                 if (
                     not rec.force
                     and not rec.validate_path_ready_to_be_override(
@@ -778,18 +1025,18 @@ class DevopsCgNewProject(models.Model):
                     raise Exception(msg_error)
 
                 rec.stage_id = self.env.ref(
-                    "erplibre_devops.devops_cg_new_project_stage_generate_config"
+                    "erplibre_devops.devops_cg_new_project_stage_generate_Uc0"
                 )
 
     @api.multi
-    def action_generate_config(self, ctx=None, rec_ws=None):
+    def action_generate_Uc0(self, ctx=None, rec_ws=None):
         for rec in self:
             ws_param = rec_ws if rec_ws else rec.devops_workspace
             with ws_param.devops_create_exec_bundle(
-                "New project generate 2.config", devops_cg_new_project=rec.id
+                "New project generate 2.Uc0", devops_cg_new_project=rec.id
             ) as ws:
                 rec.stage_id = self.env.ref(
-                    "erplibre_devops.devops_cg_new_project_stage_generate_config"
+                    "erplibre_devops.devops_cg_new_project_stage_generate_Uc0"
                 )
 
                 if not (
@@ -872,20 +1119,6 @@ class DevopsCgNewProject(models.Model):
                 _logger.info(f"Create temporary config file: {temp_file}")
                 rec.config_path = temp_file
 
-                rec.stage_id = self.env.ref(
-                    "erplibre_devops.devops_cg_new_project_stage_generate_uc0"
-                )
-
-    @api.multi
-    def action_generate_uc0(self, ctx=None, rec_ws=None):
-        for rec in self:
-            ws_param = rec_ws if rec_ws else rec.devops_workspace
-            with ws_param.devops_create_exec_bundle(
-                "New project generate 3.Uc0", devops_cg_new_project=rec.id
-            ) as ws:
-                rec.stage_id = self.env.ref(
-                    "erplibre_devops.devops_cg_new_project_stage_generate_uc0"
-                )
                 if not rec.bd_name_demo:
                     rec.bd_name_demo = (
                         f"new_project_code_generator_demo_{uuid.uuid4()}"[:63]
@@ -981,48 +1214,11 @@ class DevopsCgNewProject(models.Model):
         for rec in self:
             ws_param = rec_ws if rec_ws else rec.devops_workspace
             with ws_param.devops_create_exec_bundle(
-                "New project generate 4.UcA", devops_cg_new_project=rec.id
+                "New project generate 3.UcA", devops_cg_new_project=rec.id
             ) as ws:
                 rec.stage_id = self.env.ref(
                     "erplibre_devops.devops_cg_new_project_stage_generate_uca"
                 )
-                lst_template_hooks_py_replace = []
-                if rec.mode_view in ["wizard_view", "wizard_new_view"]:
-                    lst_template_hooks_py_replace.append(
-                        (
-                            'value["enable_template_wizard_view"] = False',
-                            'value["enable_template_wizard_view"] = True',
-                        )
-                    )
-                    if rec.mode_view == "wizard_new_view":
-                        lst_template_hooks_py_replace.append(
-                            (
-                                'value["force_generic_template_wizard_view"] ='
-                                " False",
-                                'value["force_generic_template_wizard_view"] ='
-                                " True",
-                            )
-                        )
-
-                # Add model from config
-                if self.config:
-                    config = json.loads(self.config)
-                    config_lst_model = config.get("model")
-                    str_lst_model = "; ".join(
-                        [a.get("name") for a in config_lst_model]
-                    )
-                    old_str = 'value["template_model_name"] = ""'
-                    new_str = (
-                        f'value["template_model_name"] = "{str_lst_model}"'
-                    )
-                    lst_template_hooks_py_replace.append((old_str, new_str))
-
-                if lst_template_hooks_py_replace:
-                    self.search_and_replace_file(
-                        rec.template_hooks_py,
-                        lst_template_hooks_py_replace,
-                    )
-
                 # Execute all
                 if not rec.bd_name_template:
                     rec.bd_name_template = (
@@ -1071,6 +1267,125 @@ class DevopsCgNewProject(models.Model):
                         _logger.info("Exit new project")
                         continue
 
+                lst_template_hooks_py_replace = []
+                lst_template_manifest_py_replace = []
+                if rec.mode_view in ["same_view", "new_view"]:
+                    lst_template_hooks_py_replace.append(
+                        (
+                            'value["enable_template_wizard_view"] = False',
+                            'value["enable_template_wizard_view"] = True',
+                        )
+                    )
+                    if rec.mode_view == "new_view":
+                        lst_template_hooks_py_replace.append(
+                            (
+                                'value["force_generic_template_wizard_view"] ='
+                                " False",
+                                'value["force_generic_template_wizard_view"] ='
+                                " True",
+                            )
+                        )
+                if rec.config_uca_enable_export_data:
+                    lst_template_hooks_py_replace.append(
+                        (
+                            'value["enable_template_website_snippet_view"] ='
+                            " False",
+                            f'value["enable_template_website_snippet_view"] ='
+                            f" False\n"
+                            f"       "
+                            f' value["template_auto_export_data"]'
+                            f" = True\n"
+                            f"       "
+                            f' value["template_auto_export_data_exclude_model"]'
+                            f" = 'devops.db.image;devops.exec;devops.exec.bundle;devops.ide.pycharm;"
+                            f"devops.log.makefile.target;devops.workspace.terminal;devops.workspace'",
+                        )
+                    )
+                if rec.mode_view_snippet in ["enable_snippet"]:
+                    lst_template_hooks_py_replace.append(
+                        (
+                            'value["enable_template_website_snippet_view"] ='
+                            " False",
+                            'value["enable_template_website_snippet_view"] ='
+                            f" {rec.mode_view_snippet_enable_template_website_snippet_view}\n"
+                            "       "
+                            ' value["template_generate_website_snippet_generic_model"]'
+                            f' = "{rec.mode_view_snippet_template_generate_website_snippet_generic_mdl}"\n'
+                            "       "
+                            ' value["template_generate_website_snippet_controller_feature"]'
+                            f' = "{rec.mode_view_snippet_template_generate_website_snippet_ctrl_featur}"\n'
+                            "       "
+                            ' value["template_generate_website_enable_javascript"]'
+                            f" = {rec.mode_view_snippet_template_generate_website_enable_javascript}\n"
+                            "       "
+                            ' value["template_generate_website_snippet_type"]'
+                            f' = "{rec.mode_view_snippet_template_generate_website_snippet_type}"',
+                        )
+                    )
+
+                    lst_template_hooks_py_replace.append(
+                        (
+                            "code_generator_id.add_module_dependency(lst_depend_module)",
+                            'lst_depend_module.extend(["code_generator_website_snippet"])\n'
+                            "       "
+                            " code_generator_id.add_module_dependency(lst_depend_module)",
+                        )
+                    )
+                    lst_template_manifest_py_replace.append(
+                        (
+                            '"depends": [',
+                            '"depends": [\n       '
+                            ' "code_generator_website_snippet",',
+                        )
+                    )
+
+                # Add model from config
+                if self.config:
+                    config = json.loads(self.config)
+                    config_lst_model = config.get("model")
+                    str_lst_model = "; ".join(
+                        [a.get("name") for a in config_lst_model]
+                    )
+
+                    has_error = False
+                    try:
+                        self.env[
+                            "devops.ide.breakpoint"
+                        ].get_no_line_breakpoint(
+                            'value\["template_model_name"\] =',
+                            rec.template_hooks_py,
+                            ws,
+                        )
+                    except Exception:
+                        _logger.warning(
+                            "Cannot find template_model_name"
+                            f" configuration into {rec.template_hooks_py}"
+                        )
+                        has_error = True
+                    if not has_error:
+                        old_str = 'value["template_model_name"] ='
+                        new_str = (
+                            'value["template_model_name"] ='
+                            f' "{str_lst_model};"\n       '
+                            ' value["template_model_name"] +='
+                        )
+                        lst_template_hooks_py_replace.append(
+                            (old_str, new_str)
+                        )
+
+                if lst_template_hooks_py_replace:
+                    self.search_and_replace_file(
+                        rec.template_hooks_py,
+                        lst_template_hooks_py_replace,
+                    )
+                if lst_template_manifest_py_replace:
+                    self.search_and_replace_file(
+                        rec.template_manifest_py,
+                        lst_template_manifest_py_replace,
+                    )
+
+                # TODO maybe the module exist somewhere else
+                if ws.os_path_exists(rec.module_path, to_instance=True):
                     # TODO do we need to diagnostic installing module?
 
                     if rec.active_coverage:
@@ -1151,7 +1466,7 @@ class DevopsCgNewProject(models.Model):
         for rec in self:
             ws_param = rec_ws if rec_ws else rec.devops_workspace
             with ws_param.devops_create_exec_bundle(
-                "New project generate 5.UcB", devops_cg_new_project=rec.id
+                "New project generate 4.UcB", devops_cg_new_project=rec.id
             ) as ws:
                 rec.stage_id = self.env.ref(
                     "erplibre_devops.devops_cg_new_project_stage_generate_ucb"
@@ -1193,6 +1508,7 @@ class DevopsCgNewProject(models.Model):
                     for model in config_lst_model:
                         model_name = model.get("name")
                         dct_field = {}
+                        # TODO add here nomenclator to each model
                         for a in model.get("fields"):
                             dct_value = {"ttype": a.get("type")}
                             if "relation" in a.keys():
@@ -1221,13 +1537,24 @@ class DevopsCgNewProject(models.Model):
                         lst_update_cg.append((old_str, new_str))
 
                     # Force add menu and access
-                    # if rec.mode_view in ["wizard_view", "wizard_new_view"]:
+                    # if rec.mode_view in ["same_view", "new_view"]:
                     #     lst_update_cg.append(
                     #         ('"disable_generate_menu": True,', "")
                     #     )
                     # lst_update_cg.append(
                     #     ('"disable_generate_access": True,', "")
                     # )
+                    #             # TODO add option nomenclature
+                    #             if True:
+                    #                 # Add option "nomenclature", this will export data from all generated model
+                    #                 #  This is a mess when inherit another model
+                    #                 txt_replace = 'env["code.generator.writer"].create(value)'
+                    #                 txt_replace_to = f"""        values = {
+                    #     "s_data2export": "nomenclator",
+                    # }
+                    # event_config = env["res.config.settings"].sudo().create(values)
+                    # event_config.execute()\n        """ + txt_replace
+                    #                 lst_update_cg.append((txt_replace, txt_replace_to))
                     self.search_and_replace_file(
                         rec.cg_hooks_py,
                         lst_update_cg,
@@ -1333,44 +1660,65 @@ class DevopsCgNewProject(models.Model):
 
         git_repo.git.restore(relative_path)
 
-    @api.model
-    def get_no_line_breakpoint(self, key, file, ws):
-        key = key.replace('"', '\\"')
-        cmd = f'grep -n "{key}" {file}'
-        cmd += " | awk -F: '{print $1}'"
-        result = ws.execute(to_instance=True, cmd=cmd, engine="sh")
-        try:
-            lst_no_line = [int(a) for a in result.log_all.strip().split("\n")]
-        except:
-            raise Exception(
-                f"Wrong output command : {cmd}\n{result.log_all.strip()}"
-            )
-        return lst_no_line
-
-    @api.model
+    @api.multi
     def add_breakpoint(
-        self, file=None, key=None, no_line=None, condition=None
+        self,
+        bp_id=None,
+        bp_ids=None,
+        lst_bp_id=None,
+        file=None,
+        key=None,
+        no_line=None,
+        condition=None,
     ):
+        # lst_bp_id is deprecated
+        # bp_id is deprecated, use instead bp_ids
         for rec in self:
             with rec.devops_workspace.devops_create_exec_bundle(
                 "New project add breakpoint", devops_cg_new_project=rec.id
             ) as rec_ws:
-                file_path = os.path.normpath(
-                    os.path.join(
-                        rec_ws.folder,
-                        file,
-                    )
-                )
                 lst_no_line = []
-                if key:
-                    lst_no_line = rec.get_no_line_breakpoint(key, file, rec_ws)
-                elif no_line:
-                    lst_no_line = [int(no_line)]
+                if bp_ids:
+                    for rec_bp_id in bp_ids:
+                        result = rec_bp_id.get_breakpoint_info(
+                            rec_ws, new_project_id=rec, condition=condition
+                        )
+                        lst_no_line.extend(result)
+                elif lst_bp_id:
+                    for rec_bp_id, s_cond in lst_bp_id:
+                        result = rec_bp_id.get_breakpoint_info(
+                            rec_ws, new_project_id=rec, condition=s_cond
+                        )
+                        lst_no_line.extend(result)
+                elif bp_id:
+                    lst_no_line = bp_id.get_breakpoint_info(
+                        rec_ws, new_project_id=rec, condition=condition
+                    )
+                elif file:
+                    file_path = os.path.normpath(
+                        os.path.join(
+                            rec_ws.folder,
+                            file,
+                        )
+                    )
+                    if key:
+                        lst_no_line = (
+                            file_path,
+                            self.env[
+                                "devops.ide.breakpoint"
+                            ].get_no_line_breakpoint(key, file_path, rec_ws),
+                            condition,
+                        )
+                    elif no_line:
+                        lst_no_line = [(file_path, int(no_line), condition)]
 
                 if lst_no_line:
-                    for i_no_line in lst_no_line:
+                    for filename, lst_line, s_cond in lst_no_line:
                         rec_ws.ide_pycharm.add_breakpoint(
-                            file_path, i_no_line - 1, condition=condition
+                            filename,
+                            lst_line,
+                            condition=s_cond,
+                            minus_1_line=True,
                         )
                 else:
                     _logger.warning(
@@ -1396,10 +1744,18 @@ class DevopsCgNewProject(models.Model):
 
     @api.multi
     def action_kill_pycharm(self):
-        self.ensure_one()
-        self.devops_workspace.ide_pycharm.action_kill_pycharm()
+        for rec in self:
+            with rec.devops_workspace.devops_create_exec_bundle(
+                "New project kill PyCharm", devops_cg_new_project=rec.id
+            ) as rec_ws:
+                rec_ws.ide_pycharm.action_kill_pycharm()
 
     @api.multi
-    def action_start_pycharm(self):
-        self.ensure_one()
-        self.devops_workspace.ide_pycharm.action_start_pycharm()
+    def action_start_pycharm(self, ctx=None):
+        for rec in self:
+            with rec.devops_workspace.devops_create_exec_bundle(
+                "New project start PyCharm", devops_cg_new_project=rec.id
+            ) as rec_ws:
+                rec_ws.ide_pycharm.action_start_pycharm(
+                    ctx=ctx, new_project_id=self
+                )

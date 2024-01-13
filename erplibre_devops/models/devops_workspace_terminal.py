@@ -17,7 +17,10 @@ class DevopsWorkspaceTerminal(models.Model):
     _name = "devops.workspace.terminal"
     _description = "ERPLibre DevOps Workspace Terminal"
 
-    name = fields.Char(readonly=True, compute="_compute_name", store=True)
+    name = fields.Char(
+        compute="_compute_name",
+        store=True,
+    )
 
     workspace_id = fields.Many2one(
         comodel_name="devops.workspace",
@@ -29,8 +32,6 @@ class DevopsWorkspaceTerminal(models.Model):
         default=True,
         help="When false, it's because not running terminal.",
     )
-
-    terminal_initiate_succeed = fields.Boolean(help="Terminal is ready to run")
 
     @api.multi
     @api.depends("workspace_id", "terminal_is_running")

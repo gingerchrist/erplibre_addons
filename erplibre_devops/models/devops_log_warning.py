@@ -14,6 +14,13 @@ class DevopsLogWarning(models.Model):
 
     name = fields.Char()
 
-    exec_id = fields.Many2one(comodel_name="devops.exec", readonly=True)
+    exec_id = fields.Many2one(
+        comodel_name="devops.exec",
+        string="Exec",
+        readonly=True,
+    )
 
-    new_project_id = fields.Many2one(comodel_name="devops.cg.new_project")
+    new_project_id = fields.Many2one(
+        comodel_name="devops.cg.new_project",
+        string="New Project",
+    )
