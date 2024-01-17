@@ -69,6 +69,12 @@ class DevopsPlanActionWizard(models.TransientModel):
         string="Model",
     )
 
+    model_to_remove_ids = fields.Many2many(
+        comodel_name="devops.cg.model",
+        string="Model to remove",
+        relation="devops_plan_action_model_remove_rel",
+    )
+
     image_db_selection = fields.Many2one(
         comodel_name="devops.db.image",
         default=_default_image_db_selection,
@@ -130,6 +136,9 @@ class DevopsPlanActionWizard(models.TransientModel):
             ("f_new_project_society", "New society"),
             ("g_test_erplibre", "Test ERPLibre"),
             ("g_a_local", "Test ERPLibre local"),
+            ("h_run_test", "Run test"),
+            ("h_a_test_plan_exec", "Run test plan execution"),
+            ("h_b_cg", "Run test code generator"),
             ("not_supported", "Not supported"),
             ("final", "Final"),
         ]
@@ -164,6 +173,23 @@ class DevopsPlanActionWizard(models.TransientModel):
 
     def state_goto_g_test_erplibre(self):
         self.state = "g_test_erplibre"
+        return self._reopen_self()
+
+    def state_goto_h_run_test(self):
+        self.state = "h_run_test"
+        return self._reopen_self()
+
+    def state_goto_h_a_test_plan_exec(self):
+        return {
+            "type": "ir.actions.act_window",
+            "res_model": "devops.test.plan.exec",
+            "view_mode": "form",
+            "target": "new",
+            "context": {"default_workspace_id": self.root_workspace_id.id},
+        }
+
+    def state_goto_h_b_cg(self):
+        self.state = "h_b_cg"
         return self._reopen_self()
 
     def state_goto_g_a_local(self):
@@ -224,6 +250,16 @@ class DevopsPlanActionWizard(models.TransientModel):
 
     def state_previous_g_a_local(self):
         self.state = "g_test_erplibre"
+
+    def state_previous_h_run_test(self):
+        self.state = "init"
+
+    #
+    # def state_previous_h_a_test_plan_exec(self):
+    #     self.state = "h_run_test"
+
+    def state_previous_h_b_cg(self):
+        self.state = "h_run_test"
 
     def state_exit_c_a_model(self):
         with self.root_workspace_id.devops_create_exec_bundle(
@@ -381,6 +417,9 @@ class DevopsPlanActionWizard(models.TransientModel):
             "devops_cg_ids": [(6, 0, cg_id.ids)],
             "devops_cg_module_ids": [(6, 0, cg_module_id.ids)],
             "devops_cg_model_ids": [(6, 0, self.model_ids.ids)],
+            "devops_cg_model_to_remove_ids": [
+                (6, 0, self.model_to_remove_ids.ids)
+            ],
             "devops_cg_field_ids": [(6, 0, lst_field_id)],
             "stop_execution_if_env_not_clean": not self.force_generate,
         }
@@ -410,12 +449,33 @@ class DevopsPlanActionWizard(models.TransientModel):
                     f"{module_name}/views/{model_file_name}.xml"
                 )
         cmd_git_add = ";".join([f"git add '{a}'" for a in lst_default_file])
-        wp_id.execute(
-            cmd=cmd_git_add,
-            folder=relative_path_module,
-            run_into_workspace=True,
-            to_instance=True,
-        )
+        # Git remove
+        lst_default_file_rm = []
+        if self.model_to_remove_ids:
+            for cg_model_id in self.model_to_remove_ids:
+                model_file_name = cg_model_id.name.replace(".", "_")
+                lst_default_file_rm.append(
+                    f"{module_name}/models/{model_file_name}.py"
+                )
+                lst_default_file_rm.append(
+                    f"{module_name}/views/{model_file_name}.xml"
+                )
+        cmd_git_rm = ";".join([f"git rm '{a}'" for a in lst_default_file_rm])
+        if cmd_git_add and cmd_git_rm:
+            cmd_git = f"{cmd_git_add};{cmd_git_rm}"
+        elif cmd_git_add:
+            cmd_git = cmd_git_add
+        elif cmd_git_rm:
+            cmd_git = cmd_git_rm
+        else:
+            cmd_git = ""
+        if cmd_git:
+            wp_id.execute(
+                cmd=cmd_git,
+                folder=relative_path_module,
+                run_into_workspace=True,
+                to_instance=True,
+            )
         # finally
         self.state = "final"
 
@@ -424,3 +484,4 @@ class DevopsPlanActionWizard(models.TransientModel):
         for rec in self:
             if rec.plan_cg_id:
                 rec.plan_cg_id.action_git_commit()
+        return self._reopen_self()

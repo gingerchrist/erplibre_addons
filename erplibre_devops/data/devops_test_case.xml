@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <data noupdate="1">
+        <record id="devops_test_case_breakpoint" model="devops.test.case">
+            <field name="name">Breakpoint test file and line number exist.</field>
+            <field name="test_plan_id" ref="devops_test_plan_internal" />
+            <field name="test_cb_method_name">test_breakpoint</field>
+        </record>
+        <record id="devops_test_case_cg_helloworld_test" model="devops.test.case">
+            <field name="name">Helloworld test</field>
+            <field name="test_plan_id" ref="devops_test_plan_cg" />
+            <field name="test_cb_method_cg_id" ref="devops_cg_test_case_helloworld_test" />
+        </record>
+        <record id="devops_test_case_cg_demo_test" model="devops.test.case">
+            <field name="name">Demo test</field>
+            <field name="test_plan_id" ref="devops_test_plan_cg" />
+            <field name="test_cb_method_cg_id" ref="devops_cg_test_case_demo_test" />
+        </record>
+        <record id="devops_test_case_cg_cg_theme_test" model="devops.test.case">
+            <field name="name">Code generator Theme TEST</field>
+            <field name="test_plan_id" ref="devops_test_plan_cg" />
+            <field name="test_cb_method_cg_id" ref="devops_cg_test_case_code_generator_theme_test" />
+        </record>
+        <record id="devops_test_case_cg_code_generator_demo_test" model="devops.test.case">
+            <field name="name">Code generator demo test</field>
+            <field name="test_plan_id" ref="devops_test_plan_cg" />
+            <field name="test_cb_method_cg_id" ref="devops_cg_test_case_code_generator_demo_test" />
+        </record>
+        <record id="devops_test_case_cg_code_generator_data_test" model="devops.test.case">
+            <field name="name">Code generator data test</field>
+            <field name="test_plan_id" ref="devops_test_plan_cg" />
+            <field name="test_cb_method_cg_id" ref="devops_cg_test_case_code_generator_data_test" />
+        </record>
+        <record id="devops_test_case_cg_code_generator_data_part_2_test" model="devops.test.case">
+            <field name="name">Code generator data part 2 test</field>
+            <field name="test_plan_id" ref="devops_test_plan_cg" />
+            <field name="test_cb_method_cg_id" ref="devops_cg_test_case_code_generator_data_part_2_test" />
+        </record>
+        <record id="devops_test_case_cg_code_generator_inherit_test" model="devops.test.case">
+            <field name="name">Code generator inherit test</field>
+            <field name="test_plan_id" ref="devops_test_plan_cg" />
+            <field name="test_cb_method_cg_id" ref="devops_cg_test_case_code_generator_inherit_test" />
+        </record>
+        <record id="devops_test_case_cg_code_generator_template_demo_internal" model="devops.test.case">
+            <field name="name">Code generator template demo internal</field>
+            <field name="test_plan_id" ref="devops_test_plan_cg" />
+            <field name="test_cb_method_cg_id" ref="devops_cg_test_case_code_generator_template_demo_internal" />
+        </record>
+        <record id="devops_test_case_cg_mariadb_test_template" model="devops.test.case">
+            <field name="name">Mariadb test template</field>
+            <field name="test_plan_id" ref="devops_test_plan_cg" />
+            <field name="test_cb_method_cg_id" ref="devops_cg_test_case_mariadb_test_template" />
+        </record>
+        <record id="devops_test_case_cg_mariadb_test_migrator" model="devops.test.case">
+            <field name="name">Mariadb test migrator</field>
+            <field name="test_plan_id" ref="devops_test_plan_cg" />
+            <field name="test_cb_method_cg_id" ref="devops_cg_test_case_mariadb_test_migrator" />
+        </record>
+        <record id="devops_test_case_cg_mariadb_test_code_generator" model="devops.test.case">
+            <field name="name">Mariadb test code generator</field>
+            <field name="test_plan_id" ref="devops_test_plan_cg" />
+            <field name="test_cb_method_cg_id" ref="devops_cg_test_case_mariadb_test_code_generator" />
+        </record>
+        <record id="devops_test_case_cg_code_generator_template_demo_internal_inherit" model="devops.test.case">
+            <field name="name">Code generator template demo internal</field>
+            <field name="test_plan_id" ref="devops_test_plan_cg" />
+            <field name="test_cb_method_cg_id" ref="devops_cg_test_case_code_generator_template_demo_internal_inherit" />
+        </record>
+        <record id="devops_test_case_cg_code_generator_template_demo_sysadmin_cron" model="devops.test.case">
+            <field name="name">Code generator template demo sysadmin cron</field>
+            <field name="test_plan_id" ref="devops_test_plan_cg" />
+            <field name="test_cb_method_cg_id" ref="devops_cg_test_case_code_generator_template_demo_sysadmin_cron" />
+        </record>
+        <record id="devops_test_case_cg_code_generator_export_website_attachments_test" model="devops.test.case">
+            <field name="name">Code generator export website attachments test</field>
+            <field name="test_plan_id" ref="devops_test_plan_cg" />
+            <field name="test_cb_method_cg_id" ref="devops_cg_test_case_code_generator_export_website_attachments_test" />
+        </record>
+        <record id="devops_test_case_cg_code_generator_demo_generic_test" model="devops.test.case">
+            <field name="name">Code generator demo generic test</field>
+            <field name="test_plan_id" ref="devops_test_plan_cg" />
+            <field name="test_cb_method_cg_id" ref="devops_cg_test_case_code_generator_demo_generic_test" />
+        </record>
+        <record id="devops_test_case_cg_code_generator_website_snippet_test" model="devops.test.case">
+            <field name="name">Code generator website snippet test</field>
+            <field name="test_plan_id" ref="devops_test_plan_cg" />
+            <field name="test_cb_method_cg_id" ref="devops_cg_test_case_code_generator_website_snippet_test" />
+        </record>
+        <record id="devops_test_case_cg_code_generator_auto_backup_test" model="devops.test.case">
+            <field name="name">Code generator auto backup test</field>
+            <field name="test_plan_id" ref="devops_test_plan_cg" />
+            <field name="test_cb_method_cg_id" ref="devops_cg_test_case_code_generator_auto_backup_test" />
+        </record>
+    </data>
+</odoo>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <data noupdate="1">
+        <record id="devops_test_plan_internal" model="devops.test.plan">
+            <field name="name">Internal DevOps test</field>
+        </record>
+        <record id="devops_test_plan_cg" model="devops.test.plan">
+            <field name="name">Code generator ERPLibre test</field>
+        </record>
+    </data>
+</odoo>

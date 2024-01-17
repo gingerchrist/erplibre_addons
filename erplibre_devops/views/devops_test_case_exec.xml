@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <record id="devops_test_case_exec_view_form" model="ir.ui.view">
+        <field name="name">devops_test_case_exec_form</field>
+        <field name="model">devops.test.case.exec</field>
+        <field name="arch" type="xml">
+            <form string="Titre">
+                <sheet>
+                    <group>
+                        <field name="name" />
+                        <field name="is_finish" />
+                        <field name="is_pass" />
+                        <field name="log" />
+                        <field name="test_plan_exec_id" />
+                        <field name="result_ids" />
+                        <field name="test_case_id" />
+                        <field name="workspace_id" />
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="devops_test_case_exec_view_graph" model="ir.ui.view">
+        <field name="name">devops_test_case_exec_graph</field>
+        <field name="model">devops.test.case.exec</field>
+        <field name="arch" type="xml">
+            <graph string="Devops test case exec">
+                <field name="name" type="row" />
+            </graph>
+        </field>
+    </record>
+
+    <record id="devops_test_case_exec_view_kanban" model="ir.ui.view">
+        <field name="name">devops_test_case_exec_kanban</field>
+        <field name="model">devops.test.case.exec</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile">
+                <field name="name" />
+                <templates>
+                    <t t-name="kanban-box">
+                        <div t-attf-class="oe_kanban_global_click">
+                            <div class="oe_kanban_details">
+                                <ul>
+                                    <li class="mb4">
+                                        <strong>
+                                            <field name="name" />
+                                        </strong>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="devops_test_case_exec_view_pivot" model="ir.ui.view">
+        <field name="name">devops_test_case_exec_pivot</field>
+        <field name="model">devops.test.case.exec</field>
+        <field name="arch" type="xml">
+            <pivot string="Devops test case exec">
+                <field name="name" type="row" />
+            </pivot>
+        </field>
+    </record>
+
+    <record id="devops_test_case_exec_view_search" model="ir.ui.view">
+        <field name="name">devops_test_case_exec_search</field>
+        <field name="model">devops.test.case.exec</field>
+        <field name="arch" type="xml">
+            <search string="Devops test case exec">
+                <filter name="name" string="Name" domain="[('name','!=',False)]" />
+            </search>
+        </field>
+    </record>
+
+    <record id="devops_test_case_exec_view_tree" model="ir.ui.view">
+        <field name="name">devops_test_case_exec_tree</field>
+        <field name="model">devops.test.case.exec</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name" />
+                <field name="is_finish" />
+                <field name="is_pass" />
+            </tree>
+        </field>
+    </record>
+
+    <act_window
+        id="devops_test_case_exec_test_case_exec_action_window"
+        name="Test case exec"
+        res_model="devops.test.case.exec"
+        view_mode="kanban,tree,pivot,graph,form"
+    />
+</odoo>
