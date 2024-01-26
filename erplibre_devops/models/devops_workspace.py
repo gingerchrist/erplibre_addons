@@ -1160,6 +1160,7 @@ class DevopsWorkspace(models.Model):
             "KeyError:",
             "UnboundLocalError:",
             "FileNotFoundError:",
+            "RuntimeWarning:",
             "raise ValidationError",
             "odoo.exceptions.CacheMiss:",
             "json.decoder.JSONDecodeError:",
