@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <record id="devops_cg_test_case_view_form" model="ir.ui.view">
+        <field name="name">devops_cg_test_case_form</field>
+        <field name="model">devops.cg.test.case</field>
+        <field name="arch" type="xml">
+            <form string="Titre">
+                <sheet>
+                    <group>
+                        <field name="name" />
+                        <field name="install_path" />
+                        <field name="generated_path" />
+                        <field name="module_generated" />
+                        <field name="module_init_ids" />
+                        <field name="module_search_class" />
+                        <field name="module_tested" />
+                        <field name="path_module_check" />
+                        <field name="restore_db_image_name" />
+                        <field name="run_in_sandbox" />
+                        <field name="file_to_restore" />
+                        <field name="file_to_restore_origin" />
+                        <field name="script_after_init_check" />
+                        <field name="test_name" />
+                        <field name="script_path" />
+                        <field name="run_mode" />
+                        <field name="sequence_test" />
+                        <field name="search_class_module" />
+                        <field name="note" />
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="devops_cg_test_case_view_graph" model="ir.ui.view">
+        <field name="name">devops_cg_test_case_graph</field>
+        <field name="model">devops.cg.test.case</field>
+        <field name="arch" type="xml">
+            <graph string="Devops cg test case">
+                <field name="name" type="row" />
+                <field name="install_path" type="row" />
+                <field name="path_module_check" type="row" />
+                <field name="restore_db_image_name" type="row" />
+                <field name="run_in_sandbox" type="row" />
+                <field name="script_after_init_check" type="row" />
+                <field name="test_name" type="row" />
+            </graph>
+        </field>
+    </record>
+
+    <record id="devops_cg_test_case_view_kanban" model="ir.ui.view">
+        <field name="name">devops_cg_test_case_kanban</field>
+        <field name="model">devops.cg.test.case</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile">
+                <field name="name" />
+                <field name="install_path" />
+                <field name="module_generated" />
+                <field name="module_init_ids" />
+                <field name="module_search_class" />
+                <field name="module_tested" />
+                <field name="path_module_check" />
+                <field name="restore_db_image_name" />
+                <field name="run_in_sandbox" />
+                <field name="script_after_init_check" />
+                <field name="test_name" />
+                <templates>
+                    <t t-name="kanban-box">
+                        <div t-attf-class="oe_kanban_global_click">
+                            <div class="oe_kanban_details">
+                                <ul>
+                                    <li class="mb4">
+                                        <strong>
+                                            <field name="name" />
+                                        </strong>
+                                    </li>
+                                    <li class="mb4">
+                                        <strong>
+                                            <field name="install_path" />
+                                        </strong>
+                                    </li>
+                                    <li class="mb4">
+                                        <strong>
+                                            <field name="module_generated" />
+                                        </strong>
+                                    </li>
+                                    <li class="mb4">
+                                        <strong>
+                                            <field name="module_init_ids" />
+                                        </strong>
+                                    </li>
+                                    <li class="mb4">
+                                        <strong>
+                                            <field name="module_search_class" />
+                                        </strong>
+                                    </li>
+                                    <li class="mb4">
+                                        <strong>
+                                            <field name="module_tested" />
+                                        </strong>
+                                    </li>
+                                    <li class="mb4">
+                                        <strong>
+                                            <field name="path_module_check" />
+                                        </strong>
+                                    </li>
+                                    <li class="mb4">
+                                        <strong>
+                                            <field name="restore_db_image_name" />
+                                        </strong>
+                                    </li>
+                                    <li class="text-success float-right mb4" t-if="record.run_in_sandbox.raw_value">
+                                        <i class="fa fa-circle" aria-label="Ok" role="img" title="Ok" />
+                                    </li>
+                                    <li class="text-danger float-right mb4" t-if="!record.run_in_sandbox.raw_value">
+                                        <i class="fa fa-circle" aria-label="Invalid" role="img" title="Invalid" />
+                                    </li>
+                                    <li class="mb4">
+                                        <strong>
+                                            <field name="script_after_init_check" />
+                                        </strong>
+                                    </li>
+                                    <li class="mb4">
+                                        <strong>
+                                            <field name="test_name" />
+                                        </strong>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="devops_cg_test_case_view_pivot" model="ir.ui.view">
+        <field name="name">devops_cg_test_case_pivot</field>
+        <field name="model">devops.cg.test.case</field>
+        <field name="arch" type="xml">
+            <pivot string="Devops cg test case">
+                <field name="name" type="row" />
+                <field name="install_path" type="row" />
+                <field name="path_module_check" type="row" />
+                <field name="restore_db_image_name" type="row" />
+                <field name="run_in_sandbox" type="row" />
+                <field name="script_after_init_check" type="row" />
+                <field name="test_name" type="row" />
+            </pivot>
+        </field>
+    </record>
+
+    <record id="devops_cg_test_case_view_search" model="ir.ui.view">
+        <field name="name">devops_cg_test_case_search</field>
+        <field name="model">devops.cg.test.case</field>
+        <field name="arch" type="xml">
+            <search string="Devops cg test case">
+                <filter name="name" string="Name" domain="[('name','!=',False)]" />
+                <filter name="install_path" string="Install Path" domain="[('install_path','!=',False)]" />
+                <filter name="module_generated" string="Module Generated" domain="[('module_generated','!=',False)]" />
+                <filter name="module_init_ids" string="Module Init" domain="[('module_init_ids','!=',False)]" />
+                <filter
+                    name="module_search_class"
+                    string="Module Search Class"
+                    domain="[('module_search_class','!=',False)]"
+                />
+                <filter name="module_tested" string="Module Tested" domain="[('module_tested','!=',False)]" />
+                <filter
+                    name="path_module_check"
+                    string="Path Module Check"
+                    domain="[('path_module_check','!=',False)]"
+                />
+                <filter
+                    name="restore_db_image_name"
+                    string="Restore Db Image Name"
+                    domain="[('restore_db_image_name','!=',False)]"
+                />
+                <filter name="run_in_sandbox" string="Run In Sandbox" domain="[('run_in_sandbox','=',True)]" />
+                <filter
+                    name="script_after_init_check"
+                    string="Script After Init Check"
+                    domain="[('script_after_init_check','!=',False)]"
+                />
+                <filter name="test_name" string="Test Name" domain="[('test_name','!=',False)]" />
+            </search>
+        </field>
+    </record>
+
+    <record id="devops_cg_test_case_view_tree" model="ir.ui.view">
+        <field name="name">devops_cg_test_case_tree</field>
+        <field name="model">devops.cg.test.case</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name" />
+                <field name="install_path" />
+                <field name="module_generated" />
+                <field name="module_init_ids" />
+                <field name="module_search_class" />
+                <field name="module_tested" />
+                <field name="path_module_check" />
+                <field name="restore_db_image_name" />
+                <field name="run_in_sandbox" />
+                <field name="script_after_init_check" />
+                <field name="test_name" />
+            </tree>
+        </field>
+    </record>
+
+    <act_window
+        id="devops_cg_test_case_cg_test_case_action_window"
+        name="Cg test case"
+        res_model="devops.cg.test.case"
+        view_mode="kanban,tree,pivot,graph,form"
+    />
+</odoo>

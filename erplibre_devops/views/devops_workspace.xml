@@ -128,6 +128,26 @@
                         <field name="devops_exec_count" string="Executions" widget="statinfo" />
                     </button>
                     <button
+                        name="%(erplibre_devops.devops_test_plan_exec_test_plan_exec_action_window)d"
+                        type="action"
+                        class="oe_stat_button"
+                        icon="fa-building-o"
+                        context="{'search_default_workspace_id': active_id}"
+                        attrs="{'invisible': [('devops_test_plan_exec_count', '==', 0)]}"
+                    >
+                        <field name="devops_test_plan_exec_count" string="Test plan executions" widget="statinfo" />
+                    </button>
+                    <button
+                        name="%(erplibre_devops.devops_test_result_test_result_action_window)d"
+                        type="action"
+                        class="oe_stat_button"
+                        icon="fa-building-o"
+                        context="{'search_default_workspace_id': active_id}"
+                        attrs="{'invisible': [('devops_test_result_count', '==', 0)]}"
+                    >
+                        <field name="devops_test_result_count" string="Test results" widget="statinfo" />
+                    </button>
+                    <button
                         name="%(erplibre_devops.devops_plan_cg_plan_cg_action_window)d"
                         type="action"
                         class="oe_stat_button"
@@ -280,13 +300,6 @@
                                     type="object"
                                     class="oe_highlight"
                                 />
-                            </group>
-                        </group>
-                    </page>
-                    <page name="test" string="Test">
-                        <group>
-                            <group>
-                                <field name="test_ids" />
                             </group>
                         </group>
                     </page>

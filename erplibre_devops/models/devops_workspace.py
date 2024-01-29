@@ -49,6 +49,30 @@ class DevopsWorkspace(models.Model):
         string="Executions",
     )
 
+    devops_test_plan_exec_count = fields.Integer(
+        string="Test plan exec count",
+        compute="_compute_devops_test_plan_exec_count",
+        store=True,
+    )
+
+    devops_test_plan_exec_ids = fields.One2many(
+        comodel_name="devops.test.plan.exec",
+        inverse_name="workspace_id",
+        string="Test plan exec",
+    )
+
+    devops_test_result_count = fields.Integer(
+        string="Test result count",
+        compute="_compute_devops_test_result_count",
+        store=True,
+    )
+
+    devops_test_result_ids = fields.One2many(
+        comodel_name="devops.test.result",
+        inverse_name="workspace_id",
+        string="Test result",
+    )
+
     devops_exec_count = fields.Integer(
         string="Executions count",
         compute="_compute_devops_exec_count",
@@ -267,11 +291,6 @@ class DevopsWorkspace(models.Model):
         string="Workspace Docker",
     )
 
-    test_ids = fields.Many2many(
-        comodel_name="devops.test",
-        string="Tests",
-    )
-
     workspace_terminal_id = fields.Many2one(
         comodel_name="devops.workspace.terminal",
         string="Workspace Terminal",
@@ -392,6 +411,24 @@ class DevopsWorkspace(models.Model):
             rec.devops_exec_count = self.env["devops.exec"].search_count(
                 [("devops_workspace", "=", rec.id)]
             )
+
+    @api.multi
+    @api.depends(
+        "devops_test_plan_exec_ids", "devops_test_plan_exec_ids.active"
+    )
+    def _compute_devops_test_plan_exec_count(self):
+        for rec in self:
+            rec.devops_test_plan_exec_count = self.env[
+                "devops.test.plan.exec"
+            ].search_count([("workspace_id", "=", rec.id)])
+
+    @api.multi
+    @api.depends("devops_test_result_ids", "devops_test_result_ids.active")
+    def _compute_devops_test_result_count(self):
+        for rec in self:
+            rec.devops_test_result_count = self.env[
+                "devops.test.result"
+            ].search_count([("workspace_id", "=", rec.id)])
 
     @api.multi
     @api.depends("plan_cg_ids", "plan_cg_ids.active")
@@ -1059,8 +1096,8 @@ class DevopsWorkspace(models.Model):
             if status:
                 devops_exec.exec_status = int(status)
             devops_exec.exec_stop_date = fields.Datetime.now()
-            if out is not False:
-                devops_exec.log_stdout = out
+            if out is not False and out.strip():
+                devops_exec.log_stdout = out.strip()
                 rec.find_exec_error_from_log(
                     out, devops_exec, devops_exec_bundle_id
                 )
@@ -1123,8 +1160,10 @@ class DevopsWorkspace(models.Model):
             "KeyError:",
             "UnboundLocalError:",
             "FileNotFoundError:",
+            "RuntimeWarning:",
             "raise ValidationError",
             "odoo.exceptions.CacheMiss:",
+            "json.decoder.JSONDecodeError:",
         )
         # TODO move lst_exception into model devops.exec.exception
         for exception in lst_exception:
@@ -1134,7 +1173,10 @@ class DevopsWorkspace(models.Model):
             # index_endline_error = log.find("\n", index_error)
 
         if index_last_traceback <= index_first_traceback:
-            raise Exception("Cannot find exception")
+            raise Exception(
+                "Cannot find exception, but an exception is detected. TODO"
+                " debug it."
+            )
 
         parent_root_id = devops_exec_bundle_id.get_parent_root()
         escaped_tb_all = log[index_first_traceback:index_last_traceback]
