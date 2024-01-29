@@ -368,22 +368,20 @@ class DevopsPlanCg(models.Model):
                         if rec.code_mode_context_generator == "autopoiesis":
                             # TODO this seems outdated, fix by wizard
                             # TODO found path by this __file__
-                            directory = "./addons/ERPLibre_erplibre_addons"
+                            rec.path_code_generator_to_generate = (
+                                "./addons/ERPLibre_erplibre_addons"
+                            )
                             module = "erplibre_devops"
                             project_type = "self"
                             if rec.cg_self_add_config_cg:
                                 model_conf = rec.get_cg_model_config(module_id)
                         else:
                             model_conf = rec.get_cg_model_config(module_id)
-                            directory = os.path.join(
-                                rec.path_working_erplibre,
-                                rec.path_code_generator_to_generate,
-                            )
                             module = module_id.name
                             project_type = "cg"
                         dct_new_project = {
                             "module": module,
-                            "directory": directory,
+                            "directory": rec.path_code_generator_to_generate,
                             "keep_bd_alive": True,
                             "devops_workspace": rec_ws.id,
                             "project_type": project_type,
