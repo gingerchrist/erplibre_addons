@@ -29,9 +29,31 @@ def post_init_hook(cr, e):
 
         # Generate system local
         if not os.environ.get("IS_ONLY_ME", False):
+            # Search other ERPLibre accessible
+            # TODO use instead workspace_me
             env.ref(
                 "erplibre_devops.devops_system_local"
             ).action_search_workspace()
+            # Search other System accessible
+            # system_ids = env.ref(
+            #     "erplibre_devops.devops_system_local"
+            # ).get_local_system_ids(env)
+
+            with env.ref(
+                "erplibre_devops.devops_workspace_me"
+            ).devops_create_exec_bundle("Search system SSH") as rec:
+                system_ids = (
+                    rec.system_id.get_local_system_id_from_ssh_config()
+                )
+
+                for system_id in system_ids:
+                    system_id.action_search_workspace()
+                    under_system_ids = (
+                        system_id.get_local_system_id_from_ssh_config()
+                    )
+                    # under_system_ids = system_id.get_local_system_ids(env)
+                    if under_system_ids:
+                        under_system_ids.action_search_workspace()
         # select Selenium
         if os.environ.get("IS_ME_AUTO", False):
             subprocess.Popen(
@@ -51,3 +73,12 @@ def post_init_hook(cr, e):
                 " ./script/selenium/web_login.py --open_me_devops",
                 shell=True,
             )
+
+
+# @api.multi
+# def get_local_system_ids(env):
+#     with env.ref(
+#         "erplibre_devops.devops_workspace_me"
+#     ).devops_create_exec_bundle("Search system SSH") as rec:
+#         system_ids = rec.system_id.get_local_system_id_from_ssh_config(rec)
+#         return system_ids

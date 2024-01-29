@@ -114,6 +114,21 @@ class DevopsSystem(models.Model):
         ),
     )
 
+    path_home = fields.Char()
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        result = super().create(vals_list)
+        for res in result:
+            try:
+                res.path_home = res.execute_with_result(
+                    "echo $HOME", None
+                ).strip()
+            except Exception as e:
+                # TODO catch AuthenticationException exception
+                res.path_home = "/home/"
+        return result
+
     @api.multi
     @api.depends("ssh_host", "ssh_port", "ssh_user")
     def _compute_name(self):
@@ -131,7 +146,7 @@ class DevopsSystem(models.Model):
                 )
 
     @api.model
-    def execute_process(
+    def _execute_process(
         self,
         cmd,
         add_stdin_log=False,
@@ -197,10 +212,10 @@ class DevopsSystem(models.Model):
             print(cmd)
         for rec in self.filtered(lambda r: r.method == "local"):
             if not return_status:
-                result = rec.execute_process(cmd)
+                result = rec._execute_process(cmd)
                 status = None
             else:
-                result, status = rec.execute_process(cmd, return_status=True)
+                result, status = rec._execute_process(cmd, return_status=True)
             if len(self) == 1:
                 if not return_status:
                     return result
@@ -271,7 +286,7 @@ class DevopsSystem(models.Model):
                         f' "ls"\''
                     )
             if cmd_output:
-                rec.execute_process(cmd_output)
+                rec._execute_process(cmd_output)
             if rec.debug_command:
                 print(cmd_output)
         for rec in self.filtered(lambda r: r.method == "ssh"):
@@ -316,7 +331,7 @@ class DevopsSystem(models.Model):
                 f' {rec.ssh_user}@{rec.ssh_host} "cd {folder};'
                 f" {wrap_cmd}\"'"
             )
-            rec.execute_process(cmd_output)
+            rec._execute_process(cmd_output)
             if rec.debug_command:
                 print(cmd_output)
 
@@ -367,8 +382,9 @@ class DevopsSystem(models.Model):
         ssh_client.connect(
             hostname=self.ssh_host,
             port=self.ssh_port,
-            username=self.ssh_user,
-            password=self.ssh_password,
+            username=None if not self.ssh_user else self.ssh_user,
+            password=None if not self.ssh_password else self.ssh_password,
+            timeout=5,
         )
         # params = {
         #     "host": self.ssh_host,
@@ -406,15 +422,25 @@ class DevopsSystem(models.Model):
         for rec in self:
             # TODO use mdfind on OSX
             # TODO need to do sometime «sudo updatedb»
-            out = rec.execute_process(
+            out = rec.execute_with_result(
                 "locate -b -r '^default\.xml$'|grep -v"
-                ' ".repo"|grep -v "/var/lib/docker"'
+                ' ".repo"|grep -v "/var/lib/docker"',
+                None,
             )
-            lst_dir = out.strip().split("\n")
+            out = out.strip()
+            if out:
+                lst_dir = out.split("\n")
+            else:
+                lst_dir = []
             # TODO detect is_me if not exist
             # TODO do more validation it's a ERPLibre workspace
             for dir_path in lst_dir:
                 dirname = os.path.dirname(dir_path)
+                if not dirname:
+                    raise Exception(
+                        "Missing dirname when search workspace. Debug output"
+                        f" of locate : {out}"
+                    )
                 # Check if already exist
                 rec_ws = rec.devops_workspace_ids.filtered(
                     lambda r: r.folder == dirname
@@ -422,7 +448,7 @@ class DevopsSystem(models.Model):
                 if rec_ws:
                     continue
                 odoo_dir = os.path.join(dirname, "odoo")
-                out_odoo = rec.execute_process(f"ls {odoo_dir}")
+                out_odoo = rec.execute_with_result(f"ls {odoo_dir}", None)
                 if out_odoo.startswith("ls: cannot access"):
                     # This is not a ERPLibre project
                     continue
@@ -430,10 +456,10 @@ class DevopsSystem(models.Model):
                 docker_compose_dir = os.path.join(
                     dirname, "docker-compose.yml"
                 )
-                out_git = rec.execute_process(f"ls {git_dir}")
-                out_dc = rec.execute_process(f"ls {docker_compose_dir}")
-                if not dirname:
-                    raise Exception("Missing dirname when search workspace")
+                out_git = rec.execute_with_result(f"ls {git_dir}", None)
+                out_dc = rec.execute_with_result(
+                    f"ls {docker_compose_dir}", None
+                )
 
                 value = {
                     "folder": dirname,
@@ -469,3 +495,48 @@ class DevopsSystem(models.Model):
                     self.env["devops.db.image"].create(
                         {"name": image_name, "path": file_path}
                     )
+
+    @api.multi
+    def get_local_system_id_from_ssh_config(self):
+        lst_system_id = self.env["devops.system"]
+        for rec in self:
+            config_path = os.path.join(self.path_home, ".ssh/config")
+            config_path_exist = rec.os_path_exists(config_path)
+            if not config_path_exist:
+                continue
+            out = rec.execute_with_result(f"cat {config_path}", None)
+            out = out.strip()
+            # config.parse(file)
+            # config = paramiko.SSHConfig()
+            # config.parse(out.split("\n"))
+            config = paramiko.SSHConfig.from_text(out)
+            # dev_config = config.lookup("martin")
+            lst_host = [a for a in config.get_hostnames() if a != "*"]
+            for host in lst_host:
+                dev_config = config.lookup(host)
+                system_id = self.env["devops.system"].search(
+                    [("name", "=", dev_config.get("hostname"))], limit=1
+                )
+                if not system_id:
+                    name = f"SSH {host} - {dev_config.get('hostname')}"
+                    value = {
+                        "method": "ssh",
+                        "name": name,
+                        "ssh_host": dev_config.get("hostname"),
+                        # "ssh_password": dev_config.get("password"),
+                    }
+                    if "port" in dev_config.keys():
+                        value["ssh_port"] = dev_config.get("port")
+                    if "user" in dev_config.keys():
+                        value["ssh_user"] = dev_config.get("user")
+
+                    system_id = self.env["devops.system"].create(value)
+                if system_id:
+                    lst_system_id += system_id
+        return lst_system_id
+
+    @api.model
+    def os_path_exists(self, path):
+        cmd = f'[ -e "{path}" ] && echo "true" || echo "false"'
+        result = self.execute_with_result(cmd, None)
+        return result.strip() == "true"
