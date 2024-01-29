@@ -3,9 +3,9 @@ import json
 from odoo import _, api, exceptions, fields, models
 
 
-class DevopsCodeGenerator(models.Model):
-    _name = "devops.code_generator"
-    _description = "devops_code_generator"
+class DevopsCg(models.Model):
+    _name = "devops.cg"
+    _description = "devops_cg"
 
     name = fields.Char()
 
@@ -13,7 +13,6 @@ class DevopsCodeGenerator(models.Model):
     devops_workspace_ids = fields.Many2many(
         comodel_name="devops.workspace",
         string="DevOps Workspace",
-        required=True,
     )
 
     # TODO create boolean cache with default workspace to work for the other
@@ -23,7 +22,7 @@ class DevopsCodeGenerator(models.Model):
     )
 
     module_ids = fields.One2many(
-        comodel_name="devops.code_generator.module",
+        comodel_name="devops.cg.module",
         inverse_name="code_generator",
         string="Module",
     )
