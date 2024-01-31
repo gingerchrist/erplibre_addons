@@ -329,6 +329,13 @@
             <search>
                 <field name="name" />
                 <field name="folder" />
+                <filter string="Is me" name="is_me" domain="[('is_me','=',True)]" />
+                <group string="Group By" expand="1">
+                    <filter name="system_id" string="System" context="{'group_by':'system_id'}" />
+                    <filter name="folder" string="Folder" context="{'group_by':'folder'}" />
+                    <filter name="db_name" string="Database name" context="{'group_by':'db_name'}" />
+                    <filter name="db_is_restored" string="DB is restored" context="{'group_by':'db_is_restored'}" />
+                </group>
             </search>
         </field>
     </record>

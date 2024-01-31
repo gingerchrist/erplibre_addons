@@ -25,6 +25,17 @@ class DevopsSystem(models.Model):
         string="DevOps Workspace",
     )
 
+    parent_system_id = fields.Many2one(
+        comodel_name="devops.system",
+        string="Parent system",
+    )
+
+    sub_system_ids = fields.One2many(
+        comodel_name="devops.system",
+        inverse_name="parent_system_id",
+        string="Sub system",
+    )
+
     method = fields.Selection(
         selection=[("local", "Local disk"), ("ssh", "SSH remote server")],
         required=True,
@@ -126,7 +137,13 @@ class DevopsSystem(models.Model):
                 ).strip()
             except Exception as e:
                 # TODO catch AuthenticationException exception
-                res.path_home = "/home/"
+                if res.method == "ssh" and res.ssh_user:
+                    res.path_home = f"/home/{res.ssh_user}"
+                else:
+                    res.path_home = "/home/"
+                    _logger.warning(
+                        f"Wrong path_home for create devops.system {res.id}"
+                    )
         return result
 
     @api.multi
@@ -418,6 +435,10 @@ class DevopsSystem(models.Model):
         return ssh_client
 
     @api.multi
+    def action_search_sub_system(self):
+        self.get_local_system_id_from_ssh_config()
+
+    @api.multi
     def action_search_workspace(self):
         for rec in self:
             # TODO use mdfind on OSX
@@ -498,7 +519,7 @@ class DevopsSystem(models.Model):
 
     @api.multi
     def get_local_system_id_from_ssh_config(self):
-        lst_system_id = self.env["devops.system"]
+        new_sub_system_id = self.env["devops.system"]
         for rec in self:
             config_path = os.path.join(self.path_home, ".ssh/config")
             config_path_exist = rec.os_path_exists(config_path)
@@ -530,10 +551,11 @@ class DevopsSystem(models.Model):
                     if "user" in dev_config.keys():
                         value["ssh_user"] = dev_config.get("user")
 
+                    value["parent_system_id"] = rec.id
                     system_id = self.env["devops.system"].create(value)
                 if system_id:
-                    lst_system_id += system_id
-        return lst_system_id
+                    new_sub_system_id += system_id
+        return new_sub_system_id
 
     @api.model
     def os_path_exists(self, path):
