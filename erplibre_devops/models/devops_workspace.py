@@ -544,12 +544,24 @@ class DevopsWorkspace(models.Model):
         for rec_o in self:
             with rec_o.devops_create_exec_bundle("Open directory") as rec:
                 # TODO this need to use system
-                if platform.system() == "Windows":
-                    os.startfile(rec.folder)
-                elif platform.system() == "Darwin":
-                    subprocess.Popen(["open", rec.folder])
+                if rec.is_me:
+                    if platform.system() == "Windows":
+                        os.startfile(rec.folder)
+                    elif platform.system() == "Darwin":
+                        subprocess.Popen(["open", rec.folder])
+                    else:
+                        subprocess.Popen(["xdg-open", rec.folder])
                 else:
-                    subprocess.Popen(["xdg-open", rec.folder])
+                    if rec.system_id.method == "ssh":
+                        cmd = (
+                            "nautilus"
+                            f" ssh://{rec.system_id.ssh_user}@{rec.system_id.ssh_host}/{rec.folder}"
+                        )
+                    else:
+                        cmd = f"nautilus {rec.folder}"
+                    self.env.ref(
+                        "erplibre_devops.devops_workspace_me"
+                    ).execute(cmd=cmd)
 
     @api.model
     def action_check_all(self):

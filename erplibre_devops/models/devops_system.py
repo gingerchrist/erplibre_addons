@@ -465,7 +465,10 @@ class DevopsSystem(models.Model):
     def action_install_dev_system(self):
         for rec in self:
             out = rec.execute_terminal_gui(
-                cmd="sudo apt update;sudo apt install git plocate",
+                cmd=(
+                    "sudo apt update;sudo apt install -y git plocate tig vim"
+                    " htop"
+                ),
             )
             # print(out)
 
