@@ -241,20 +241,40 @@ class DevopsSystem(models.Model):
             lst_result.append(result)
         for rec in self.filtered(lambda r: r.method == "ssh"):
             with rec.ssh_connection() as ssh_client:
+                status = 0
+                cmd += ";echo $?"
                 stdin, stdout, stderr = ssh_client.exec_command(cmd)
                 if add_stdin_log:
                     result = stdin.read().decode("utf-8")
                 else:
                     result = ""
-                result += stdout.read().decode("utf-8")
+                stdout_log = stdout.read().decode("utf-8")
+                # Extract echo $?
+                count_endline_log = stdout_log.count("\n")
+                if count_endline_log:
+                    # Minimum 1, we know we have a command output by echo $?
+                    # output is only the status
+                    try:
+                        status = int(stdout_log.strip())
+                    except Exception:
+                        _logger.warning(
+                            f"System id {rec.id} communicate by SSH cannot"
+                            f" retrieve status of command {cmd}"
+                        )
+                    finally:
+                        if count_endline_log == 1:
+                            stdout_log = ""
+                        else:
+                            c = stdout_log
+                            stdout_log = c[: c.rfind("\n", 0, c.rfind("\n"))]
+                result += stdout_log
                 if add_stderr_log:
                     result += stderr.read().decode("utf-8")
                 if len(self) == 1:
                     if not return_status:
                         return result
                     else:
-                        # TODO support status with ssh_client
-                        return result, None
+                        return result, status
                 lst_result.append(result)
         return lst_result
 

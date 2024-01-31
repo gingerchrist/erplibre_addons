@@ -891,14 +891,16 @@ class DevopsWorkspace(models.Model):
                         else:
                             branch_str = f" -b {rec.mode_version_erplibre}"
 
-                    # TODO bug if file has same key
+                    # TTODO bug if file has same key
                     # if any(["ls:cannot access " in str_file for str_file in lst_file]):
-                    if any(
-                        [
-                            "No such file or directory" in str_file
-                            for str_file in lst_file
-                        ]
-                    ):
+                    # if any(
+                    #     [
+                    #         "No such file or directory" in str_file
+                    #         for str_file in lst_file
+                    #     ]
+                    # ):
+                    if exec_id.exec_status:
+                        # No such directory
                         exec_id = rec.execute(
                             cmd=(
                                 "git clone"
@@ -906,11 +908,15 @@ class DevopsWorkspace(models.Model):
                             )
                         )
                         rec.log_workspace = exec_id.log_all
+                        if exec_id.exec_status:
+                            raise Exception(exec_id.log_all)
                         exec_id = rec.execute(
                             cmd=f"./script/install/install_locally_dev.sh",
                             folder=rec.folder,
                         )
                         rec.log_workspace += exec_id.log_all
+                        if exec_id.exec_status:
+                            raise Exception(exec_id.log_all)
                         # TODO fix this bug, but activate into install script
                         # TODO bug only for local, ssh is good
                         # Bug poetry thinks it's installed, so force it
@@ -926,6 +932,8 @@ class DevopsWorkspace(models.Model):
                             ),
                             force_open_terminal=True,
                         )
+                        if exec_id.exec_status:
+                            raise Exception(exec_id.log_all)
                     else:
                         # TODO try te reuse
                         _logger.info(
