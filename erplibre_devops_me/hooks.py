@@ -52,8 +52,9 @@ def post_init_hook(cr, e):
                         system_id.get_local_system_id_from_ssh_config()
                     )
                     # under_system_ids = system_id.get_local_system_ids(env)
-                    if under_system_ids:
-                        under_system_ids.action_search_workspace()
+                    # Too much time, user will ask later
+                    # if under_system_ids:
+                    #     under_system_ids.action_search_workspace()
         # select Selenium
         if os.environ.get("IS_ME_AUTO", False):
             subprocess.Popen(
