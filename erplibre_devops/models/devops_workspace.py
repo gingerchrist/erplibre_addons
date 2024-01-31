@@ -930,6 +930,23 @@ class DevopsWorkspace(models.Model):
                         _logger.info(
                             f'Git project already exist for "{rec.folder}"'
                         )
+                        # Check branch
+                        if self.env.context.get("force_reinstall_workspace"):
+                            if rec.mode_version_erplibre[0].isnumeric():
+                                branch_str = f"v{rec.mode_version_erplibre}"
+                            else:
+                                branch_str = rec.mode_version_erplibre
+
+                            exec_id = rec.execute(
+                                cmd=(
+                                    "git fetch --all;git checkout"
+                                    f" {branch_str}"
+                                ),
+                                folder=rec.folder,
+                                force_open_terminal=True,
+                            )
+                            if exec_id.exec_status:
+                                raise Exception(exec_id.log_all)
                     if self.env.context.get("install_dev_workspace"):
                         exec_id = rec.execute(
                             cmd=f"./script/install/install_dev.sh",

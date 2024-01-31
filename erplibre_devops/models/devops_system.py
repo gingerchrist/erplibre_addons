@@ -467,7 +467,7 @@ class DevopsSystem(models.Model):
             out = rec.execute_terminal_gui(
                 cmd=(
                     "sudo apt update;sudo apt install -y git plocate tig vim"
-                    " htop"
+                    " tree watch git-cola htop"
                 ),
             )
             # print(out)
