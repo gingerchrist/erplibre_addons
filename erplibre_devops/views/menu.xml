@@ -29,6 +29,8 @@
 
     <menuitem id="menu_process" name="Process" sequence="5" parent="menu_devops" />
 
+    <menuitem id="menu_workspace_sub" name="Workspace misc" sequence="6" parent="menu_devops" />
+
     <!--Child menu-->
 
     <menuitem
@@ -220,7 +222,7 @@
         name="Workspace docker"
         action="action_devops_check_workspace_docker_conf_form"
         sequence="2"
-        parent="menu_devops"
+        parent="menu_workspace_sub"
     />
 
     <menuitem
@@ -235,7 +237,7 @@
         id="menu_workspace_terminal_item"
         name="Workspace terminal"
         action="action_devops_check_workspace_terminal_conf_form"
-        sequence="3"
-        parent="menu_devops"
+        sequence="1"
+        parent="menu_workspace_sub"
     />
 </odoo>

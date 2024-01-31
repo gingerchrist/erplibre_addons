@@ -366,7 +366,10 @@ class DevopsSystem(models.Model):
                 "gnome-terminal --window -- bash -c"
                 f" '{sshpass}ssh{argument_ssh} -t"
                 f' {rec.ssh_user}@{rec.ssh_host} "cd {folder};'
-                f" {wrap_cmd}\"'"
+                f" {wrap_cmd}"
+                + '"'
+                + str_keep_open
+                + "'"
             )
             rec._execute_process(cmd_output)
             if rec.debug_command:
@@ -457,6 +460,14 @@ class DevopsSystem(models.Model):
     @api.multi
     def action_search_sub_system(self):
         self.get_local_system_id_from_ssh_config()
+
+    @api.multi
+    def action_install_dev_system(self):
+        for rec in self:
+            out = rec.execute_terminal_gui(
+                cmd="sudo apt update;sudo apt install git plocate",
+            )
+            # print(out)
 
     @api.multi
     def action_search_workspace(self):

@@ -900,12 +900,14 @@ class DevopsWorkspace(models.Model):
                     #     ]
                     # ):
                     if exec_id.exec_status:
+                        dir_name = os.path.dirname(rec.folder)
                         # No such directory
                         exec_id = rec.execute(
                             cmd=(
                                 "git clone"
                                 f" {rec.git_url}{branch_str} {rec.folder}"
-                            )
+                            ),
+                            folder=dir_name,
                         )
                         rec.log_workspace = exec_id.log_all
                         if exec_id.exec_status:
