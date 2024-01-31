@@ -911,6 +911,7 @@ class DevopsWorkspace(models.Model):
                     #         for str_file in lst_file
                     #     ]
                     # ):
+                    is_first_install = False
                     if exec_id.exec_status:
                         dir_name = os.path.dirname(rec.folder)
                         # No such directory
@@ -924,6 +925,24 @@ class DevopsWorkspace(models.Model):
                         rec.log_workspace = exec_id.log_all
                         if exec_id.exec_status:
                             raise Exception(exec_id.log_all)
+                        is_first_install = True
+                    else:
+                        _logger.info(
+                            f'Git project already exist for "{rec.folder}"'
+                        )
+                    if self.env.context.get("install_dev_workspace"):
+                        exec_id = rec.execute(
+                            cmd=f"./script/install/install_dev.sh",
+                            folder=rec.folder,
+                            force_open_terminal=True,
+                        )
+                        # print(exec_id)
+                        # Force stop execution, async execution installation
+                        return
+                    if is_first_install or self.env.context.get(
+                        "force_reinstall_workspace"
+                    ):
+                        # TODO implement debug with step and open with open-terminal async
                         exec_id = rec.execute(
                             cmd=f"./script/install/install_locally_dev.sh",
                             folder=rec.folder,
@@ -941,18 +960,13 @@ class DevopsWorkspace(models.Model):
                         # rec.log_workspace += result
                         rec.execute(
                             cmd=(
-                                'bash -c "source ./.venv/bin/activate;poetry'
-                                ' install"'
+                                'bash -c "source'
+                                ' ./.venv/bin/activate;poetry install"'
                             ),
                             force_open_terminal=True,
                         )
                         if exec_id.exec_status:
                             raise Exception(exec_id.log_all)
-                    else:
-                        # TODO try te reuse
-                        _logger.info(
-                            f'Git project already exist for "{rec.folder}"'
-                        )
                     rec.update_makefile_from_git()
 
                     # lst_file = rec.execute(cmd=f"ls {rec.folder}").log_all.strip().split("\n")

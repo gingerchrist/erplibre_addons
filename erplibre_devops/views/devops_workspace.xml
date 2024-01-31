@@ -91,6 +91,16 @@
                         type="object"
                         class="oe_highlight"
                         groups="base.group_no_one"
+                        context="{'force_reinstall_workspace': True}"
+                        attrs="{'invisible': [('is_conflict_mode_exec', '=', True)]}"
+                    />
+                    <button
+                        name="action_install_workspace"
+                        string="Re-install full"
+                        type="object"
+                        class="oe_highlight"
+                        groups="base.group_no_one"
+                        context="{'force_reinstall_workspace': True, 'install_dev_workspace': True}"
                         attrs="{'invisible': [('is_conflict_mode_exec', '=', True)]}"
                     />
                     <button
