@@ -1,8 +1,11 @@
+import logging
 import os
 import time
 import uuid
 
 from odoo import _, api, exceptions, fields, models
+
+_logger = logging.getLogger(__name__)
 
 
 class DevopsPlanActionWizard(models.TransientModel):
@@ -66,6 +69,39 @@ class DevopsPlanActionWizard(models.TransientModel):
     working_module_path = fields.Char(
         help="Need it for new module, relative path from folder of workspace."
     )
+
+    ssh_system_name = fields.Char(string="System name")
+
+    ssh_user = fields.Char(
+        string="SSH user", help="New remote system ssh_user."
+    )
+
+    ssh_password = fields.Char(
+        string="SSH password", help="New remote system ssh_password."
+    )
+
+    ssh_host = fields.Char(
+        string="SSH host/IP", help="New remote system ssh_host, like local ip."
+    )
+
+    ssh_port = fields.Integer(
+        string="SSH Port",
+        default=22,
+        help="The port on the FTP server that accepts SSH calls.",
+    )
+
+    ssh_system_id = fields.Many2one(
+        comodel_name="devops.system",
+        string="New remote system",
+    )
+
+    is_update_system = fields.Boolean(
+        store=True,
+        compute="_compute_is_update_system",
+        help="True if editing an existing system or False to create a system",
+    )
+
+    ssh_test_work = fields.Boolean(help="Status of test remote ssh_system_id")
 
     state = fields.Selection(default="init")
 
@@ -131,6 +167,17 @@ class DevopsPlanActionWizard(models.TransientModel):
                 record, "state_exit_%s" % record.state, False
             )
 
+    @api.multi
+    @api.depends("ssh_system_id")
+    def _compute_is_update_system(self):
+        for rec in self:
+            is_update_system = bool(rec.ssh_system_id)
+            if is_update_system:
+                rec.ssh_system_name = rec.ssh_system_id.name
+                rec.ssh_host = rec.ssh_system_id.ssh_host
+                rec.ssh_user = rec.ssh_system_id.ssh_user
+                rec.ssh_password = rec.ssh_system_id.ssh_password
+
     @api.model
     def _selection_state(self):
         return [
@@ -153,6 +200,7 @@ class DevopsPlanActionWizard(models.TransientModel):
             ("h_run_test", "Run test"),
             ("h_a_test_plan_exec", "Run test plan execution"),
             ("h_b_cg", "Run test code generator"),
+            ("i_new_remote_system", "New remote system"),
             ("not_supported", "Not supported"),
             ("final", "Final"),
         ]
@@ -232,6 +280,10 @@ class DevopsPlanActionWizard(models.TransientModel):
         self.state = "c_existing_module"
         return self._reopen_self()
 
+    def state_goto_i_new_remote_system(self):
+        self.state = "i_new_remote_system"
+        return self._reopen_self()
+
     def state_goto_c_a_model(self):
         self.state = "c_a_model"
         return self._reopen_self()
@@ -250,6 +302,9 @@ class DevopsPlanActionWizard(models.TransientModel):
 
     def state_previous_a_b_field(self):
         self.state = "a_autopoiesis_devops"
+
+    def state_previous_i_new_remote_system(self):
+        self.state = "init"
 
     def state_previous_a_c_action(self):
         self.state = "a_autopoiesis_devops"
@@ -294,6 +349,63 @@ class DevopsPlanActionWizard(models.TransientModel):
             self.generate_new_model(
                 wp_id, module_name, "Existing module new model"
             )
+
+    def ssh_system_open_terminal(self):
+        if not self.ssh_system_id:
+            # TODO manage this error
+            return
+        self.ssh_system_id.execute_terminal_gui(force_no_sshpass_no_arg=True)
+        return self._reopen_self()
+
+    def ssh_system_install_dev_minimal(self):
+        if not self.ssh_system_id:
+            # TODO manage this error
+            return
+        self.ssh_system_id.action_install_dev_system()
+        return self._reopen_self()
+
+    def ssh_create_and_test(self):
+        system_name = self.ssh_system_name
+        if not system_name:
+            system_name = "New remote system " + uuid.uuid4().hex[:6]
+        system_value = {
+            "name": system_name,
+            "parent_system_id": self.root_workspace_id.system_id.id,
+            "method": "ssh",
+            "ssh_use_sshpass": True,
+            "ssh_host": self.ssh_host,
+            "ssh_user": self.ssh_user,
+            "ssh_password": self.ssh_password,
+        }
+        system_id = self.env["devops.system"].create(system_value)
+        self.ssh_system_id = system_id
+        try:
+            # Just open and close the connection
+            with self.ssh_system_id.ssh_connection():
+                self.ssh_test_work = True
+        except Exception:
+            self.ssh_test_work = False
+        return self._reopen_self()
+
+    def ssh_test_system_exist(self):
+        if not self.ssh_system_id:
+            raise exceptions.Warning(
+                "Missing SSH system id from plan Wizard, wrong configuration,"
+                " please contact your administrator."
+            )
+        if self.ssh_system_name:
+            self.ssh_system_id.name = self.ssh_system_name
+        self.ssh_system_id.ssh_host = self.ssh_host
+        self.ssh_system_id.ssh_user = self.ssh_user
+        self.ssh_system_id.ssh_password = self.ssh_password
+        self.ssh_system_id.ssh_use_sshpass = True
+        try:
+            # Just open and close the connection
+            with self.ssh_system_id.ssh_connection():
+                self.ssh_test_work = True
+        except Exception:
+            self.ssh_test_work = False
+        return self._reopen_self()
 
     def state_exit_g_new_module(self):
         with self.root_workspace_id.devops_create_exec_bundle(

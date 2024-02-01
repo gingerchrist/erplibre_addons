@@ -43,6 +43,7 @@ class DevopsSystem(models.Model):
         help="Choose the communication method.",
     )
 
+    # TODO default terminal from configuration
     terminal = fields.Selection(
         selection=[
             ("gnome-terminal", "Gnome-terminal"),
@@ -278,7 +279,9 @@ class DevopsSystem(models.Model):
                 lst_result.append(result)
         return lst_result
 
-    def execute_terminal_gui(self, folder="", cmd="", docker=False):
+    def execute_terminal_gui(
+        self, folder="", cmd="", docker=False, force_no_sshpass_no_arg=False
+    ):
         # TODO support argument return_status
         # TODO if folder not exist, cannot CD. don't execute the command if wrong directory
         for rec in self.filtered(lambda r: r.method == "local"):
@@ -328,10 +331,10 @@ class DevopsSystem(models.Model):
                 print(cmd_output)
         for rec in self.filtered(lambda r: r.method == "ssh"):
             str_keep_open = ""
-            if rec.keep_terminal_open:
+            if rec.keep_terminal_open and rec.terminal == "gnome-terminal":
                 str_keep_open = ";bash"
             sshpass = ""
-            if rec.ssh_use_sshpass:
+            if rec.ssh_use_sshpass and not force_no_sshpass_no_arg:
                 if not rec.ssh_password:
                     raise exceptions.Warning(
                         "Please, configure your password, because you enable"
@@ -359,15 +362,18 @@ class DevopsSystem(models.Model):
                     ' -o "UserKnownHostsFile=/dev/null" -o'
                     ' "StrictHostKeyChecking=no"'
                 )
+            if folder:
+                if wrap_cmd.startswith(";"):
+                    wrap_cmd = f'cd "{folder}"{wrap_cmd}'
+                else:
+                    wrap_cmd = f'cd "{folder}";{wrap_cmd}'
             if not wrap_cmd:
                 wrap_cmd = "bash --login"
             # TODO support other terminal
             cmd_output = (
                 "gnome-terminal --window -- bash -c"
                 f" '{sshpass}ssh{argument_ssh} -t"
-                f' {rec.ssh_user}@{rec.ssh_host} "cd {folder};'
-                f" {wrap_cmd}"
-                + '"'
+                f' {rec.ssh_user}@{rec.ssh_host} "{wrap_cmd}"'
                 + str_keep_open
                 + "'"
             )

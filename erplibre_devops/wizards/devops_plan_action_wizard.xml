@@ -19,6 +19,8 @@
                 <field name="root_workspace_id_is_me" invisible="True" />
                 <field name="root_workspace_id" invisible="True" />
                 <field name="has_next" invisible="True" />
+                <field name="ssh_test_work" invisible="True" />
+                <field name="is_update_system" invisible="True" />
                 <!--                <h1>-->
                 <!--                    <field name="name"-->
                 <!--                           attrs="{'readonly': [('state', '!=', 'start')]}"-->
@@ -78,6 +80,14 @@
                         <!--                            type="object"-->
                         <!--                            class="btn btn-default"-->
                         <!--                        />-->
+                    </group>
+                    <group string="Deploy">
+                        <button
+                            name="state_goto_i_new_remote_system"
+                            string="Remote system"
+                            type="object"
+                            class="btn btn-default"
+                        />
                     </group>
                     <group string="Quality">
                         <button
@@ -195,6 +205,79 @@
                     <group string="Option">
                         <button name="state_goto_c_a_model" string="Add model" type="object" class="btn btn-default" />
                     </group>
+                </group>
+                <group name="group_i_new_remote_system" attrs="{'invisible': [('state', '!=', 'i_new_remote_system')]}">
+                    <div>
+                        Requirement :
+                        <ul>
+                            <li>Ubuntu OS (22.04 tested)</li>
+                            <li>
+                                Install openssh-server
+                                <b>sudo apt install openssh-server</b>
+                            </li>
+                            <li>
+                                Get your username, password and your ip
+                                <b>ip a</b>
+                                (or your host name)
+                            </li>
+                        </ul>
+                    </div>
+                    <group string="SSH information">
+                        <field name="ssh_system_id" string="Existing system" options="{'no_create': True}" />
+                        <field name="ssh_system_name" />
+                        <field name="ssh_user" />
+                        <field name="ssh_password" password="True" />
+                        <field name="ssh_host" />
+                        <field name="ssh_port" />
+                        <button
+                            name="ssh_create_and_test"
+                            string="Create system and test"
+                            type="object"
+                            class="btn btn-default"
+                            attrs="{'invisible': [('ssh_system_id', '!=', False)]}"
+                        />
+                        <button
+                            name="ssh_test_system_exist"
+                            string="Update system and re-test"
+                            type="object"
+                            class="btn btn-default"
+                            attrs="{'invisible': [('ssh_system_id', '=', False)]}"
+                        />
+                        <div
+                            class="bg-warning"
+                            attrs="{'invisible': ['|',('ssh_test_work', '=', True),('ssh_system_id', '=', False)]}"
+                        >
+                            Test SSH connection fail.
+                        </div>
+                    </group>
+                    <group string="Installation" attrs="{'invisible': [('ssh_test_work', '=', False)]}">
+                        <group string="1-Test comm">
+                            <button
+                                name="ssh_system_open_terminal"
+                                string="Test open terminal"
+                                type="object"
+                                class="btn btn-default"
+                            />
+                        </group>
+                        <group string="2-OS">
+                            <button
+                                name="ssh_system_install_dev_minimal"
+                                string="Minimal installation"
+                                type="object"
+                                class="btn btn-default"
+                            />
+                        </group>
+                    </group>
+                    <!--                    <group string="Workspace" attrs="{'invisible': [('ssh_test_work', '=', False)]}">-->
+                    <!--                        <group string="Create workspace">-->
+                    <!--                            <button-->
+                    <!--                                name="ssh_system_install_os"-->
+                    <!--                                string="Create workspace"-->
+                    <!--                                type="object"-->
+                    <!--                                class="btn btn-default"-->
+                    <!--                            />-->
+                    <!--                        </group>-->
+                    <!--                    </group>-->
                 </group>
                 <group name="group_h_run_test" attrs="{'invisible': [('state', '!=', 'h_run_test')]}">
                     <group string="Test plan">
