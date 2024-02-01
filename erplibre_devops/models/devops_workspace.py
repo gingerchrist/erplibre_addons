@@ -1038,6 +1038,7 @@ class DevopsWorkspace(models.Model):
         to_instance=False,
         engine="bash",
         delimiter_bash="'",
+        error_on_status=True,
     ):
         # TODO search into context if need to parallel or serial
         lst_result = []
@@ -1146,8 +1147,6 @@ class DevopsWorkspace(models.Model):
                     return_status=True,
                 )
 
-            if status:
-                devops_exec.exec_status = int(status)
             devops_exec.exec_stop_date = fields.Datetime.now()
             if out is not False and out.strip():
                 devops_exec.log_stdout = out.strip()
@@ -1155,6 +1154,19 @@ class DevopsWorkspace(models.Model):
                     out, devops_exec, devops_exec_bundle_id
                 )
                 devops_exec.compute_error()
+            if status:
+                devops_exec.exec_status = int(status)
+                if error_on_status:
+                    parent_root_id = devops_exec_bundle_id.get_parent_root()
+                    rec.create_exec_error(
+                        "Detect status > 0 on execution.",
+                        devops_exec.log_stdout,
+                        rec,
+                        devops_exec_bundle_id,
+                        devops_exec,
+                        parent_root_id,
+                        "internal",
+                    )
 
         if len(self) == 1:
             return lst_result[0]
