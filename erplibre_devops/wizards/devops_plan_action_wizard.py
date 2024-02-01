@@ -393,6 +393,16 @@ class DevopsPlanActionWizard(models.TransientModel):
             plan_cg_id.action_code_generator_generate_all()
             self.generated_new_project_id = plan_cg_id.last_new_project_cg.id
             self.plan_cg_id = plan_cg_id.id
+            # Format module
+            cmd_format = (
+                f"./script/maintenance/format.sh"
+                f" ./addons/ERPLibre_erplibre_addons/erplibre_devops"
+            )
+            wp_id.execute(
+                cmd=cmd_format,
+                run_into_workspace=True,
+                to_instance=True,
+            )
             # finally
             self.state = "final"
 
@@ -489,6 +499,16 @@ class DevopsPlanActionWizard(models.TransientModel):
         plan_cg_id.action_code_generator_generate_all()
         self.generated_new_project_id = plan_cg_id.last_new_project_cg.id
         self.plan_cg_id = plan_cg_id.id
+        # Format module
+        cmd_format = (
+            "./script/maintenance/format.sh"
+            f" {relative_path_module}/{module_name}"
+        )
+        wp_id.execute(
+            cmd=cmd_format,
+            run_into_workspace=True,
+            to_instance=True,
+        )
         # Git add
         if is_new_module:
             lst_default_file = [module_name]
