@@ -576,6 +576,7 @@ class DevopsWorkspace(models.Model):
                 # rec.docker_initiate_succeed = not rec.docker_initiate_succeed
                 exec_id = rec.execute(cmd=f"ls {rec.folder}")
                 lst_file = exec_id.log_all.strip().split("\n")
+                # TODO use status instead of ls output
                 if any(
                     [
                         "No such file or directory" in str_file
@@ -588,7 +589,8 @@ class DevopsWorkspace(models.Model):
                     rec.workspace_docker_id.action_check()
                 elif rec.mode_exec in ["terminal"]:
                     exec_id = rec.execute(
-                        f"lsof -i TCP:{rec.port_http} | grep python"
+                        f"lsof -i TCP:{rec.port_http} | grep python",
+                        error_on_status=False,
                     )
                     rec.is_running = bool(exec_id.log_all)
                     rec.workspace_terminal_id.action_check()
@@ -607,7 +609,9 @@ class DevopsWorkspace(models.Model):
                 # Set same BD of this instance
                 rec.db_name = self.env.cr.dbname
                 # Detect the mode exec of this instance
-                exec_id = rec.execute(cmd=f"ls {rec.folder}/.git")
+                exec_id = rec.execute(
+                    cmd=f"ls {rec.folder}/.git", error_on_status=False
+                )
                 status_ls = exec_id.log_all
                 if "No such file or directory" not in status_ls:
                     rec.mode_source = "git"
@@ -804,6 +808,7 @@ class DevopsWorkspace(models.Model):
                             cmd=f"sleep {SLEEP_KILL};kill -9 {pid}",
                             force_open_terminal=True,
                             force_exit=True,
+                            error_on_status=False,
                         )
                         rec_o.is_running = False
                     else:
@@ -835,6 +840,7 @@ class DevopsWorkspace(models.Model):
                             cmd=f"sleep {SLEEP_KILL};kill -9 {pid}",
                             force_open_terminal=True,
                             force_exit=True,
+                            error_on_status=False,
                         )
                         rec.execute(
                             cmd=(
@@ -842,6 +848,7 @@ class DevopsWorkspace(models.Model):
                                 f" {rec.db_name} --http-port={rec.port_http} --longpolling-port={rec.port_longpolling}"
                             ),
                             force_open_terminal=True,
+                            error_on_status=False,
                         )
                 else:
                     rec.action_stop()
@@ -857,7 +864,10 @@ class DevopsWorkspace(models.Model):
                     cmd = ""
                 if not port:
                     port = rec.port_http
-                exec_id = rec.execute(f"lsof -FF -c python -i TCP:{port} -a")
+                exec_id = rec.execute(
+                    f"lsof -FF -c python -i TCP:{port} -a",
+                    error_on_status=False,
+                )
                 if exec_id.log_all:
                     lines = [
                         a
@@ -872,7 +882,10 @@ class DevopsWorkspace(models.Model):
                     elif len(lines) == 1:
                         cmd += f"kill -9 {lines[0][1:]}"
                         rec.execute(
-                            cmd=cmd, force_open_terminal=True, force_exit=True
+                            cmd=cmd,
+                            force_open_terminal=True,
+                            force_exit=True,
+                            error_on_status=False,
                         )
                         rec_o.is_running = False
 
@@ -880,7 +893,9 @@ class DevopsWorkspace(models.Model):
     def action_install_workspace(self):
         for rec_o in self:
             with rec_o.devops_create_exec_bundle("Install workspace") as rec:
-                exec_id = rec.execute(cmd=f"ls {rec.folder}")
+                exec_id = rec.execute(
+                    cmd=f"ls {rec.folder}", error_on_status=False
+                )
                 lst_file = exec_id.log_all.strip().split("\n")
                 rec.namespace = os.path.basename(rec.folder)
                 if rec.mode_source in ["docker"]:
@@ -921,6 +936,7 @@ class DevopsWorkspace(models.Model):
                                 f" {rec.git_url}{branch_str} {rec.folder}"
                             ),
                             folder=dir_name,
+                            error_on_status=False,
                         )
                         rec.log_workspace = exec_id.log_all
                         if exec_id.exec_status:
@@ -963,8 +979,9 @@ class DevopsWorkspace(models.Model):
                         exec_id = rec.execute(
                             cmd=f"./script/install/install_locally_dev.sh",
                             folder=rec.folder,
+                            error_on_status=False,
                         )
-                        rec.log_workspace += exec_id.log_all
+                        rec.log_workspace = exec_id.log_all
                         if exec_id.exec_status:
                             raise Exception(exec_id.log_all)
                         # TODO fix this bug, but activate into install script
