@@ -33,6 +33,12 @@
                             type="object"
                             class="btn btn-default"
                         />
+                        <button
+                            name="state_goto_g_new_module"
+                            string="New module"
+                            type="object"
+                            class="btn btn-default"
+                        />
                         <!--                        <button-->
                         <!--                            name="state_goto_f_new_project_society"-->
                         <!--                            string="New society"-->
@@ -149,6 +155,17 @@
                     <group string="Where">
                         <button name="state_goto_g_a_local" string="Local" type="object" class="btn btn-default" />
                     </group>
+                </group>
+                <group name="group_g_new_module" attrs="{'invisible': [('state', '!=', 'g_new_module')]}">
+                    <group string="Information">
+                        <field name="working_module_name" />
+                        <field name="working_module_name_suggestion" />
+                        <field
+                            name="working_module_path"
+                            attrs="{'invisible': [('working_module_name_suggestion', '!=', False)]}"
+                        />
+                    </group>
+                    <group string="Feature" />
                 </group>
                 <group name="group_g_a_local" attrs="{'invisible': [('state', '!=', 'g_a_local')]}">
                     <group string="DB">

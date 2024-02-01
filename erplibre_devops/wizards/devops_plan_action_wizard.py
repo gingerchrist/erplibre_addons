@@ -50,8 +50,21 @@ class DevopsPlanActionWizard(models.TransientModel):
         string="Working module",
     )
 
+    working_module_name_suggestion = fields.Selection(
+        selection=[
+            ("addons/addons", "Addons private"),
+            ("addons/ERPLibre_erplibre_addons", "ERPLibre addons"),
+            ("addons/TechnoLibre_odoo-code-generator", "Code generator"),
+        ],
+        help="Suggestion relative path",
+    )
+
     working_module_name = fields.Char(
         help="working_module_id or working_module_name"
+    )
+
+    working_module_path = fields.Char(
+        help="Need it for new module, relative path from folder of workspace."
     )
 
     state = fields.Selection(default="init")
@@ -135,6 +148,7 @@ class DevopsPlanActionWizard(models.TransientModel):
             ("e_migrate_from_external_ddb", "Migrate from external database"),
             ("f_new_project_society", "New society"),
             ("g_test_erplibre", "Test ERPLibre"),
+            ("g_new_module", "New module ERPLibre"),
             ("g_a_local", "Test ERPLibre local"),
             ("h_run_test", "Run test"),
             ("h_a_test_plan_exec", "Run test plan execution"),
@@ -173,6 +187,10 @@ class DevopsPlanActionWizard(models.TransientModel):
 
     def state_goto_g_test_erplibre(self):
         self.state = "g_test_erplibre"
+        return self._reopen_self()
+
+    def state_goto_g_new_module(self):
+        self.state = "g_new_module"
         return self._reopen_self()
 
     def state_goto_h_run_test(self):
@@ -251,6 +269,9 @@ class DevopsPlanActionWizard(models.TransientModel):
     def state_previous_g_a_local(self):
         self.state = "g_test_erplibre"
 
+    def state_previous_g_b_TODODO(self):
+        self.state = "g_new_module"
+
     def state_previous_h_run_test(self):
         self.state = "init"
 
@@ -272,6 +293,24 @@ class DevopsPlanActionWizard(models.TransientModel):
             )
             self.generate_new_model(
                 wp_id, module_name, "Existing module new model"
+            )
+
+    def state_exit_g_new_module(self):
+        with self.root_workspace_id.devops_create_exec_bundle(
+            "Plan g_new_module"
+        ) as wp_id:
+            module_name = self.working_module_name
+            if self.working_module_name_suggestion:
+                module_path = self.working_module_name_suggestion
+            else:
+                module_path = self.working_module_path
+            self.generate_new_model(
+                wp_id,
+                module_name,
+                "New empty module",
+                is_new_module=True,
+                module_path=module_path,
+                is_relative_path=True,
             )
 
     def state_exit_g_a_local(self):
@@ -358,24 +397,42 @@ class DevopsPlanActionWizard(models.TransientModel):
             self.state = "final"
 
     def generate_new_model(
-        self, wp_id, module_name, project_name, is_autopoiesis=False
+        self,
+        wp_id,
+        module_name,
+        project_name,
+        is_autopoiesis=False,
+        module_path=None,
+        is_relative_path=False,
+        is_new_module=False,
     ):
-        # Search relative path
-        exec_id = wp_id.execute(
-            cmd=(
-                "./script/addons/check_addons_exist.py --output_path -m"
-                f" {module_name}"
-            ),
-            run_into_workspace=True,
-        )
-        if exec_id.exec_status:
-            raise exceptions.Warning(f"Cannot find module '{module_name}'")
-        path_module = exec_id.log_all.strip()
-        dir_name, basename = os.path.split(path_module)
-        if dir_name.startswith(wp_id.folder):
-            relative_path_module = dir_name[len(wp_id.folder) + 1 :]
+        path_module = ""
+        if not is_new_module:
+            # Search relative path
+            exec_id = wp_id.execute(
+                cmd=(
+                    "./script/addons/check_addons_exist.py --output_path -m"
+                    f" {module_name}"
+                ),
+                run_into_workspace=True,
+            )
+            if exec_id.exec_status:
+                raise exceptions.Warning(f"Cannot find module '{module_name}'")
+            path_module = exec_id.log_all.strip()
+        if module_path:
+            # Overwrite it
+            path_module = module_path
+        if not path_module:
+            raise exceptions.Warning(f"Cannot find module path.")
+        if not is_relative_path:
+            dir_name, basename = os.path.split(path_module)
+            if dir_name.startswith(wp_id.folder):
+                relative_path_module = dir_name[len(wp_id.folder) + 1 :]
+            else:
+                relative_path_module = dir_name
         else:
-            relative_path_module = dir_name
+            relative_path_module = path_module
+
         # Project
         cg_id = self.env["devops.cg"].create(
             {
@@ -433,21 +490,24 @@ class DevopsPlanActionWizard(models.TransientModel):
         self.generated_new_project_id = plan_cg_id.last_new_project_cg.id
         self.plan_cg_id = plan_cg_id.id
         # Git add
-        lst_default_file = [
-            f"{module_name}/__manifest__.py",
-            f"{module_name}/security/ir.model.access.csv",
-            f"{module_name}/views/menu.xml",
-        ]
-        if self.model_ids:
-            lst_default_file.append(f"{module_name}/models/__init__.py")
-            for cg_model_id in self.model_ids:
-                model_file_name = cg_model_id.name.replace(".", "_")
-                lst_default_file.append(
-                    f"{module_name}/models/{model_file_name}.py"
-                )
-                lst_default_file.append(
-                    f"{module_name}/views/{model_file_name}.xml"
-                )
+        if is_new_module:
+            lst_default_file = [module_name]
+        else:
+            lst_default_file = [
+                f"{module_name}/__manifest__.py",
+                f"{module_name}/security/ir.model.access.csv",
+                f"{module_name}/views/menu.xml",
+            ]
+            if self.model_ids:
+                lst_default_file.append(f"{module_name}/models/__init__.py")
+                for cg_model_id in self.model_ids:
+                    model_file_name = cg_model_id.name.replace(".", "_")
+                    lst_default_file.append(
+                        f"{module_name}/models/{model_file_name}.py"
+                    )
+                    lst_default_file.append(
+                        f"{module_name}/views/{model_file_name}.xml"
+                    )
         cmd_git_add = ";".join([f"git add '{a}'" for a in lst_default_file])
         # Git remove
         lst_default_file_rm = []
