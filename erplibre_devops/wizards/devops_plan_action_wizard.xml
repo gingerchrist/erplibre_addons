@@ -28,16 +28,22 @@
                 <!--                           placeholder="Name"/>-->
                 <!--                </h1>-->
                 <group name="init" attrs="{'invisible': [('state', '!=', 'init')]}">
-                    <group string="New project">
+                    <group string="Project">
                         <button
                             name="state_goto_g_test_erplibre"
-                            string="Test ERPLibre"
+                            string="Operate"
                             type="object"
                             class="btn btn-default"
                         />
                         <button
                             name="state_goto_g_new_module"
-                            string="New module"
+                            string="Create module"
+                            type="object"
+                            class="btn btn-default"
+                        />
+                        <button
+                            name="state_goto_c_existing_module"
+                            string="Refactor module"
                             type="object"
                             class="btn btn-default"
                         />
@@ -47,26 +53,12 @@
                         <!--                            type="object"-->
                         <!--                            class="btn btn-default"-->
                         <!--                        />-->
-                    </group>
-                    <group string="Actual project">
                         <button
                             name="state_goto_a_autopoiesis_devops"
-                            string="Autopoiesis DevOps"
+                            string="Autopoiesis"
                             type="object"
                             class="btn btn-default"
                             attrs="{'invisible': [('root_workspace_id_is_me', '=', False)]}"
-                        />
-                        <!--                        <button-->
-                        <!--                            name="state_goto_not_supported"-->
-                        <!--                            string="New module"-->
-                        <!--                            type="object"-->
-                        <!--                            class="btn btn-default"-->
-                        <!--                        />-->
-                        <button
-                            name="state_goto_c_existing_module"
-                            string="Existing module"
-                            type="object"
-                            class="btn btn-default"
                         />
                         <!--                        <button-->
                         <!--                            name="state_goto_not_supported"-->
@@ -82,6 +74,12 @@
                         <!--                        />-->
                     </group>
                     <group string="Deploy">
+                        <!--                        <button-->
+                        <!--                            name="state_goto_i_new_remote_system"-->
+                        <!--                            string="Local system"-->
+                        <!--                            type="object"-->
+                        <!--                            class="btn btn-default"-->
+                        <!--                        />-->
                         <button
                             name="state_goto_i_new_remote_system"
                             string="Remote system"
@@ -90,12 +88,7 @@
                         />
                     </group>
                     <group string="Quality">
-                        <button
-                            name="state_goto_h_run_test"
-                            string="Running test"
-                            type="object"
-                            class="btn btn-default"
-                        />
+                        <button name="state_goto_h_run_test" string="Test" type="object" class="btn btn-default" />
                         <!--                        <button-->
                         <!--                            name="state_goto_not_supported"-->
                         <!--                            string="Analyse/inspection"-->
