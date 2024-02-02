@@ -216,15 +216,12 @@
                 <field name="is_installed" invisible="True" />
                 <field name="is_running" invisible="True" />
                 <field name="is_me" invisible="True" />
+                <field name="mode_exec" invisible="True" />
                 <group>
                     <group string="Basic">
                         <field name="system_id" />
                         <field name="folder" />
-                        <field name="mode_source" attrs="{'readonly': [('is_installed', '=', True)]}" />
-                        <field name="mode_exec" />
-                        <field name="mode_environnement" />
-                        <field name="mode_version_erplibre" />
-                        <field name="mode_version_base" />
+                        <field name="erplibre_mode" />
                     </group>
                     <group string="Execution">
                         <field name="is_debug_log" />
@@ -359,11 +356,7 @@
                 <field name="folder" />
                 <field name="namespace" />
                 <field name="system_id" />
-                <field name="mode_source" />
-                <field name="mode_exec" />
-                <field name="mode_environnement" />
-                <field name="mode_version_erplibre" />
-                <field name="mode_version_base" />
+                <field name="erplibre_mode" />
                 <field name="is_me" />
                 <field name="is_installed" />
             </tree>

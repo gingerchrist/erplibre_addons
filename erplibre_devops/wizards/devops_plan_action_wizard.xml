@@ -305,11 +305,7 @@
                 >
                     <group string="Information">
                         <field name="workspace_folder" />
-                        <field name="mode_source" />
-                        <field name="mode_exec" />
-                        <field name="mode_environnement" />
-                        <field name="mode_version_erplibre" />
-                        <field name="mode_version_base" />
+                        <field name="erplibre_mode" />
                         <field name="image_db_selection" />
                         <button
                             name="ssh_system_create_workspace"

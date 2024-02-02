@@ -351,7 +351,7 @@ class DevopsPlanCg(models.Model):
                 # Increase speed
                 # TODO keep old configuration of config.conf and not overwrite all
                 # rec_ws.execute(cmd=f"cd {rec.path_working_erplibre};make config_gen_code_generator", to_instance=True)
-                if rec.devops_cg_ids and rec_ws.mode_exec in ["docker"]:
+                if rec.devops_cg_ids and rec_ws.mode_exec.value in ["docker"]:
                     rec_ws.workspace_docker_id.docker_config_gen_cg = True
                     rec_ws.action_reboot()
                     rec_ws.workspace_docker_id.docker_config_gen_cg = False
@@ -431,7 +431,7 @@ class DevopsPlanCg(models.Model):
                         #     cmd=f"cd {rec.folder};./script/code_generator/new_project.py"
                         #     f" -d {addons_path} -m {module_name}",
                         # )
-                if rec.devops_cg_ids and rec_ws.mode_exec in ["docker"]:
+                if rec.devops_cg_ids and rec_ws.mode_exec.value in ["docker"]:
                     rec_ws.action_reboot()
                 # rec_ws.execute(cmd=f"cd {rec.path_working_erplibre};make config_gen_all", to_instance=True)
 
@@ -1019,7 +1019,7 @@ class DevopsPlanCg(models.Model):
             with rec.workspace_id.devops_create_exec_bundle(
                 "Open Terminal and tig"
             ) as rec_ws:
-                if rec_ws.mode_exec in ["docker"]:
+                if rec_ws.mode_exec.value in ["docker"]:
                     exec_id = rec_ws.execute(cmd="which tig", to_instance=True)
                     result = exec_id.log_all
                     if not result:

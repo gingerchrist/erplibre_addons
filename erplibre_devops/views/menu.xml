@@ -19,6 +19,8 @@
 
     <menuitem id="menu_devops" name="DevOps" sequence="1" parent="menu_erplibre_devops" />
 
+    <menuitem id="menu_erplibre" name="ERPLibre" sequence="2" parent="menu_erplibre_devops" />
+
     <menuitem id="menu_plan" name="Plan" sequence="3" parent="menu_erplibre_devops" />
 
     <menuitem id="menu_test" name="Test" sequence="6" parent="menu_erplibre_devops" />
@@ -30,6 +32,8 @@
     <menuitem id="menu_process" name="Process" sequence="5" parent="menu_devops" />
 
     <menuitem id="menu_workspace_sub" name="Workspace misc" sequence="6" parent="menu_devops" />
+
+    <menuitem id="menu_erplibre_mode" name="Mode" sequence="1" parent="menu_erplibre" />
 
     <!--Child menu-->
 
@@ -193,6 +197,54 @@
         action="devops_exec_error_action_window"
         sequence="7"
         parent="menu_process"
+    />
+
+    <menuitem
+        id="menu_erplibre_mode_mode"
+        name="Mode"
+        action="erplibre_mode_mode_action_window"
+        sequence="1"
+        parent="menu_erplibre_mode"
+    />
+
+    <menuitem
+        id="menu_erplibre_mode_env"
+        name="Environnement"
+        action="erplibre_mode_env_mode_env_action_window"
+        sequence="2"
+        parent="menu_erplibre_mode"
+    />
+
+    <menuitem
+        id="menu_erplibre_mode_exec"
+        name="Execution"
+        action="erplibre_mode_exec_mode_exec_action_window"
+        sequence="3"
+        parent="menu_erplibre_mode"
+    />
+
+    <menuitem
+        id="menu_erplibre_mode_source"
+        name="Source"
+        action="erplibre_mode_source_mode_source_action_window"
+        sequence="4"
+        parent="menu_erplibre_mode"
+    />
+
+    <menuitem
+        id="menu_erplibre_mode_version_base"
+        name="Version base"
+        action="erplibre_mode_version_base_mode_version_base_action_window"
+        sequence="5"
+        parent="menu_erplibre_mode"
+    />
+
+    <menuitem
+        id="menu_erplibre_mode_version_erplibre"
+        name="Version ERPLibre"
+        action="erplibre_mode_version_erplibre_mode_version_erplibre_action_window"
+        sequence="6"
+        parent="menu_erplibre_mode"
     />
 
     <menuitem id="menu_monitor" name="Monitor" sequence="10" parent="menu_erplibre_devops" />

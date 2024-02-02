@@ -42,6 +42,10 @@ class DevopsPlanActionWizard(models.TransientModel):
         help="Absolute path for storing the devops_workspaces",
     )
 
+    erplibre_mode = fields.Many2one(
+        comodel_name="erplibre.mode",
+    )
+
     generated_new_project_id = fields.Many2one(
         comodel_name="devops.cg.new_project",
         string="Generated project",
@@ -131,55 +135,6 @@ class DevopsPlanActionWizard(models.TransientModel):
     image_db_selection = fields.Many2one(
         comodel_name="devops.db.image",
         default=_default_image_db_selection,
-    )
-
-    mode_source = fields.Selection(
-        selection=[("docker", "Docker"), ("git", "Git")],
-        required=True,
-        default="docker",
-    )
-
-    mode_exec = fields.Selection(
-        selection=[("docker", "Docker"), ("terminal", "Terminal")],
-        required=True,
-        default="docker",
-    )
-
-    mode_environnement = fields.Selection(
-        selection=[
-            ("dev", "Dev"),
-            ("test", "Test"),
-            ("prod", "Prod"),
-            ("stage", "Stage"),
-        ],
-        required=True,
-        default="test",
-        help=(
-            "Dev to improve, test to test, prod ready for production, stage to"
-            " use a dev and replace a prod"
-        ),
-    )
-
-    mode_version_erplibre = fields.Selection(
-        selection=[
-            ("1.5.0", "1.5.0"),
-            ("master", "Master"),
-            ("develop", "Develop"),
-            ("robotlibre", "RobotLibre"),
-        ],
-        required=True,
-        default="1.5.0",
-        help=(
-            "Dev to improve, test to test, prod ready for production, stage to"
-            " use a dev and replace a prod"
-        ),
-    )
-
-    mode_version_base = fields.Selection(
-        selection=[("12.0", "12.0"), ("14.0", "14.0")],
-        required=True,
-        default="12.0",
-        help="Support base version communautaire",
     )
 
     enable_package_srs = fields.Boolean()
@@ -429,14 +384,13 @@ class DevopsPlanActionWizard(models.TransientModel):
         ws_value = {
             "system_id": self.ssh_system_id.id,
             "folder": self.workspace_folder,
-            "mode_source": self.mode_source,
-            "mode_exec": self.mode_exec,
-            "mode_environnement": self.mode_environnement,
-            "mode_version_erplibre": self.mode_version_erplibre,
+            "erplibre_mode": self.erplibre_mode.id,
             "image_db_selection": self.image_db_selection.id,
         }
         ws_id = self.env["devops.workspace"].create(ws_value)
         self.create_workspace_id = ws_id.id
+        # TODO missing check status before continue
+        # TODO missing with workspace me to catch error
         ws_id.action_install_workspace()
         ws_id.action_start()
         # TODO implement detect when website is up or cancel state with error
@@ -522,12 +476,14 @@ class DevopsPlanActionWizard(models.TransientModel):
         with self.root_workspace_id.devops_create_exec_bundle(
             "Plan g_a_local"
         ) as wp_id:
+            self.erplibre_mode = self.env.ref(
+                "erplibre_devops.erplibre_mode_docker_test"
+            ).id
             # Create a workspace with same system of actual workspace, will be in test mode
             dct_wp = {
                 "system_id": wp_id.system_id.id,
                 "folder": f"/tmp/test_erplibre_{uuid.uuid4()}",
-                "mode_source": "docker",
-                "mode_exec": "docker",
+                "erplibre_mode": self.erplibre_mode.id,
                 "image_db_selection": self.image_db_selection.id,
             }
             local_wp_id = self.env["devops.workspace"].create(dct_wp)

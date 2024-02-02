@@ -224,59 +224,18 @@ class DevopsWorkspace(models.Model):
         store=True,
     )
 
-    mode_source = fields.Selection(
-        selection=[("docker", "Docker"), ("git", "Git")],
-        required=True,
-        default="docker",
+    erplibre_mode = fields.Many2one(
+        comodel_name="erplibre.mode", string="Mode"
     )
 
-    # TODO add SystemD
-    mode_exec = fields.Selection(
-        selection=[("docker", "Docker"), ("terminal", "Terminal")],
-        required=True,
-        default="docker",
+    mode_exec = fields.Many2one(
+        comodel_name="erplibre.mode.exec", related="erplibre_mode.mode_exec"
     )
 
-    mode_environnement = fields.Selection(
-        selection=[
-            ("dev", "Dev"),
-            ("test", "Test"),
-            ("prod", "Prod"),
-            ("stage", "Stage"),
-        ],
-        required=True,
-        default="test",
-        help=(
-            "Dev to improve, test to test, prod ready for production, stage to"
-            " use a dev and replace a prod"
-        ),
-    )
-
+    # TODO move it to erplibre.mode
     is_conflict_mode_exec = fields.Boolean(
         compute="_compute_is_conflict_mode_exec",
         store=True,
-    )
-
-    mode_version_erplibre = fields.Selection(
-        selection=[
-            ("1.5.0", "1.5.0"),
-            ("master", "Master"),
-            ("develop", "Develop"),
-            ("robotlibre", "RobotLibre"),
-        ],
-        required=True,
-        default="1.5.0",
-        help=(
-            "Dev to improve, test to test, prod ready for production, stage to"
-            " use a dev and replace a prod"
-        ),
-    )
-
-    mode_version_base = fields.Selection(
-        selection=[("12.0", "12.0"), ("14.0", "14.0")],
-        required=True,
-        default="12.0",
-        help="Support base version communautaire",
     )
 
     git_branch = fields.Char(string="Git branch")
@@ -341,11 +300,8 @@ class DevopsWorkspace(models.Model):
 
     @api.multi
     @api.depends(
-        "mode_source",
-        "mode_exec",
-        "mode_environnement",
-        "mode_version_erplibre",
-        "mode_version_base",
+        "erplibre_mode",
+        "erplibre_mode.name",
         "folder",
         "port_http",
     )
@@ -357,19 +313,25 @@ class DevopsWorkspace(models.Model):
                 rec.name = ""
             if rec.is_me:
                 rec.name += "ME - "
-            rec.name += (
-                f"{rec.mode_source} - {rec.mode_exec} -"
-                f" {rec.mode_environnement} - {rec.mode_version_erplibre} -"
-                f" {rec.mode_version_base} - {rec.folder} - {rec.port_http}"
-            )
+                if rec.erplibre_mode:
+                    rec.name += rec.erplibre_mode.name
+            rec.name += f" {rec.folder} - {rec.port_http}"
 
     @api.multi
-    @api.depends("mode_source", "mode_exec")
+    @api.depends("erplibre_mode.mode_source", "erplibre_mode.mode_exec")
     def _compute_is_conflict_mode_exec(self):
         for rec in self:
-            rec.is_conflict_mode_exec = (
-                rec.mode_source == "docker" and rec.mode_exec != "docker"
-            )
+            if rec.erplibre_mode:
+                rec.is_conflict_mode_exec = (
+                    rec.erplibre_mode.mode_source
+                    == self.env.ref(
+                        "erplibre_devops.erplibre_mode_source_docker"
+                    )
+                    and rec.erplibre_mode.mode_exec
+                    != self.env.ref(
+                        "erplibre_devops.erplibre_mode_exec_docker"
+                    )
+                )
 
     @api.multi
     @api.depends("plan_cg_ids.path_code_generator_to_generate")
@@ -513,7 +475,9 @@ class DevopsWorkspace(models.Model):
         for rec_o in self:
             with rec_o.devops_create_exec_bundle("Install module") as rec:
                 # str_module_list is string separate module by ','
-                if rec.mode_exec in ["docker"]:
+                if rec.erplibre_mode.mode_exec in [
+                    self.env.ref("erplibre_devops.erplibre_mode_exec_docker")
+                ]:
                     last_cmd = rec.workspace_docker_id.docker_cmd_extra
                     rec.workspace_docker_id.docker_cmd_extra = (
                         f"-d {rec.db_name} -i {str_module_list} -u"
@@ -525,7 +489,9 @@ class DevopsWorkspace(models.Model):
                     # TODO maybe add an auto-update when detect installation finish
                     rec.action_reboot()
                     rec.workspace_docker_id.docker_cmd_extra = last_cmd
-                elif rec.mode_exec in ["terminal"]:
+                elif rec.erplibre_mode.mode_exec in [
+                    self.env.ref("erplibre_devops.erplibre_mode_exec_terminal")
+                ]:
                     rec.execute(
                         "./script/addons/install_addons.sh"
                         f" {rec.db_name} {str_module_list}",
@@ -584,10 +550,14 @@ class DevopsWorkspace(models.Model):
                     ]
                 ):
                     rec.is_installed = False
-                if rec.mode_exec in ["docker"]:
+                if rec.erplibre_mode.mode_exec in [
+                    self.env.ref("erplibre_devops.erplibre_mode_exec_docker")
+                ]:
                     rec.is_running = rec.workspace_docker_id.docker_is_running
                     rec.workspace_docker_id.action_check()
-                elif rec.mode_exec in ["terminal"]:
+                elif rec.erplibre_mode.mode_exec in [
+                    self.env.ref("erplibre_devops.erplibre_mode_exec_terminal")
+                ]:
                     exec_id = rec.execute(
                         f"lsof -i TCP:{rec.port_http} | grep python",
                         error_on_status=False,
@@ -614,8 +584,9 @@ class DevopsWorkspace(models.Model):
                 )
                 status_ls = exec_id.log_all
                 if "No such file or directory" not in status_ls:
-                    rec.mode_source = "git"
-                    rec.mode_exec = "terminal"
+                    rec.erplibre_mode = self.env.ref(
+                        "erplibre_devops.erplibre_mode_git_robot_libre"
+                    ).id
                 rec.action_install_workspace()
                 rec.is_me = True
                 rec.port_http = 8069
@@ -627,7 +598,9 @@ class DevopsWorkspace(models.Model):
         for rec_o in self:
             with rec_o.devops_create_exec_bundle("Restore DB image") as rec:
                 rec.has_error_restore_db = False
-                if rec.mode_exec in ["terminal"]:
+                if rec.erplibre_mode.mode_exec in [
+                    self.env.ref("erplibre_devops.erplibre_mode_exec_terminal")
+                ]:
                     image = ""
                     if rec.image_db_selection:
                         image = f" --image {rec.image_db_selection.name}"
@@ -639,7 +612,9 @@ class DevopsWorkspace(models.Model):
                         cmd=cmd, folder=rec.path_working_erplibre
                     )
                     rec.log_workspace = f"\n{exec_id.log_all}"
-                elif rec.mode_exec in ["docker"]:
+                elif rec.erplibre_mode.mode_exec in [
+                    self.env.ref("erplibre_devops.erplibre_mode_exec_docker")
+                ]:
                     # maybe send by network REST web/database/restore
                     url_list = f"{rec.url_instance}/web/database/list"
                     url_restore = f"{rec.url_instance}/web/database/restore"
@@ -760,12 +735,16 @@ class DevopsWorkspace(models.Model):
     @api.multi
     def check_devops_workspace(self):
         for rec in self:
-            if rec.mode_exec in ["docker"]:
+            if rec.erplibre_mode.mode_exec in [
+                self.env.ref("erplibre_devops.erplibre_mode_exec_docker")
+            ]:
                 if not rec.workspace_docker_id:
                     rec.workspace_docker_id = self.env[
                         "devops.workspace.docker"
                     ].create({"workspace_id": rec.id})
-            elif rec.mode_exec in ["terminal"]:
+            elif rec.erplibre_mode.mode_exec in [
+                self.env.ref("erplibre_devops.erplibre_mode_exec_terminal")
+            ]:
                 if not rec.workspace_terminal_id:
                     rec.workspace_terminal_id = self.env[
                         "devops.workspace.terminal"
@@ -778,9 +757,13 @@ class DevopsWorkspace(models.Model):
         for rec_o in self:
             with rec_o.devops_create_exec_bundle("Start") as rec:
                 rec.check_devops_workspace()
-                if rec.mode_exec in ["docker"]:
+                if rec.erplibre_mode.mode_exec in [
+                    self.env.ref("erplibre_devops.erplibre_mode_exec_docker")
+                ]:
                     rec.workspace_docker_id.action_start_docker_compose()
-                elif rec.mode_exec in ["terminal"]:
+                elif rec.erplibre_mode.mode_exec in [
+                    self.env.ref("erplibre_devops.erplibre_mode_exec_terminal")
+                ]:
                     rec.execute(
                         cmd=(
                             "./run.sh -d"
@@ -798,10 +781,14 @@ class DevopsWorkspace(models.Model):
         for rec_o in self:
             with rec_o.devops_create_exec_bundle("Stop") as rec:
                 rec.check_devops_workspace()
-                if rec.mode_exec in ["docker"]:
+                if rec.erplibre_mode.mode_exec in [
+                    self.env.ref("erplibre_devops.erplibre_mode_exec_docker")
+                ]:
                     rec.workspace_docker_id.action_stop_docker_compose()
                     rec.action_check()
-                elif rec.mode_exec in ["terminal"]:
+                elif rec.erplibre_mode.mode_exec in [
+                    self.env.ref("erplibre_devops.erplibre_mode_exec_terminal")
+                ]:
                     if rec.is_me:
                         pid = os.getpid()
                         rec.execute(
@@ -898,7 +885,9 @@ class DevopsWorkspace(models.Model):
                 )
                 lst_file = exec_id.log_all.strip().split("\n")
                 rec.namespace = os.path.basename(rec.folder)
-                if rec.mode_source in ["docker"]:
+                if rec.erplibre_mode.mode_source in [
+                    self.env.ref("erplibre_devops.erplibre_mode_source_docker")
+                ]:
                     if "docker-compose.yml" in lst_file:
                         # TODO try to reuse
                         _logger.info(
@@ -906,17 +895,23 @@ class DevopsWorkspace(models.Model):
                         )
                     rec.action_pre_install_workspace()
                     rec.path_working_erplibre = "/ERPLibre"
-                elif rec.mode_source in ["git"]:
-                    if rec.mode_exec in ["docker"]:
+                elif rec.erplibre_mode.mode_source in [
+                    self.env.ref("erplibre_devops.erplibre_mode_source_git")
+                ]:
+                    # TODO this can be move to erplibre_mode
+                    if rec.erplibre_mode.mode_exec in [
+                        self.env.ref(
+                            "erplibre_devops.erplibre_mode_exec_docker"
+                        )
+                    ]:
                         rec.path_working_erplibre = "/ERPLibre"
                     else:
                         rec.path_working_erplibre = rec.folder
                     branch_str = ""
-                    if rec.mode_version_erplibre:
-                        if rec.mode_version_erplibre[0].isnumeric():
-                            branch_str = f" -b v{rec.mode_version_erplibre}"
-                        else:
-                            branch_str = f" -b {rec.mode_version_erplibre}"
+                    if rec.erplibre_mode.mode_version_erplibre:
+                        branch_str = (
+                            rec.erplibre_mode.mode_version_erplibre.value
+                        )
 
                     # TTODO bug if file has same key
                     # if any(["ls:cannot access " in str_file for str_file in lst_file]):
@@ -948,10 +943,15 @@ class DevopsWorkspace(models.Model):
                         )
                         # Check branch
                         if self.env.context.get("force_reinstall_workspace"):
-                            if rec.mode_version_erplibre[0].isnumeric():
-                                branch_str = f"v{rec.mode_version_erplibre}"
+                            if (
+                                rec.erplibre_mode
+                                and rec.erplibre_mode.mode_version_erplibre
+                            ):
+                                branch_str = (
+                                    rec.erplibre_mode.mode_version_erplibre.value
+                                )
                             else:
-                                branch_str = rec.mode_version_erplibre
+                                branch_str = ""
 
                             exec_id = rec.execute(
                                 cmd=(
@@ -1019,7 +1019,10 @@ class DevopsWorkspace(models.Model):
         for rec_o in self:
             with rec_o.devops_create_exec_bundle("Update makefile") as rec:
                 exec_mk_ref_id = rec.execute(
-                    cmd=f"git show v{rec.mode_version_erplibre}:Makefile",
+                    cmd=(
+                        "git show"
+                        f" {rec.erplibre_mode.mode_version_erplibre.value}:Makefile"
+                    ),
                     to_instance=True,
                 )
                 ref_makefile_content = exec_mk_ref_id.log_all
@@ -1072,7 +1075,9 @@ class DevopsWorkspace(models.Model):
                 rec.check_devops_workspace()
                 if not folder:
                     folder = rec.path_working_erplibre
-                if rec.mode_exec in ["docker"]:
+                if rec.erplibre_mode.mode_exec in [
+                    self.env.ref("erplibre_devops.erplibre_mode_exec_docker")
+                ]:
                     rec_force_docker = True
 
             if rec.is_debug_log and cmd:

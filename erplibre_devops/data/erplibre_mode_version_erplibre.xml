@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <data noupdate="1">
+        <record id="erplibre_mode_version_erplibre_1_5_0" model="erplibre.mode.version.erplibre">
+            <field name="name">1.5.0</field>
+            <field name="value">v1.5.0</field>
+            <field name="is_tag" eval="True" />
+        </record>
+        <record id="erplibre_mode_version_erplibre_master" model="erplibre.mode.version.erplibre">
+            <field name="name">Master</field>
+            <field name="value">master</field>
+        </record>
+        <record id="erplibre_mode_version_erplibre_develop" model="erplibre.mode.version.erplibre">
+            <field name="name">Develop</field>
+            <field name="value">develop</field>
+        </record>
+        <record id="erplibre_mode_version_erplibre_robot_libre" model="erplibre.mode.version.erplibre">
+            <field name="name">RobotLibre</field>
+            <field name="value">robotlibre</field>
+        </record>
+    </data>
+</odoo>

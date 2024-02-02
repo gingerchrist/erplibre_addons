@@ -526,21 +526,20 @@ class DevopsSystem(models.Model):
                     "folder": dirname,
                     "system_id": rec.id,
                 }
-                mode_source = ""
-                mode_exec = ""
                 if not out_git.startswith("ls: cannot access"):
-                    # Create it git
-                    mode_source = "git"
-                    mode_exec = "terminal"
+                    value["erplibre_mode"] = self.env.ref(
+                        "erplibre_devops.erplibre_mode_git_robot_libre"
+                    ).id
                 elif not out_dc.startswith("ls: cannot access"):
-                    # create it docker
-                    mode_source = "docker"
-                    mode_exec = "docker"
-                if mode_source:
-                    value["mode_source"] = mode_source
-                    value["mode_exec"] = mode_exec
-                    ws_id = self.env["devops.workspace"].create(value)
-                    ws_id.action_install_workspace()
+                    value["erplibre_mode"] = self.env.ref(
+                        "erplibre_devops.erplibre_mode_docker_test"
+                    ).id
+                else:
+                    # TODO create a new one mode or search it
+                    print("create me")
+                    pass
+                ws_id = self.env["devops.workspace"].create(value)
+                ws_id.action_install_workspace()
 
     @api.model
     def action_refresh_db_image(self):
