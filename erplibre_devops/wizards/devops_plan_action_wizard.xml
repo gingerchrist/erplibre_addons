@@ -214,6 +214,12 @@
                                 (or your host name)
                             </li>
                         </ul>
+                        <button
+                            name="search_subsystem_workspace"
+                            string="Update sub-system"
+                            type="object"
+                            class="btn btn-default"
+                        />
                     </div>
                     <group string="SSH information">
                         <field name="ssh_system_id" string="Existing system" options="{'no_create': True}" />
@@ -243,7 +249,7 @@
                             Test SSH connection fail.
                         </div>
                     </group>
-                    <group string="Installation" attrs="{'invisible': [('ssh_test_work', '=', False)]}">
+                    <group string="A-Installation" attrs="{'invisible': [('ssh_test_work', '=', False)]}">
                         <group string="1-Test comm">
                             <button
                                 name="ssh_system_open_terminal"
@@ -261,16 +267,30 @@
                             />
                         </group>
                     </group>
-                    <!--                    <group string="Workspace" attrs="{'invisible': [('ssh_test_work', '=', False)]}">-->
-                    <!--                        <group string="Create workspace">-->
-                    <!--                            <button-->
-                    <!--                                name="ssh_system_install_os"-->
-                    <!--                                string="Create workspace"-->
-                    <!--                                type="object"-->
-                    <!--                                class="btn btn-default"-->
-                    <!--                            />-->
-                    <!--                        </group>-->
-                    <!--                    </group>-->
+                </group>
+                <group
+                    string="B-Workspace"
+                    attrs="{'invisible': ['|',('ssh_test_work', '=', False),('state', '!=', 'i_new_remote_system')]}"
+                >
+                    <group string="Information">
+                        <field name="workspace_folder" />
+                        <field name="mode_source" />
+                        <field name="mode_exec" />
+                        <field name="mode_environnement" />
+                        <field name="mode_version_erplibre" />
+                        <field name="mode_version_base" />
+                        <field name="image_db_selection" />
+                        <button
+                            name="ssh_system_create_workspace"
+                            string="Create workspace"
+                            type="object"
+                            class="btn btn-default"
+                        />
+                        <field
+                            name="create_workspace_id"
+                            attrs="{'invisible': [('create_workspace_id', '=', False)]}"
+                        />
+                    </group>
                 </group>
                 <group name="group_h_run_test" attrs="{'invisible': [('state', '!=', 'h_run_test')]}">
                     <group string="Test plan">

@@ -212,6 +212,10 @@
                     <h3>Error:</h3>
                     Cannot support this execution mode with source mode 'docker'.
                 </div>
+                <field name="is_conflict_mode_exec" invisible="True" />
+                <field name="is_installed" invisible="True" />
+                <field name="is_running" invisible="True" />
+                <field name="is_me" invisible="True" />
                 <group>
                     <group string="Basic">
                         <field name="system_id" />
@@ -221,10 +225,6 @@
                         <field name="mode_environnement" />
                         <field name="mode_version_erplibre" />
                         <field name="mode_version_base" />
-                        <field name="is_conflict_mode_exec" invisible="True" />
-                        <field name="is_installed" invisible="True" />
-                        <field name="is_running" invisible="True" />
-                        <field name="is_me" invisible="True" />
                     </group>
                     <group string="Execution">
                         <field name="is_debug_log" />

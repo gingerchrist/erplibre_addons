@@ -38,6 +38,10 @@ class DevopsPlanActionWizard(models.TransientModel):
 
     root_workspace_id_is_me = fields.Boolean(related="root_workspace_id.is_me")
 
+    workspace_folder = fields.Char(
+        help="Absolute path for storing the devops_workspaces",
+    )
+
     generated_new_project_id = fields.Many2one(
         comodel_name="devops.cg.new_project",
         string="Generated project",
@@ -129,28 +133,54 @@ class DevopsPlanActionWizard(models.TransientModel):
         default=_default_image_db_selection,
     )
 
-    # option_adding = fields.Selection([
-    #     ('inherit', 'Inherit Model'),
-    #     ('nomenclator', 'Nomenclator'),
-    # ], required=True, default='nomenclator', help="Inherit to inherit a new model.\nNomenclator to export data.")
+    mode_source = fields.Selection(
+        selection=[("docker", "Docker"), ("git", "Git")],
+        required=True,
+        default="docker",
+    )
 
-    # option_blacklist = fields.Selection([
-    #     ('blacklist', 'Blacklist'),
-    #     ('whitelist', 'Whitelist'),
-    # ], required=True, default='whitelist', help="When whitelist, all selected fields will be added.\n"
-    #                                             "When blacklist, all selected fields will be ignored.")
+    mode_exec = fields.Selection(
+        selection=[("docker", "Docker"), ("terminal", "Terminal")],
+        required=True,
+        default="docker",
+    )
 
-    # field_ids = fields.Many2many(
-    #     comodel_name="ir.model.fields",
-    #     string="Fields",
-    #     help="Select the field you want to inherit or import data.",
-    # )
-    #
-    # model_ids = fields.Many2many(
-    #     comodel_name="ir.model",
-    #     string="Models",
-    #     help="Select the model you want to inherit or import data.",
-    # )
+    mode_environnement = fields.Selection(
+        selection=[
+            ("dev", "Dev"),
+            ("test", "Test"),
+            ("prod", "Prod"),
+            ("stage", "Stage"),
+        ],
+        required=True,
+        default="test",
+        help=(
+            "Dev to improve, test to test, prod ready for production, stage to"
+            " use a dev and replace a prod"
+        ),
+    )
+
+    mode_version_erplibre = fields.Selection(
+        selection=[
+            ("1.5.0", "1.5.0"),
+            ("master", "Master"),
+            ("develop", "Develop"),
+            ("robotlibre", "RobotLibre"),
+        ],
+        required=True,
+        default="1.5.0",
+        help=(
+            "Dev to improve, test to test, prod ready for production, stage to"
+            " use a dev and replace a prod"
+        ),
+    )
+
+    mode_version_base = fields.Selection(
+        selection=[("12.0", "12.0"), ("14.0", "14.0")],
+        required=True,
+        default="12.0",
+        help="Support base version communautaire",
+    )
 
     enable_package_srs = fields.Boolean()
 
@@ -362,6 +392,41 @@ class DevopsPlanActionWizard(models.TransientModel):
             # TODO manage this error
             return
         self.ssh_system_id.action_install_dev_system()
+        return self._reopen_self()
+
+    def ssh_system_create_workspace(self):
+        if not self.ssh_system_id:
+            # TODO manage this error
+            return
+        ws_value = {
+            "system_id": self.ssh_system_id.id,
+            "folder": self.workspace_folder,
+            "mode_source": self.mode_source,
+            "mode_exec": self.mode_exec,
+            "mode_environnement": self.mode_environnement,
+            "mode_version_erplibre": self.mode_version_erplibre,
+            "image_db_selection": self.image_db_selection.id,
+        }
+        ws_id = self.env["devops.workspace"].create(ws_value)
+        self.create_workspace_id = ws_id.id
+        ws_id.action_install_workspace()
+        ws_id.action_start()
+        # TODO implement detect when website is up or cancel state with error
+        time.sleep(5)
+        ws_id.action_restore_db_image()
+        self.root_workspace_id.execute(
+            cmd=(
+                "source"
+                " ./.venv/bin/activate;./script/selenium/web_login.py"
+                f" --url {ws_id.url_instance}"
+            ),
+            force_open_terminal=True,
+            run_into_workspace=True,
+        )
+        return self._reopen_self()
+
+    def search_subsystem_workspace(self):
+        self.root_workspace_id.system_id.get_local_system_id_from_ssh_config()
         return self._reopen_self()
 
     def ssh_create_and_test(self):
