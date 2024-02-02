@@ -811,6 +811,23 @@ class DevopsWorkspace(models.Model):
                 rec.action_reboot()
 
     @api.multi
+    def action_open_local_view(self, ctx=None, url_instance=None):
+        for rec_o in self:
+            with rec_o.devops_create_exec_bundle("Open local view") as rec:
+                str_url_instance = (
+                    url_instance if url_instance else rec.url_instance
+                )
+                self.env.ref("erplibre_devops.devops_workspace_me").execute(
+                    cmd=(
+                        "source"
+                        " ./.venv/bin/activate;./script/selenium/web_login.py"
+                        f" --url {str_url_instance}"
+                    ),
+                    force_open_terminal=True,
+                    run_into_workspace=True,
+                )
+
+    @api.multi
     def action_reboot(self):
         for rec_o in self:
             with rec_o.devops_create_exec_bundle("Reboot") as rec:

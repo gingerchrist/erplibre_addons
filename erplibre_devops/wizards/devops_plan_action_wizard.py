@@ -396,15 +396,7 @@ class DevopsPlanActionWizard(models.TransientModel):
         # TODO implement detect when website is up or cancel state with error
         time.sleep(5)
         ws_id.action_restore_db_image()
-        self.root_workspace_id.execute(
-            cmd=(
-                "source"
-                " ./.venv/bin/activate;./script/selenium/web_login.py"
-                f" --url {ws_id.url_instance}"
-            ),
-            force_open_terminal=True,
-            run_into_workspace=True,
-        )
+        ws_id.action_open_local_view()
         return self._reopen_self()
 
     def search_subsystem_workspace(self):
@@ -495,15 +487,7 @@ class DevopsPlanActionWizard(models.TransientModel):
             local_wp_id.action_restore_db_image()
             if self.enable_package_srs:
                 local_wp_id.install_module("project_srs")
-            wp_id.execute(
-                cmd=(
-                    "source"
-                    " ./.venv/bin/activate;./script/selenium/web_login.py"
-                    f" --url {local_wp_id.url_instance}"
-                ),
-                force_open_terminal=True,
-                run_into_workspace=True,
-            )
+            local_wp_id.action_open_local_view()
             # finally
             self.state = "final"
 

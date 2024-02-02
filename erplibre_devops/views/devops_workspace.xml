@@ -86,6 +86,13 @@
                         attrs="{'invisible': ['|', ('is_installed', '=', False), ('is_conflict_mode_exec', '=', True)]}"
                     />
                     <button
+                        name="action_open_local_view"
+                        string="Open browser"
+                        type="object"
+                        class="oe_highlight"
+                        attrs="{'invisible': ['|', ('is_installed', '=', False), ('is_conflict_mode_exec', '=', True)]}"
+                    />
+                    <button
                         name="action_install_workspace"
                         string="Re-install"
                         type="object"
