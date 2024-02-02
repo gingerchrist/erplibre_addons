@@ -387,7 +387,35 @@ class DevopsPlanActionWizard(models.TransientModel):
         self.ssh_system_id.execute_terminal_gui(force_no_sshpass_no_arg=True)
         return self._reopen_self()
 
-    def ssh_system_install_dev_minimal(self):
+    def ssh_system_install_minimal(self):
+        if not self.ssh_system_id:
+            # TODO manage this error
+            return
+        self.ssh_system_id.action_install_dev_system()
+        return self._reopen_self()
+
+    def ssh_system_install_docker(self):
+        if not self.ssh_system_id:
+            # TODO manage this error
+            return
+        self.ssh_system_id.action_install_dev_system()
+        return self._reopen_self()
+
+    def ssh_system_install_dev(self):
+        if not self.ssh_system_id:
+            # TODO manage this error
+            return
+        self.ssh_system_id.action_install_dev_system()
+        return self._reopen_self()
+
+    def ssh_system_install_production(self):
+        if not self.ssh_system_id:
+            # TODO manage this error
+            return
+        self.ssh_system_id.action_install_dev_system()
+        return self._reopen_self()
+
+    def ssh_system_install_all(self):
         if not self.ssh_system_id:
             # TODO manage this error
             return
