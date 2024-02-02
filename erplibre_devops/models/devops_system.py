@@ -43,7 +43,6 @@ class DevopsSystem(models.Model):
         help="Choose the communication method.",
     )
 
-    # TODO default terminal from configuration
     terminal = fields.Selection(
         selection=[
             ("gnome-terminal", "Gnome-terminal"),
@@ -57,6 +56,9 @@ class DevopsSystem(models.Model):
             "xterm block the process, not gnome-terminal. xterm not work on"
             " osx, use osascript instead."
         ),
+        default=lambda self: self.env["ir.config_parameter"]
+        .sudo()
+        .get_param("erplibre_devops.default_terminal", False),
     )
 
     ssh_host = fields.Char(
