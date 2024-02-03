@@ -11,10 +11,14 @@ def post_init_hook(cr, e):
     with api.Environment.manage():
         env = api.Environment(cr, SUPERUSER_ID, {})
 
-        action = env.ref('board.open_board_my_dash_action')
+        action = env.ref("board.open_board_my_dash_action")
         menu_board = env.ref("board.menu_board_my_dash")
-        action_workspace_view = env.ref("erplibre_devops.action_devops_check_workspace_conf_form")
-        action_system_view = env.ref("erplibre_devops.action_devops_check_system_conf_form")
+        action_workspace_view = env.ref(
+            "erplibre_devops.action_devops_check_workspace_conf_form"
+        )
+        action_system_view = env.ref(
+            "erplibre_devops.action_devops_check_system_conf_form"
+        )
         arch = f"""
 <form string="Mon tableau de bord">
     <board style="2-1">
@@ -28,8 +32,10 @@ def post_init_hook(cr, e):
     </board>
 </form>
         """
-        env['ir.ui.view.custom'].create({
-            'user_id': env.ref("base.user_admin").id,
-            'ref_id': env.ref("board.board_my_dash_view").id,
-            'arch': arch
-        })
+        env["ir.ui.view.custom"].create(
+            {
+                "user_id": env.ref("base.user_admin").id,
+                "ref_id": env.ref("board.board_my_dash_view").id,
+                "arch": arch,
+            }
+        )

@@ -56,22 +56,35 @@ def post_init_hook(cr, e):
                     # if under_system_ids:
                     #     under_system_ids.action_search_workspace()
         # select Selenium
+        arg_selenium = ""
+        if os.environ.get("OPEN_DASHBOARD", False):
+            arg_selenium = " --open_dashboard"
+
         if os.environ.get("IS_ME_AUTO", False):
             subprocess.Popen(
                 f"cd {os.getcwd()};./.venv/bin/python"
-                " ./script/selenium/web_login.py --open_me_devops_auto",
+                " ./script/selenium/web_login.py"
+                f" --open_me_devops_auto{arg_selenium}",
                 shell=True,
             )
         elif os.environ.get("IS_ME_AUTO_FORCE", False):
             subprocess.Popen(
                 f"cd {os.getcwd()};./.venv/bin/python"
-                " ./script/selenium/web_login.py --open_me_devops_auto_force",
+                " ./script/selenium/web_login.py"
+                f" --open_me_devops_auto_force{arg_selenium}",
+                shell=True,
+            )
+        elif arg_selenium:
+            subprocess.Popen(
+                f"cd {os.getcwd()};./.venv/bin/python"
+                f" ./script/selenium/web_login.py{arg_selenium}",
                 shell=True,
             )
         else:
             subprocess.Popen(
                 f"cd {os.getcwd()};./.venv/bin/python"
-                " ./script/selenium/web_login.py --open_me_devops",
+                " ./script/selenium/web_login.py"
+                f" --open_me_devops{arg_selenium}",
                 shell=True,
             )
 
