@@ -82,8 +82,16 @@ class DevopsPlanActionWizard(models.TransientModel):
 
     system_method = fields.Selection(related="working_system_id.method")
 
+    is_force_local_system = fields.Boolean(
+        help="Help for view to force local component."
+    )
+
     is_new_or_exist_ssh = fields.Boolean(
         compute="_compute_is_new_or_exist_ssh", store=True
+    )
+
+    can_search_workspace = fields.Boolean(
+        compute="_compute_can_search_workspace", store=True
     )
 
     ssh_user = fields.Char(
@@ -115,7 +123,7 @@ class DevopsPlanActionWizard(models.TransientModel):
         help="True if editing an existing system or False to create a system",
     )
 
-    ssh_test_work = fields.Boolean(
+    system_ssh_connection_status = fields.Boolean(
         related="working_system_id.ssh_connection_status",
         help="Status of test remote working_system_id",
     )
@@ -180,6 +188,22 @@ class DevopsPlanActionWizard(models.TransientModel):
                 not rec.working_system_id
                 or rec.working_system_id.method == "ssh"
             )
+
+    @api.multi
+    @api.depends(
+        "working_system_id", "system_ssh_connection_status", "system_method"
+    )
+    def _compute_can_search_workspace(self):
+        for rec in self:
+            rec.can_search_workspace = False
+            if rec.working_system_id:
+                if (
+                    rec.system_method == "ssh"
+                    and rec.system_ssh_connection_status
+                ):
+                    rec.can_search_workspace = True
+                elif rec.system_method == "local":
+                    rec.can_search_workspace = True
 
     @api.model
     def _selection_state(self):
@@ -289,6 +313,17 @@ class DevopsPlanActionWizard(models.TransientModel):
 
     def state_goto_i_new_remote_system(self):
         self.state = "i_new_remote_system"
+        self.working_system_id = False
+        self.is_force_local_system = False
+        return self._reopen_self()
+
+    def state_goto_i_local_system(self):
+        self.state = "i_new_remote_system"
+        self.working_system_id = self.env.ref(
+            "erplibre_devops.devops_system_local"
+        ).id
+        self.is_force_local_system = True
+        self.system_name = self.working_system_id.name_overwrite
         return self._reopen_self()
 
     def state_goto_c_a_model(self):
@@ -364,6 +399,13 @@ class DevopsPlanActionWizard(models.TransientModel):
         self.working_system_id.execute_terminal_gui(
             force_no_sshpass_no_arg=True
         )
+        return self._reopen_self()
+
+    def search_workspace_from_system(self):
+        if not self.working_system_id:
+            # TODO manage this error
+            return
+        self.working_system_id.action_search_workspace()
         return self._reopen_self()
 
     def ssh_system_install_minimal(self):
