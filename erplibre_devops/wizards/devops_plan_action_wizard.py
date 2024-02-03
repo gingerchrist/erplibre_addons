@@ -78,7 +78,13 @@ class DevopsPlanActionWizard(models.TransientModel):
         help="Need it for new module, relative path from folder of workspace."
     )
 
-    ssh_system_name = fields.Char(string="System name")
+    system_name = fields.Char(string="System name")
+
+    system_method = fields.Selection(related="working_system_id.method")
+
+    is_new_or_exist_ssh = fields.Boolean(
+        compute="_compute_is_new_or_exist_ssh", store=True
+    )
 
     ssh_user = fields.Char(
         string="SSH user", help="New remote system ssh_user."
@@ -98,9 +104,9 @@ class DevopsPlanActionWizard(models.TransientModel):
         help="The port on the FTP server that accepts SSH calls.",
     )
 
-    ssh_system_id = fields.Many2one(
+    working_system_id = fields.Many2one(
         comodel_name="devops.system",
-        string="New remote system",
+        string="New/Existing system",
     )
 
     is_update_system = fields.Boolean(
@@ -110,8 +116,8 @@ class DevopsPlanActionWizard(models.TransientModel):
     )
 
     ssh_test_work = fields.Boolean(
-        related="ssh_system_id.ssh_connection_status",
-        help="Status of test remote ssh_system_id",
+        related="working_system_id.ssh_connection_status",
+        help="Status of test remote working_system_id",
     )
 
     state = fields.Selection(default="init")
@@ -156,15 +162,24 @@ class DevopsPlanActionWizard(models.TransientModel):
             )
 
     @api.multi
-    @api.depends("ssh_system_id")
+    @api.depends("working_system_id")
     def _compute_is_update_system(self):
         for rec in self:
-            is_update_system = bool(rec.ssh_system_id)
+            is_update_system = bool(rec.working_system_id)
             if is_update_system:
-                rec.ssh_system_name = rec.ssh_system_id.name_overwrite
-                rec.ssh_host = rec.ssh_system_id.ssh_host
-                rec.ssh_user = rec.ssh_system_id.ssh_user
-                rec.ssh_password = rec.ssh_system_id.ssh_password
+                rec.system_name = rec.working_system_id.name_overwrite
+                rec.ssh_host = rec.working_system_id.ssh_host
+                rec.ssh_user = rec.working_system_id.ssh_user
+                rec.ssh_password = rec.working_system_id.ssh_password
+
+    @api.multi
+    @api.depends("system_method", "working_system_id")
+    def _compute_is_new_or_exist_ssh(self):
+        for rec in self:
+            rec.is_new_or_exist_ssh = (
+                not rec.working_system_id
+                or rec.working_system_id.method == "ssh"
+            )
 
     @api.model
     def _selection_state(self):
@@ -192,6 +207,10 @@ class DevopsPlanActionWizard(models.TransientModel):
             ("not_supported", "Not supported"),
             ("final", "Final"),
         ]
+
+    def clear_working_system_id(self):
+        self.working_system_id = False
+        return self._reopen_self()
 
     def state_goto_a_autopoiesis_devops(self):
         self.state = "a_autopoiesis_devops"
@@ -339,53 +358,55 @@ class DevopsPlanActionWizard(models.TransientModel):
             )
 
     def ssh_system_open_terminal(self):
-        if not self.ssh_system_id:
+        if not self.working_system_id:
             # TODO manage this error
             return
-        self.ssh_system_id.execute_terminal_gui(force_no_sshpass_no_arg=True)
+        self.working_system_id.execute_terminal_gui(
+            force_no_sshpass_no_arg=True
+        )
         return self._reopen_self()
 
     def ssh_system_install_minimal(self):
-        if not self.ssh_system_id:
+        if not self.working_system_id:
             # TODO manage this error
             return
-        self.ssh_system_id.action_install_dev_system()
+        self.working_system_id.action_install_dev_system()
         return self._reopen_self()
 
     def ssh_system_install_docker(self):
-        if not self.ssh_system_id:
+        if not self.working_system_id:
             # TODO manage this error
             return
-        self.ssh_system_id.action_install_dev_system()
+        self.working_system_id.action_install_dev_system()
         return self._reopen_self()
 
     def ssh_system_install_dev(self):
-        if not self.ssh_system_id:
+        if not self.working_system_id:
             # TODO manage this error
             return
-        self.ssh_system_id.action_install_dev_system()
+        self.working_system_id.action_install_dev_system()
         return self._reopen_self()
 
     def ssh_system_install_production(self):
-        if not self.ssh_system_id:
+        if not self.working_system_id:
             # TODO manage this error
             return
-        self.ssh_system_id.action_install_dev_system()
+        self.working_system_id.action_install_dev_system()
         return self._reopen_self()
 
     def ssh_system_install_all(self):
-        if not self.ssh_system_id:
+        if not self.working_system_id:
             # TODO manage this error
             return
-        self.ssh_system_id.action_install_dev_system()
+        self.working_system_id.action_install_dev_system()
         return self._reopen_self()
 
     def ssh_system_create_workspace(self):
-        if not self.ssh_system_id:
+        if not self.working_system_id:
             # TODO manage this error
             return
         ws_value = {
-            "system_id": self.ssh_system_id.id,
+            "system_id": self.working_system_id.id,
             "folder": self.workspace_folder,
             "erplibre_mode": self.erplibre_mode.id,
             "image_db_selection": self.image_db_selection.id,
@@ -403,11 +424,17 @@ class DevopsPlanActionWizard(models.TransientModel):
         return self._reopen_self()
 
     def search_subsystem_workspace(self):
-        self.root_workspace_id.system_id.get_local_system_id_from_ssh_config()
+        system_ids = (
+            self.root_workspace_id.system_id.get_local_system_id_from_ssh_config()
+        )
+        for system_id in system_ids:
+            if system_id.ssh_connection_status:
+                # TODO the connection status is never activate for new remote system
+                system_id.action_search_workspace()
         return self._reopen_self()
 
     def ssh_create_and_test(self):
-        system_name = self.ssh_system_name
+        system_name = self.system_name
         if not system_name:
             system_name = "New remote system " + uuid.uuid4().hex[:6]
         system_value = {
@@ -420,30 +447,30 @@ class DevopsPlanActionWizard(models.TransientModel):
             "ssh_password": self.ssh_password,
         }
         system_id = self.env["devops.system"].create(system_value)
-        self.ssh_system_id = system_id
+        self.working_system_id = system_id
         try:
             # Just open and close the connection
-            with self.ssh_system_id.ssh_connection():
+            with self.working_system_id.ssh_connection():
                 pass
         except Exception:
             pass
         return self._reopen_self()
 
     def ssh_test_system_exist(self):
-        if not self.ssh_system_id:
+        if not self.working_system_id:
             raise exceptions.Warning(
                 "Missing SSH system id from plan Wizard, wrong configuration,"
                 " please contact your administrator."
             )
-        if self.ssh_system_name:
-            self.ssh_system_id.name_overwrite = self.ssh_system_name
-        self.ssh_system_id.ssh_host = self.ssh_host
-        self.ssh_system_id.ssh_user = self.ssh_user
-        self.ssh_system_id.ssh_password = self.ssh_password
-        self.ssh_system_id.ssh_use_sshpass = True
+        if self.system_name:
+            self.working_system_id.name_overwrite = self.system_name
+        self.working_system_id.ssh_host = self.ssh_host
+        self.working_system_id.ssh_user = self.ssh_user
+        self.working_system_id.ssh_password = self.ssh_password
+        self.working_system_id.ssh_use_sshpass = True
         try:
             # Just open and close the connection
-            with self.ssh_system_id.ssh_connection():
+            with self.working_system_id.ssh_connection():
                 pass
         except Exception:
             pass

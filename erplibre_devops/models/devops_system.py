@@ -176,19 +176,17 @@ class DevopsSystem(models.Model):
             if rec.method == "ssh":
                 state = "UP" if rec.ssh_connection_status else "DOWN"
                 if not rec.name:
-                    if rec.ssh_port != 22:
-                        rec.name = "SSH %s@%s:%d" % (
-                            rec.ssh_user,
-                            rec.ssh_host,
-                            rec.ssh_port,
-                        )
-                    else:
-                        rec.name = "SSH %s@%s" % (
-                            rec.ssh_user,
-                            rec.ssh_host,
-                        )
+                    addr = rec.get_ssh_address()
+                    rec.name = f"SSH {addr}"
                 # Add state if name_overwrite
                 rec.name += f" {state}"
+
+    def get_ssh_address(self):
+        # TODO is unique
+        s_port = "" if self.ssh_port == 22 else f":{self.ssh_port}"
+        s_user = "" if self.ssh_user is False else f"{self.ssh_user}@"
+        addr = f"{s_user}{self.ssh_host}{s_port}"
+        return addr
 
     @api.model
     def _execute_process(
@@ -397,10 +395,12 @@ class DevopsSystem(models.Model):
             if not wrap_cmd:
                 wrap_cmd = "bash --login"
             # TODO support other terminal
+            addr = rec.get_ssh_address()
+            rec.name = f"SSH {addr}"
             cmd_output = (
                 "gnome-terminal --window -- bash -c"
                 f" '{sshpass}ssh{argument_ssh} -t"
-                f' {rec.ssh_user}@{rec.ssh_host} "{wrap_cmd}"'
+                f' {addr} "{wrap_cmd}"'
                 + str_keep_open
                 + "'"
             )

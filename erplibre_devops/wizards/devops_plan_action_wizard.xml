@@ -21,6 +21,7 @@
                 <field name="has_next" invisible="True" />
                 <field name="ssh_test_work" invisible="True" />
                 <field name="is_update_system" invisible="True" />
+                <field name="is_new_or_exist_ssh" invisible="True" />
                 <!--                <h1>-->
                 <!--                    <field name="name"-->
                 <!--                           attrs="{'readonly': [('state', '!=', 'start')]}"-->
@@ -82,7 +83,7 @@
                         <!--                        />-->
                         <button
                             name="state_goto_i_new_remote_system"
-                            string="Remote system"
+                            string="System"
                             type="object"
                             class="btn btn-default"
                         />
@@ -205,7 +206,9 @@
                     attrs="{'invisible': [('state', '!=', 'i_new_remote_system')]}"
                 >
                     <div>
-                        Requirement :
+                        Choose existing system or a remote system.
+                        <br />
+                        Requirement to create a remote system :
                         <ul>
                             <li>Ubuntu OS (22.04 tested)</li>
                             <li>
@@ -220,36 +223,67 @@
                         </ul>
                         <button
                             name="search_subsystem_workspace"
-                            string="Update sub-system"
+                            string="Update sub-system to find remote system"
                             type="object"
                             class="btn btn-default"
                         />
                     </div>
                 </group>
-                <group string="SSH information" attrs="{'invisible': [('state', '!=', 'i_new_remote_system')]}">
-                    <field name="ssh_system_id" string="Existing system" options="{'no_create': True}" />
-                    <field name="ssh_system_name" />
-                    <field name="ssh_user" />
-                    <field name="ssh_password" password="True" />
-                    <field name="ssh_host" />
-                    <field name="ssh_port" />
+                <group string="Choose a system" attrs="{'invisible': [('state', '!=', 'i_new_remote_system')]}">
+                    <field name="working_system_id" string="Existing system" options="{'no_create': True}" />
+                    <group>
+                        <button
+                            name="clear_working_system_id"
+                            string="A new system please"
+                            type="object"
+                            class="btn btn-default"
+                            attrs="{'invisible': [('working_system_id', '=', False)]}"
+                        />
+                    </group>
+                </group>
+                <span
+                    attrs="{'invisible': ['|',('state', '!=', 'i_new_remote_system'),('working_system_id', '!=', False)]}"
+                >
+                    <h2>
+                        <i class="fa fa-fw fa-caret-down" />
+                        Create a remote system
+                    </h2>
+                </span>
+                <span
+                    attrs="{'invisible': ['|',('state', '!=', 'i_new_remote_system'),('working_system_id', '=', False)]}"
+                >
+                    <h2>
+                        <i class="fa fa-fw fa-caret-down" />
+                        Update the system
+                    </h2>
+                </span>
+                <group string="System information" attrs="{'invisible': [('state', '!=', 'i_new_remote_system')]}">
+                    <field name="system_name" />
+                    <field name="ssh_user" attrs="{'invisible': [('is_new_or_exist_ssh', '=', False)]}" />
+                    <field
+                        name="ssh_password"
+                        password="True"
+                        attrs="{'invisible': [('is_new_or_exist_ssh', '=', False)]}"
+                    />
+                    <field name="ssh_host" attrs="{'invisible': [('is_new_or_exist_ssh', '=', False)]}" />
+                    <field name="ssh_port" attrs="{'invisible': [('is_new_or_exist_ssh', '=', False)]}" />
                     <button
                         name="ssh_create_and_test"
                         string="Create system and test"
                         type="object"
                         class="btn btn-default"
-                        attrs="{'invisible': [('ssh_system_id', '!=', False)]}"
+                        attrs="{'invisible': ['|',('is_new_or_exist_ssh', '=', False),('working_system_id', '!=', False)]}"
                     />
                     <button
                         name="ssh_test_system_exist"
                         string="Update system and re-test"
                         type="object"
                         class="btn btn-default"
-                        attrs="{'invisible': [('ssh_system_id', '=', False)]}"
+                        attrs="{'invisible': ['|',('is_new_or_exist_ssh', '=', False),('working_system_id', '=', False)]}"
                     />
                     <div
                         class="bg-warning"
-                        attrs="{'invisible': ['|',('ssh_test_work', '=', True),('ssh_system_id', '=', False)]}"
+                        attrs="{'invisible': ['|','|',('is_new_or_exist_ssh', '=', False),('ssh_test_work', '=', True),('working_system_id', '=', False)]}"
                     >
                         Test SSH connection fail.
                     </div>
