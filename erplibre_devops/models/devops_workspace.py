@@ -144,7 +144,12 @@ class DevopsWorkspace(models.Model):
     path_working_erplibre = fields.Char(default="/ERPLibre")
 
     is_installed = fields.Boolean(
-        help="Need to install environnement before execute it."
+        string="Installed",
+        help="Need to install environnement before execute it.",
+    )
+
+    is_robot = fields.Boolean(
+        string="Robot", help="The automated robot to manage ERPLibre."
     )
 
     path_code_generator_to_generate = fields.Char(
@@ -195,7 +200,7 @@ class DevopsWorkspace(models.Model):
     )
 
     is_me = fields.Boolean(
-        string="Self instance",
+        string="ME",
         readonly=True,
         help="Add more automatisation about manage itself.",
     )
@@ -299,23 +304,24 @@ class DevopsWorkspace(models.Model):
         return os.getcwd()
 
     @api.multi
-    @api.depends(
-        "erplibre_mode",
-        "erplibre_mode.name",
-        "folder",
-        "port_http",
-    )
+    @api.depends("is_me", "is_robot", "folder", "namespace")
     def _compute_name(self):
         for rec in self:
-            if not isinstance(rec.id, models.NewId):
-                rec.name = f"{rec.id}: "
-            else:
-                rec.name = ""
+            # if not isinstance(rec.id, models.NewId):
+            #     rec.name = f"{rec.id}: "
+            # else:
+            #     rec.name = ""
+            rec.name = ""
             if rec.is_me:
-                rec.name += "ME - "
-                if rec.erplibre_mode:
-                    rec.name += rec.erplibre_mode.name
-            rec.name += f" {rec.folder} - {rec.port_http}"
+                rec.name += "💻"
+            if rec.is_robot:
+                rec.name += "🤖"
+            if rec.name:
+                rec.name += " "
+            if rec.namespace:
+                rec.name += rec.namespace
+            elif rec.folder:
+                rec.name += rec.folder
 
     @api.multi
     @api.depends("erplibre_mode.mode_source", "erplibre_mode.mode_exec")
@@ -358,13 +364,6 @@ class DevopsWorkspace(models.Model):
             rec.url_instance_database_manager = (
                 f"{rec.url_instance}/web/database/manager"
             )
-
-    @api.multi
-    @api.depends("folder", "system_id")
-    def _compute_is_installed(self):
-        for rec in self:
-            # TODO validate installation is done before
-            rec.is_installed = False
 
     @api.multi
     @api.depends("devops_exec_ids", "devops_exec_ids.active")
@@ -540,16 +539,16 @@ class DevopsWorkspace(models.Model):
             # Track exception because it's run from cron
             with rec_o.devops_create_exec_bundle("Check all") as rec:
                 # rec.docker_initiate_succeed = not rec.docker_initiate_succeed
-                exec_id = rec.execute(cmd=f"ls {rec.folder}")
-                lst_file = exec_id.log_all.strip().split("\n")
-                # TODO use status instead of ls output
-                if any(
-                    [
-                        "No such file or directory" in str_file
-                        for str_file in lst_file
-                    ]
-                ):
-                    rec.is_installed = False
+                # TODO Check if project is installed, check script installation
+                # exec_id = rec.execute(cmd=f"ls {rec.folder}")
+                # lst_file = exec_id.log_all.strip().split("\n")
+                # if any(
+                #     [
+                #         "No such file or directory" in str_file
+                #         for str_file in lst_file
+                #     ]
+                # ):
+                #     rec.is_installed = False
                 if rec.erplibre_mode.mode_exec in [
                     self.env.ref("erplibre_devops.erplibre_mode_exec_docker")
                 ]:
@@ -589,6 +588,7 @@ class DevopsWorkspace(models.Model):
                     ).id
                 rec.action_install_workspace()
                 rec.is_me = True
+                rec.is_robot = True
                 rec.port_http = 8069
                 rec.port_longpolling = 8072
                 rec.is_running = True
@@ -1029,7 +1029,18 @@ class DevopsWorkspace(models.Model):
                     #     )
                     # else:
                 rec.action_network_change_port_random()
-                rec.is_installed = True
+                # TODO this "works" for source git, but source docker, need to check docker inspect
+                folder_venv = os.path.join(rec.folder, ".venv")
+                rec.is_installed = rec.os_path_exists(
+                    rec.folder
+                ) and rec.os_path_exists(folder_venv)
+                # TODO now, robot is this branch, but find another way to identify it
+                rec.is_robot = (
+                    rec.erplibre_mode.mode_version_erplibre.id
+                    == self.env.ref(
+                        "erplibre_devops.erplibre_mode_version_erplibre_robot_libre"
+                    ).id
+                )
 
     @api.multi
     def update_makefile_from_git(self):

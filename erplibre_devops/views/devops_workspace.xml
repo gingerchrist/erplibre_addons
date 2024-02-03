@@ -223,6 +223,7 @@
                 <field name="is_installed" invisible="True" />
                 <field name="is_running" invisible="True" />
                 <field name="is_me" invisible="True" />
+                <field name="is_robot" invisible="True" />
                 <field name="mode_exec" invisible="True" />
                 <group>
                     <group string="Basic">
@@ -344,6 +345,7 @@
                 <field name="name" />
                 <field name="folder" />
                 <filter string="Is me" name="is_me" domain="[('is_me','=',True)]" />
+                <filter string="Is robot" name="is_robot" domain="[('is_robot','=',True)]" />
                 <group string="Group By" expand="1">
                     <filter name="system_id" string="System" context="{'group_by':'system_id'}" />
                     <filter name="folder" string="Folder" context="{'group_by':'folder'}" />
@@ -361,11 +363,11 @@
             <tree>
                 <field name="name" />
                 <field name="folder" />
-                <field name="namespace" />
                 <field name="system_id" />
                 <field name="erplibre_mode" />
                 <field name="is_me" />
                 <field name="is_installed" />
+                <field name="is_robot" />
             </tree>
         </field>
     </record>
