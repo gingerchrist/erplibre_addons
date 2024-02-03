@@ -51,3 +51,51 @@ class ErplibreMode(models.Model):
                 f"{rec.mode_version_erplibre.name}"
                 "}"
             )
+
+    def get_mode(
+        self,
+        mode_env_id,
+        mode_exec_id,
+        mode_source_id,
+        mode_version_base,
+        mode_version_erplibre,
+    ):
+        mode_version_base_id = self.env["erplibre.mode.version.base"].search(
+            [("value", "=", mode_version_base)]
+        )
+        if not mode_version_base_id:
+            mode_version_base_id = self.env[
+                "erplibre.mode.version.base"
+            ].create({"value": mode_version_base, "name": mode_version_base})
+        mode_version_erplibre_id = self.env[
+            "erplibre.mode.version.erplibre"
+        ].search([("value", "=", mode_version_erplibre)])
+        if not mode_version_erplibre_id:
+            mode_version_erplibre_id = self.env[
+                "erplibre.mode.version.erplibre"
+            ].create(
+                {"value": mode_version_erplibre, "name": mode_version_erplibre}
+            )
+        mode_id = self.env["erplibre.mode"].search(
+            [
+                ("mode_env", "=", mode_env_id.id),
+                ("mode_exec", "=", mode_exec_id.id),
+                ("mode_source", "=", mode_source_id.id),
+                ("mode_version_base", "=", mode_version_base_id.id),
+                ("mode_version_erplibre", "=", mode_version_erplibre_id.id),
+            ],
+            limit=1,
+        )
+        if not mode_id:
+            mode_id = self.create(
+                [
+                    {
+                        "mode_env": mode_env_id.id,
+                        "mode_exec": mode_exec_id.id,
+                        "mode_source": mode_source_id.id,
+                        "mode_version_base": mode_version_base_id.id,
+                        "mode_version_erplibre": mode_version_erplibre_id.id,
+                    }
+                ]
+            )
+        return mode_id

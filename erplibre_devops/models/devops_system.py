@@ -2,6 +2,7 @@ import base64
 import json
 import logging
 import os
+import re
 import subprocess
 
 from odoo import _, api, exceptions, fields, models
@@ -11,6 +12,8 @@ try:
     import paramiko
 except ImportError:  # pragma: no cover
     _logger.debug("Cannot import paramiko")
+
+BASE_VERSION_SOFTWARE_NAME = "odoo"
 
 
 class DevopsSystem(models.Model):
@@ -515,63 +518,192 @@ class DevopsSystem(models.Model):
         for rec in self:
             # TODO use mdfind on OSX
             # TODO need to do sometime «sudo updatedb»
-            out = rec.execute_with_result(
-                "locate -b -r '^default\.xml$'|grep -v"
-                ' ".repo"|grep -v "/var/lib/docker"',
-                None,
-            )
-            out = out.strip()
-            if out:
-                lst_dir = out.split("\n")
+            # TODO take this information from system if use locate or find
+            use_locate = True
+            if use_locate:
+                # Validate word ERPLibre is into default.xml
+                cmd = (
+                    "locate -b -r '^default\.xml$'|grep -v \".repo\"|grep -v"
+                    ' "/var/lib/docker"| xargs -I {} sh -c "grep -l "ERPLibre"'
+                    ' "{}" 2>/dev/null || true"'
+                )
             else:
-                lst_dir = []
+                # Validate word ERPLibre is into default.xml
+                cmd = (
+                    'find "/" -name "default.xml" -type f -print 2>/dev/null |'
+                    " grep -v .repo | grep -v /var/lib/docker | xargs -I {} sh"
+                    ' -c "grep -l "ERPLibre" "{}" 2>/dev/null || true"'
+                )
+            out_default_git = rec.execute_with_result(cmd, None).strip()
+            if out_default_git:
+                lst_dir_git = [
+                    os.path.dirname(a) for a in out_default_git.split("\n")
+                ]
+            else:
+                lst_dir_git = []
+            if use_locate:
+                # Validate word ERPLibre is into default.xml
+                cmd = (
+                    'locate -b -r "^docker-compose\.yml$"|grep -v .repo|grep'
+                    ' -v /var/lib/docker|xargs -I {} sh -c "grep -l "ERPLibre"'
+                    ' "{}" 2>/dev/null || true"'
+                )
+            else:
+                # Validate word ERPLibre is into default.xml
+                cmd = (
+                    'find "/" -name "docker-compose.yml" -type f -print'
+                    " 2>/dev/null | grep -v .repo | grep -v /var/lib/docker |"
+                    ' xargs -I {} sh -c "grep -l "ERPLibre" "{}" 2>/dev/null'
+                    ' || true"'
+                )
+            out_docker_compose = rec.execute_with_result(cmd, None).strip()
+            if out_docker_compose:
+                lst_dir_docker = [
+                    os.path.dirname(a) for a in out_docker_compose.split("\n")
+                ]
+                lst_dir_docker = list(
+                    set(lst_dir_docker).difference(set(lst_dir_git))
+                )
+            else:
+                lst_dir_docker = []
+            # if out:
+            #     # TODO search live docker
+            #     # TODO search all docker-compose.yml and check if support it
+            #     # docker ps -q | xargs -I {} docker inspect {} --format '{{ .Id }}: Montages={{ range .Mounts }}{{ .Source }}:{{ .Destination }} {{ end }}
+            #     """
+            #     "com.docker.compose.project": "#",
+            #     "com.docker.compose.project.config_files": "###/docker-compose.yml",
+            #     "com.docker.compose.project.working_dir": "###",
+            #     "com.docker.compose.service": "ERPLibre",
+            #     """
+            #     # docker inspect <container_id_or_name> --format '{{ index .Config.Labels "com.docker.compose.project.working_dir" }}'
             # TODO detect is_me if not exist
-            # TODO do more validation it's a ERPLibre workspace
-            for dir_path in lst_dir:
-                dirname = os.path.dirname(dir_path)
-                if not dirname:
-                    raise Exception(
-                        "Missing dirname when search workspace. Debug output"
-                        f" of locate : {out}"
-                    )
+            lst_ws_value = []
+            for dir_name in lst_dir_git:
                 # Check if already exist
                 rec_ws = rec.devops_workspace_ids.filtered(
-                    lambda r: r.folder == dirname
+                    lambda r: r.folder == dir_name
                 )
                 if rec_ws:
                     continue
-                odoo_dir = os.path.join(dirname, "odoo")
-                out_odoo = rec.execute_with_result(f"ls {odoo_dir}", None)
-                if out_odoo.startswith("ls: cannot access"):
-                    # This is not a ERPLibre project
+                # TODO do more validation it's a ERPLibre workspace
+                # odoo_dir = os.path.join(dirname, BASE_VERSION_SOFTWARE_NAME)
+                # out_odoo = rec.execute_with_result(f"ls {odoo_dir}", None)
+                # if out_odoo.startswith("ls: cannot access"):
+                #     # This is not a ERPLibre project
+                #     continue
+                git_dir = os.path.join(dir_name, ".git")
+                out_git, status = rec.execute_with_result(
+                    f"ls {git_dir}", None, return_status=True
+                )
+                if status:
                     continue
-                git_dir = os.path.join(dirname, ".git")
-                docker_compose_dir = os.path.join(
-                    dirname, "docker-compose.yml"
-                )
-                out_git = rec.execute_with_result(f"ls {git_dir}", None)
-                out_dc = rec.execute_with_result(
-                    f"ls {docker_compose_dir}", None
-                )
-
                 value = {
-                    "folder": dirname,
+                    "folder": dir_name,
                     "system_id": rec.id,
                 }
-                if not out_git.startswith("ls: cannot access"):
-                    value["erplibre_mode"] = self.env.ref(
-                        "erplibre_devops.erplibre_mode_git_robot_libre"
-                    ).id
-                elif not out_dc.startswith("ls: cannot access"):
-                    value["erplibre_mode"] = self.env.ref(
-                        "erplibre_devops.erplibre_mode_docker_test"
-                    ).id
+                mode_env_id = self.env.ref(
+                    "erplibre_devops.erplibre_mode_env_dev"
+                )
+                mode_exec_id = self.env.ref(
+                    "erplibre_devops.erplibre_mode_exec_terminal"
+                )
+                mode_source_id = self.env.ref(
+                    "erplibre_devops.erplibre_mode_source_git"
+                )
+
+                # Has git, get some information
+                mode_version_erplibre = rec.execute_with_result(
+                    "git branch --show-current", dir_name
+                ).strip()
+
+                mode_version_base = rec.execute_with_result(
+                    "git branch --show-current",
+                    os.path.join(dir_name, BASE_VERSION_SOFTWARE_NAME),
+                ).strip()
+                if not mode_version_base:
+                    # Search somewhere else, because it's a commit!
+                    mode_version_base_raw = rec.execute_with_result(
+                        'grep "<default remote=" default.xml',
+                        dir_name,
+                    )
+                    regex = r'revision="([^"]+)"'
+                    result = re.search(regex, mode_version_base_raw)
+                    mode_version_base = result.group(1) if result else None
+                    _logger.debug(
+                        f"Find mode version base {mode_version_base}"
+                    )
+
+                erplibre_mode = self.env["erplibre.mode"].get_mode(
+                    mode_env_id,
+                    mode_exec_id,
+                    mode_source_id,
+                    mode_version_base,
+                    mode_version_erplibre,
+                )
+                value["erplibre_mode"] = erplibre_mode.id
+                lst_ws_value.append(value)
+            for dir_name in lst_dir_docker:
+                # Check if already exist
+                rec_ws = rec.devops_workspace_ids.filtered(
+                    lambda r: r.folder == dir_name
+                )
+                if rec_ws:
+                    continue
+                value = {
+                    "folder": dir_name,
+                    "system_id": rec.id,
+                }
+                mode_exec_id = self.env.ref(
+                    "erplibre_devops.erplibre_mode_exec_docker"
+                )
+                mode_source_id = self.env.ref(
+                    "erplibre_devops.erplibre_mode_source_docker"
+                )
+                # TODO cannot find odoo version from a simple docker-compose, need more information from docker image
+                mode_version_base = "12.0"
+                key_version = "/erplibre:"
+                cmd = (
+                    f'grep "image:" ./docker-compose.yml |grep "{key_version}"'
+                )
+                out_docker_compose_file = rec.execute_with_result(
+                    cmd, dir_name
+                ).strip()
+                if not out_docker_compose_file:
+                    _logger.warning(
+                        "Cannot find erplibre version into docker compose"
+                        f" {dir_name}"
+                    )
+                    continue
+                image_version = out_docker_compose_file[
+                    out_docker_compose_file.find("image: ") + len("image: ") :
+                ]
+                docker_version = out_docker_compose_file[
+                    out_docker_compose_file.find(key_version)
+                    + len(key_version) :
+                ]
+                if "_" in docker_version:
+                    mode_env_id = self.env.ref(
+                        "erplibre_devops.erplibre_mode_env_dev"
+                    )
                 else:
-                    # TODO create a new one mode or search it
-                    print("create me")
-                    pass
-                ws_id = self.env["devops.workspace"].create(value)
-                ws_id.action_install_workspace()
+                    mode_env_id = self.env.ref(
+                        "erplibre_devops.erplibre_mode_env_prod"
+                    )
+
+                erplibre_mode = self.env["erplibre.mode"].get_mode(
+                    mode_env_id,
+                    mode_exec_id,
+                    mode_source_id,
+                    mode_version_base,
+                    docker_version,
+                )
+                value["erplibre_mode"] = erplibre_mode.id
+                lst_ws_value.append(value)
+
+            if lst_ws_value:
+                ws_ids = self.env["devops.workspace"].create(lst_ws_value)
+                ws_ids.action_install_workspace()
 
     @api.model
     def action_refresh_db_image(self):
