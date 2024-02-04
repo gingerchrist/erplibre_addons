@@ -256,7 +256,11 @@ class DevopsPlanCg(models.Model):
     @api.depends("workspace_id")
     def _compute_name(self):
         for rec in self:
-            rec.name = rec.workspace_id.name
+            if not isinstance(rec.id, models.NewId):
+                rec.name = f"{rec.id}: "
+            else:
+                rec.name = ""
+            rec.name += rec.workspace_id.name
 
     @api.multi
     def action_install_all_generated_module(self):
