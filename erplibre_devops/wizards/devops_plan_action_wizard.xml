@@ -355,9 +355,9 @@
                     string="B-Workspace"
                     attrs="{'invisible': ['|',('state', '!=', 'i_new_remote_system'),('can_search_workspace', '=', False)]}"
                 >
-                    <group string="Select">
-                        <field name="working_workspace_ids" />
-                    </group>
+                    <!--                    <group string="Select">-->
+                    <!--                        <field name="working_workspace_ids" />-->
+                    <!--                    </group>-->
                     <group string="Information">
                         <field name="workspace_folder" />
                         <field name="erplibre_mode" />

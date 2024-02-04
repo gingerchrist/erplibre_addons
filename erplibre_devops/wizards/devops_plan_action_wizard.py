@@ -38,9 +38,9 @@ class DevopsPlanActionWizard(models.TransientModel):
 
     root_workspace_id_is_me = fields.Boolean(related="root_workspace_id.is_me")
 
-    working_workspace_ids = fields.One2many(
-        related="working_system_id.devops_workspace_ids"
-    )
+    # working_workspace_ids = fields.One2many(
+    #     related="working_system_id.devops_workspace_ids"
+    # )
 
     workspace_folder = fields.Char(
         help="Absolute path for storing the devops_workspaces",

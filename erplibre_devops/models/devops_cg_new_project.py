@@ -1266,7 +1266,9 @@ class DevopsCgNewProject(models.Model):
                             f' value["template_auto_export_data_exclude_model"]'
                             f" = 'devops.db.image;devops.exec;devops.exec.bundle;devops.ide.pycharm;"
                             f"devops.log.makefile.target;devops.workspace.terminal;devops.workspace;"
-                            f"devops.test.case;devops.test.plan'",
+                            f"devops.test.case;devops.test.plan;erplibre.mode;erplibre.mode.env;"
+                            f"erplibre.mode.exec;erplibre.mode.source;erplibre.mode.version.base;"
+                            f"erplibre.mode.version.erplibre'",
                         )
                     )
                 if rec.mode_view_snippet in ["enable_snippet"]:

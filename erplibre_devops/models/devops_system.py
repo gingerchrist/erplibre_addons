@@ -523,7 +523,8 @@ class DevopsSystem(models.Model):
             if use_locate:
                 # Validate word ERPLibre is into default.xml
                 cmd = (
-                    "locate -b -r '^default\.xml$'|grep -v \".repo\"|grep -v"
+                    "locate -b -r '^default\.xml$'|grep -v "
+                    '".repo"|grep -v'
                     ' "/var/lib/docker"| xargs -I {} sh -c "grep -l "ERPLibre"'
                     ' "{}" 2>/dev/null || true"'
                 )
