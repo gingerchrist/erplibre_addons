@@ -942,8 +942,9 @@ class DevopsWorkspace(models.Model):
                     branch_str = ""
                     if rec.erplibre_mode.mode_version_erplibre:
                         branch_str = (
-                            rec.erplibre_mode.mode_version_erplibre.value
+                            f" -b {rec.erplibre_mode.mode_version_erplibre.value}"
                         )
+                    git_arg = f"{branch_str} {rec.folder}"
 
                     # TTODO bug if file has same key
                     # if any(["ls:cannot access " in str_file for str_file in lst_file]):
@@ -960,7 +961,7 @@ class DevopsWorkspace(models.Model):
                         exec_id = rec.execute(
                             cmd=(
                                 "git clone"
-                                f" {rec.git_url}{branch_str} {rec.folder}"
+                                f" {rec.git_url}{git_arg}"
                             ),
                             folder=dir_name,
                             error_on_status=False,
