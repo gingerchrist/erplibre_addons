@@ -26,6 +26,7 @@ devops_test_result_access_user_types_/_internal_user,devops_test_result Access U
 devops_workspace_access_user_types_/_internal_user,devops_workspace Access User types / Internal User,model_devops_workspace,base.group_user,1,1,1,1
 devops_workspace_docker_access_user_types_/_internal_user,devops_workspace_docker Access User types / Internal User,model_devops_workspace_docker,base.group_user,1,1,1,1
 devops_workspace_terminal_access_user_types_/_internal_user,devops_workspace_terminal Access User types / Internal User,model_devops_workspace_terminal,base.group_user,1,1,1,1
+erplibre_config_path_home_access_user_types_/_internal_user,erplibre_config_path_home Access User types / Internal User,model_erplibre_config_path_home,base.group_user,1,1,1,1
 erplibre_mode_access_user_types_/_internal_user,erplibre_mode Access User types / Internal User,model_erplibre_mode,base.group_user,1,1,1,1
 erplibre_mode_env_access_user_types_/_internal_user,erplibre_mode_env Access User types / Internal User,model_erplibre_mode_env,base.group_user,1,1,1,1
 erplibre_mode_exec_access_user_types_/_internal_user,erplibre_mode_exec Access User types / Internal User,model_erplibre_mode_exec,base.group_user,1,1,1,1

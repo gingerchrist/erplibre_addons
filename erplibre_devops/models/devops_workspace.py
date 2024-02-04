@@ -294,16 +294,23 @@ class DevopsWorkspace(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
-        r_ids = super().create(vals_list)
-        for r in r_ids:
-            if not r.ide_pycharm:
-                r.ide_pycharm = self.env["devops.ide.pycharm"].create(
-                    {"devops_workspace": r.id}
+        rec_ids = super().create(vals_list)
+        for rec_id in rec_ids:
+            if not rec_id.ide_pycharm:
+                rec_id.ide_pycharm = self.env["devops.ide.pycharm"].create(
+                    {"devops_workspace": rec_id.id}
                 )
-            r.message_subscribe(
+            rec_id.message_subscribe(
                 partner_ids=[self.env.ref("base.partner_admin").id]
             )
-        return r_ids
+            # help to find path.home of ERPLibre
+            config_id = self.env["erplibre.config.path.home"].get_path_home_id(
+                os.path.dirname(rec_id.folder)
+            )
+            rec_id.system_id.erplibre_config_path_home_ids = [
+                (4, config_id.id)
+            ]
+        return rec_ids
 
     @api.model
     def _default_folder(self):
@@ -313,10 +320,6 @@ class DevopsWorkspace(models.Model):
     @api.depends("is_me", "is_robot", "folder", "namespace")
     def _compute_name(self):
         for rec in self:
-            # if not isinstance(rec.id, models.NewId):
-            #     rec.name = f"{rec.id}: "
-            # else:
-            #     rec.name = ""
             rec.name = ""
             if rec.is_me:
                 rec.name += "💻"

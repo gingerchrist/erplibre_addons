@@ -19,7 +19,7 @@
                         class="oe_highlight"
                     />
                     <button
-                        name="action_search_sub_system"
+                        name="get_local_system_id_from_ssh_config"
                         string="Search sub-system"
                         type="object"
                         class="oe_highlight"
@@ -77,6 +77,9 @@
                         />
                     </group>
                 </div>
+                <group string="Information">
+                    <field name="erplibre_config_path_home_ids" />
+                </group>
                 <group>
                     <field name="devops_workspace_ids" />
                 </group>

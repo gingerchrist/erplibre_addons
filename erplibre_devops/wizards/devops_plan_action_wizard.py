@@ -43,6 +43,8 @@ class DevopsPlanActionWizard(models.TransientModel):
     # )
 
     workspace_folder = fields.Char(
+        compute="_compute_workspace_folder",
+        store=True,
         help="Absolute path for storing the devops_workspaces",
     )
 
@@ -85,6 +87,17 @@ class DevopsPlanActionWizard(models.TransientModel):
     system_name = fields.Char(string="System name")
 
     system_method = fields.Selection(related="working_system_id.method")
+
+    system_erplibre_config_path_home_ids = fields.Many2many(
+        related="working_system_id.erplibre_config_path_home_ids"
+    )
+
+    working_erplibre_config_path_home_id = fields.Many2one(
+        string="Root path",
+        comodel_name="erplibre.config.path.home",
+    )
+
+    working_relative_folder = fields.Char(string="Relative folder")
 
     is_force_local_system = fields.Boolean(
         help="Help for view to force local component."
@@ -183,6 +196,29 @@ class DevopsPlanActionWizard(models.TransientModel):
                 rec.ssh_host = rec.working_system_id.ssh_host
                 rec.ssh_user = rec.working_system_id.ssh_user
                 rec.ssh_password = rec.working_system_id.ssh_password
+
+    @api.multi
+    @api.depends(
+        "working_erplibre_config_path_home_id",
+        "working_erplibre_config_path_home_id.name",
+        "working_relative_folder",
+    )
+    def _compute_workspace_folder(self):
+        for rec in self:
+            rec.workspace_folder = ""
+            if (
+                rec.working_erplibre_config_path_home_id
+                and rec.working_erplibre_config_path_home_id.name
+            ):
+                if rec.working_relative_folder:
+                    rec.workspace_folder = os.path.join(
+                        rec.working_erplibre_config_path_home_id.name,
+                        rec.working_relative_folder,
+                    )
+                else:
+                    rec.workspace_folder = (
+                        rec.working_erplibre_config_path_home_id.name
+                    )
 
     @api.multi
     @api.depends("system_method", "working_system_id")

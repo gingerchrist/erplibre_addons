@@ -41,6 +41,22 @@ class DevopsSystem(models.Model):
         string="Parent system",
     )
 
+    erplibre_config_path_home_ids = fields.Many2many(
+        comodel_name="erplibre.config.path.home",
+        string="List path home",
+        default=lambda self: [
+            (
+                6,
+                0,
+                [
+                    self.env.ref(
+                        "erplibre_devops.erplibre_config_path_home_tmp"
+                    ).id
+                ],
+            )
+        ],
+    )
+
     sub_system_ids = fields.One2many(
         comodel_name="devops.system",
         inverse_name="parent_system_id",
@@ -149,20 +165,26 @@ class DevopsSystem(models.Model):
     @api.model_create_multi
     def create(self, vals_list):
         result = super().create(vals_list)
-        for res in result:
+        for rec in result:
             try:
-                res.path_home = res.execute_with_result(
+                rec.path_home = rec.execute_with_result(
                     "echo $HOME", None
                 ).strip()
             except Exception as e:
                 # TODO catch AuthenticationException exception
-                if res.method == "ssh" and res.ssh_user:
-                    res.path_home = f"/home/{res.ssh_user}"
+                if rec.method == "ssh" and rec.ssh_user:
+                    rec.path_home = f"/home/{rec.ssh_user}"
                 else:
-                    res.path_home = "/home/"
+                    rec.path_home = "/home/"
                     _logger.warning(
-                        f"Wrong path_home for create devops.system {res.id}"
+                        f"Wrong path_home for create devops.system {rec.id}"
                     )
+            if rec.path_home:
+                # Display this home to plan action
+                path_home_id = self.env[
+                    "erplibre.config.path.home"
+                ].get_path_home_id(rec.path_home)
+                rec.erplibre_config_path_home_ids = [(4, path_home_id.id)]
         return result
 
     @api.multi
@@ -501,10 +523,6 @@ class DevopsSystem(models.Model):
         self.ssh_connection_status = True
 
         return ssh_client
-
-    @api.multi
-    def action_search_sub_system(self):
-        self.get_local_system_id_from_ssh_config()
 
     @api.multi
     def action_install_dev_system(self):
