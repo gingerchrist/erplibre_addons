@@ -98,18 +98,25 @@ class DevopsIdePycharm(models.Model):
             if lst_line:
                 filename = lst_line[0][0]
                 no_line = lst_line[0][1][0]
-                add_line = f" --line {no_line}" if no_line > 0 else ""
-                cmd = (
-                    f"~/.local/share/JetBrains/Toolbox/scripts/pycharm{add_line}"
-                    f" {filename}"
+                add_line = f"--line {no_line}" if no_line > 0 else ""
+                self.action_pycharm_open(
+                    rec_ws, filename=filename, pycharm_arg=add_line
                 )
             else:
-                cmd = (
-                    "~/.local/share/JetBrains/Toolbox/scripts/pycharm"
-                    f" {rec_ws.folder}"
-                )
+                self.action_pycharm_open(rec_ws, folder=rec_ws.folder)
 
-            rec_ws.execute(cmd=cmd, force_open_terminal=True, force_exit=True)
+    @staticmethod
+    def action_pycharm_open(
+        rec_ws, folder=None, filename=None, pycharm_arg=None
+    ):
+        cmd = "~/.local/share/JetBrains/Toolbox/scripts/pycharm"
+        if pycharm_arg:
+            cmd += f" {pycharm_arg}"
+        if folder:
+            cmd += f" {folder}"
+        elif filename:
+            cmd += f" {filename}"
+        rec_ws.execute(cmd=cmd, force_open_terminal=True, force_exit=True)
 
     @api.multi
     def action_pycharm_conf_init(self, ctx=None):

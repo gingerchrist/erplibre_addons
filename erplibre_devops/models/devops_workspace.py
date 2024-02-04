@@ -239,6 +239,10 @@ class DevopsWorkspace(models.Model):
         comodel_name="erplibre.mode.exec", related="erplibre_mode.mode_exec"
     )
 
+    system_method = fields.Selection(
+        related="system_id.method", string="Method"
+    )
+
     # TODO move it to erplibre.mode
     is_conflict_mode_exec = fields.Boolean(
         compute="_compute_is_conflict_mode_exec",
@@ -429,6 +433,12 @@ class DevopsWorkspace(models.Model):
             rec.new_project_count = self.env[
                 "devops.cg.new_project"
             ].search_count([("devops_workspace", "=", rec.id)])
+
+    @api.multi
+    def action_open_workspace_pycharm(self):
+        for rec_o in self:
+            with rec_o.devops_create_exec_bundle("Setup PyCharm debug") as rec:
+                rec.ide_pycharm.action_pycharm_open(rec, folder=rec.folder)
 
     @api.multi
     def action_cg_setup_pycharm_debug(self):

@@ -361,6 +361,7 @@
         <field name="model">devops.workspace</field>
         <field name="arch" type="xml">
             <tree>
+                <field name="system_method" invisible="True" />
                 <field name="name" />
                 <field name="folder" />
                 <field name="system_id" />
@@ -393,6 +394,13 @@
                     icon="fa-refresh"
                     attrs="{'invisible': [('is_me', '=', False)]}"
                     help="Soft reboot"
+                />
+                <button
+                    name="action_open_workspace_pycharm"
+                    type="object"
+                    class="oe_stat_button"
+                    icon="fa-code"
+                    attrs="{'invisible': [('system_method', '!=', 'local')]}"
                 />
                 <button name="action_open_terminal" type="object" class="oe_stat_button" icon="fa-terminal" help="" />
                 <button name="action_open_directory" type="object" class="oe_stat_button" icon="fa-folder" />
