@@ -68,6 +68,7 @@
                         <field name="ssh_password" password="True" />
                         <field name="ssh_private_key" placeholder="/home/odoo/.ssh/id_rsa" />
                         <field name="ssh_public_host_key" placeholder="AAAA..." />
+                        <field name="ssh_connection_status" />
                         <button
                             name="action_ssh_test_connection"
                             string="Test SSH Connection"
@@ -106,6 +107,7 @@
         <field name="arch" type="xml">
             <tree>
                 <field name="name" />
+                <field name="ssh_connection_status" />
                 <field name="ssh_host" />
                 <field name="method" />
                 <field name="terminal" />

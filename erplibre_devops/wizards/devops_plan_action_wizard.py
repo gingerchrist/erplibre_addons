@@ -109,7 +109,10 @@ class DevopsPlanActionWizard(models.TransientModel):
         help="True if editing an existing system or False to create a system",
     )
 
-    ssh_test_work = fields.Boolean(help="Status of test remote ssh_system_id")
+    ssh_test_work = fields.Boolean(
+        related="ssh_system_id.ssh_connection_status",
+        help="Status of test remote ssh_system_id",
+    )
 
     state = fields.Selection(default="init")
 
@@ -158,7 +161,7 @@ class DevopsPlanActionWizard(models.TransientModel):
         for rec in self:
             is_update_system = bool(rec.ssh_system_id)
             if is_update_system:
-                rec.ssh_system_name = rec.ssh_system_id.name
+                rec.ssh_system_name = rec.ssh_system_id.name_overwrite
                 rec.ssh_host = rec.ssh_system_id.ssh_host
                 rec.ssh_user = rec.ssh_system_id.ssh_user
                 rec.ssh_password = rec.ssh_system_id.ssh_password
@@ -408,7 +411,7 @@ class DevopsPlanActionWizard(models.TransientModel):
         if not system_name:
             system_name = "New remote system " + uuid.uuid4().hex[:6]
         system_value = {
-            "name": system_name,
+            "name_overwrite": system_name,
             "parent_system_id": self.root_workspace_id.system_id.id,
             "method": "ssh",
             "ssh_use_sshpass": True,
@@ -421,9 +424,9 @@ class DevopsPlanActionWizard(models.TransientModel):
         try:
             # Just open and close the connection
             with self.ssh_system_id.ssh_connection():
-                self.ssh_test_work = True
+                pass
         except Exception:
-            self.ssh_test_work = False
+            pass
         return self._reopen_self()
 
     def ssh_test_system_exist(self):
@@ -433,7 +436,7 @@ class DevopsPlanActionWizard(models.TransientModel):
                 " please contact your administrator."
             )
         if self.ssh_system_name:
-            self.ssh_system_id.name = self.ssh_system_name
+            self.ssh_system_id.name_overwrite = self.ssh_system_name
         self.ssh_system_id.ssh_host = self.ssh_host
         self.ssh_system_id.ssh_user = self.ssh_user
         self.ssh_system_id.ssh_password = self.ssh_password
@@ -441,9 +444,9 @@ class DevopsPlanActionWizard(models.TransientModel):
         try:
             # Just open and close the connection
             with self.ssh_system_id.ssh_connection():
-                self.ssh_test_work = True
+                pass
         except Exception:
-            self.ssh_test_work = False
+            pass
         return self._reopen_self()
 
     def state_exit_g_new_module(self):

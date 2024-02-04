@@ -17,7 +17,11 @@ class DevopsSystem(models.Model):
     _name = "devops.system"
     _description = "devops_system"
 
-    name = fields.Char()
+    name = fields.Char(compute="_compute_name", store=True)
+
+    name_overwrite = fields.Char(
+        string="Overwrite name", help="Overwrite existing name"
+    )
 
     devops_workspace_ids = fields.One2many(
         comodel_name="devops.workspace",
@@ -41,6 +45,11 @@ class DevopsSystem(models.Model):
         required=True,
         default="local",
         help="Choose the communication method.",
+    )
+
+    ssh_connection_status = fields.Boolean(
+        readonly=True,
+        help="The state of the connexion.",
     )
 
     terminal = fields.Selection(
@@ -150,20 +159,36 @@ class DevopsSystem(models.Model):
         return result
 
     @api.multi
-    @api.depends("ssh_host", "ssh_port", "ssh_user")
+    @api.depends(
+        "name_overwrite",
+        "ssh_connection_status",
+        "ssh_host",
+        "ssh_port",
+        "ssh_user",
+    )
     def _compute_name(self):
-        """Get the right summary for this job."""
         for rec in self:
-            if rec.method == "local":
-                # rec.name = "%s @ localhost" % rec.name
-                rec.name = "localhost"
-            elif rec.method == "ssh":
-                rec.name = "ssh://%s@%s:%d%s" % (
-                    rec.ssh_user,
-                    rec.ssh_host,
-                    rec.ssh_port,
-                    "",
-                )
+            rec.name = ""
+            if rec.name_overwrite:
+                rec.name = rec.name_overwrite
+            elif rec.method == "local":
+                rec.name = "Local"
+            if rec.method == "ssh":
+                state = "UP" if rec.ssh_connection_status else "DOWN"
+                if not rec.name:
+                    if rec.ssh_port != 22:
+                        rec.name = "SSH %s@%s:%d" % (
+                            rec.ssh_user,
+                            rec.ssh_host,
+                            rec.ssh_port,
+                        )
+                    else:
+                        rec.name = "SSH %s@%s" % (
+                            rec.ssh_user,
+                            rec.ssh_host,
+                        )
+                # Add state if name_overwrite
+                rec.name += f" {state}"
 
     @api.model
     def _execute_process(
@@ -416,6 +441,8 @@ class DevopsSystem(models.Model):
         """Return a new SSH connection with found parameters."""
         self.ensure_one()
 
+        self.ssh_connection_status = False
+
         ssh_client = paramiko.SSHClient()
         ssh_client.load_system_host_keys()
         ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -462,6 +489,9 @@ class DevopsSystem(models.Model):
         #     params["password"] = self.sftp_password
         #
         # return pysftp.Connection(**params, cnopts=cnopts)
+
+        # Because, offline will raise an exception
+        self.ssh_connection_status = True
 
         return ssh_client
 
@@ -580,10 +610,10 @@ class DevopsSystem(models.Model):
                     [("name", "=", dev_config.get("hostname"))], limit=1
                 )
                 if not system_id:
-                    name = f"SSH {host} - {dev_config.get('hostname')}"
+                    name = f"{host}[{dev_config.get('hostname')}]"
                     value = {
                         "method": "ssh",
-                        "name": name,
+                        "name_overwrite": name,
                         "ssh_host": dev_config.get("hostname"),
                         # "ssh_password": dev_config.get("password"),
                     }
