@@ -149,7 +149,8 @@ class DevopsWorkspace(models.Model):
     )
 
     is_robot = fields.Boolean(
-        string="Robot", help="The automated robot to manage ERPLibre."
+        string="Robot",
+        help="The automated robot to manage ERPLibre.",
     )
 
     path_code_generator_to_generate = fields.Char(
@@ -230,7 +231,8 @@ class DevopsWorkspace(models.Model):
     )
 
     erplibre_mode = fields.Many2one(
-        comodel_name="erplibre.mode", string="Mode"
+        comodel_name="erplibre.mode",
+        string="Mode",
     )
 
     mode_exec = fields.Many2one(

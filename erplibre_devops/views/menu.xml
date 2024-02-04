@@ -29,11 +29,11 @@
 
     <menuitem id="menu_code_ide" name="IDE" sequence="2" parent="menu_code" />
 
+    <menuitem id="menu_erplibre_mode" name="Mode" sequence="1" parent="menu_erplibre" />
+
     <menuitem id="menu_process" name="Process" sequence="5" parent="menu_devops" />
 
     <menuitem id="menu_workspace_sub" name="Workspace misc" sequence="6" parent="menu_devops" />
-
-    <menuitem id="menu_erplibre_mode" name="Mode" sequence="1" parent="menu_erplibre" />
 
     <!--Child menu-->
 
@@ -83,54 +83,6 @@
         action="devops_new_project_action_window"
         sequence="1"
         parent="menu_code_cg"
-    />
-
-    <menuitem
-        id="menu_test_plan"
-        name="Test plan"
-        action="devops_test_plan_test_plan_action_window"
-        sequence="1"
-        parent="menu_test"
-    />
-
-    <menuitem
-        id="menu_test_plan_exec"
-        name="Test plan exec"
-        action="devops_test_plan_exec_test_plan_exec_action_window"
-        sequence="2"
-        parent="menu_test"
-    />
-
-    <menuitem
-        id="menu_test_case"
-        name="Test case"
-        action="devops_test_case_test_case_action_window"
-        sequence="3"
-        parent="menu_test"
-    />
-
-    <menuitem
-        id="menu_test_case_exec"
-        name="Test case exec"
-        action="devops_test_case_exec_test_case_exec_action_window"
-        sequence="4"
-        parent="menu_test"
-    />
-
-    <menuitem
-        id="menu_test_result"
-        name="Test result"
-        action="devops_test_result_test_result_action_window"
-        sequence="5"
-        parent="menu_test"
-    />
-
-    <menuitem
-        id="menu_test_case_cg"
-        name="Test case CG"
-        action="devops_cg_test_case_cg_test_case_action_window"
-        sequence="6"
-        parent="menu_test"
     />
 
     <menuitem
@@ -200,14 +152,6 @@
     />
 
     <menuitem
-        id="menu_erplibre_mode_mode"
-        name="Mode"
-        action="erplibre_mode_mode_action_window"
-        sequence="1"
-        parent="menu_erplibre_mode"
-    />
-
-    <menuitem
         id="menu_erplibre_mode_env"
         name="Environnement"
         action="erplibre_mode_env_mode_env_action_window"
@@ -220,6 +164,14 @@
         name="Execution"
         action="erplibre_mode_exec_mode_exec_action_window"
         sequence="3"
+        parent="menu_erplibre_mode"
+    />
+
+    <menuitem
+        id="menu_erplibre_mode_mode"
+        name="Mode"
+        action="erplibre_mode_mode_action_window"
+        sequence="1"
         parent="menu_erplibre_mode"
     />
 
@@ -267,6 +219,54 @@
         action="action_devops_check_system_conf_form"
         sequence="4"
         parent="menu_devops"
+    />
+
+    <menuitem
+        id="menu_test_case"
+        name="Test case"
+        action="devops_test_case_test_case_action_window"
+        sequence="3"
+        parent="menu_test"
+    />
+
+    <menuitem
+        id="menu_test_case_cg"
+        name="Test case CG"
+        action="devops_cg_test_case_cg_test_case_action_window"
+        sequence="6"
+        parent="menu_test"
+    />
+
+    <menuitem
+        id="menu_test_case_exec"
+        name="Test case exec"
+        action="devops_test_case_exec_test_case_exec_action_window"
+        sequence="4"
+        parent="menu_test"
+    />
+
+    <menuitem
+        id="menu_test_plan"
+        name="Test plan"
+        action="devops_test_plan_test_plan_action_window"
+        sequence="1"
+        parent="menu_test"
+    />
+
+    <menuitem
+        id="menu_test_plan_exec"
+        name="Test plan exec"
+        action="devops_test_plan_exec_test_plan_exec_action_window"
+        sequence="2"
+        parent="menu_test"
+    />
+
+    <menuitem
+        id="menu_test_result"
+        name="Test result"
+        action="devops_test_result_test_result_action_window"
+        sequence="5"
+        parent="menu_test"
     />
 
     <menuitem

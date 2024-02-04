@@ -5,16 +5,24 @@ class ErplibreMode(models.Model):
     _name = "erplibre.mode"
     _description = "erplibre_mode"
 
-    name = fields.Char(store=True, compute="_compute_name")
+    name = fields.Char(
+        compute="_compute_name",
+        store=True,
+    )
 
-    mode_env = fields.Many2one(comodel_name="erplibre.mode.env", required=True)
+    mode_env = fields.Many2one(
+        comodel_name="erplibre.mode.env",
+        required=True,
+    )
 
     mode_exec = fields.Many2one(
-        comodel_name="erplibre.mode.exec", required=True
+        comodel_name="erplibre.mode.exec",
+        required=True,
     )
 
     mode_source = fields.Many2one(
-        comodel_name="erplibre.mode.source", required=True
+        comodel_name="erplibre.mode.source",
+        required=True,
     )
 
     mode_version_base = fields.Many2one(

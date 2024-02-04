@@ -20,10 +20,14 @@ class DevopsSystem(models.Model):
     _name = "devops.system"
     _description = "devops_system"
 
-    name = fields.Char(compute="_compute_name", store=True)
+    name = fields.Char(
+        compute="_compute_name",
+        store=True,
+    )
 
     name_overwrite = fields.Char(
-        string="Overwrite name", help="Overwrite existing name"
+        string="Overwrite name",
+        help="Overwrite existing name",
     )
 
     devops_workspace_ids = fields.One2many(
@@ -64,13 +68,13 @@ class DevopsSystem(models.Model):
             ),
             ("xterm", "Xterm"),
         ],
+        default=lambda self: self.env["ir.config_parameter"]
+        .sudo()
+        .get_param("erplibre_devops.default_terminal", False),
         help=(
             "xterm block the process, not gnome-terminal. xterm not work on"
             " osx, use osascript instead."
         ),
-        default=lambda self: self.env["ir.config_parameter"]
-        .sudo()
-        .get_param("erplibre_devops.default_terminal", False),
     )
 
     ssh_host = fields.Char(
