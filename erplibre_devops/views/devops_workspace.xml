@@ -366,8 +366,44 @@
                 <field name="system_id" />
                 <field name="erplibre_mode" />
                 <field name="is_me" />
-                <field name="is_installed" />
                 <field name="is_robot" />
+                <field name="is_installed" />
+                <field name="is_running" />
+                <button
+                    name="%(erplibre_devops.devops_plan_action_action)d"
+                    type="action"
+                    class="oe_stat_button"
+                    context="{'default_root_workspace_id': id, 'default_user_id': uid}"
+                    icon="fa-star"
+                    attrs="{'invisible': [('is_me', '=', False)]}"
+                    help="Plan action wizard"
+                />
+                <button
+                    name="action_update"
+                    type="object"
+                    class="oe_stat_button"
+                    icon="fa-level-up"
+                    attrs="{'invisible': [('is_me', '=', False)]}"
+                    help="Update erplibre_devops, can crash..."
+                />
+                <button
+                    name="action_reboot"
+                    type="object"
+                    class="oe_stat_button bg-success"
+                    icon="fa-refresh"
+                    attrs="{'invisible': [('is_me', '=', False)]}"
+                    help="Soft reboot"
+                />
+                <button name="action_open_terminal" type="object" class="oe_stat_button" icon="fa-terminal" help="" />
+                <button name="action_open_directory" type="object" class="oe_stat_button" icon="fa-folder" />
+                <button name="action_open_local_view" type="object" class="oe_stat_button" icon="fa-desktop" />
+                <button
+                    name="action_reboot"
+                    type="object"
+                    context="{'default_exec_reboot_process': True}"
+                    class="oe_stat_button bg-danger"
+                    icon="fa-refresh"
+                />
             </tree>
         </field>
     </record>
