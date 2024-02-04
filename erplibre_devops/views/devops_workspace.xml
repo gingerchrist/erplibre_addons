@@ -7,7 +7,7 @@
             <form string="DevOps Workspace">
                 <header>
                     <button
-                        name="%(devops_plan_action_action)d"
+                        name="%(erplibre_devops.devops_plan_action_action)d"
                         string="Plan"
                         type="action"
                         class="btn btn-secondary"
@@ -97,8 +97,8 @@
                         string="Re-install"
                         type="object"
                         class="oe_highlight"
-                        groups="base.group_no_one"
                         context="{'force_reinstall_workspace': True}"
+                        groups="base.group_no_one"
                         attrs="{'invisible': [('is_conflict_mode_exec', '=', True)]}"
                     />
                     <button
@@ -106,8 +106,8 @@
                         string="Re-install full"
                         type="object"
                         class="oe_highlight"
-                        groups="base.group_no_one"
                         context="{'force_reinstall_workspace': True, 'install_dev_workspace': True}"
+                        groups="base.group_no_one"
                         attrs="{'invisible': [('is_conflict_mode_exec', '=', True)]}"
                     />
                     <button
@@ -374,8 +374,8 @@
                     name="%(erplibre_devops.devops_plan_action_action)d"
                     type="action"
                     class="oe_stat_button"
-                    context="{'default_root_workspace_id': id, 'default_user_id': uid}"
                     icon="fa-star"
+                    context="{'default_root_workspace_id': id, 'default_user_id': uid}"
                     attrs="{'invisible': [('is_me', '=', False)]}"
                     help="Plan action wizard"
                 />
@@ -408,9 +408,9 @@
                 <button
                     name="action_reboot"
                     type="object"
+                    icon="fa-refresh"
                     context="{'default_exec_reboot_process': True}"
                     class="oe_stat_button bg-danger"
-                    icon="fa-refresh"
                 />
             </tree>
         </field>

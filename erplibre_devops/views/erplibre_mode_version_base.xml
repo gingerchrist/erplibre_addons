@@ -66,7 +66,7 @@
         <field name="model">erplibre.mode.version.base</field>
         <field name="arch" type="xml">
             <search string="Erplibre mode version base">
-                <filter domain="[('name','!=',False)]" name="name" string="Name" />
+                <filter name="name" string="Name" domain="[('name','!=',False)]" />
             </search>
         </field>
     </record>
