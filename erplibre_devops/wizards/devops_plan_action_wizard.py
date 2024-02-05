@@ -140,6 +140,13 @@ class DevopsPlanActionWizard(models.TransientModel):
         help="True if editing an existing system or False to create a system",
     )
 
+    use_internal_cg = fields.Boolean(
+        help=(
+            "If internal, will use same database of devops for build code,"
+            " this can interfere."
+        ),
+    )
+
     system_ssh_connection_status = fields.Boolean(
         related="working_system_id.ssh_connection_status",
         help="Status of test remote working_system_id",
@@ -644,6 +651,7 @@ class DevopsPlanActionWizard(models.TransientModel):
                 "devops_cg_model_ids": [(6, 0, [])],
                 "devops_cg_field_ids": [(6, 0, [])],
                 "stop_execution_if_env_not_clean": not self.force_generate,
+                "use_internal_cg": self.use_internal_cg,
             }
             plan_cg_id = self.env["devops.plan.cg"].create(plan_cg_value)
             # Generate
@@ -746,6 +754,7 @@ class DevopsPlanActionWizard(models.TransientModel):
             ],
             "devops_cg_field_ids": [(6, 0, lst_field_id)],
             "stop_execution_if_env_not_clean": not self.force_generate,
+            "use_internal_cg": self.use_internal_cg,
         }
         # Update configuration self-gen
         if is_autopoiesis:

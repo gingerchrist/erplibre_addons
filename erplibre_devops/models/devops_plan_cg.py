@@ -21,6 +21,13 @@ class DevopsPlanCg(models.Model):
         required=True,
     )
 
+    use_internal_cg = fields.Boolean(
+        help=(
+            "If internal, will use same database of devops for build code,"
+            " this can interfere."
+        ),
+    )
+
     code_mode_context_generator = fields.Selection(
         selection=[
             ("default", "Default"),
@@ -399,6 +406,7 @@ class DevopsPlanCg(models.Model):
                             "mode_view_snippet_template_generate_website_enable_javascript": rec.mode_view_snippet_template_generate_website_enable_javascript,
                             "mode_view_snippet_template_generate_website_snippet_type": rec.mode_view_snippet_template_generate_website_snippet_type,
                             "config_uca_enable_export_data": rec.config_uca_enable_export_data,
+                            "use_internal_cg": rec.use_internal_cg,
                         }
                         # extra_arg = ""
                         if model_conf:
@@ -411,18 +419,20 @@ class DevopsPlanCg(models.Model):
                                     for a in rec.devops_cg_model_to_remove_ids
                                 ]
                             )
-
-                        new_project_id = self.env[
-                            "devops.cg.new_project"
-                        ].create(dct_new_project)
-                        if rec.last_new_project_cg:
-                            new_project_id.last_new_project = (
-                                rec.last_new_project_cg.id
-                            )
-                        rec.last_new_project_cg = new_project_id.id
-                        new_project_id.with_context(
-                            rec_ws._context
-                        ).action_new_project()
+                        if not rec.use_internal_cg:
+                            new_project_id = self.env[
+                                "devops.cg.new_project"
+                            ].create(dct_new_project)
+                            if rec.last_new_project_cg:
+                                new_project_id.last_new_project = (
+                                    rec.last_new_project_cg.id
+                                )
+                            rec.last_new_project_cg = new_project_id.id
+                            new_project_id.with_context(
+                                rec_ws._context
+                            ).action_new_project()
+                        else:
+                            rec.execute_internal_cg(rec_cg, module_id)
                         # cmd = (
                         #     f"cd {rec.path_working_erplibre};./script/code_generator/new_project.py"
                         #     f" --keep_bd_alive -m {module_name} -d"
@@ -438,6 +448,59 @@ class DevopsPlanCg(models.Model):
                 if rec.devops_cg_ids and rec_ws.mode_exec.value in ["docker"]:
                     rec_ws.action_reboot()
                 # rec_ws.execute(cmd=f"cd {rec.path_working_erplibre};make config_gen_all", to_instance=True)
+
+    @api.multi
+    def execute_internal_cg(self, rec_cg, module_id):
+        for rec in self:
+            path_module_generate = os.path.join(
+                ".", rec.path_code_generator_to_generate
+            )
+            short_name = module_id.name.replace("_", " ").title()
+
+            # Add code generator
+            value = {
+                "shortdesc": short_name,
+                "name": module_id.name,
+                "license": "AGPL-3",
+                "author": "TechnoLibre",
+                "website": "https://technolibre.ca",
+                "application": True,
+                "enable_sync_code": True,
+                "path_sync_code": path_module_generate,
+            }
+
+            value["enable_sync_template"] = True
+            value["ignore_fields"] = ""
+            value["post_init_hook_show"] = False
+            value["uninstall_hook_show"] = False
+            value["post_init_hook_feature_code_generator"] = False
+            value["uninstall_hook_feature_code_generator"] = False
+
+            value[
+                "hook_constant_code"
+            ] = f'module_id.name = "{module_id.name}"'
+
+            code_generator_id = self.env["code.generator.module"].create(value)
+
+            # Generate view
+            # Action generate view
+            wizard_view = self.env[
+                "code.generator.generate.views.wizard"
+            ].create(
+                {
+                    "code_generator_id": code_generator_id.id,
+                    "enable_generate_all": False,
+                    "disable_generate_menu": True,
+                    "disable_generate_access": True,
+                }
+            )
+
+            wizard_view.button_generate_views()
+
+            # Generate module
+            value = {"code_generator_ids": code_generator_id.ids}
+            cg_writer_id = self.env["code.generator.writer"].create(value)
+            # print(cg_writer_id)
 
     @api.multi
     def workspace_code_remove_module(self, module_id):

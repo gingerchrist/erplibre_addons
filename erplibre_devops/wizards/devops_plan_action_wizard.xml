@@ -153,9 +153,12 @@
                         <field name="working_module_id" />
                         <field name="working_module_name" string="OR Working Module Name" />
                     </group>
-                    <group>
+                    <group string="Model">
                         <field name="model_ids" />
                         <field name="model_to_remove_ids" />
+                    </group>
+                    <group string="Feature">
+                        <field name="use_internal_cg" />
                     </group>
                 </group>
                 <group name="group_a_f_devops_regen" attrs="{'invisible': [('state', '!=', 'a_f_devops_regen')]}">
@@ -177,7 +180,9 @@
                             attrs="{'invisible': [('working_module_name_suggestion', '!=', False)]}"
                         />
                     </group>
-                    <group string="Feature" />
+                    <group string="Feature">
+                        <field name="use_internal_cg" />
+                    </group>
                 </group>
                 <group name="group_g_a_local" attrs="{'invisible': [('state', '!=', 'g_a_local')]}">
                     <group string="DB">

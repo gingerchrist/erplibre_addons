@@ -959,10 +959,7 @@ class DevopsWorkspace(models.Model):
                         dir_name = os.path.dirname(rec.folder)
                         # No such directory
                         exec_id = rec.execute(
-                            cmd=(
-                                "git clone"
-                                f" {rec.git_url}{git_arg}"
-                            ),
+                            cmd=f"git clone {rec.git_url}{git_arg}",
                             folder=dir_name,
                             error_on_status=False,
                         )
