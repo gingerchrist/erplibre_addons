@@ -18,6 +18,18 @@
                         type="object"
                         class="oe_highlight"
                     />
+                    <button
+                        name="get_local_system_id_from_ssh_config"
+                        string="Search sub-system"
+                        type="object"
+                        class="oe_highlight"
+                    />
+                    <button
+                        name="action_install_dev_system"
+                        string="Install dev system"
+                        type="object"
+                        class="oe_highlight"
+                    />
                 </header>
                 <div class="oe_title">
                     <h1>
@@ -34,6 +46,10 @@
                         <field name="terminal" />
                         <field name="keep_terminal_open" />
                         <field name="debug_command" />
+                    </group>
+                    <group string="Connected system">
+                        <field name="parent_system_id" />
+                        <field name="sub_system_ids" />
                     </group>
                 </group>
                 <div attrs="{'invisible': [('method', '!=', 'ssh')]}">
@@ -52,6 +68,7 @@
                         <field name="ssh_password" password="True" />
                         <field name="ssh_private_key" placeholder="/home/odoo/.ssh/id_rsa" />
                         <field name="ssh_public_host_key" placeholder="AAAA..." />
+                        <field name="ssh_connection_status" />
                         <button
                             name="action_ssh_test_connection"
                             string="Test SSH Connection"
@@ -60,6 +77,9 @@
                         />
                     </group>
                 </div>
+                <group string="Information">
+                    <field name="erplibre_config_path_home_ids" />
+                </group>
                 <group>
                     <field name="devops_workspace_ids" />
                 </group>
@@ -74,6 +94,12 @@
             <search>
                 <field name="name" />
                 <field name="ssh_host" />
+                <group string="Group By" expand="1">
+                    <filter name="method" string="Method" context="{'group_by':'method'}" />
+                    <filter name="parent_system_id" string="Parent system" context="{'group_by':'parent_system_id'}" />
+                    <filter name="terminal" string="Terminal" context="{'group_by':'terminal'}" />
+                    <filter name="path_home" string="Path home" context="{'group_by':'path_home'}" />
+                </group>
             </search>
         </field>
     </record>
@@ -84,6 +110,7 @@
         <field name="arch" type="xml">
             <tree>
                 <field name="name" />
+                <field name="ssh_connection_status" />
                 <field name="ssh_host" />
                 <field name="method" />
                 <field name="terminal" />

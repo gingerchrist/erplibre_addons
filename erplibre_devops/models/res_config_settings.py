@@ -56,7 +56,7 @@ class ResConfigSettings(models.TransientModel):
         params = self.env["ir.config_parameter"].sudo()
         default_value = False
         for key, value in self._system_terminal_selection():
-            result = self.env["devops.system"].execute_process(f"which {key}")
+            result = self.env["devops.system"]._execute_process(f"which {key}")
             if result:
                 default_value = key
                 break

@@ -256,7 +256,11 @@ class DevopsPlanCg(models.Model):
     @api.depends("workspace_id")
     def _compute_name(self):
         for rec in self:
-            rec.name = rec.workspace_id.name
+            if not isinstance(rec.id, models.NewId):
+                rec.name = f"{rec.id}: "
+            else:
+                rec.name = ""
+            rec.name += rec.workspace_id.name
 
     @api.multi
     def action_install_all_generated_module(self):
@@ -351,7 +355,7 @@ class DevopsPlanCg(models.Model):
                 # Increase speed
                 # TODO keep old configuration of config.conf and not overwrite all
                 # rec_ws.execute(cmd=f"cd {rec.path_working_erplibre};make config_gen_code_generator", to_instance=True)
-                if rec.devops_cg_ids and rec_ws.mode_exec in ["docker"]:
+                if rec.devops_cg_ids and rec_ws.mode_exec.value in ["docker"]:
                     rec_ws.workspace_docker_id.docker_config_gen_cg = True
                     rec_ws.action_reboot()
                     rec_ws.workspace_docker_id.docker_config_gen_cg = False
@@ -368,22 +372,20 @@ class DevopsPlanCg(models.Model):
                         if rec.code_mode_context_generator == "autopoiesis":
                             # TODO this seems outdated, fix by wizard
                             # TODO found path by this __file__
-                            directory = "./addons/ERPLibre_erplibre_addons"
+                            rec.path_code_generator_to_generate = (
+                                "./addons/ERPLibre_erplibre_addons"
+                            )
                             module = "erplibre_devops"
                             project_type = "self"
                             if rec.cg_self_add_config_cg:
                                 model_conf = rec.get_cg_model_config(module_id)
                         else:
                             model_conf = rec.get_cg_model_config(module_id)
-                            directory = os.path.join(
-                                rec.path_working_erplibre,
-                                rec.path_code_generator_to_generate,
-                            )
                             module = module_id.name
                             project_type = "cg"
                         dct_new_project = {
                             "module": module,
-                            "directory": directory,
+                            "directory": rec.path_code_generator_to_generate,
                             "keep_bd_alive": True,
                             "devops_workspace": rec_ws.id,
                             "project_type": project_type,
@@ -433,7 +435,7 @@ class DevopsPlanCg(models.Model):
                         #     cmd=f"cd {rec.folder};./script/code_generator/new_project.py"
                         #     f" -d {addons_path} -m {module_name}",
                         # )
-                if rec.devops_cg_ids and rec_ws.mode_exec in ["docker"]:
+                if rec.devops_cg_ids and rec_ws.mode_exec.value in ["docker"]:
                     rec_ws.action_reboot()
                 # rec_ws.execute(cmd=f"cd {rec.path_working_erplibre};make config_gen_all", to_instance=True)
 
@@ -1021,7 +1023,7 @@ class DevopsPlanCg(models.Model):
             with rec.workspace_id.devops_create_exec_bundle(
                 "Open Terminal and tig"
             ) as rec_ws:
-                if rec_ws.mode_exec in ["docker"]:
+                if rec_ws.mode_exec.value in ["docker"]:
                     exec_id = rec_ws.execute(cmd="which tig", to_instance=True)
                     result = exec_id.log_all
                     if not result:

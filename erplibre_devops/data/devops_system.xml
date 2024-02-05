@@ -2,11 +2,11 @@
 <odoo>
     <data noupdate="1">
         <record id="devops_system_local" model="devops.system">
-            <field name="name">Local</field>
+            <field name="name_overwrite">Local</field>
         </record>
         <record id="devops_system_ssh_localhost" model="devops.system">
             <field name="method">ssh</field>
-            <field name="name">SSH Local</field>
+            <field name="name_overwrite">SSH Local</field>
             <field name="ssh_host">localhost</field>
         </record>
     </data>

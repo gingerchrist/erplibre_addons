@@ -1,8 +1,11 @@
+import logging
 import os
 import time
 import uuid
 
 from odoo import _, api, exceptions, fields, models
+
+_logger = logging.getLogger(__name__)
 
 
 class DevopsPlanActionWizard(models.TransientModel):
@@ -35,6 +38,20 @@ class DevopsPlanActionWizard(models.TransientModel):
 
     root_workspace_id_is_me = fields.Boolean(related="root_workspace_id.is_me")
 
+    # working_workspace_ids = fields.One2many(
+    #     related="working_system_id.devops_workspace_ids"
+    # )
+
+    workspace_folder = fields.Char(
+        compute="_compute_workspace_folder",
+        store=True,
+        help="Absolute path for storing the devops_workspaces",
+    )
+
+    erplibre_mode = fields.Many2one(
+        comodel_name="erplibre.mode",
+    )
+
     generated_new_project_id = fields.Many2one(
         comodel_name="devops.cg.new_project",
         string="Generated project",
@@ -50,8 +67,82 @@ class DevopsPlanActionWizard(models.TransientModel):
         string="Working module",
     )
 
+    working_module_name_suggestion = fields.Selection(
+        selection=[
+            ("addons/addons", "Addons private"),
+            ("addons/ERPLibre_erplibre_addons", "ERPLibre addons"),
+            ("addons/TechnoLibre_odoo-code-generator", "Code generator"),
+        ],
+        help="Suggestion relative path",
+    )
+
     working_module_name = fields.Char(
         help="working_module_id or working_module_name"
+    )
+
+    working_module_path = fields.Char(
+        help="Need it for new module, relative path from folder of workspace."
+    )
+
+    system_name = fields.Char(string="System name")
+
+    system_method = fields.Selection(related="working_system_id.method")
+
+    system_erplibre_config_path_home_ids = fields.Many2many(
+        related="working_system_id.erplibre_config_path_home_ids"
+    )
+
+    working_erplibre_config_path_home_id = fields.Many2one(
+        string="Root path",
+        comodel_name="erplibre.config.path.home",
+    )
+
+    working_relative_folder = fields.Char(string="Relative folder")
+
+    is_force_local_system = fields.Boolean(
+        help="Help for view to force local component."
+    )
+
+    is_new_or_exist_ssh = fields.Boolean(
+        compute="_compute_is_new_or_exist_ssh", store=True
+    )
+
+    can_search_workspace = fields.Boolean(
+        compute="_compute_can_search_workspace", store=True
+    )
+
+    ssh_user = fields.Char(
+        string="SSH user", help="New remote system ssh_user."
+    )
+
+    ssh_password = fields.Char(
+        string="SSH password", help="New remote system ssh_password."
+    )
+
+    ssh_host = fields.Char(
+        string="SSH host/IP", help="New remote system ssh_host, like local ip."
+    )
+
+    ssh_port = fields.Integer(
+        string="SSH Port",
+        default=22,
+        help="The port on the FTP server that accepts SSH calls.",
+    )
+
+    working_system_id = fields.Many2one(
+        comodel_name="devops.system",
+        string="New/Existing system",
+    )
+
+    is_update_system = fields.Boolean(
+        store=True,
+        compute="_compute_is_update_system",
+        help="True if editing an existing system or False to create a system",
+    )
+
+    system_ssh_connection_status = fields.Boolean(
+        related="working_system_id.ssh_connection_status",
+        help="Status of test remote working_system_id",
     )
 
     state = fields.Selection(default="init")
@@ -80,29 +171,6 @@ class DevopsPlanActionWizard(models.TransientModel):
         default=_default_image_db_selection,
     )
 
-    # option_adding = fields.Selection([
-    #     ('inherit', 'Inherit Model'),
-    #     ('nomenclator', 'Nomenclator'),
-    # ], required=True, default='nomenclator', help="Inherit to inherit a new model.\nNomenclator to export data.")
-
-    # option_blacklist = fields.Selection([
-    #     ('blacklist', 'Blacklist'),
-    #     ('whitelist', 'Whitelist'),
-    # ], required=True, default='whitelist', help="When whitelist, all selected fields will be added.\n"
-    #                                             "When blacklist, all selected fields will be ignored.")
-
-    # field_ids = fields.Many2many(
-    #     comodel_name="ir.model.fields",
-    #     string="Fields",
-    #     help="Select the field you want to inherit or import data.",
-    # )
-    #
-    # model_ids = fields.Many2many(
-    #     comodel_name="ir.model",
-    #     string="Models",
-    #     help="Select the model you want to inherit or import data.",
-    # )
-
     enable_package_srs = fields.Boolean()
 
     user_id = fields.Many2one(
@@ -117,6 +185,65 @@ class DevopsPlanActionWizard(models.TransientModel):
             record.has_next = getattr(
                 record, "state_exit_%s" % record.state, False
             )
+
+    @api.multi
+    @api.depends("working_system_id")
+    def _compute_is_update_system(self):
+        for rec in self:
+            is_update_system = bool(rec.working_system_id)
+            if is_update_system:
+                rec.system_name = rec.working_system_id.name_overwrite
+                rec.ssh_host = rec.working_system_id.ssh_host
+                rec.ssh_user = rec.working_system_id.ssh_user
+                rec.ssh_password = rec.working_system_id.ssh_password
+
+    @api.multi
+    @api.depends(
+        "working_erplibre_config_path_home_id",
+        "working_erplibre_config_path_home_id.name",
+        "working_relative_folder",
+    )
+    def _compute_workspace_folder(self):
+        for rec in self:
+            rec.workspace_folder = ""
+            if (
+                rec.working_erplibre_config_path_home_id
+                and rec.working_erplibre_config_path_home_id.name
+            ):
+                if rec.working_relative_folder:
+                    rec.workspace_folder = os.path.join(
+                        rec.working_erplibre_config_path_home_id.name,
+                        rec.working_relative_folder,
+                    )
+                else:
+                    rec.workspace_folder = (
+                        rec.working_erplibre_config_path_home_id.name
+                    )
+
+    @api.multi
+    @api.depends("system_method", "working_system_id")
+    def _compute_is_new_or_exist_ssh(self):
+        for rec in self:
+            rec.is_new_or_exist_ssh = (
+                not rec.working_system_id
+                or rec.working_system_id.method == "ssh"
+            )
+
+    @api.multi
+    @api.depends(
+        "working_system_id", "system_ssh_connection_status", "system_method"
+    )
+    def _compute_can_search_workspace(self):
+        for rec in self:
+            rec.can_search_workspace = False
+            if rec.working_system_id:
+                if (
+                    rec.system_method == "ssh"
+                    and rec.system_ssh_connection_status
+                ):
+                    rec.can_search_workspace = True
+                elif rec.system_method == "local":
+                    rec.can_search_workspace = True
 
     @api.model
     def _selection_state(self):
@@ -135,13 +262,19 @@ class DevopsPlanActionWizard(models.TransientModel):
             ("e_migrate_from_external_ddb", "Migrate from external database"),
             ("f_new_project_society", "New society"),
             ("g_test_erplibre", "Test ERPLibre"),
+            ("g_new_module", "New module ERPLibre"),
             ("g_a_local", "Test ERPLibre local"),
             ("h_run_test", "Run test"),
             ("h_a_test_plan_exec", "Run test plan execution"),
             ("h_b_cg", "Run test code generator"),
+            ("i_new_remote_system", "New remote system"),
             ("not_supported", "Not supported"),
             ("final", "Final"),
         ]
+
+    def clear_working_system_id(self):
+        self.working_system_id = False
+        return self._reopen_self()
 
     def state_goto_a_autopoiesis_devops(self):
         self.state = "a_autopoiesis_devops"
@@ -173,6 +306,10 @@ class DevopsPlanActionWizard(models.TransientModel):
 
     def state_goto_g_test_erplibre(self):
         self.state = "g_test_erplibre"
+        return self._reopen_self()
+
+    def state_goto_g_new_module(self):
+        self.state = "g_new_module"
         return self._reopen_self()
 
     def state_goto_h_run_test(self):
@@ -214,6 +351,21 @@ class DevopsPlanActionWizard(models.TransientModel):
         self.state = "c_existing_module"
         return self._reopen_self()
 
+    def state_goto_i_new_remote_system(self):
+        self.state = "i_new_remote_system"
+        self.working_system_id = False
+        self.is_force_local_system = False
+        return self._reopen_self()
+
+    def state_goto_i_local_system(self):
+        self.state = "i_new_remote_system"
+        self.working_system_id = self.env.ref(
+            "erplibre_devops.devops_system_local"
+        ).id
+        self.is_force_local_system = True
+        self.system_name = self.working_system_id.name_overwrite
+        return self._reopen_self()
+
     def state_goto_c_a_model(self):
         self.state = "c_a_model"
         return self._reopen_self()
@@ -233,6 +385,9 @@ class DevopsPlanActionWizard(models.TransientModel):
     def state_previous_a_b_field(self):
         self.state = "a_autopoiesis_devops"
 
+    def state_previous_i_new_remote_system(self):
+        self.state = "init"
+
     def state_previous_a_c_action(self):
         self.state = "a_autopoiesis_devops"
 
@@ -250,6 +405,9 @@ class DevopsPlanActionWizard(models.TransientModel):
 
     def state_previous_g_a_local(self):
         self.state = "g_test_erplibre"
+
+    def state_previous_g_b_TODODO(self):
+        self.state = "g_new_module"
 
     def state_previous_h_run_test(self):
         self.state = "init"
@@ -274,16 +432,162 @@ class DevopsPlanActionWizard(models.TransientModel):
                 wp_id, module_name, "Existing module new model"
             )
 
+    def ssh_system_open_terminal(self):
+        if not self.working_system_id:
+            # TODO manage this error
+            return
+        self.working_system_id.execute_terminal_gui(
+            force_no_sshpass_no_arg=True
+        )
+        return self._reopen_self()
+
+    def search_workspace_from_system(self):
+        if not self.working_system_id:
+            # TODO manage this error
+            return
+        self.working_system_id.action_search_workspace()
+        return self._reopen_self()
+
+    def ssh_system_install_minimal(self):
+        if not self.working_system_id:
+            # TODO manage this error
+            return
+        self.working_system_id.action_install_dev_system()
+        return self._reopen_self()
+
+    def ssh_system_install_docker(self):
+        if not self.working_system_id:
+            # TODO manage this error
+            return
+        self.working_system_id.action_install_dev_system()
+        return self._reopen_self()
+
+    def ssh_system_install_dev(self):
+        if not self.working_system_id:
+            # TODO manage this error
+            return
+        self.working_system_id.action_install_dev_system()
+        return self._reopen_self()
+
+    def ssh_system_install_production(self):
+        if not self.working_system_id:
+            # TODO manage this error
+            return
+        self.working_system_id.action_install_dev_system()
+        return self._reopen_self()
+
+    def ssh_system_install_all(self):
+        if not self.working_system_id:
+            # TODO manage this error
+            return
+        self.working_system_id.action_install_dev_system()
+        return self._reopen_self()
+
+    def ssh_system_create_workspace(self):
+        if not self.working_system_id:
+            # TODO manage this error
+            return
+        ws_value = {
+            "system_id": self.working_system_id.id,
+            "folder": self.workspace_folder,
+            "erplibre_mode": self.erplibre_mode.id,
+            "image_db_selection": self.image_db_selection.id,
+        }
+        ws_id = self.env["devops.workspace"].create(ws_value)
+        self.create_workspace_id = ws_id.id
+        # TODO missing check status before continue
+        # TODO missing with workspace me to catch error
+        ws_id.action_install_workspace()
+        ws_id.action_start()
+        # TODO implement detect when website is up or cancel state with error
+        time.sleep(5)
+        ws_id.action_restore_db_image()
+        ws_id.action_open_local_view()
+        return self._reopen_self()
+
+    def search_subsystem_workspace(self):
+        system_ids = (
+            self.root_workspace_id.system_id.get_local_system_id_from_ssh_config()
+        )
+        for system_id in system_ids:
+            if system_id.ssh_connection_status:
+                # TODO the connection status is never activate for new remote system
+                system_id.action_search_workspace()
+        return self._reopen_self()
+
+    def ssh_create_and_test(self):
+        system_name = self.system_name
+        if not system_name:
+            system_name = "New remote system " + uuid.uuid4().hex[:6]
+        system_value = {
+            "name_overwrite": system_name,
+            "parent_system_id": self.root_workspace_id.system_id.id,
+            "method": "ssh",
+            "ssh_use_sshpass": True,
+            "ssh_host": self.ssh_host,
+            "ssh_user": self.ssh_user,
+            "ssh_password": self.ssh_password,
+        }
+        system_id = self.env["devops.system"].create(system_value)
+        self.working_system_id = system_id
+        try:
+            # Just open and close the connection
+            with self.working_system_id.ssh_connection():
+                pass
+        except Exception:
+            pass
+        return self._reopen_self()
+
+    def ssh_test_system_exist(self):
+        if not self.working_system_id:
+            raise exceptions.Warning(
+                "Missing SSH system id from plan Wizard, wrong configuration,"
+                " please contact your administrator."
+            )
+        if self.system_name:
+            self.working_system_id.name_overwrite = self.system_name
+        self.working_system_id.ssh_host = self.ssh_host
+        self.working_system_id.ssh_user = self.ssh_user
+        self.working_system_id.ssh_password = self.ssh_password
+        self.working_system_id.ssh_use_sshpass = True
+        try:
+            # Just open and close the connection
+            with self.working_system_id.ssh_connection():
+                pass
+        except Exception:
+            pass
+        return self._reopen_self()
+
+    def state_exit_g_new_module(self):
+        with self.root_workspace_id.devops_create_exec_bundle(
+            "Plan g_new_module"
+        ) as wp_id:
+            module_name = self.working_module_name
+            if self.working_module_name_suggestion:
+                module_path = self.working_module_name_suggestion
+            else:
+                module_path = self.working_module_path
+            self.generate_new_model(
+                wp_id,
+                module_name,
+                "New empty module",
+                is_new_module=True,
+                module_path=module_path,
+                is_relative_path=True,
+            )
+
     def state_exit_g_a_local(self):
         with self.root_workspace_id.devops_create_exec_bundle(
             "Plan g_a_local"
         ) as wp_id:
+            self.erplibre_mode = self.env.ref(
+                "erplibre_devops.erplibre_mode_docker_test"
+            ).id
             # Create a workspace with same system of actual workspace, will be in test mode
             dct_wp = {
                 "system_id": wp_id.system_id.id,
                 "folder": f"/tmp/test_erplibre_{uuid.uuid4()}",
-                "mode_source": "docker",
-                "mode_exec": "docker",
+                "erplibre_mode": self.erplibre_mode.id,
                 "image_db_selection": self.image_db_selection.id,
             }
             local_wp_id = self.env["devops.workspace"].create(dct_wp)
@@ -295,15 +599,7 @@ class DevopsPlanActionWizard(models.TransientModel):
             local_wp_id.action_restore_db_image()
             if self.enable_package_srs:
                 local_wp_id.install_module("project_srs")
-            wp_id.execute(
-                cmd=(
-                    "source"
-                    " ./.venv/bin/activate;./script/selenium/web_login.py"
-                    f" --url {local_wp_id.url_instance}"
-                ),
-                force_open_terminal=True,
-                run_into_workspace=True,
-            )
+            local_wp_id.action_open_local_view()
             # finally
             self.state = "final"
 
@@ -354,28 +650,56 @@ class DevopsPlanActionWizard(models.TransientModel):
             plan_cg_id.action_code_generator_generate_all()
             self.generated_new_project_id = plan_cg_id.last_new_project_cg.id
             self.plan_cg_id = plan_cg_id.id
+            # Format module
+            cmd_format = (
+                f"./script/maintenance/format.sh"
+                f" ./addons/ERPLibre_erplibre_addons/erplibre_devops"
+            )
+            wp_id.execute(
+                cmd=cmd_format,
+                run_into_workspace=True,
+                to_instance=True,
+            )
             # finally
             self.state = "final"
 
     def generate_new_model(
-        self, wp_id, module_name, project_name, is_autopoiesis=False
+        self,
+        wp_id,
+        module_name,
+        project_name,
+        is_autopoiesis=False,
+        module_path=None,
+        is_relative_path=False,
+        is_new_module=False,
     ):
-        # Search relative path
-        exec_id = wp_id.execute(
-            cmd=(
-                "./script/addons/check_addons_exist.py --output_path -m"
-                f" {module_name}"
-            ),
-            run_into_workspace=True,
-        )
-        if exec_id.exec_status:
-            raise exceptions.Warning(f"Cannot find module '{module_name}'")
-        path_module = exec_id.log_all.strip()
-        dir_name, basename = os.path.split(path_module)
-        if dir_name.startswith(wp_id.folder):
-            relative_path_module = dir_name[len(wp_id.folder) + 1 :]
+        path_module = ""
+        if not is_new_module:
+            # Search relative path
+            exec_id = wp_id.execute(
+                cmd=(
+                    "./script/addons/check_addons_exist.py --output_path -m"
+                    f" {module_name}"
+                ),
+                run_into_workspace=True,
+            )
+            if exec_id.exec_status:
+                raise exceptions.Warning(f"Cannot find module '{module_name}'")
+            path_module = exec_id.log_all.strip()
+        if module_path:
+            # Overwrite it
+            path_module = module_path
+        if not path_module:
+            raise exceptions.Warning(f"Cannot find module path.")
+        if not is_relative_path:
+            dir_name, basename = os.path.split(path_module)
+            if dir_name.startswith(wp_id.folder):
+                relative_path_module = dir_name[len(wp_id.folder) + 1 :]
+            else:
+                relative_path_module = dir_name
         else:
-            relative_path_module = dir_name
+            relative_path_module = path_module
+
         # Project
         cg_id = self.env["devops.cg"].create(
             {
@@ -432,22 +756,35 @@ class DevopsPlanActionWizard(models.TransientModel):
         plan_cg_id.action_code_generator_generate_all()
         self.generated_new_project_id = plan_cg_id.last_new_project_cg.id
         self.plan_cg_id = plan_cg_id.id
+        # Format module
+        cmd_format = (
+            "./script/maintenance/format.sh"
+            f" {relative_path_module}/{module_name}"
+        )
+        wp_id.execute(
+            cmd=cmd_format,
+            run_into_workspace=True,
+            to_instance=True,
+        )
         # Git add
-        lst_default_file = [
-            f"{module_name}/__manifest__.py",
-            f"{module_name}/security/ir.model.access.csv",
-            f"{module_name}/views/menu.xml",
-        ]
-        if self.model_ids:
-            lst_default_file.append(f"{module_name}/models/__init__.py")
-            for cg_model_id in self.model_ids:
-                model_file_name = cg_model_id.name.replace(".", "_")
-                lst_default_file.append(
-                    f"{module_name}/models/{model_file_name}.py"
-                )
-                lst_default_file.append(
-                    f"{module_name}/views/{model_file_name}.xml"
-                )
+        if is_new_module:
+            lst_default_file = [module_name]
+        else:
+            lst_default_file = [
+                f"{module_name}/__manifest__.py",
+                f"{module_name}/security/ir.model.access.csv",
+                f"{module_name}/views/menu.xml",
+            ]
+            if self.model_ids:
+                lst_default_file.append(f"{module_name}/models/__init__.py")
+                for cg_model_id in self.model_ids:
+                    model_file_name = cg_model_id.name.replace(".", "_")
+                    lst_default_file.append(
+                        f"{module_name}/models/{model_file_name}.py"
+                    )
+                    lst_default_file.append(
+                        f"{module_name}/views/{model_file_name}.xml"
+                    )
         cmd_git_add = ";".join([f"git add '{a}'" for a in lst_default_file])
         # Git remove
         lst_default_file_rm = []

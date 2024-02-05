@@ -2,6 +2,7 @@ import base64
 import json
 import logging
 import os
+import re
 import subprocess
 
 from odoo import _, api, exceptions, fields, models
@@ -12,12 +13,22 @@ try:
 except ImportError:  # pragma: no cover
     _logger.debug("Cannot import paramiko")
 
+BASE_VERSION_SOFTWARE_NAME = "odoo"
+
 
 class DevopsSystem(models.Model):
     _name = "devops.system"
     _description = "devops_system"
 
-    name = fields.Char()
+    name = fields.Char(
+        compute="_compute_name",
+        store=True,
+    )
+
+    name_overwrite = fields.Char(
+        string="Overwrite name",
+        help="Overwrite existing name",
+    )
 
     devops_workspace_ids = fields.One2many(
         comodel_name="devops.workspace",
@@ -25,11 +36,43 @@ class DevopsSystem(models.Model):
         string="DevOps Workspace",
     )
 
+    parent_system_id = fields.Many2one(
+        comodel_name="devops.system",
+        string="Parent system",
+    )
+
+    erplibre_config_path_home_ids = fields.Many2many(
+        comodel_name="erplibre.config.path.home",
+        string="List path home",
+        default=lambda self: [
+            (
+                6,
+                0,
+                [
+                    self.env.ref(
+                        "erplibre_devops.erplibre_config_path_home_tmp"
+                    ).id
+                ],
+            )
+        ],
+    )
+
+    sub_system_ids = fields.One2many(
+        comodel_name="devops.system",
+        inverse_name="parent_system_id",
+        string="Sub system",
+    )
+
     method = fields.Selection(
         selection=[("local", "Local disk"), ("ssh", "SSH remote server")],
         required=True,
         default="local",
         help="Choose the communication method.",
+    )
+
+    ssh_connection_status = fields.Boolean(
+        readonly=True,
+        help="The state of the connexion.",
     )
 
     terminal = fields.Selection(
@@ -41,6 +84,9 @@ class DevopsSystem(models.Model):
             ),
             ("xterm", "Xterm"),
         ],
+        default=lambda self: self.env["ir.config_parameter"]
+        .sudo()
+        .get_param("erplibre_devops.default_terminal", False),
         help=(
             "xterm block the process, not gnome-terminal. xterm not work on"
             " osx, use osascript instead."
@@ -114,24 +160,65 @@ class DevopsSystem(models.Model):
         ),
     )
 
+    path_home = fields.Char()
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        result = super().create(vals_list)
+        for rec in result:
+            try:
+                rec.path_home = rec.execute_with_result(
+                    "echo $HOME", None
+                ).strip()
+            except Exception as e:
+                # TODO catch AuthenticationException exception
+                if rec.method == "ssh" and rec.ssh_user:
+                    rec.path_home = f"/home/{rec.ssh_user}"
+                else:
+                    rec.path_home = "/home/"
+                    _logger.warning(
+                        f"Wrong path_home for create devops.system {rec.id}"
+                    )
+            if rec.path_home:
+                # Display this home to plan action
+                path_home_id = self.env[
+                    "erplibre.config.path.home"
+                ].get_path_home_id(rec.path_home)
+                rec.erplibre_config_path_home_ids = [(4, path_home_id.id)]
+        return result
+
     @api.multi
-    @api.depends("ssh_host", "ssh_port", "ssh_user")
+    @api.depends(
+        "name_overwrite",
+        "ssh_connection_status",
+        "ssh_host",
+        "ssh_port",
+        "ssh_user",
+    )
     def _compute_name(self):
-        """Get the right summary for this job."""
         for rec in self:
-            if rec.method == "local":
-                # rec.name = "%s @ localhost" % rec.name
-                rec.name = "localhost"
-            elif rec.method == "ssh":
-                rec.name = "ssh://%s@%s:%d%s" % (
-                    rec.ssh_user,
-                    rec.ssh_host,
-                    rec.ssh_port,
-                    "",
-                )
+            rec.name = ""
+            if rec.name_overwrite:
+                rec.name = rec.name_overwrite
+            elif rec.method == "local":
+                rec.name = "Local"
+            if rec.method == "ssh":
+                state = "UP" if rec.ssh_connection_status else "DOWN"
+                if not rec.name:
+                    addr = rec.get_ssh_address()
+                    rec.name = f"SSH {addr}"
+                # Add state if name_overwrite
+                rec.name += f" {state}"
+
+    def get_ssh_address(self):
+        # TODO is unique
+        s_port = "" if self.ssh_port == 22 else f":{self.ssh_port}"
+        s_user = "" if self.ssh_user is False else f"{self.ssh_user}@"
+        addr = f"{s_user}{self.ssh_host}{s_port}"
+        return addr
 
     @api.model
-    def execute_process(
+    def _execute_process(
         self,
         cmd,
         add_stdin_log=False,
@@ -197,10 +284,10 @@ class DevopsSystem(models.Model):
             print(cmd)
         for rec in self.filtered(lambda r: r.method == "local"):
             if not return_status:
-                result = rec.execute_process(cmd)
+                result = rec._execute_process(cmd)
                 status = None
             else:
-                result, status = rec.execute_process(cmd, return_status=True)
+                result, status = rec._execute_process(cmd, return_status=True)
             if len(self) == 1:
                 if not return_status:
                     return result
@@ -209,24 +296,46 @@ class DevopsSystem(models.Model):
             lst_result.append(result)
         for rec in self.filtered(lambda r: r.method == "ssh"):
             with rec.ssh_connection() as ssh_client:
+                status = 0
+                cmd += ";echo $?"
                 stdin, stdout, stderr = ssh_client.exec_command(cmd)
                 if add_stdin_log:
                     result = stdin.read().decode("utf-8")
                 else:
                     result = ""
-                result += stdout.read().decode("utf-8")
+                stdout_log = stdout.read().decode("utf-8")
+                # Extract echo $?
+                count_endline_log = stdout_log.count("\n")
+                if count_endline_log:
+                    # Minimum 1, we know we have a command output by echo $?
+                    # output is only the status
+                    try:
+                        status = int(stdout_log.strip())
+                    except Exception:
+                        _logger.warning(
+                            f"System id {rec.id} communicate by SSH cannot"
+                            f" retrieve status of command {cmd}"
+                        )
+                    finally:
+                        if count_endline_log == 1:
+                            stdout_log = ""
+                        else:
+                            c = stdout_log
+                            stdout_log = c[: c.rfind("\n", 0, c.rfind("\n"))]
+                result += stdout_log
                 if add_stderr_log:
                     result += stderr.read().decode("utf-8")
                 if len(self) == 1:
                     if not return_status:
                         return result
                     else:
-                        # TODO support status with ssh_client
-                        return result, None
+                        return result, status
                 lst_result.append(result)
         return lst_result
 
-    def execute_terminal_gui(self, folder="", cmd="", docker=False):
+    def execute_terminal_gui(
+        self, folder="", cmd="", docker=False, force_no_sshpass_no_arg=False
+    ):
         # TODO support argument return_status
         # TODO if folder not exist, cannot CD. don't execute the command if wrong directory
         for rec in self.filtered(lambda r: r.method == "local"):
@@ -271,15 +380,15 @@ class DevopsSystem(models.Model):
                         f' "ls"\''
                     )
             if cmd_output:
-                rec.execute_process(cmd_output)
+                rec._execute_process(cmd_output)
             if rec.debug_command:
                 print(cmd_output)
         for rec in self.filtered(lambda r: r.method == "ssh"):
             str_keep_open = ""
-            if rec.keep_terminal_open:
+            if rec.keep_terminal_open and rec.terminal == "gnome-terminal":
                 str_keep_open = ";bash"
             sshpass = ""
-            if rec.ssh_use_sshpass:
+            if rec.ssh_use_sshpass and not force_no_sshpass_no_arg:
                 if not rec.ssh_password:
                     raise exceptions.Warning(
                         "Please, configure your password, because you enable"
@@ -307,16 +416,24 @@ class DevopsSystem(models.Model):
                     ' -o "UserKnownHostsFile=/dev/null" -o'
                     ' "StrictHostKeyChecking=no"'
                 )
+            if folder:
+                if wrap_cmd.startswith(";"):
+                    wrap_cmd = f'cd "{folder}"{wrap_cmd}'
+                else:
+                    wrap_cmd = f'cd "{folder}";{wrap_cmd}'
             if not wrap_cmd:
                 wrap_cmd = "bash --login"
             # TODO support other terminal
+            addr = rec.get_ssh_address()
+            rec.name = f"SSH {addr}"
             cmd_output = (
                 "gnome-terminal --window -- bash -c"
                 f" '{sshpass}ssh{argument_ssh} -t"
-                f' {rec.ssh_user}@{rec.ssh_host} "cd {folder};'
-                f" {wrap_cmd}\"'"
+                f' {addr} "{wrap_cmd}"'
+                + str_keep_open
+                + "'"
             )
-            rec.execute_process(cmd_output)
+            rec._execute_process(cmd_output)
             if rec.debug_command:
                 print(cmd_output)
 
@@ -353,6 +470,8 @@ class DevopsSystem(models.Model):
         """Return a new SSH connection with found parameters."""
         self.ensure_one()
 
+        self.ssh_connection_status = False
+
         ssh_client = paramiko.SSHClient()
         ssh_client.load_system_host_keys()
         ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -367,8 +486,9 @@ class DevopsSystem(models.Model):
         ssh_client.connect(
             hostname=self.ssh_host,
             port=self.ssh_port,
-            username=self.ssh_user,
-            password=self.ssh_password,
+            username=None if not self.ssh_user else self.ssh_user,
+            password=None if not self.ssh_password else self.ssh_password,
+            timeout=5,
         )
         # params = {
         #     "host": self.ssh_host,
@@ -399,61 +519,214 @@ class DevopsSystem(models.Model):
         #
         # return pysftp.Connection(**params, cnopts=cnopts)
 
+        # Because, offline will raise an exception
+        self.ssh_connection_status = True
+
         return ssh_client
+
+    @api.multi
+    def action_install_dev_system(self):
+        for rec in self:
+            out = rec.execute_terminal_gui(
+                cmd=(
+                    "sudo apt update;sudo apt install -y git plocate tig vim"
+                    " tree watch git-cola htop"
+                ),
+            )
+            # print(out)
 
     @api.multi
     def action_search_workspace(self):
         for rec in self:
             # TODO use mdfind on OSX
             # TODO need to do sometime «sudo updatedb»
-            out = rec.execute_process(
-                "locate -b -r '^default\.xml$'|grep -v"
-                ' ".repo"|grep -v "/var/lib/docker"'
-            )
-            lst_dir = out.strip().split("\n")
+            # TODO take this information from system if use locate or find
+            use_locate = True
+            if use_locate:
+                # Validate word ERPLibre is into default.xml
+                cmd = (
+                    "locate -b -r '^default\.xml$'|grep -v "
+                    '".repo"|grep -v'
+                    ' "/var/lib/docker"| xargs -I {} sh -c "grep -l "ERPLibre"'
+                    ' "{}" 2>/dev/null || true"'
+                )
+            else:
+                # Validate word ERPLibre is into default.xml
+                cmd = (
+                    'find "/" -name "default.xml" -type f -print 2>/dev/null |'
+                    " grep -v .repo | grep -v /var/lib/docker | xargs -I {} sh"
+                    ' -c "grep -l "ERPLibre" "{}" 2>/dev/null || true"'
+                )
+            out_default_git = rec.execute_with_result(cmd, None).strip()
+            if out_default_git:
+                lst_dir_git = [
+                    os.path.dirname(a) for a in out_default_git.split("\n")
+                ]
+            else:
+                lst_dir_git = []
+            if use_locate:
+                # Validate word ERPLibre is into default.xml
+                cmd = (
+                    'locate -b -r "^docker-compose\.yml$"|grep -v .repo|grep'
+                    ' -v /var/lib/docker|xargs -I {} sh -c "grep -l "ERPLibre"'
+                    ' "{}" 2>/dev/null || true"'
+                )
+            else:
+                # Validate word ERPLibre is into default.xml
+                cmd = (
+                    'find "/" -name "docker-compose.yml" -type f -print'
+                    " 2>/dev/null | grep -v .repo | grep -v /var/lib/docker |"
+                    ' xargs -I {} sh -c "grep -l "ERPLibre" "{}" 2>/dev/null'
+                    ' || true"'
+                )
+            out_docker_compose = rec.execute_with_result(cmd, None).strip()
+            if out_docker_compose:
+                lst_dir_docker = [
+                    os.path.dirname(a) for a in out_docker_compose.split("\n")
+                ]
+                lst_dir_docker = list(
+                    set(lst_dir_docker).difference(set(lst_dir_git))
+                )
+            else:
+                lst_dir_docker = []
+            # if out:
+            #     # TODO search live docker
+            #     # TODO search all docker-compose.yml and check if support it
+            #     # docker ps -q | xargs -I {} docker inspect {} --format '{{ .Id }}: Montages={{ range .Mounts }}{{ .Source }}:{{ .Destination }} {{ end }}
+            #     """
+            #     "com.docker.compose.project": "#",
+            #     "com.docker.compose.project.config_files": "###/docker-compose.yml",
+            #     "com.docker.compose.project.working_dir": "###",
+            #     "com.docker.compose.service": "ERPLibre",
+            #     """
+            #     # docker inspect <container_id_or_name> --format '{{ index .Config.Labels "com.docker.compose.project.working_dir" }}'
             # TODO detect is_me if not exist
-            # TODO do more validation it's a ERPLibre workspace
-            for dir_path in lst_dir:
-                dirname = os.path.dirname(dir_path)
+            lst_ws_value = []
+            for dir_name in lst_dir_git:
                 # Check if already exist
                 rec_ws = rec.devops_workspace_ids.filtered(
-                    lambda r: r.folder == dirname
+                    lambda r: r.folder == dir_name
                 )
                 if rec_ws:
                     continue
-                odoo_dir = os.path.join(dirname, "odoo")
-                out_odoo = rec.execute_process(f"ls {odoo_dir}")
-                if out_odoo.startswith("ls: cannot access"):
-                    # This is not a ERPLibre project
-                    continue
-                git_dir = os.path.join(dirname, ".git")
-                docker_compose_dir = os.path.join(
-                    dirname, "docker-compose.yml"
+                # TODO do more validation it's a ERPLibre workspace
+                # odoo_dir = os.path.join(dirname, BASE_VERSION_SOFTWARE_NAME)
+                # out_odoo = rec.execute_with_result(f"ls {odoo_dir}", None)
+                # if out_odoo.startswith("ls: cannot access"):
+                #     # This is not a ERPLibre project
+                #     continue
+                git_dir = os.path.join(dir_name, ".git")
+                out_git, status = rec.execute_with_result(
+                    f"ls {git_dir}", None, return_status=True
                 )
-                out_git = rec.execute_process(f"ls {git_dir}")
-                out_dc = rec.execute_process(f"ls {docker_compose_dir}")
-                if not dirname:
-                    raise Exception("Missing dirname when search workspace")
-
+                if status:
+                    continue
                 value = {
-                    "folder": dirname,
+                    "folder": dir_name,
                     "system_id": rec.id,
                 }
-                mode_source = ""
-                mode_exec = ""
-                if not out_git.startswith("ls: cannot access"):
-                    # Create it git
-                    mode_source = "git"
-                    mode_exec = "terminal"
-                elif not out_dc.startswith("ls: cannot access"):
-                    # create it docker
-                    mode_source = "docker"
-                    mode_exec = "docker"
-                if mode_source:
-                    value["mode_source"] = mode_source
-                    value["mode_exec"] = mode_exec
-                    ws_id = self.env["devops.workspace"].create(value)
-                    ws_id.action_install_workspace()
+                mode_env_id = self.env.ref(
+                    "erplibre_devops.erplibre_mode_env_dev"
+                )
+                mode_exec_id = self.env.ref(
+                    "erplibre_devops.erplibre_mode_exec_terminal"
+                )
+                mode_source_id = self.env.ref(
+                    "erplibre_devops.erplibre_mode_source_git"
+                )
+
+                # Has git, get some information
+                mode_version_erplibre = rec.execute_with_result(
+                    "git branch --show-current", dir_name
+                ).strip()
+
+                mode_version_base = rec.execute_with_result(
+                    "git branch --show-current",
+                    os.path.join(dir_name, BASE_VERSION_SOFTWARE_NAME),
+                ).strip()
+                if not mode_version_base:
+                    # Search somewhere else, because it's a commit!
+                    mode_version_base_raw = rec.execute_with_result(
+                        'grep "<default remote=" default.xml',
+                        dir_name,
+                    )
+                    regex = r'revision="([^"]+)"'
+                    result = re.search(regex, mode_version_base_raw)
+                    mode_version_base = result.group(1) if result else None
+                    _logger.debug(
+                        f"Find mode version base {mode_version_base}"
+                    )
+
+                erplibre_mode = self.env["erplibre.mode"].get_mode(
+                    mode_env_id,
+                    mode_exec_id,
+                    mode_source_id,
+                    mode_version_base,
+                    mode_version_erplibre,
+                )
+                value["erplibre_mode"] = erplibre_mode.id
+                lst_ws_value.append(value)
+            for dir_name in lst_dir_docker:
+                # Check if already exist
+                rec_ws = rec.devops_workspace_ids.filtered(
+                    lambda r: r.folder == dir_name
+                )
+                if rec_ws:
+                    continue
+                value = {
+                    "folder": dir_name,
+                    "system_id": rec.id,
+                }
+                mode_exec_id = self.env.ref(
+                    "erplibre_devops.erplibre_mode_exec_docker"
+                )
+                mode_source_id = self.env.ref(
+                    "erplibre_devops.erplibre_mode_source_docker"
+                )
+                # TODO cannot find odoo version from a simple docker-compose, need more information from docker image
+                mode_version_base = "12.0"
+                key_version = "/erplibre:"
+                cmd = (
+                    f'grep "image:" ./docker-compose.yml |grep "{key_version}"'
+                )
+                out_docker_compose_file = rec.execute_with_result(
+                    cmd, dir_name
+                ).strip()
+                if not out_docker_compose_file:
+                    _logger.warning(
+                        "Cannot find erplibre version into docker compose"
+                        f" {dir_name}"
+                    )
+                    continue
+                image_version = out_docker_compose_file[
+                    out_docker_compose_file.find("image: ") + len("image: ") :
+                ]
+                docker_version = out_docker_compose_file[
+                    out_docker_compose_file.find(key_version)
+                    + len(key_version) :
+                ]
+                if "_" in docker_version:
+                    mode_env_id = self.env.ref(
+                        "erplibre_devops.erplibre_mode_env_dev"
+                    )
+                else:
+                    mode_env_id = self.env.ref(
+                        "erplibre_devops.erplibre_mode_env_prod"
+                    )
+
+                erplibre_mode = self.env["erplibre.mode"].get_mode(
+                    mode_env_id,
+                    mode_exec_id,
+                    mode_source_id,
+                    mode_version_base,
+                    docker_version,
+                )
+                value["erplibre_mode"] = erplibre_mode.id
+                lst_ws_value.append(value)
+
+            if lst_ws_value:
+                ws_ids = self.env["devops.workspace"].create(lst_ws_value)
+                ws_ids.action_install_workspace()
 
     @api.model
     def action_refresh_db_image(self):
@@ -469,3 +742,49 @@ class DevopsSystem(models.Model):
                     self.env["devops.db.image"].create(
                         {"name": image_name, "path": file_path}
                     )
+
+    @api.multi
+    def get_local_system_id_from_ssh_config(self):
+        new_sub_system_id = self.env["devops.system"]
+        for rec in self:
+            config_path = os.path.join(self.path_home, ".ssh/config")
+            config_path_exist = rec.os_path_exists(config_path)
+            if not config_path_exist:
+                continue
+            out = rec.execute_with_result(f"cat {config_path}", None)
+            out = out.strip()
+            # config.parse(file)
+            # config = paramiko.SSHConfig()
+            # config.parse(out.split("\n"))
+            config = paramiko.SSHConfig.from_text(out)
+            # dev_config = config.lookup("martin")
+            lst_host = [a for a in config.get_hostnames() if a != "*"]
+            for host in lst_host:
+                dev_config = config.lookup(host)
+                system_id = self.env["devops.system"].search(
+                    [("name", "=", dev_config.get("hostname"))], limit=1
+                )
+                if not system_id:
+                    name = f"{host}[{dev_config.get('hostname')}]"
+                    value = {
+                        "method": "ssh",
+                        "name_overwrite": name,
+                        "ssh_host": dev_config.get("hostname"),
+                        # "ssh_password": dev_config.get("password"),
+                    }
+                    if "port" in dev_config.keys():
+                        value["ssh_port"] = dev_config.get("port")
+                    if "user" in dev_config.keys():
+                        value["ssh_user"] = dev_config.get("user")
+
+                    value["parent_system_id"] = rec.id
+                    system_id = self.env["devops.system"].create(value)
+                if system_id:
+                    new_sub_system_id += system_id
+        return new_sub_system_id
+
+    @api.model
+    def os_path_exists(self, path):
+        cmd = f'[ -e "{path}" ] && echo "true" || echo "false"'
+        result = self.execute_with_result(cmd, None)
+        return result.strip() == "true"

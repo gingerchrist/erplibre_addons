@@ -19,6 +19,11 @@
                 <field name="root_workspace_id_is_me" invisible="True" />
                 <field name="root_workspace_id" invisible="True" />
                 <field name="has_next" invisible="True" />
+                <field name="system_ssh_connection_status" invisible="True" />
+                <field name="is_update_system" invisible="True" />
+                <field name="is_new_or_exist_ssh" invisible="True" />
+                <field name="can_search_workspace" invisible="True" />
+                <field name="is_force_local_system" invisible="True" />
                 <!--                <h1>-->
                 <!--                    <field name="name"-->
                 <!--                           attrs="{'readonly': [('state', '!=', 'start')]}"-->
@@ -26,10 +31,22 @@
                 <!--                           placeholder="Name"/>-->
                 <!--                </h1>-->
                 <group name="init" attrs="{'invisible': [('state', '!=', 'init')]}">
-                    <group string="New project">
+                    <group string="Project">
+                        <!--                        <button-->
+                        <!--                            name="state_goto_g_test_erplibre"-->
+                        <!--                            string="Operate"-->
+                        <!--                            type="object"-->
+                        <!--                            class="btn btn-default"-->
+                        <!--                        />-->
                         <button
-                            name="state_goto_g_test_erplibre"
-                            string="Test ERPLibre"
+                            name="state_goto_g_new_module"
+                            string="Create module"
+                            type="object"
+                            class="btn btn-default"
+                        />
+                        <button
+                            name="state_goto_c_existing_module"
+                            string="Refactor module"
                             type="object"
                             class="btn btn-default"
                         />
@@ -39,26 +56,12 @@
                         <!--                            type="object"-->
                         <!--                            class="btn btn-default"-->
                         <!--                        />-->
-                    </group>
-                    <group string="Actual project">
                         <button
                             name="state_goto_a_autopoiesis_devops"
-                            string="Autopoiesis DevOps"
+                            string="Autopoiesis"
                             type="object"
                             class="btn btn-default"
                             attrs="{'invisible': [('root_workspace_id_is_me', '=', False)]}"
-                        />
-                        <!--                        <button-->
-                        <!--                            name="state_goto_not_supported"-->
-                        <!--                            string="New module"-->
-                        <!--                            type="object"-->
-                        <!--                            class="btn btn-default"-->
-                        <!--                        />-->
-                        <button
-                            name="state_goto_c_existing_module"
-                            string="Existing module"
-                            type="object"
-                            class="btn btn-default"
                         />
                         <!--                        <button-->
                         <!--                            name="state_goto_not_supported"-->
@@ -73,13 +76,28 @@
                         <!--                            class="btn btn-default"-->
                         <!--                        />-->
                     </group>
-                    <group string="Quality">
+                    <group string="Deploy">
+                        <!--                        <button-->
+                        <!--                            name="state_goto_i_new_remote_system"-->
+                        <!--                            string="Local system"-->
+                        <!--                            type="object"-->
+                        <!--                            class="btn btn-default"-->
+                        <!--                        />-->
                         <button
-                            name="state_goto_h_run_test"
-                            string="Running test"
+                            name="state_goto_i_local_system"
+                            string="Local system"
                             type="object"
                             class="btn btn-default"
                         />
+                        <button
+                            name="state_goto_i_new_remote_system"
+                            string="Remote system"
+                            type="object"
+                            class="btn btn-default"
+                        />
+                    </group>
+                    <group string="Quality">
+                        <button name="state_goto_h_run_test" string="Test" type="object" class="btn btn-default" />
                         <!--                        <button-->
                         <!--                            name="state_goto_not_supported"-->
                         <!--                            string="Analyse/inspection"-->
@@ -150,6 +168,17 @@
                         <button name="state_goto_g_a_local" string="Local" type="object" class="btn btn-default" />
                     </group>
                 </group>
+                <group name="group_g_new_module" attrs="{'invisible': [('state', '!=', 'g_new_module')]}">
+                    <group string="Information">
+                        <field name="working_module_name" />
+                        <field name="working_module_name_suggestion" />
+                        <field
+                            name="working_module_path"
+                            attrs="{'invisible': [('working_module_name_suggestion', '!=', False)]}"
+                        />
+                    </group>
+                    <group string="Feature" />
+                </group>
                 <group name="group_g_a_local" attrs="{'invisible': [('state', '!=', 'g_a_local')]}">
                     <group string="DB">
                         <field name="image_db_selection" />
@@ -177,6 +206,179 @@
                 <group name="group_c_existing_module" attrs="{'invisible': [('state', '!=', 'c_existing_module')]}">
                     <group string="Option">
                         <button name="state_goto_c_a_model" string="Add model" type="object" class="btn btn-default" />
+                    </group>
+                </group>
+                <group
+                    string="Introduction"
+                    name="group_i_new_remote_system"
+                    attrs="{'invisible': ['|',('state', '!=', 'i_new_remote_system'),('is_force_local_system', '=', True)]}"
+                >
+                    <div>
+                        Choose existing system or a remote system.
+                        <br />
+                        Requirement to create a remote system :
+                        <ul>
+                            <li>Ubuntu OS (22.04 tested)</li>
+                            <li>
+                                Install openssh-server
+                                <b>sudo apt install openssh-server</b>
+                            </li>
+                            <li>
+                                Get your username, password and your ip
+                                <b>ip a</b>
+                                (or your host name)
+                            </li>
+                        </ul>
+                        <button
+                            name="search_subsystem_workspace"
+                            string="Update sub-system to find remote system"
+                            type="object"
+                            class="btn btn-default"
+                        />
+                    </div>
+                </group>
+                <group
+                    string="Choose a system"
+                    attrs="{'invisible': ['|',('state', '!=', 'i_new_remote_system'),('is_force_local_system', '=', True)]}"
+                >
+                    <field name="working_system_id" string="Existing system" options="{'no_create': True}" />
+                    <group>
+                        <button
+                            name="clear_working_system_id"
+                            string="A new system please"
+                            type="object"
+                            class="btn btn-default"
+                            attrs="{'invisible': [('working_system_id', '=', False)]}"
+                        />
+                    </group>
+                </group>
+                <span
+                    attrs="{'invisible': ['|',('state', '!=', 'i_new_remote_system'),('working_system_id', '!=', False)]}"
+                >
+                    <h2>
+                        <i class="fa fa-fw fa-caret-down" />
+                        Create a remote system
+                    </h2>
+                </span>
+                <span
+                    attrs="{'invisible': ['|','|',('state', '!=', 'i_new_remote_system'),('working_system_id', '=', False),('is_force_local_system', '=', True)]}"
+                >
+                    <h2>
+                        <i class="fa fa-fw fa-caret-down" />
+                        Update the system
+                    </h2>
+                </span>
+                <group string="System information" attrs="{'invisible': [('state', '!=', 'i_new_remote_system')]}">
+                    <field name="system_name" />
+                    <field name="ssh_user" attrs="{'invisible': [('is_new_or_exist_ssh', '=', False)]}" />
+                    <field
+                        name="ssh_password"
+                        password="True"
+                        attrs="{'invisible': [('is_new_or_exist_ssh', '=', False)]}"
+                    />
+                    <field name="ssh_host" attrs="{'invisible': [('is_new_or_exist_ssh', '=', False)]}" />
+                    <field name="ssh_port" attrs="{'invisible': [('is_new_or_exist_ssh', '=', False)]}" />
+                    <button
+                        name="ssh_create_and_test"
+                        string="Create system and test"
+                        type="object"
+                        class="btn btn-default"
+                        attrs="{'invisible': ['|',('is_new_or_exist_ssh', '=', False),('working_system_id', '!=', False)]}"
+                    />
+                    <button
+                        name="ssh_test_system_exist"
+                        string="Update system and re-test"
+                        type="object"
+                        class="btn btn-default"
+                        attrs="{'invisible': ['|',('is_new_or_exist_ssh', '=', False),('working_system_id', '=', False)]}"
+                    />
+                    <div
+                        class="bg-warning"
+                        attrs="{'invisible': ['|','|',('is_new_or_exist_ssh', '=', False),('system_ssh_connection_status', '=', True),('working_system_id', '=', False)]}"
+                    >
+                        Test SSH connection fail.
+                    </div>
+                    <button
+                        name="search_workspace_from_system"
+                        string="Search workspace"
+                        type="object"
+                        class="btn btn-default"
+                        attrs="{'invisible': [('can_search_workspace', '=', False)]}"
+                    />
+                </group>
+                <group
+                    string="A-Installation"
+                    attrs="{'invisible': ['|',('state', '!=', 'i_new_remote_system'),('can_search_workspace', '=', False)]}"
+                >
+                    <group string="1-Test comm">
+                        <button
+                            name="ssh_system_open_terminal"
+                            string="Test open terminal"
+                            type="object"
+                            class="btn btn-default"
+                        />
+                    </group>
+                    <group string="2-OS">
+                        <button
+                            name="ssh_system_install_minimal"
+                            string="Minimal installation"
+                            type="object"
+                            class="btn btn-default"
+                        />
+                        <button
+                            name="ssh_system_install_docker"
+                            string="Docker installation"
+                            type="object"
+                            class="btn btn-default"
+                        />
+                        <button
+                            name="ssh_system_install_dev"
+                            string="Dev installation"
+                            type="object"
+                            class="btn btn-default"
+                        />
+                        <button
+                            name="ssh_system_install_production"
+                            string="Production installation"
+                            type="object"
+                            class="btn btn-default"
+                        />
+                        <button
+                            name="ssh_system_install_all"
+                            string="All installation"
+                            type="object"
+                            class="btn btn-default"
+                        />
+                    </group>
+                </group>
+                <group
+                    string="B-Workspace"
+                    attrs="{'invisible': ['|',('state', '!=', 'i_new_remote_system'),('can_search_workspace', '=', False)]}"
+                >
+                    <!--                    <group string="Select">-->
+                    <!--                        <field name="working_workspace_ids" />-->
+                    <!--                    </group>-->
+                    <group string="Information">
+                        <field name="system_erplibre_config_path_home_ids" invisible="True" />
+                        <field
+                            name="working_erplibre_config_path_home_id"
+                            domain="[('id','in', system_erplibre_config_path_home_ids)]"
+                            options="{'no_create':true}"
+                        />
+                        <field name="working_relative_folder" />
+                        <field name="workspace_folder" />
+                        <field name="erplibre_mode" />
+                        <field name="image_db_selection" />
+                        <button
+                            name="ssh_system_create_workspace"
+                            string="Create workspace"
+                            type="object"
+                            class="btn btn-default"
+                        />
+                        <field
+                            name="create_workspace_id"
+                            attrs="{'invisible': [('create_workspace_id', '=', False)]}"
+                        />
                     </group>
                 </group>
                 <group name="group_h_run_test" attrs="{'invisible': [('state', '!=', 'h_run_test')]}">

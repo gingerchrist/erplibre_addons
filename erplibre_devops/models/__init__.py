@@ -28,5 +28,12 @@ from . import (
     devops_workspace,
     devops_workspace_docker,
     devops_workspace_terminal,
+    erplibre_config_path_home,
+    erplibre_mode,
+    erplibre_mode_env,
+    erplibre_mode_exec,
+    erplibre_mode_source,
+    erplibre_mode_version_base,
+    erplibre_mode_version_erplibre,
     res_config_settings,
 )

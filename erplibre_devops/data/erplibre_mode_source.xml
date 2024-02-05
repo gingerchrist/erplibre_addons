@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <data noupdate="1">
+        <record id="erplibre_mode_source_docker" model="erplibre.mode.source">
+            <field name="name">Docker</field>
+            <field name="value">docker</field>
+        </record>
+        <record id="erplibre_mode_source_git" model="erplibre.mode.source">
+            <field name="name">Git</field>
+            <field name="value">git</field>
+        </record>
+    </data>
+</odoo>

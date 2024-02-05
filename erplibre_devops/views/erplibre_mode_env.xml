@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <record id="erplibre_mode_env_view_form" model="ir.ui.view">
+        <field name="name">erplibre_mode_env_form</field>
+        <field name="model">erplibre.mode.env</field>
+        <field name="arch" type="xml">
+            <form string="Titre">
+                <sheet>
+                    <group>
+                        <field name="name" />
+                        <field name="value" />
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="erplibre_mode_env_view_graph" model="ir.ui.view">
+        <field name="name">erplibre_mode_env_graph</field>
+        <field name="model">erplibre.mode.env</field>
+        <field name="arch" type="xml">
+            <graph string="Erplibre mode env">
+                <field name="name" type="row" />
+            </graph>
+        </field>
+    </record>
+
+    <record id="erplibre_mode_env_view_kanban" model="ir.ui.view">
+        <field name="name">erplibre_mode_env_kanban</field>
+        <field name="model">erplibre.mode.env</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile">
+                <field name="name" />
+                <templates>
+                    <t t-name="kanban-box">
+                        <div t-attf-class="oe_kanban_global_click">
+                            <div class="oe_kanban_details">
+                                <ul>
+                                    <li class="mb4">
+                                        <strong>
+                                            <field name="name" />
+                                        </strong>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="erplibre_mode_env_view_pivot" model="ir.ui.view">
+        <field name="name">erplibre_mode_env_pivot</field>
+        <field name="model">erplibre.mode.env</field>
+        <field name="arch" type="xml">
+            <pivot string="Erplibre mode env">
+                <field name="name" type="row" />
+            </pivot>
+        </field>
+    </record>
+
+    <record id="erplibre_mode_env_view_search" model="ir.ui.view">
+        <field name="name">erplibre_mode_env_search</field>
+        <field name="model">erplibre.mode.env</field>
+        <field name="arch" type="xml">
+            <search string="Erplibre mode env">
+                <filter name="name" string="Name" domain="[('name','!=',False)]" />
+            </search>
+        </field>
+    </record>
+
+    <record id="erplibre_mode_env_view_tree" model="ir.ui.view">
+        <field name="name">erplibre_mode_env_tree</field>
+        <field name="model">erplibre.mode.env</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name" />
+                <field name="value" />
+            </tree>
+        </field>
+    </record>
+
+    <act_window
+        id="erplibre_mode_env_mode_env_action_window"
+        name="Mode env"
+        res_model="erplibre.mode.env"
+        view_mode="kanban,tree,pivot,graph,form"
+    />
+</odoo>

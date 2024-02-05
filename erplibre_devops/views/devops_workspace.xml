@@ -7,7 +7,7 @@
             <form string="DevOps Workspace">
                 <header>
                     <button
-                        name="%(devops_plan_action_action)d"
+                        name="%(erplibre_devops.devops_plan_action_action)d"
                         string="Plan"
                         type="action"
                         class="btn btn-secondary"
@@ -86,10 +86,27 @@
                         attrs="{'invisible': ['|', ('is_installed', '=', False), ('is_conflict_mode_exec', '=', True)]}"
                     />
                     <button
+                        name="action_open_local_view"
+                        string="Open browser"
+                        type="object"
+                        class="oe_highlight"
+                        attrs="{'invisible': ['|', ('is_installed', '=', False), ('is_conflict_mode_exec', '=', True)]}"
+                    />
+                    <button
                         name="action_install_workspace"
                         string="Re-install"
                         type="object"
                         class="oe_highlight"
+                        context="{'force_reinstall_workspace': True}"
+                        groups="base.group_no_one"
+                        attrs="{'invisible': [('is_conflict_mode_exec', '=', True)]}"
+                    />
+                    <button
+                        name="action_install_workspace"
+                        string="Re-install full"
+                        type="object"
+                        class="oe_highlight"
+                        context="{'force_reinstall_workspace': True, 'install_dev_workspace': True}"
                         groups="base.group_no_one"
                         attrs="{'invisible': [('is_conflict_mode_exec', '=', True)]}"
                     />
@@ -202,19 +219,17 @@
                     <h3>Error:</h3>
                     Cannot support this execution mode with source mode 'docker'.
                 </div>
+                <field name="is_conflict_mode_exec" invisible="True" />
+                <field name="is_installed" invisible="True" />
+                <field name="is_running" invisible="True" />
+                <field name="is_me" invisible="True" />
+                <field name="is_robot" invisible="True" />
+                <field name="mode_exec" invisible="True" />
                 <group>
                     <group string="Basic">
                         <field name="system_id" />
                         <field name="folder" />
-                        <field name="mode_source" attrs="{'readonly': [('is_installed', '=', True)]}" />
-                        <field name="mode_exec" />
-                        <field name="mode_environnement" />
-                        <field name="mode_version_erplibre" />
-                        <field name="mode_version_base" />
-                        <field name="is_conflict_mode_exec" invisible="True" />
-                        <field name="is_installed" invisible="True" />
-                        <field name="is_running" invisible="True" />
-                        <field name="is_me" invisible="True" />
+                        <field name="erplibre_mode" />
                     </group>
                     <group string="Execution">
                         <field name="is_debug_log" />
@@ -329,6 +344,14 @@
             <search>
                 <field name="name" />
                 <field name="folder" />
+                <filter string="Is me" name="is_me" domain="[('is_me','=',True)]" />
+                <filter string="Is robot" name="is_robot" domain="[('is_robot','=',True)]" />
+                <group string="Group By" expand="1">
+                    <filter name="system_id" string="System" context="{'group_by':'system_id'}" />
+                    <filter name="folder" string="Folder" context="{'group_by':'folder'}" />
+                    <filter name="db_name" string="Database name" context="{'group_by':'db_name'}" />
+                    <filter name="db_is_restored" string="DB is restored" context="{'group_by':'db_is_restored'}" />
+                </group>
             </search>
         </field>
     </record>
@@ -338,17 +361,57 @@
         <field name="model">devops.workspace</field>
         <field name="arch" type="xml">
             <tree>
+                <field name="system_method" invisible="True" />
                 <field name="name" />
                 <field name="folder" />
-                <field name="namespace" />
                 <field name="system_id" />
-                <field name="mode_source" />
-                <field name="mode_exec" />
-                <field name="mode_environnement" />
-                <field name="mode_version_erplibre" />
-                <field name="mode_version_base" />
+                <field name="erplibre_mode" />
                 <field name="is_me" />
+                <field name="is_robot" />
                 <field name="is_installed" />
+                <field name="is_running" />
+                <button
+                    name="%(erplibre_devops.devops_plan_action_action)d"
+                    type="action"
+                    class="oe_stat_button"
+                    icon="fa-star"
+                    context="{'default_root_workspace_id': id, 'default_user_id': uid}"
+                    attrs="{'invisible': [('is_me', '=', False)]}"
+                    help="Plan action wizard"
+                />
+                <button
+                    name="action_update"
+                    type="object"
+                    class="oe_stat_button"
+                    icon="fa-level-up"
+                    attrs="{'invisible': [('is_me', '=', False)]}"
+                    help="Update erplibre_devops, can crash..."
+                />
+                <button
+                    name="action_reboot"
+                    type="object"
+                    class="oe_stat_button bg-success"
+                    icon="fa-refresh"
+                    attrs="{'invisible': [('is_me', '=', False)]}"
+                    help="Soft reboot"
+                />
+                <button
+                    name="action_open_workspace_pycharm"
+                    type="object"
+                    class="oe_stat_button"
+                    icon="fa-code"
+                    attrs="{'invisible': [('system_method', '!=', 'local')]}"
+                />
+                <button name="action_open_terminal" type="object" class="oe_stat_button" icon="fa-terminal" help="" />
+                <button name="action_open_directory" type="object" class="oe_stat_button" icon="fa-folder" />
+                <button name="action_open_local_view" type="object" class="oe_stat_button" icon="fa-desktop" />
+                <button
+                    name="action_reboot"
+                    type="object"
+                    icon="fa-refresh"
+                    context="{'default_exec_reboot_process': True}"
+                    class="oe_stat_button bg-danger"
+                />
             </tree>
         </field>
     </record>
