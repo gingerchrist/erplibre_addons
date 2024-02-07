@@ -527,13 +527,35 @@ class DevopsSystem(models.Model):
     @api.multi
     def action_install_dev_system(self):
         for rec in self:
+            # Need this to install ERPLibre for dev
+            # Minimal
+            # git make curl which parallel
+            # Dev
+            # plocate tig vim tree watch git-cola htop make curl build-essential
+            # zlib1g-dev libreadline-dev libbz2-dev libffi-dev libssl-dev libldap2-dev wget
             out = rec.execute_terminal_gui(
                 cmd=(
-                    "sudo apt update;sudo apt install -y git plocate tig vim"
-                    " tree watch git-cola htop"
+                    "sudo apt update;sudo apt install -y git make curl which"
+                    " parallel  plocate vim tree watch git-cola htop tig"
+                    " build-essential zlib1g-dev libreadline-dev libbz2-dev"
+                    " libffi-dev libssl-dev libldap2-dev wget"
                 ),
             )
+            # Debian
+            # libxslt-dev libzip-dev libsasl2-dev gdebi-core
+            # TODO create link python for pyenv if not exist
+            # sudo ln -s /usr/bin/python3 /usr/bin/python
             # print(out)
+            # uname -m
+            # uname -r
+            # uname -s
+            # uname -v
+            # TODO autodetect missing git config --global
+            # git config --global user.email "@"
+            # git config --global user.name ""
+            # git testing colorized enable color yes y
+            # Dev desktop
+            # vanille-gnome-desktop
 
     @api.multi
     def action_search_workspace(self):

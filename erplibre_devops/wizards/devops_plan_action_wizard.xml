@@ -31,7 +31,7 @@
                 <!--                           placeholder="Name"/>-->
                 <!--                </h1>-->
                 <group name="init" attrs="{'invisible': [('state', '!=', 'init')]}">
-                    <group string="Project">
+                    <group string="Code">
                         <!--                        <button-->
                         <!--                            name="state_goto_g_test_erplibre"-->
                         <!--                            string="Operate"-->
@@ -439,7 +439,7 @@
     </record>
 
     <record id="devops_plan_action_action" model="ir.actions.act_window">
-        <field name="name">Plan action</field>
+        <field name="name">DEVOPS action</field>
         <field name="type">ir.actions.act_window</field>
         <field name="res_model">devops.plan.action.wizard</field>
         <field name="src_model">devops.workspace</field>

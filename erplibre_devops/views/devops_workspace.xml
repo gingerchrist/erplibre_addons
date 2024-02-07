@@ -8,7 +8,7 @@
                 <header>
                     <button
                         name="%(erplibre_devops.devops_plan_action_action)d"
-                        string="Plan"
+                        string="Action"
                         type="action"
                         class="btn btn-secondary"
                         context="{'default_root_workspace_id': id, 'default_user_id': uid}"
