@@ -149,17 +149,21 @@
                     name="group_a_a_model"
                     attrs="{'invisible': [('state', '!=', 'a_a_model'),('state', '!=', 'c_a_model')]}"
                 >
-                    <group string="Module" attrs="{'invisible': [('state', '!=', 'c_a_model')]}">
+                    <group string="Module">
                         <field name="working_module_id" />
                         <field name="working_module_name" string="OR Working Module Name" />
-                    </group>
-                    <group string="Model">
-                        <field name="model_ids" />
-                        <field name="model_to_remove_ids" />
                     </group>
                     <group string="Feature">
                         <field name="use_internal_cg" />
                     </group>
+                </group>
+                <group
+                    name="group_a_a_model"
+                    string="Model"
+                    attrs="{'invisible': [('state', '!=', 'a_a_model'),('state', '!=', 'c_a_model')]}"
+                >
+                    <field name="model_ids" />
+                    <field name="model_to_remove_ids" />
                 </group>
                 <group name="group_a_f_devops_regen" attrs="{'invisible': [('state', '!=', 'a_f_devops_regen')]}">
                     <group string="Param">
@@ -183,13 +187,32 @@
                     <group string="Feature">
                         <field name="use_internal_cg" />
                     </group>
+                    <group string="Model">
+                        <field name="model_ids" />
+                        <field name="model_to_remove_ids" />
+                    </group>
                     <group string="Snippet">
                         <field name="mode_view_snippet" />
-                        <field name="mode_view_snippet_enable_template_website_snippet_view" />
-                        <field name="mode_view_snippet_template_generate_website_snippet_generic_mdl" />
-                        <field name="mode_view_snippet_template_generate_website_snippet_ctrl_featur" />
-                        <field name="mode_view_snippet_template_generate_website_enable_javascript" />
-                        <field name="mode_view_snippet_template_generate_website_snippet_type" />
+                        <field
+                            name="mode_view_snippet_enable_template_website_snippet_view"
+                            attrs="{'invisible': [('mode_view_snippet', '==', 'no_snippet')]}"
+                        />
+                        <field
+                            name="mode_view_snippet_template_generate_website_snippet_generic_mdl"
+                            attrs="{'invisible': [('mode_view_snippet', '==', 'no_snippet')]}"
+                        />
+                        <field
+                            name="mode_view_snippet_template_generate_website_snippet_ctrl_featur"
+                            attrs="{'invisible': [('mode_view_snippet', '==', 'no_snippet')]}"
+                        />
+                        <field
+                            name="mode_view_snippet_template_generate_website_enable_javascript"
+                            attrs="{'invisible': [('mode_view_snippet', '==', 'no_snippet')]}"
+                        />
+                        <field
+                            name="mode_view_snippet_template_generate_website_snippet_type"
+                            attrs="{'invisible': [('mode_view_snippet', '==', 'no_snippet')]}"
+                        />
                     </group>
                 </group>
                 <group name="group_g_a_local" attrs="{'invisible': [('state', '!=', 'g_a_local')]}">

@@ -104,3 +104,10 @@ class DevopsCgField(models.Model):
                         rec.field_relation or rec.field_relation_manual
                     )
                 rec.has_error = not has_relation or not has_field_relation
+
+    def get_dct(self):
+        self.ensure_one()
+        dct_field = {"ttype": self.type}
+        if self.help:
+            dct_field["help"] = self.help
+        return dct_field

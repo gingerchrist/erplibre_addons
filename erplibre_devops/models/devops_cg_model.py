@@ -25,3 +25,10 @@ class DevopsCgModel(models.Model):
         comodel_name="devops.workspace",
         string="DevOps Workspace",
     )
+
+    def get_field_dct(self):
+        self.ensure_one()
+        dct_model = {}
+        for field_id in self.field_ids:
+            dct_model[field_id.name] = field_id.get_dct()
+        return dct_model

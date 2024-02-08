@@ -415,7 +415,6 @@ class DevopsPlanCg(models.Model):
                             "mode_view_snippet_template_generate_website_enable_javascript": rec.mode_view_snippet_template_generate_website_enable_javascript,
                             "mode_view_snippet_template_generate_website_snippet_type": rec.mode_view_snippet_template_generate_website_snippet_type,
                             "config_uca_enable_export_data": rec.config_uca_enable_export_data,
-                            "use_internal_cg": rec.use_internal_cg,
                         }
                         # extra_arg = ""
                         if model_conf:
@@ -491,6 +490,25 @@ class DevopsPlanCg(models.Model):
 
             code_generator_id = self.env["code.generator.module"].create(value)
 
+            # lst_depend_module = ["mail", "portal", "website"]
+            lst_depend_module = []
+            if (
+                rec.mode_view_snippet
+                and rec.mode_view_snippet == "enable_snippet"
+            ):
+                lst_depend_module.append("website")
+            if lst_depend_module:
+                # Trim for unique item
+                lst_depend_module = list(set(lst_depend_module))
+                code_generator_id.add_module_dependency(lst_depend_module)
+
+            # Add model
+            for model_model_id in rec.devops_cg_model_ids:
+                code_generator_id.add_update_model(
+                    model_model_id.name,
+                    dct_field=model_model_id.get_field_dct(),
+                )
+
             # Generate view
             # Action generate view
             wizard_view = self.env[
@@ -506,7 +524,10 @@ class DevopsPlanCg(models.Model):
 
             wizard_view.button_generate_views()
 
-            if rec.mode_view_snippet and rec.mode_view_snippet == "enable_snippet":
+            if (
+                rec.mode_view_snippet
+                and rec.mode_view_snippet == "enable_snippet"
+            ):
                 # Generate snippet
                 # TODO addons/TechnoLibre_odoo-code-generator-template/code_generator_demo_portal/hooks.py
                 #  template_generate_website_snippet_controller_feature is not suppose to be here, this field
