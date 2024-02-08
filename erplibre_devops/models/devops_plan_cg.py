@@ -138,7 +138,16 @@ class DevopsPlanCg(models.Model):
             ("enable_snippet", "Enable snippet"),
         ],
         default="no_snippet",
-        help="Will active feature to generate snippet",
+        help="Will active feature to generate snippet on website interface",
+    )
+
+    mode_view_portal = fields.Selection(
+        selection=[
+            ("no_portal", "No portal"),
+            ("enable_portal", "Enable portal"),
+        ],
+        default="no_portal",
+        help="Will active feature to generate portal interface",
     )
 
     mode_view_snippet_enable_template_website_snippet_view = fields.Boolean(
@@ -496,6 +505,20 @@ class DevopsPlanCg(models.Model):
             )
 
             wizard_view.button_generate_views()
+
+            if rec.mode_view_snippet and rec.mode_view_snippet == "enable_snippet":
+                # Generate snippet
+                # TODO addons/TechnoLibre_odoo-code-generator-template/code_generator_demo_portal/hooks.py
+                #  template_generate_website_snippet_controller_feature is not suppose to be here, this field
+                #  is not into code.generator.snippet
+                value_snippet = {
+                    "code_generator_id": code_generator_id.id,
+                    "controller_feature": rec.mode_view_snippet_template_generate_website_snippet_ctrl_featur,
+                    "enable_javascript": rec.mode_view_snippet_template_generate_website_enable_javascript,
+                    "snippet_type": rec.mode_view_snippet_template_generate_website_snippet_type,
+                    "model_name": rec.mode_view_snippet_template_generate_website_snippet_generic_mdl,
+                }
+                self.env["code.generator.snippet"].create(value_snippet)
 
             # Generate module
             value = {"code_generator_ids": code_generator_id.ids}

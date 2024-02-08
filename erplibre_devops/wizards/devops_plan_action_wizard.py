@@ -140,6 +140,56 @@ class DevopsPlanActionWizard(models.TransientModel):
         help="True if editing an existing system or False to create a system",
     )
 
+    mode_view_snippet = fields.Selection(
+        selection=[
+            ("no_snippet", "No snippet"),
+            ("enable_snippet", "Enable snippet"),
+        ],
+        default="no_snippet",
+        help="Will active feature to generate snippet on website interface",
+    )
+
+    mode_view_snippet_enable_template_website_snippet_view = fields.Boolean(
+        default=True,
+        help="Feature for mode_view_snippet",
+    )
+
+    mode_view_snippet_template_generate_website_snippet_generic_mdl = (
+        fields.Char(help="Feature for mode_view_snippet")
+    )
+
+    mode_view_snippet_template_generate_website_snippet_ctrl_featur = (
+        fields.Selection(
+            selection=[
+                ("helloworld", "helloworld"),
+                ("model_show_item_individual", "Model show item individual"),
+                ("model_show_item_list", "Model show item list"),
+            ],
+            default="model_show_item_individual",
+            help="Feature for mode_view_snippet",
+        )
+    )
+
+    mode_view_snippet_template_generate_website_enable_javascript = (
+        fields.Boolean(
+            default=True,
+            help="Feature for mode_view_snippet",
+        )
+    )
+
+    mode_view_snippet_template_generate_website_snippet_type = (
+        fields.Selection(
+            selection=[
+                ("content", "Content"),
+                ("effect", "Effect"),
+                ("feature", "Feature"),
+                ("structure", "Structure"),
+            ],
+            default="effect",
+            help="Feature for mode_view_snippet",
+        )
+    )
+
     use_internal_cg = fields.Boolean(
         help=(
             "If internal, will use same database of devops for build code,"
@@ -756,6 +806,29 @@ class DevopsPlanActionWizard(models.TransientModel):
             "stop_execution_if_env_not_clean": not self.force_generate,
             "use_internal_cg": self.use_internal_cg,
         }
+        if self.mode_view_snippet == "enable_snippet":
+            plan_cg_value["mode_view_snippet"] = self.mode_view_snippet
+            plan_cg_value[
+                "mode_view_snippet_enable_template_website_snippet_view"
+            ] = self.mode_view_snippet_enable_template_website_snippet_view
+            plan_cg_value[
+                "mode_view_snippet_template_generate_website_snippet_generic_mdl"
+            ] = (
+                self.mode_view_snippet_template_generate_website_snippet_generic_mdl
+            )
+            plan_cg_value[
+                "mode_view_snippet_template_generate_website_snippet_ctrl_featur"
+            ] = (
+                self.mode_view_snippet_template_generate_website_snippet_ctrl_featur
+            )
+            plan_cg_value[
+                "mode_view_snippet_template_generate_website_enable_javascript"
+            ] = (
+                self.mode_view_snippet_template_generate_website_enable_javascript
+            )
+            plan_cg_value[
+                "mode_view_snippet_template_generate_website_snippet_type"
+            ] = self.mode_view_snippet_template_generate_website_snippet_type
         # Update configuration self-gen
         if is_autopoiesis:
             plan_cg_value["cg_self_add_config_cg"] = True

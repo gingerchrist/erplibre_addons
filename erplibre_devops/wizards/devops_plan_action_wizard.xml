@@ -183,6 +183,14 @@
                     <group string="Feature">
                         <field name="use_internal_cg" />
                     </group>
+                    <group string="Snippet">
+                        <field name="mode_view_snippet" />
+                        <field name="mode_view_snippet_enable_template_website_snippet_view" />
+                        <field name="mode_view_snippet_template_generate_website_snippet_generic_mdl" />
+                        <field name="mode_view_snippet_template_generate_website_snippet_ctrl_featur" />
+                        <field name="mode_view_snippet_template_generate_website_enable_javascript" />
+                        <field name="mode_view_snippet_template_generate_website_snippet_type" />
+                    </group>
                 </group>
                 <group name="group_g_a_local" attrs="{'invisible': [('state', '!=', 'g_a_local')]}">
                     <group string="DB">
