@@ -29,9 +29,9 @@
 
     <menuitem id="menu_code_ide" name="IDE" sequence="2" parent="menu_code" />
 
-    <menuitem id="menu_erplibre_mode" name="Mode" sequence="1" parent="menu_erplibre" />
-
     <menuitem id="menu_erplibre_config" name="Config" sequence="2" parent="menu_erplibre" />
+
+    <menuitem id="menu_erplibre_mode" name="Mode" sequence="1" parent="menu_erplibre" />
 
     <menuitem id="menu_process" name="Process" sequence="5" parent="menu_devops" />
 
@@ -154,6 +154,14 @@
     />
 
     <menuitem
+        id="menu_erplibre_config_path_home"
+        name="Path home"
+        action="erplibre_config_path_home_config_path_home_action_window"
+        sequence="1"
+        parent="menu_erplibre_config"
+    />
+
+    <menuitem
         id="menu_erplibre_mode_env"
         name="Environnement"
         action="erplibre_mode_env_mode_env_action_window"
@@ -199,14 +207,6 @@
         action="erplibre_mode_version_erplibre_mode_version_erplibre_action_window"
         sequence="6"
         parent="menu_erplibre_mode"
-    />
-
-    <menuitem
-        id="menu_erplibre_config_path_home"
-        name="Path home"
-        action="erplibre_config_path_home_config_path_home_action_window"
-        sequence="1"
-        parent="menu_erplibre_config"
     />
 
     <menuitem id="menu_monitor" name="Monitor" sequence="10" parent="menu_erplibre_devops" />

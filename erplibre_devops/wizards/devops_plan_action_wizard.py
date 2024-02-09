@@ -134,10 +134,53 @@ class DevopsPlanActionWizard(models.TransientModel):
         string="New/Existing system",
     )
 
+    working_cg_module_id = fields.Many2one(
+        comodel_name="code.generator.module",
+        string="CG code builder",
+    )
+
+    working_cg_writer_id = fields.Many2one(
+        comodel_name="code.generator.writer",
+        string="CG code writer",
+    )
+
     is_update_system = fields.Boolean(
         store=True,
         compute="_compute_is_update_system",
         help="True if editing an existing system or False to create a system",
+    )
+
+    mode_view_portal = fields.Selection(
+        selection=[
+            ("no_portal", "No portal"),
+            ("enable_portal", "Enable portal"),
+        ],
+        default="no_portal",
+        help="Will active feature to generate portal interface",
+    )
+
+    mode_view_portal_enable_create = fields.Boolean(
+        default=True,
+        help="Feature for portal_enable_create",
+    )
+
+    mode_view_portal_enable_read = fields.Boolean(
+        default=True,
+        help="Feature for portal_enable_read",
+    )
+
+    mode_view_portal_enable_update = fields.Boolean(
+        default=True,
+        help="Feature for portal_enable_update",
+    )
+
+    mode_view_portal_enable_delete = fields.Boolean(
+        default=True,
+        help="Feature for portal_enable_delete",
+    )
+
+    mode_view_portal_models = fields.Char(
+        help="Separate models by ;",
     )
 
     mode_view_snippet = fields.Selection(
@@ -708,6 +751,12 @@ class DevopsPlanActionWizard(models.TransientModel):
             plan_cg_id.action_code_generator_generate_all()
             self.generated_new_project_id = plan_cg_id.last_new_project_cg.id
             self.plan_cg_id = plan_cg_id.id
+            self.working_cg_module_id = (
+                self.plan_cg_id.last_code_generator_module.id
+            )
+            self.working_cg_writer_id = (
+                self.plan_cg_id.last_code_generator_writer.id
+            )
             # Format module
             cmd_format = (
                 f"./script/maintenance/format.sh"
@@ -806,7 +855,7 @@ class DevopsPlanActionWizard(models.TransientModel):
             "stop_execution_if_env_not_clean": not self.force_generate,
             "use_internal_cg": self.use_internal_cg,
         }
-        if self.mode_view_snippet == "enable_snippet":
+        if self.mode_view_snippet and self.mode_view_snippet != "no_snippet":
             plan_cg_value["mode_view_snippet"] = self.mode_view_snippet
             plan_cg_value[
                 "mode_view_snippet_enable_template_website_snippet_view"
@@ -829,6 +878,23 @@ class DevopsPlanActionWizard(models.TransientModel):
             plan_cg_value[
                 "mode_view_snippet_template_generate_website_snippet_type"
             ] = self.mode_view_snippet_template_generate_website_snippet_type
+        if self.mode_view_portal and self.mode_view_portal != "no_portal":
+            plan_cg_value["mode_view_portal"] = self.mode_view_portal
+            plan_cg_value[
+                "mode_view_portal_enable_create"
+            ] = self.mode_view_portal_enable_create
+            plan_cg_value[
+                "mode_view_portal_enable_read"
+            ] = self.mode_view_portal_enable_read
+            plan_cg_value[
+                "mode_view_portal_enable_update"
+            ] = self.mode_view_portal_enable_update
+            plan_cg_value[
+                "mode_view_portal_enable_delete"
+            ] = self.mode_view_portal_enable_delete
+            plan_cg_value[
+                "mode_view_portal_models"
+            ] = self.mode_view_portal_models
         # Update configuration self-gen
         if is_autopoiesis:
             plan_cg_value["cg_self_add_config_cg"] = True
@@ -838,6 +904,8 @@ class DevopsPlanActionWizard(models.TransientModel):
         plan_cg_id.action_code_generator_generate_all()
         self.generated_new_project_id = plan_cg_id.last_new_project_cg.id
         self.plan_cg_id = plan_cg_id.id
+        self.working_cg_module_id = plan_cg_id.last_code_generator_module.id
+        self.working_cg_writer_id = plan_cg_id.last_code_generator_writer.id
         # Format module
         cmd_format = (
             "./script/maintenance/format.sh"

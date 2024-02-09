@@ -214,6 +214,29 @@
                             attrs="{'invisible': [('mode_view_snippet', '==', 'no_snippet')]}"
                         />
                     </group>
+                    <group string="Portal" attrs="{'invisible': [('use_internal_cg', '==', False)]}">
+                        <field name="mode_view_portal" />
+                        <field
+                            name="mode_view_portal_models"
+                            attrs="{'invisible': [('mode_view_portal', '==', 'no_portal')]}"
+                        />
+                        <field
+                            name="mode_view_portal_enable_create"
+                            attrs="{'invisible': [('mode_view_portal', '==', 'no_portal')]}"
+                        />
+                        <field
+                            name="mode_view_portal_enable_read"
+                            attrs="{'invisible': [('mode_view_portal', '==', 'no_portal')]}"
+                        />
+                        <field
+                            name="mode_view_portal_enable_update"
+                            attrs="{'invisible': [('mode_view_portal', '==', 'no_portal')]}"
+                        />
+                        <field
+                            name="mode_view_portal_enable_delete"
+                            attrs="{'invisible': [('mode_view_portal', '==', 'no_portal')]}"
+                        />
+                    </group>
                 </group>
                 <group name="group_g_a_local" attrs="{'invisible': [('state', '!=', 'g_a_local')]}">
                     <group string="DB">
@@ -455,6 +478,15 @@
                         <field
                             name="create_workspace_id"
                             attrs="{'invisible': [('create_workspace_id', '=', False)]}"
+                        />
+                        <field name="working_system_id" attrs="{'invisible': [('working_system_id', '=', False)]}" />
+                        <field
+                            name="working_cg_module_id"
+                            attrs="{'invisible': [('working_cg_module_id', '=', False)]}"
+                        />
+                        <field
+                            name="working_cg_writer_id"
+                            attrs="{'invisible': [('working_cg_writer_id', '=', False)]}"
                         />
                         <button
                             name="action_git_commit"

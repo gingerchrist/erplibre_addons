@@ -174,6 +174,8 @@
                         <group string="Execution">
                             <field name="workspace_id" />
                             <field name="last_new_project_cg" />
+                            <field name="last_code_generator_module" />
+                            <field name="last_code_generator_writer" />
                             <field name="stop_execution_if_env_not_clean" />
                             <field name="cg_self_add_config_cg" />
                         </group>
@@ -195,6 +197,12 @@
                             <field name="mode_view_snippet_template_generate_website_snippet_ctrl_featur" />
                             <field name="mode_view_snippet_template_generate_website_enable_javascript" />
                             <field name="mode_view_snippet_template_generate_website_snippet_type" />
+                            <field name="mode_view_portal" />
+                            <field name="mode_view_portal_enable_create" />
+                            <field name="mode_view_portal_enable_read" />
+                            <field name="mode_view_portal_enable_update" />
+                            <field name="mode_view_portal_enable_delete" />
+                            <field name="mode_view_portal_models" />
                         </group>
                         <group string="Configuration">
                             <field name="code_mode_context_generator" />
