@@ -178,10 +178,10 @@
                 <group name="group_g_new_module" attrs="{'invisible': [('state', '!=', 'g_new_module')]}">
                     <group string="Information">
                         <field name="working_module_name" />
-                        <field name="working_module_name_suggestion" />
+                        <field name="working_module_path_suggestion" />
                         <field
                             name="working_module_path"
-                            attrs="{'invisible': [('working_module_name_suggestion', '!=', False)]}"
+                            attrs="{'invisible': [('working_module_path_suggestion', '!=', False)]}"
                         />
                     </group>
                     <group string="Feature">

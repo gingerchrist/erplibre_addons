@@ -67,7 +67,7 @@ class DevopsPlanActionWizard(models.TransientModel):
         string="Working module",
     )
 
-    working_module_name_suggestion = fields.Selection(
+    working_module_path_suggestion = fields.Selection(
         selection=[
             ("addons/addons", "Addons private"),
             ("addons/ERPLibre_erplibre_addons", "ERPLibre addons"),
@@ -663,8 +663,8 @@ class DevopsPlanActionWizard(models.TransientModel):
             "Plan g_new_module"
         ) as wp_id:
             module_name = self.working_module_name
-            if self.working_module_name_suggestion:
-                module_path = self.working_module_name_suggestion
+            if self.working_module_path_suggestion:
+                module_path = self.working_module_path_suggestion
             else:
                 module_path = self.working_module_path
             self.generate_new_model(
