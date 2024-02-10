@@ -581,9 +581,11 @@ class DevopsPlanCg(models.Model):
             value_view_wizard = {
                 "code_generator_id": code_generator_id.id,
                 "enable_generate_all": False,
-                "disable_generate_menu": True,
-                "disable_generate_access": True,
             }
+            if rec.mode_view == "same_view":
+                value_view_wizard["disable_generate_menu"] = True
+                value_view_wizard["disable_generate_access"] = True
+
             if rec.mode_view_portal and rec.mode_view_portal != "no_portal":
                 value_view_wizard["enable_generate_portal"] = True
                 value_view_wizard[
