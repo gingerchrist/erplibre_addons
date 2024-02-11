@@ -21,11 +21,12 @@ class DevopsPlanCg(models.Model):
         required=True,
     )
 
-    use_internal_cg = fields.Boolean(
+    use_external_cg = fields.Boolean(
         help=(
             "If internal, will use same database of devops for build code,"
-            " this can interfere."
-        )
+            " this can interfere. If False, will generate external database"
+            " with sandbox."
+        ),
     )
 
     code_mode_context_generator = fields.Selection(
@@ -470,7 +471,7 @@ class DevopsPlanCg(models.Model):
                                     for a in rec.devops_cg_model_to_remove_ids
                                 ]
                             )
-                        if not rec.use_internal_cg:
+                        if rec.use_external_cg:
                             new_project_id = self.env[
                                 "devops.cg.new_project"
                             ].create(dct_new_project)

@@ -274,11 +274,11 @@ class DevopsPlanActionWizard(models.TransientModel):
         )
     )
 
-    use_internal_cg = fields.Boolean(
-        default=True,
+    use_external_cg = fields.Boolean(
         help=(
             "If internal, will use same database of devops for build code,"
-            " this can interfere."
+            " this can interfere. If False, will generate external database"
+            " with sandbox."
         ),
     )
 
@@ -481,7 +481,7 @@ class DevopsPlanActionWizard(models.TransientModel):
     def goto_autopoiese(self, module_name):
         if module_name:
             self.fill_working_module_name_or_id(module_name)
-            self.use_internal_cg = False
+            self.use_external_cg = True
             self.is_autopoieses = True
             self.is_new_module = False
             self.mode_view_generator = "same_view"
@@ -717,7 +717,7 @@ class DevopsPlanActionWizard(models.TransientModel):
             #     "devops_cg_model_ids": [(6, 0, [])],
             #     "devops_cg_field_ids": [(6, 0, [])],
             #     "stop_execution_if_env_not_clean": not self.force_generate,
-            #     "use_internal_cg": self.use_internal_cg,
+            #     "use_external_cg": self.use_external_cg,
             # }
             # plan_cg_id = self.env["devops.plan.cg"].create(plan_cg_value)
             # # Generate
@@ -868,7 +868,7 @@ class DevopsPlanActionWizard(models.TransientModel):
             ],
             "devops_cg_field_ids": [(6, 0, lst_field_id)],
             "stop_execution_if_env_not_clean": not self.force_generate,
-            "use_internal_cg": self.use_internal_cg,
+            "use_external_cg": self.use_external_cg,
         }
         # Update configuration self-gen
         if is_autopoiesis:

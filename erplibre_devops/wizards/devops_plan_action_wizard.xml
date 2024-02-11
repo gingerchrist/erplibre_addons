@@ -232,7 +232,7 @@
                         <field name="working_module_name" string="OR Working Module Name" />
                     </group>
                     <group string="Feature">
-                        <field name="use_internal_cg" />
+                        <field name="use_external_cg" />
                     </group>
                 </group>
                 <group
@@ -276,7 +276,7 @@
                         />
                     </group>
                     <group string="C-Parameter">
-                        <field name="use_internal_cg" />
+                        <field name="use_external_cg" />
                         <field name="is_autopoieses" />
                         <field name="force_generate" />
                         <field name="mode_view_generator" />
@@ -314,7 +314,7 @@
                             attrs="{'invisible': [('mode_view_snippet', '==', 'no_snippet')]}"
                         />
                     </group>
-                    <group string="Portal" attrs="{'invisible': [('use_internal_cg', '==', False)]}">
+                    <group string="Portal" attrs="{'invisible': [('use_external_cg', '==', True)]}">
                         <field name="mode_view_portal" />
                         <field
                             name="mode_view_portal_models"
