@@ -32,8 +32,67 @@
                 <!--                           class="oe_inline"-->
                 <!--                           placeholder="Name"/>-->
                 <!--                </h1>-->
+                <group name="init_context" attrs="{'invisible': [('state', '!=', 'init')]}">
+                    <group>
+                        <div>Choose an action into the system development life cycle.</div>
+                    </group>
+                    <group>
+                        <field name="mode_context" />
+                    </group>
+                </group>
+                <group name="init_context" attrs="{'invisible': [('state', '!=', 'init')]}">
+                    <group string="Software development">
+                        <div>
+                            Iterate between 4 steps and interact with Operates.
+                            <ul>
+                                <li>
+                                    <b>Plan</b>
+                                    : Requirement, Analyse, Conception
+                                </li>
+                                <li>
+                                    <b>Code</b>
+                                    : Module generation, Code writing
+                                </li>
+                                <li>
+                                    <b>Build</b>
+                                    : Create docker
+                                </li>
+                                <li>
+                                    <b>Quality</b>
+                                    : Running test
+                                </li>
+                            </ul>
+                        </div>
+                    </group>
+                    <group string="It operations">
+                        <div>
+                            <ul>
+                                <li>
+                                    <b>Release</b>
+                                    : Documentation, Versioning
+                                </li>
+                                <li>
+                                    <b>Deploy</b>
+                                    : Migration, Update workspace, Install system, Backup
+                                </li>
+                                <li>
+                                    <b>Operate</b>
+                                    : Manage problem, Live surveillance, Configuration
+                                </li>
+                                <li>
+                                    <b>Monitor</b>
+                                    : Collect data monitoring, Alerts, Performance, Correlate incident, Continuous
+                                amelioration
+                                </li>
+                            </ul>
+                        </div>
+                    </group>
+                </group>
                 <group name="init" attrs="{'invisible': [('state', '!=', 'init')]}">
-                    <group string="Code">
+                    <group string="Plan" style="background-color: #057bc2;">
+                        <button name="requirement" string="Requirement" groups="base.group_no_one" />
+                    </group>
+                    <group string="Code" style="background-color: #08a9cb;">
                         <!--                        <button-->
                         <!--                            name="state_goto_g_test_erplibre"-->
                         <!--                            string="Operate"-->
@@ -67,7 +126,22 @@
                         <!--                            class="btn btn-default"-->
                         <!--                        />-->
                     </group>
-                    <group string="Deploy">
+                    <group string="Build" style="background-color: #02b5af;">
+                        <!--                        <-->
+                    </group>
+                    <group string="Quality" style="background-color: #04c576;">
+                        <button name="state_goto_h_run_test" string="Test" type="object" class="btn btn-default" />
+                        <!--                        <button-->
+                        <!--                            name="state_goto_not_supported"-->
+                        <!--                            string="Analyse/inspection"-->
+                        <!--                            type="object"-->
+                        <!--                            class="btn btn-default"-->
+                        <!--                        />-->
+                    </group>
+                    <group string="Release" style="background-color: #9bc604;">
+                        <!--                        <-->
+                    </group>
+                    <group string="Deploy" style="background-color: #f7b905;">
                         <!--                        <button-->
                         <!--                            name="state_goto_i_new_remote_system"-->
                         <!--                            string="Local system"-->
@@ -87,14 +161,11 @@
                             class="btn btn-default"
                         />
                     </group>
-                    <group string="Quality">
-                        <button name="state_goto_h_run_test" string="Test" type="object" class="btn btn-default" />
-                        <!--                        <button-->
-                        <!--                            name="state_goto_not_supported"-->
-                        <!--                            string="Analyse/inspection"-->
-                        <!--                            type="object"-->
-                        <!--                            class="btn btn-default"-->
-                        <!--                        />-->
+                    <group string="Operate" style="background-color: #dc0527;">
+                        <!--                    -->
+                    </group>
+                    <group string="Monitor" style="background-color: #c01e75;">
+                        <!--                    -->
                     </group>
                 </group>
                 <!--                <group-->

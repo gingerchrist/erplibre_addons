@@ -92,6 +92,20 @@ class DevopsPlanActionWizard(models.TransientModel):
         help="Suggestion relative path",
     )
 
+    # TODO select default context from configuration and export it in local environment home configuration
+    mode_context = fields.Selection(
+        selection=[
+            ("dev", "Dev"),
+            ("test", "Test"),
+            ("stage", "Stage"),
+            ("demo", "Demo"),
+            ("prod", "Prod"),
+        ],
+        help="Context why you use DevOps",
+        default="dev",
+        required=True,
+    )
+
     working_module_name = fields.Char(
         help="working_module_id or working_module_name"
     )
