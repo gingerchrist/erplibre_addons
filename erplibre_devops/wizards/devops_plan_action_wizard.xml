@@ -40,72 +40,40 @@
                         <field name="mode_context" />
                     </group>
                 </group>
-                <group name="init_context" attrs="{'invisible': [('state', '!=', 'init')]}">
-                    <group string="Software development">
-                        <div>
-                            Iterate between 4 steps and interact with Operates.
-                            <ul>
-                                <li>
-                                    <b>Plan</b>
-                                    : Requirement, Analyse, Conception
-                                </li>
-                                <li>
-                                    <b>Code</b>
-                                    : Module generation, Code writing
-                                </li>
-                                <li>
-                                    <b>Build</b>
-                                    : Create docker
-                                </li>
-                                <li>
-                                    <b>Quality</b>
-                                    : Running test
-                                </li>
-                            </ul>
-                        </div>
-                    </group>
-                    <group string="It operations">
-                        <div>
-                            <ul>
-                                <li>
-                                    <b>Release</b>
-                                    : Documentation, Versioning
-                                </li>
-                                <li>
-                                    <b>Deploy</b>
-                                    : Migration, Update workspace, Install system, Backup
-                                </li>
-                                <li>
-                                    <b>Operate</b>
-                                    : Manage problem, Live surveillance, Configuration
-                                </li>
-                                <li>
-                                    <b>Monitor</b>
-                                    : Collect data monitoring, Alerts, Performance, Correlate incident, Continuous
-                                amelioration
-                                </li>
-                            </ul>
-                        </div>
-                    </group>
+                <group
+                    name="init_soft_dev"
+                    string="Software development"
+                    attrs="{'invisible': [('state', '!=', 'init')]}"
+                >
+                    <div>Iterate between 4 steps and interact with Operates.</div>
                 </group>
                 <group name="init" attrs="{'invisible': [('state', '!=', 'init')]}">
-                    <group string="Plan" style="background-color: #057bc2;">
-                        <button name="requirement" string="Requirement" groups="base.group_no_one" />
+                    <group style="background-color: #057bc2; color: white;">
+                        <div>
+                            <h2>1 Plan</h2>
+                        </div>
+                        <!--                        <button name="requirement" string="Requirement" groups="base.group_no_one" />-->
+                        <div>Requirement</div>
+                        <div>Analyse/Observe/Audit</div>
+                        <div>Conception</div>
                     </group>
-                    <group string="Code" style="background-color: #08a9cb;">
+                    <group style="background-color: #08a9cb; color: white;">
+                        <div>
+                            <h2>2 Code</h2>
+                        </div>
                         <!--                        <button-->
                         <!--                            name="state_goto_g_test_erplibre"-->
                         <!--                            string="Operate"-->
                         <!--                            type="object"-->
                         <!--                            class="btn btn-default"-->
                         <!--                        />-->
-                        <button name="state_goto_code_module" string="Module" type="object" class="btn btn-default" />
                         <button
                             name="state_goto_code_shortcut"
                             string="Auto-complete module"
                             type="object"
                             class="btn btn-default"
                         />
+                        <button name="state_goto_code_module" string="Module" type="object" class="btn btn-default" />
                         <!--                        <button-->
                         <!--                            name="state_goto_a_autopoiesis_devops"-->
                         <!--                            string="Autopoiesis"-->
@@ -125,11 +93,18 @@
                         <!--                            type="object"-->
                         <!--                            class="btn btn-default"-->
                         <!--                        />-->
+                        <div>Project</div>
                     </group>
-                    <group string="Build" style="background-color: #02b5af;">
-                        <!--                        <-->
+                    <group style="background-color: #02b5af; color: white;">
+                        <div>
+                            <h2>3 Build</h2>
+                        </div>
+                        <div>Container/Package</div>
                     </group>
-                    <group string="Quality" style="background-color: #04c576;">
+                    <group style="background-color: #04c576; color: white;">
+                        <div>
+                            <h2>4 Quality</h2>
+                        </div>
                         <button name="state_goto_h_run_test" string="Test" type="object" class="btn btn-default" />
                         <!--                        <button-->
                         <!--                            name="state_goto_not_supported"-->
@@ -137,11 +112,26 @@
                         <!--                            type="object"-->
                         <!--                            class="btn btn-default"-->
                         <!--                        />-->
+                        <div>Inspection</div>
                     </group>
-                    <group string="Release" style="background-color: #9bc604;">
-                        <!--                        <-->
+                </group>
+                <group name="init_it_ops" string="It operations" attrs="{'invisible': [('state', '!=', 'init')]}">
+                    <div>
+                        Operating automation about usage of the software, create reports and feedback for development.
+                    </div>
+                </group>
+                <group name="init_2" attrs="{'invisible': [('state', '!=', 'init')]}">
+                    <group style="background-color: #9bc604; color: white;">
+                        <div>
+                            <h2>5 Release</h2>
+                        </div>
+                        <div>Documentation</div>
+                        <div>Versioning</div>
                     </group>
-                    <group string="Deploy" style="background-color: #f7b905;">
+                    <group style="background-color: #f7b905; color: white;">
+                        <div>
+                            <h2>6 Deploy</h2>
+                        </div>
                         <!--                        <button-->
                         <!--                            name="state_goto_i_new_remote_system"-->
                         <!--                            string="Local system"-->
@@ -160,12 +150,27 @@
                             type="object"
                             class="btn btn-default"
                         />
+                        <div>Migration</div>
+                        <div>Backup/Restoration</div>
+                        <div>Install/Update/Remove</div>
                     </group>
-                    <group string="Operate" style="background-color: #dc0527;">
-                        <!--                    -->
+                    <group style="background-color: #dc0527; color: white;">
+                        <div>
+                            <h2>7 Operate</h2>
+                        </div>
+                        <div>Manage problems</div>
+                        <div>Live observation</div>
+                        <div>Configuration</div>
                     </group>
-                    <group string="Monitor" style="background-color: #c01e75;">
-                        <!--                    -->
+                    <group style="background-color: #c01e75; color: white;">
+                        <div>
+                            <h2>8 Monitor</h2>
+                        </div>
+                        <div>Collect data monitoring</div>
+                        <div>Alerts</div>
+                        <div>Performance analysing</div>
+                        <div>Correlate incident</div>
+                        <div>Continuous amelioration</div>
                     </group>
                 </group>
                 <!--                <group-->
