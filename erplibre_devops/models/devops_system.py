@@ -75,6 +75,21 @@ class DevopsSystem(models.Model):
         help="The state of the connexion.",
     )
 
+    use_search_cmd = fields.Selection(
+        # TODO support mdfind for OSX
+        selection=[
+            (
+                "locate",
+                "locate",
+            ),
+            ("find", "find"),
+        ],
+        default=lambda self: self.env["ir.config_parameter"]
+        .sudo()
+        .get_param("erplibre_devops.default_search_engine", False),
+        help="find or locate, need sudo updatedb.",
+    )
+
     terminal = fields.Selection(
         selection=[
             ("gnome-terminal", "Gnome-terminal"),
@@ -562,9 +577,19 @@ class DevopsSystem(models.Model):
         for rec in self:
             # TODO use mdfind on OSX
             # TODO need to do sometime «sudo updatedb»
-            # TODO take this information from system if use locate or find
-            use_locate = True
-            if use_locate:
+            if not rec.use_search_cmd or rec.use_search_cmd not in (
+                "locate",
+                "find",
+            ):
+                # TODO add information about this missing command, a TODO action
+                # raise ValueError(
+                #     f"Cannot execute command search '{rec.use_search_cmd}'"
+                # )
+                _logger.error(
+                    f"Cannot execute command search '{rec.use_search_cmd}'"
+                )
+                return
+            if rec.use_search_cmd == "locate":
                 # Validate word ERPLibre is into default.xml
                 cmd = (
                     "locate -b -r '^default\.xml$'|grep -v "
@@ -572,7 +597,7 @@ class DevopsSystem(models.Model):
                     ' "/var/lib/docker"| xargs -I {} sh -c "grep -l "ERPLibre"'
                     ' "{}" 2>/dev/null || true"'
                 )
-            else:
+            elif rec.use_search_cmd == "find":
                 # Validate word ERPLibre is into default.xml
                 cmd = (
                     'find "/" -name "default.xml" -type f -print 2>/dev/null |'
@@ -586,14 +611,14 @@ class DevopsSystem(models.Model):
                 ]
             else:
                 lst_dir_git = []
-            if use_locate:
+            if rec.use_search_cmd == "locate":
                 # Validate word ERPLibre is into default.xml
                 cmd = (
                     'locate -b -r "^docker-compose\.yml$"|grep -v .repo|grep'
                     ' -v /var/lib/docker|xargs -I {} sh -c "grep -l "ERPLibre"'
                     ' "{}" 2>/dev/null || true"'
                 )
-            else:
+            elif rec.use_search_cmd == "find":
                 # Validate word ERPLibre is into default.xml
                 cmd = (
                     'find "/" -name "docker-compose.yml" -type f -print'

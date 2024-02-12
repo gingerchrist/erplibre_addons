@@ -45,6 +45,7 @@
                         <field name="method" />
                         <field name="terminal" />
                         <field name="keep_terminal_open" />
+                        <field name="use_search_cmd" />
                         <field name="debug_command" />
                     </group>
                     <group string="Connected system">
@@ -98,6 +99,7 @@
                     <filter name="method" string="Method" context="{'group_by':'method'}" />
                     <filter name="parent_system_id" string="Parent system" context="{'group_by':'parent_system_id'}" />
                     <filter name="terminal" string="Terminal" context="{'group_by':'terminal'}" />
+                    <filter name="use_search_cmd" string="Searching command" context="{'group_by':'use_search_cmd'}" />
                     <filter name="path_home" string="Path home" context="{'group_by':'path_home'}" />
                 </group>
             </search>
@@ -114,6 +116,7 @@
                 <field name="ssh_host" />
                 <field name="method" />
                 <field name="terminal" />
+                <field name="use_search_cmd" />
             </tree>
         </field>
     </record>

@@ -32,6 +32,21 @@
                                     />
                                 </div>
                             </div>
+                            <div class="o_setting_right_pane">
+                                <label for="default_use_search_cmd" />
+                                <div class="text-muted">Default command for search into system</div>
+                                <div class="mt8">
+                                    <field name="default_use_search_cmd" class="o_light_label" />
+                                </div>
+                                <div class="mt8">
+                                    <button
+                                        name="auto_select_use_search_cmd"
+                                        string="Update searching command"
+                                        type="object"
+                                        icon="fa-refresh"
+                                    />
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

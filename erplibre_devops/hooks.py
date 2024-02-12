@@ -25,3 +25,4 @@ def post_init_hook(cr, e):
         # Update configuration
         settings = env["res.config.settings"].sudo()
         settings.auto_select_terminal()
+        settings.auto_select_use_search_cmd()
