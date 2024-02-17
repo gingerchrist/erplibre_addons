@@ -85,6 +85,13 @@ class DevopsExecError(models.Model):
     stage_new_project_id = fields.Many2one(
         comodel_name="devops.cg.new_project.stage",
         string="Stage",
+        readonly=True,
+    )
+
+    new_project_id = fields.Many2one(
+        comodel_name="devops.cg.new_project",
+        string="New projects",
+        readonly=True,
     )
 
     parent_root_exec_bundle_id = fields.Many2one(

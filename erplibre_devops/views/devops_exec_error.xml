@@ -57,6 +57,7 @@
                         <field name="devops_exec_id" />
                         <field name="parent_root_exec_bundle_id" />
                         <field name="stage_new_project_id" />
+                        <field name="new_project_id" />
                     </group>
                     <group>
                         <group string="Info">
