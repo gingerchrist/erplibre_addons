@@ -423,26 +423,17 @@ class DevopsPlanCg(models.Model):
                             rec.workspace_code_remove_module(module_id)
                         model_conf = None
                         if rec.code_mode_context_generator == "autopoiesis":
-                            # TODO this seems outdated, fix by wizard
-                            # TODO found path by this __file__
-                            rec.path_code_generator_to_generate = (
-                                "./addons/ERPLibre_erplibre_addons"
-                            )
-                            module = "erplibre_devops"
-                            project_type = "self"
                             if rec.cg_self_add_config_cg:
                                 model_conf = rec.get_cg_model_config(module_id)
                         else:
                             model_conf = rec.get_cg_model_config(module_id)
-                            module = module_id.name
-                            project_type = "cg"
+                        module = module_id.name
                         # TODO support portal into external
                         dct_new_project = {
                             "module": module,
                             "directory": rec.path_code_generator_to_generate,
                             "keep_bd_alive": True,
                             "devops_workspace": rec_ws.id,
-                            "project_type": project_type,
                             "devops_exec_bundle_id": devops_exec_bundle_parent_root_id.id,
                             "stop_execution_if_env_not_clean": rec.stop_execution_if_env_not_clean,
                             "mode_view": rec.mode_view,
